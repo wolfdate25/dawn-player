@@ -13,6 +13,7 @@ using DawnPlayer.Core.Playlists;
 using DawnPlayer.Core.Util;
 using NAudio.Wave;
 using Xunit;
+using Xunit.Abstractions;
 using CorePlaybackState = DawnPlayer.Core.Audio.PlaybackState;
 
 namespace DawnPlayer.Tests;
@@ -27,6 +28,35 @@ namespace DawnPlayer.Tests;
 [Collection("AudioDeviceCollection")]
 public class LibraryAndPlaybackConcurrencyTests
 {
+    private readonly ITestOutputHelper _output;
+
+    public LibraryAndPlaybackConcurrencyTests(ITestOutputHelper output) => _output = output;
+
+    /// <summary>
+    /// xUnit 2.5.3 cannot turn a running test into a skip, so an environment bail-out reports PASS.
+    /// This marker is the only way a log reader can tell one from a run that actually asserted.
+    /// </summary>
+    private void LogEnvironmentSkip(string reason) => _output.WriteLine($"[SKIPPED-ENV] {reason}");
+
+    /// <summary>
+    /// True when the machine exposes a render endpoint. Asserting that playback reaches Playing
+    /// requires one: with no device the output never starts and the controller stays Stopped.
+    /// </summary>
+    private static bool HasRenderEndpoint()
+    {
+        try
+        {
+            using var enumerator = new NAudio.CoreAudioApi.MMDeviceEnumerator();
+            return enumerator.GetDefaultAudioEndpoint(
+                NAudio.CoreAudioApi.DataFlow.Render,
+                NAudio.CoreAudioApi.Role.Multimedia) != null;
+        }
+        catch (System.Runtime.InteropServices.COMException)
+        {
+            return false;
+        }
+    }
+
     // =========================================================================
     // SECTION 1: MusicLibrary Concurrency, _ioLock & SQLite Transaction Tests
     // =========================================================================
@@ -378,8 +408,15 @@ public class LibraryAndPlaybackConcurrencyTests
     }
 
     [Fact]
+    [Trait("Category", "RequiresAudio")]
     public async Task PlaybackController_CurrentItemAndHistory_ConsistentUnderConcurrentAccess()
     {
+        if (!HasRenderEndpoint())
+        {
+            LogEnvironmentSkip("no audio render endpoint: playback cannot reach Playing");
+            return;
+        }
+
         var tempDir = Path.Combine(Path.GetTempPath(), "DawnPlayer_HistoryStress_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(tempDir);
 
