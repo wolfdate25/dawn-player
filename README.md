@@ -5,6 +5,8 @@ foobar2000의 기능성과 [Eole 테마](https://github.com/Ottodix/Eole-foobar-
 
 ![release](https://img.shields.io/github/v/tag/wolfdate25/dawn-player?label=release&color=blue)
 
+![Dawn Player Screenshot](docs/screenshot.png)
+
 ## 주요 기능
 
 ### 오디오 엔진
@@ -119,7 +121,7 @@ tests/DawnPlayer.Tests/         # 코어/서비스/뷰모델 단위 테스트, �
 → [Equalizer (장치별/공통)] → [DynamicNormalizer] → [SoftLimiter] → PCM 변환
 → SequencerStream(갭리스 체인) → WasapiOut(Exclusive/Shared)`
 
-## 로드맵 (foobar2000 기능 계속 이식)
+## 로드맵
 
 - DSP 체인 확장 (크로스피드)
 - Converter (형식 변환/리핑)
