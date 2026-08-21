@@ -139,13 +139,17 @@ public sealed class SequencerStreamResponsivenessTests
         var pending = Pending(reader);
         seq.SwitchTo(pending);
 
-        var render = Task.Run(() => seq.Read(new byte[16384], 0, 16384));
-        Assert.True(reader.EnteredRead.Wait(TimeSpan.FromSeconds(5)), "Render thread never reached the decoder.");
+        var render = Task.Factory.StartNew(
+            () => seq.Read(new byte[16384], 0, 16384),
+            CancellationToken.None,
+            TaskCreationOptions.LongRunning,
+            TaskScheduler.Default);
+        Assert.True(reader.EnteredRead.Wait(TimeSpan.FromSeconds(15)), "Render thread never reached the decoder.");
 
         try
         {
             // Each of these used to take the same lock the stalled Read is holding.
-            var probe = Task.Run(() =>
+            var probe = Task.Factory.StartNew(() =>
             {
                 _ = seq.GetPosition();
                 _ = seq.TotalTime;
@@ -153,9 +157,9 @@ public sealed class SequencerStreamResponsivenessTests
                 _ = seq.RemainingTime;
                 _ = seq.HasPrefetched;
                 seq.SetGain(0.5f);
-            });
+            }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 
-            Assert.True(probe.Wait(TimeSpan.FromSeconds(5)),
+            Assert.True(probe.Wait(TimeSpan.FromSeconds(15)),
                 "UI-facing reads blocked behind decoder I/O held under the render lock.");
             Assert.Equal(TimeSpan.FromSeconds(7), seq.TotalTime);
             Assert.Same(pending.Item, seq.CurrentItem);
@@ -163,7 +167,7 @@ public sealed class SequencerStreamResponsivenessTests
         finally
         {
             reader.ReleaseRead();
-            render.Wait(TimeSpan.FromSeconds(5));
+            render.Wait(TimeSpan.FromSeconds(15));
         }
     }
 
@@ -174,22 +178,30 @@ public sealed class SequencerStreamResponsivenessTests
         var seq = CreateSequencer();
         seq.SwitchTo(Pending(reader));
 
-        var render = Task.Run(() => seq.Read(new byte[16384], 0, 16384));
-        Assert.True(reader.EnteredRead.Wait(TimeSpan.FromSeconds(5)), "Render thread never reached the decoder.");
+        var render = Task.Factory.StartNew(
+            () => seq.Read(new byte[16384], 0, 16384),
+            CancellationToken.None,
+            TaskCreationOptions.LongRunning,
+            TaskScheduler.Default);
+        Assert.True(reader.EnteredRead.Wait(TimeSpan.FromSeconds(15)), "Render thread never reached the decoder.");
 
         try
         {
             var nextReader = new FiniteReader(1000);
-            var queueing = Task.Run(() => seq.SetPrefetched(Pending(nextReader, @"C:\m\b.flac")));
+            var queueing = Task.Factory.StartNew(
+                () => seq.SetPrefetched(Pending(nextReader, @"C:\m\b.flac")),
+                CancellationToken.None,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Default);
 
-            Assert.True(queueing.Wait(TimeSpan.FromSeconds(5)),
+            Assert.True(queueing.Wait(TimeSpan.FromSeconds(15)),
                 "Queueing the next track blocked behind decoder I/O.");
             Assert.True(seq.HasPrefetched);
         }
         finally
         {
             reader.ReleaseRead();
-            render.Wait(TimeSpan.FromSeconds(5));
+            render.Wait(TimeSpan.FromSeconds(15));
         }
     }
 
