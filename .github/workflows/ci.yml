@@ -63,7 +63,7 @@ jobs:
 
       - name: Upload Coverage Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: coverage-report
@@ -71,7 +71,7 @@ jobs:
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results
           path: tests/DawnPlayer.Tests/TestResults/**/*.trx
@@ -111,7 +111,7 @@ jobs:
         run: pwsh -File tools/build-installer.ps1 -Version "0.0.0-ci"
 
       - name: Upload Installer Dry-Run Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dawnplayer-ci-build
           path: |
