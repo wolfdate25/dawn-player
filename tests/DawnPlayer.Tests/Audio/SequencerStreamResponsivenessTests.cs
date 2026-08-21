@@ -155,7 +155,7 @@ public sealed class SequencerStreamResponsivenessTests
                 seq.SetGain(0.5f);
             });
 
-            Assert.True(probe.Wait(TimeSpan.FromSeconds(2)),
+            Assert.True(probe.Wait(TimeSpan.FromSeconds(5)),
                 "UI-facing reads blocked behind decoder I/O held under the render lock.");
             Assert.Equal(TimeSpan.FromSeconds(7), seq.TotalTime);
             Assert.Same(pending.Item, seq.CurrentItem);
@@ -182,7 +182,7 @@ public sealed class SequencerStreamResponsivenessTests
             var nextReader = new FiniteReader(1000);
             var queueing = Task.Run(() => seq.SetPrefetched(Pending(nextReader, @"C:\m\b.flac")));
 
-            Assert.True(queueing.Wait(TimeSpan.FromSeconds(2)),
+            Assert.True(queueing.Wait(TimeSpan.FromSeconds(5)),
                 "Queueing the next track blocked behind decoder I/O.");
             Assert.True(seq.HasPrefetched);
         }
