@@ -1,0 +1,73 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <DefineConstants>$(DefineConstants);TEST_PROJECT</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="FlaUI.UIA3" Version="5.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="xunit" Version="2.5.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DawnPlayer.Core\DawnPlayer.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\src\DawnPlayer.App\Services\IAudioSettingsService.cs" Link="Services\IAudioSettingsService.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Services\AudioSettingsService.cs" Link="Services\AudioSettingsService.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Services\IEqSettingsService.cs" Link="Services\IEqSettingsService.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Services\EqSettingsService.cs" Link="Services\EqSettingsService.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Services\IAppearanceSettingsService.cs" Link="Services\IAppearanceSettingsService.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Services\AppearanceSettingsService.cs" Link="Services\AppearanceSettingsService.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Controls\QueuePopupController.cs" Link="Controls\QueuePopupController.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Controls\SeekbarScrubbingCalculator.cs" Link="Controls\SeekbarScrubbingCalculator.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Controls\AudioFormatBadgeFormatter.cs" Link="Controls\AudioFormatBadgeFormatter.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Controls\LyricsScrollSynchronizer.cs" Link="Controls\LyricsScrollSynchronizer.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Controls\PlaybackUiHelper.cs" Link="Controls\PlaybackUiHelper.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Controls\TransportToggleCalculator.cs" Link="Controls\TransportToggleCalculator.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Shortcuts\ShortcutCommand.cs" Link="Shortcuts\ShortcutCommand.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Shortcuts\ShortcutModifiers.cs" Link="Shortcuts\ShortcutModifiers.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Shortcuts\ShortcutKeyNames.cs" Link="Shortcuts\ShortcutKeyNames.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Shortcuts\KeyChord.cs" Link="Shortcuts\KeyChord.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Shortcuts\ShortcutCommandCatalog.cs" Link="Shortcuts\ShortcutCommandCatalog.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Shortcuts\ShortcutMap.cs" Link="Shortcuts\ShortcutMap.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Shortcuts\ShortcutDispatchPolicy.cs" Link="Shortcuts\ShortcutDispatchPolicy.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Shortcuts\IShortcutBindingStore.cs" Link="Shortcuts\IShortcutBindingStore.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Shortcuts\ShortcutMapStore.cs" Link="Shortcuts\ShortcutMapStore.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\ViewModels\ViewModelBase.cs" Link="ViewModels\ViewModelBase.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Calculators\EqVisualizerCalculator.cs" Link="Calculators\EqVisualizerCalculator.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\EqBandViewModel.cs" Link="ViewModels\Settings\EqBandViewModel.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\AudioSettingsViewModel.cs" Link="ViewModels\Settings\AudioSettingsViewModel.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\EqualizerSettingsViewModel.cs" Link="ViewModels\Settings\EqualizerSettingsViewModel.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\PlaybackSettingsViewModel.cs" Link="ViewModels\Settings\PlaybackSettingsViewModel.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\LibrarySettingsViewModel.cs" Link="ViewModels\Settings\LibrarySettingsViewModel.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\LyricsSettingsViewModel.cs" Link="ViewModels\Settings\LyricsSettingsViewModel.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\AppearanceSettingsViewModel.cs" Link="ViewModels\Settings\AppearanceSettingsViewModel.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\LayoutSettingsViewModel.cs" Link="ViewModels\Settings\LayoutSettingsViewModel.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\ShortcutBindingViewModel.cs" Link="ViewModels\Settings\ShortcutBindingViewModel.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\ShortcutGroupViewModel.cs" Link="ViewModels\Settings\ShortcutGroupViewModel.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\ShortcutSettingsViewModel.cs" Link="ViewModels\Settings\ShortcutSettingsViewModel.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\SettingsViewModel.cs" Link="ViewModels\Settings\SettingsViewModel.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Views\NavigationStateCalculator.cs" Link="Views\NavigationStateCalculator.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Views\Library\LibraryTreeNode.cs" Link="Views\Library\LibraryTreeNode.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Views\Library\LibraryTreeModelBuilder.cs" Link="Views\Library\LibraryTreeModelBuilder.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Views\Library\LibraryFilterService.cs" Link="Views\Library\LibraryFilterService.cs" />
+  </ItemGroup>
+
+</Project>

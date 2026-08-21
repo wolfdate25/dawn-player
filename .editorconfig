@@ -1,0 +1,22 @@
+root = true
+
+[*]
+charset = utf-8
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+# end_of_line intentionally unset: the working tree carries mixed endings and
+# forcing one would churn in-flight files. Checkout behavior follows core.autocrlf.
+
+[*.cs]
+indent_size = 4
+csharp_style_namespace_declarations = file_scoped:suggestion
+dotnet_sort_system_directives_first = true
+# Keep style analyzers advisory until the analyzer baseline is curated.
+dotnet_analyzer_diagnostic.category-Style.severity = suggestion
+
+[*.{xaml,csproj,slnx,props,targets,yml,yaml,json}]
+indent_size = 2
+
+[*.ps1]
+indent_size = 4

@@ -1,0 +1,84 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 1.0.0)'
+        required: true
+        type: string
+      draft:
+        description: 'Create a draft release'
+        required: false
+        type: boolean
+        default: false
+      prerelease:
+        description: 'Mark as prerelease'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Publish Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Install Inno Setup 6
+        run: choco install innosetup --no-progress
+
+      - name: Build Solution (Release)
+        run: dotnet build DawnPlayer.slnx -c Release
+
+      - name: Run Unit Tests (Pre-Release Validation)
+        run: dotnet test tests/DawnPlayer.Tests/DawnPlayer.Tests.csproj -c Release --no-build --verbosity normal
+
+      - name: Determine Release Version
+        id: get_version
+        shell: pwsh
+        run: |
+          $ver = "${{ github.event.inputs.version }}"
+          if ([string]::IsNullOrWhiteSpace($ver)) {
+              $tag = "${{ github.ref_name }}"
+              $ver = $tag -replace '^v', ''
+          }
+          Write-Host "Resolved Version: $ver"
+          "version=$ver" >> $env:GITHUB_OUTPUT
+
+      - name: Build Installer & Portable Packages
+        shell: pwsh
+        run: |
+          pwsh -File tools/build-installer.ps1 -Version "${{ steps.get_version.outputs.version }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Dawn Player v${{ steps.get_version.outputs.version }}"
+          tag_name: v${{ steps.get_version.outputs.version }}
+          draft: ${{ github.event.inputs.draft || false }}
+          prerelease: ${{ github.event.inputs.prerelease || false }}
+          generate_release_notes: true
+          files: |
+            dist/installer/DawnPlayer-Setup-v${{ steps.get_version.outputs.version }}-x64.exe
+            dist/DawnPlayer-v${{ steps.get_version.outputs.version }}-portable-win-x64.zip
+            dist/SHA256SUMS.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

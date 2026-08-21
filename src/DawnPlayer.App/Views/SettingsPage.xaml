@@ -1,0 +1,1298 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="DawnPlayer.App.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:DawnPlayer.App.Views"
+    xmlns:vm="using:DawnPlayer.App.ViewModels.Settings"
+    xmlns:coreAudio="using:DawnPlayer.Core.Audio"
+    xmlns:corePersist="using:DawnPlayer.Core.Persistence">
+
+    <Page.Resources>
+        <Style x:Key="SettingTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{ThemeResource TextPrimaryBrush}"/>
+        </Style>
+        <Style x:Key="SettingDesc" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Foreground" Value="{ThemeResource TextTertiaryBrush}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <Style x:Key="CategoryHeader" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
+            <Setter Property="Foreground" Value="{ThemeResource TextPrimaryBrush}"/>
+        </Style>
+        <Style x:Key="SectionCard" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource PanelBrush}"/>
+            <Setter Property="BorderBrush" Value="{ThemeResource BorderSubtleBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="18,14"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+        <Style x:Key="RowGrid" TargetType="Grid">
+            <Setter Property="Padding" Value="0,8"/>
+            <Setter Property="ColumnSpacing" Value="24"/>
+        </Style>
+        <Style x:Key="CategoryListItem" TargetType="ListViewItem">
+            <Setter Property="MinHeight" Value="40"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="Margin" Value="0,2"/>
+        </Style>
+    </Page.Resources>
+
+    <Grid Background="Transparent">
+        <Grid.RowDefinitions>
+            <!-- 0. Top Navigation Bar -->
+            <RowDefinition Height="Auto"/>
+            <!-- 1. Split Category View -->
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 0. Top Header with Back Button -->
+        <Grid Grid.Row="0" Margin="24,12,24,10" Padding="0,0,0,10"
+              BorderBrush="{ThemeResource SeparatorSubtleBrush}" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <Button Style="{StaticResource TitleMenuButtonStyle}" Click="OnBackClick" ToolTipService.ToolTip="돌아가기"
+                        Width="32" Height="32" Padding="0">
+                    <FontIcon Glyph="&#xE72B;" FontSize="13"/>
+                </Button>
+                <TextBlock Text="환경설정 (Preferences)" FontSize="17" FontWeight="SemiBold"
+                           Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- 1. Two-Column Category Split View -->
+        <Grid Grid.Row="1" Margin="24,0,24,16">
+            <Grid.ColumnDefinitions>
+                <!-- Column 0: Category Sidebar -->
+                <ColumnDefinition Width="230"/>
+                <!-- Column 1: Vertical Divider -->
+                <ColumnDefinition Width="1"/>
+                <!-- Column 2: Content Pane -->
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ==================== LEFT CATEGORY SIDEBAR ==================== -->
+            <Grid Grid.Column="0" Margin="0,0,16,0">
+                <ListView x:Name="CategoryList" SelectionMode="Single"
+                          SelectedIndex="{x:Bind ViewModel.SelectedCategoryIndex, Mode=TwoWay}"
+                          ItemContainerStyle="{StaticResource CategoryListItem}"
+                          SelectionChanged="OnCategorySelectionChanged">
+                    <!-- 1. Audio Output -->
+                    <ListViewItem Tag="Audio">
+                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xE767;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                            <TextBlock Text="오디오 출력" FontSize="13" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </ListViewItem>
+
+                    <!-- 2. Equalizer -->
+                    <ListViewItem Tag="Equalizer">
+                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xE9E9;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                            <TextBlock Text="이퀄라이저 (EQ)" FontSize="13" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </ListViewItem>
+
+                    <!-- 3. Playback & Normalizer -->
+                    <ListViewItem Tag="Playback">
+                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xE93C;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                            <TextBlock Text="재생 &amp; 음량 정규화" FontSize="13" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </ListViewItem>
+
+                    <!-- 4. Music Library -->
+                    <ListViewItem Tag="Library">
+                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xE8F1;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                            <TextBlock Text="음악 라이브러리" FontSize="13" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </ListViewItem>
+
+                    <!-- 5. Lyrics & Typography -->
+                    <ListViewItem Tag="Lyrics">
+                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xEC4F;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                            <TextBlock Text="가사 (Lyrics)" FontSize="13" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </ListViewItem>
+
+                    <!-- 6. Appearance & Theme -->
+                    <ListViewItem Tag="Appearance">
+                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xE790;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                            <TextBlock Text="외관 &amp; 테마" FontSize="13" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </ListViewItem>
+
+                    <!-- 7. Layout & Sizing -->
+                    <ListViewItem Tag="Layout">
+                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xE740;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                            <TextBlock Text="레이아웃 &amp; 디스플레이" FontSize="13" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </ListViewItem>
+
+                    <!-- 8. Keyboard Shortcuts -->
+                    <ListViewItem Tag="Shortcuts">
+                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xE765;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                            <TextBlock Text="단축키 (Shortcuts)" FontSize="13" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </ListViewItem>
+
+                    <!-- 9. About -->
+                    <ListViewItem Tag="About">
+                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xE946;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                            <TextBlock Text="정보 (About)" FontSize="13" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </ListViewItem>
+                </ListView>
+            </Grid>
+
+            <!-- Vertical Separator -->
+            <Border Grid.Column="1" Background="{ThemeResource SeparatorSubtleBrush}" Width="1" HorizontalAlignment="Center"/>
+
+            <!-- ==================== RIGHT CONTENT PANE ==================== -->
+            <ScrollViewer x:Name="ContentScrollViewer" Grid.Column="2" Padding="24,0,12,0" VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="0">
+
+                    <!-- ==================== 1. AUDIO OUTPUT SECTION ==================== -->
+                    <StackPanel x:Name="Section_Audio" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsAudioCategorySelected), Mode=OneWay}" Spacing="0">
+                        <TextBlock Text="오디오 출력 (Audio Output)" Style="{StaticResource CategoryHeader}"/>
+
+                        <!-- Driver Type & Devices Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="10">
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="오디오 출력 드라이버" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="WASAPI(고음질 비트 퍼펙트), DirectSound, WaveOut 중 선택" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ComboBox Grid.Column="1" Width="200" HorizontalAlignment="Right"
+                                              SelectedIndex="{x:Bind ViewModel.Audio.DriverTypeIndex, Mode=TwoWay}">
+                                        <ComboBoxItem Content="WASAPI (권장)"/>
+                                        <ComboBoxItem Content="Windows Audio (DirectSound)"/>
+                                        <ComboBoxItem Content="WaveOut"/>
+                                    </ComboBox>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="출력 장치 (Device)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="{x:Bind ViewModel.Audio.DriverDescriptionText, Mode=OneWay}" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <ComboBox Width="220" DisplayMemberPath="Name"
+                                                  ItemsSource="{x:Bind ViewModel.Audio.Devices, Mode=OneWay}"
+                                                  SelectedItem="{x:Bind ViewModel.Audio.SelectedDevice, Mode=TwoWay}"/>
+                                        <Button Content="&#xE72C;" FontFamily="Segoe Fluent Icons" FontSize="13"
+                                                Click="OnRefreshDevices" ToolTipService.ToolTip="장치 목록 새로고침"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- WASAPI Exclusive Options Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="10">
+                                <Grid Style="{StaticResource RowGrid}"
+                                      Visibility="{x:Bind BooleanToVisibility(ViewModel.Audio.IsWasapiDriver), Mode=OneWay}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="WASAPI 배타 모드 (Exclusive)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="다른 프로그램 소리를 차단하고 비트 퍼펙트로 직접 출력합니다. 형식이 맞지 않으면 자동으로 공유 모드로 대체됩니다."
+                                                   Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
+                                                  OnContent="배타" OffContent="공유"
+                                                  IsOn="{x:Bind ViewModel.Audio.UseExclusiveMode, Mode=TwoWay}"/>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"
+                                        Visibility="{x:Bind BooleanToVisibility(ViewModel.Audio.IsWasapiDriver), Mode=OneWay}"/>
+
+                                <Grid Style="{StaticResource RowGrid}"
+                                      Visibility="{x:Bind BooleanToVisibility(ViewModel.Audio.IsWasapiDriver), Mode=OneWay}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="Windows 독점 제어 / 우선순위 설정" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="{x:Bind ViewModel.Audio.WindowsExclusiveStatusText, Mode=OneWay}"
+                                                   Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <Button Content="Windows 소리 제어판 열기" Grid.Column="1" HorizontalAlignment="Right"
+                                            Click="OnOpenSoundControlPanel"/>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"
+                                        Visibility="{x:Bind BooleanToVisibility(ViewModel.Audio.IsWasapiDriver), Mode=OneWay}"/>
+
+                                <Grid Style="{StaticResource RowGrid}"
+                                      Visibility="{x:Bind BooleanToVisibility(ViewModel.Audio.IsWasapiDriver), Mode=OneWay}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="배타 모드 비트 깊이" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="원본: 파일의 비트 심도 그대로 (16/24/32 비트)" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ComboBox Grid.Column="1" Width="180" HorizontalAlignment="Right"
+                                              SelectedIndex="{x:Bind ViewModel.Audio.ExclusiveBitDepthIndex, Mode=TwoWay}">
+                                        <ComboBoxItem Content="원본 따르기"/>
+                                        <ComboBoxItem Content="16비트"/>
+                                        <ComboBoxItem Content="24비트"/>
+                                        <ComboBoxItem Content="32비트"/>
+                                    </ComboBox>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"
+                                        Visibility="{x:Bind BooleanToVisibility(ViewModel.Audio.IsWasapiDriver), Mode=OneWay}"/>
+
+                                <Grid Style="{StaticResource RowGrid}"
+                                      Visibility="{x:Bind BooleanToVisibility(ViewModel.Audio.IsWasapiDriver), Mode=OneWay}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="배타 모드에서 볼륨/리플레이게인 허용" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="끄면 비트 퍼펙트가 유지됩니다 (볼륨 100% 고정)." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
+                                                  IsOn="{x:Bind ViewModel.Audio.AllowVolumeInExclusive, Mode=TwoWay}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Latency Buffer Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <Grid Style="{StaticResource RowGrid}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="320"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                    <TextBlock Text="출력 버퍼 크기 (Latency)" Style="{StaticResource SettingTitle}"/>
+                                    <TextBlock Text="낮으면 지연이 줄고, 높으면 오디오 버벅임 방지 및 안정성이 향상됩니다." Style="{StaticResource SettingDesc}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <Slider Width="200" Minimum="30" Maximum="500" StepFrequency="10"
+                                            Value="{x:Bind ViewModel.Audio.LatencyMs, Mode=TwoWay}"/>
+                                    <TextBlock Text="{x:Bind ViewModel.Audio.LatencyText, Mode=OneWay}" FontSize="12" Width="48"
+                                               VerticalAlignment="Center" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- ==================== 2. EQUALIZER SECTION ==================== -->
+                    <StackPanel x:Name="Section_Equalizer" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsEqualizerCategorySelected), Mode=OneWay}" Spacing="0">
+                        <TextBlock Text="파라메트릭 이퀄라이저 (Parametric Equalizer)" Style="{StaticResource CategoryHeader}"/>
+
+                        <!-- 1. Master Equalizer Toggle Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <Grid Style="{StaticResource RowGrid}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                    <TextBlock Text="이퀄라이저 활성화 (Master Enable)" Style="{StaticResource SettingTitle}"/>
+                                    <TextBlock Text="이퀄라이저 기능을 전역으로 켜거나 끕니다. 끄면 모든 장치에서 신호 가공 없이 비트 퍼펙트 바이패스로 재생됩니다." Style="{StaticResource SettingDesc}"/>
+                                </StackPanel>
+                                <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
+                                              IsOn="{x:Bind ViewModel.Equalizer.IsMasterEnabled, Mode=TwoWay}" OnContent="켬" OffContent="끔"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- 2. Profile Manager & Controls Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="10">
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="편집할 프로필 선택" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="프로필 파라미터를 실시간 편집하고 새 프로필을 생성하거나 관리합니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <ComboBox Width="180" DisplayMemberPath="Name"
+                                                  ItemsSource="{x:Bind ViewModel.Equalizer.Profiles, Mode=OneWay}"
+                                                  SelectedItem="{x:Bind ViewModel.Equalizer.SelectedProfile, Mode=TwoWay}"/>
+                                        <Button Content="새 프로필" Click="OnEqNewProfileClick" ToolTipService.ToolTip="새 EQ 프로필 추가"/>
+                                        <Button Content="복제" Click="OnEqDuplicateProfileClick" ToolTipService.ToolTip="현재 프로필 복제"/>
+                                        <Button Content="이름 변경" Click="OnEqRenameProfileClick" ToolTipService.ToolTip="프로필 이름 변경"/>
+                                        <Button Content="삭제" Click="OnEqDeleteProfileClick"
+                                                IsEnabled="{x:Bind ViewModel.Equalizer.CanDeleteProfile, Mode=OneWay}" ToolTipService.ToolTip="현재 프로필 삭제"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="380"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="프리앰프 (Preamp)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="EQ 부스트 시 디지털 클리핑을 방지하기 위해 전체 레벨을 조절합니다 (-12.0 ~ +12.0 dB)." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <Grid Grid.Column="1" VerticalAlignment="Center" ColumnSpacing="6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="48"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="48"/>
+                                            <ColumnDefinition Width="80"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="-12 dB" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        <Slider Grid.Column="1" Minimum="-12" Maximum="12" StepFrequency="0.1"
+                                                Value="{x:Bind ViewModel.Equalizer.PreampDb, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="2" Text="+12 dB" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                        <NumberBox Grid.Column="3" Minimum="-12" Maximum="12" SmallChange="0.5"
+                                                   SpinButtonPlacementMode="Hidden" Value="{x:Bind ViewModel.Equalizer.PreampDb, Mode=TwoWay}"
+                                                   FontSize="12" HorizontalContentAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 3. Frequency Response Visualizer Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="10">
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="주파수 응답 곡선 (Frequency Response)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="현재 편집 중인 프로필의 합성 주파수 전달 특성 (20Hz ~ 20kHz, ±18dB)" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.Equalizer.ProfileName, Mode=OneWay}" FontSize="12"
+                                               FontWeight="SemiBold" Foreground="{ThemeResource DawnAccentBrush}" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <!-- Graph Canvas -->
+                                <Border x:Name="EqVisualizerBorder" Background="#141414" BorderBrush="{ThemeResource BorderSubtleBrush}" BorderThickness="1"
+                                        CornerRadius="6" Height="190" Padding="0" Margin="0,4,0,0"
+                                        SizeChanged="OnEqVisualizerContainerSizeChanged">
+                                    <Canvas x:Name="EqVisualizerCanvas" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 4. Filter Bands Card (Declarative XAML DataTemplate) -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="12">
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                            <TextBlock Text="파라메트릭 필터 밴드" Style="{StaticResource SettingTitle}"/>
+                                            <TextBlock Text="{x:Bind ViewModel.Equalizer.BandCountText, Mode=OneWay}" FontSize="12"
+                                                       Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <TextBlock Text="최대 20개의 필터 밴드를 추가하여 주파수(20Hz~20kHz), 게인(±15dB), Q(0.1~8.0)를 정밀하게 조정합니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="+ 밴드 추가"
+                                            IsEnabled="{x:Bind ViewModel.Equalizer.CanAddBand, Mode=OneWay}"
+                                            Click="OnEqAddBandClick" Style="{StaticResource AccentButtonStyle}"/>
+                                </Grid>
+
+                                <TextBlock Text="설정된 필터 밴드가 없습니다. '+ 밴드 추가' 버튼을 눌러 새 밴드를 구성하세요."
+                                           FontSize="12" Foreground="{ThemeResource TextTertiaryBrush}" Margin="0,4,0,4"
+                                           Visibility="{x:Bind BooleanToVisibility(ViewModel.Equalizer.HasEmptyBands), Mode=OneWay}"/>
+
+                                <!-- Declarative EQ Bands ItemsControl -->
+                                <ItemsControl x:Name="EqBandsItemsControl" ItemsSource="{x:Bind ViewModel.Equalizer.Bands, Mode=OneWay}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:EqBandViewModel">
+                                            <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                                    BorderBrush="{ThemeResource BorderSubtleBrush}"
+                                                    BorderThickness="1" CornerRadius="6"
+                                                    Padding="14,10,14,12" Margin="0,0,0,8">
+                                                <StackPanel Spacing="8">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Border Grid.Column="0" BorderThickness="1" CornerRadius="4" Padding="8,3"
+                                                                BorderBrush="{ThemeResource DawnAccentBrush}"
+                                                                HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                            <TextBlock Text="{x:Bind DisplayNumber, Mode=OneWay}" FontSize="12" FontWeight="Bold"
+                                                                       Foreground="{ThemeResource DawnAccentBrush}"/>
+                                                        </Border>
+                                                        <ComboBox Grid.Column="1" Width="120" Margin="0,0,8,0" VerticalAlignment="Center"
+                                                                  SelectedIndex="{x:Bind TypeIndex, Mode=TwoWay}">
+                                                            <ComboBoxItem Content="피크"/>
+                                                            <ComboBoxItem Content="저음 쉘프"/>
+                                                            <ComboBoxItem Content="고음 쉘프"/>
+                                                            <ComboBoxItem Content="로우 패스"/>
+                                                            <ComboBoxItem Content="하이 패스"/>
+                                                        </ComboBox>
+                                                        <Button Grid.Column="2" Padding="6,4" VerticalAlignment="Center"
+                                                                Click="OnDeleteBandClick" ToolTipService.ToolTip="밴드 삭제">
+                                                            <FontIcon Glyph="&#xE74D;" FontSize="12"/>
+                                                        </Button>
+                                                    </Grid>
+
+                                                    <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                                    <Grid RowSpacing="8" ColumnSpacing="8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="56"/>
+                                                            <ColumnDefinition Width="48"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="48"/>
+                                                            <ColumnDefinition Width="86"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+
+                                                        <!-- Row 0: Frequency -->
+                                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="주파수" FontSize="12" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="20 Hz" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                                        <Slider Grid.Row="0" Grid.Column="2" Minimum="20" Maximum="20000" StepFrequency="1"
+                                                                Value="{x:Bind FrequencyHz, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Row="0" Grid.Column="3" Text="20 kHz" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                                                                   HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                                        <NumberBox Grid.Row="0" Grid.Column="4" Minimum="20" Maximum="20000" SmallChange="10"
+                                                                   SpinButtonPlacementMode="Hidden" Value="{x:Bind FrequencyHz, Mode=TwoWay}"
+                                                                   FontSize="12" HorizontalContentAlignment="Right" VerticalAlignment="Center"/>
+
+                                                        <!-- Row 1: Gain -->
+                                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="게인" FontSize="12" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="-15 dB" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                                        <Slider Grid.Row="1" Grid.Column="2" Minimum="-15" Maximum="15" StepFrequency="0.1"
+                                                                Value="{x:Bind GainDb, Mode=TwoWay}" IsEnabled="{x:Bind IsGainEnabled, Mode=OneWay}"
+                                                                VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Row="1" Grid.Column="3" Text="+15 dB" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                                                                   HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                                        <NumberBox Grid.Row="1" Grid.Column="4" Minimum="-15" Maximum="15" SmallChange="0.5"
+                                                                   SpinButtonPlacementMode="Hidden" Value="{x:Bind GainDb, Mode=TwoWay}"
+                                                                   IsEnabled="{x:Bind IsGainEnabled, Mode=OneWay}"
+                                                                   FontSize="12" HorizontalContentAlignment="Right" VerticalAlignment="Center"/>
+
+                                                        <!-- Row 2: Q Factor -->
+                                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Q 팩터" FontSize="12" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="0.10" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                                        <Slider Grid.Row="2" Grid.Column="2" Minimum="0.1" Maximum="8.0" StepFrequency="0.05"
+                                                                Value="{x:Bind Q, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Row="2" Grid.Column="3" Text="8.00" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                                                                   HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                                        <NumberBox Grid.Row="2" Grid.Column="4" Minimum="0.1" Maximum="8.0" SmallChange="0.1"
+                                                                   SpinButtonPlacementMode="Hidden" Value="{x:Bind Q, Mode=TwoWay}"
+                                                                   FontSize="12" HorizontalContentAlignment="Right" VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 5. Device & Profile Binding Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="10">
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="대상 오디오 출력 장치" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="장치별로 원하는 EQ 프로필을 연결하거나 공통 기본 프로필을 따르도록 설정합니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <ComboBox Width="220" DisplayMemberPath="Name"
+                                                  ItemsSource="{x:Bind ViewModel.Equalizer.Devices, Mode=OneWay}"
+                                                  SelectedItem="{x:Bind ViewModel.Equalizer.SelectedDevice, Mode=TwoWay}"/>
+                                        <Button Content="&#xE72C;" FontFamily="Segoe Fluent Icons" FontSize="13"
+                                                Click="OnRefreshEqDevices" ToolTipService.ToolTip="장치 목록 새로고침"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="이 장치에 연결된 프로필" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="{x:Bind ViewModel.Equalizer.BindingDescriptionText, Mode=OneWay}" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ComboBox Grid.Column="1" Width="260" HorizontalAlignment="Right"
+                                              DisplayMemberPath="Name"
+                                              ItemsSource="{x:Bind ViewModel.Equalizer.BindingOptions, Mode=OneWay}"
+                                              SelectedItem="{x:Bind ViewModel.Equalizer.SelectedBindingOption, Mode=TwoWay}"/>
+                                </Grid>
+
+                                <!-- Exclusive Mode Warning Notice -->
+                                <Border Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
+                                        BorderBrush="{ThemeResource SystemFillColorCautionBrush}" BorderThickness="1"
+                                        CornerRadius="6" Padding="12,10" Margin="0,4,0,0"
+                                        Visibility="{x:Bind BooleanToVisibility(ViewModel.Equalizer.IsExclusiveWarningVisible), Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                        <FontIcon Glyph="&#xE7BA;" FontSize="15" Foreground="{ThemeResource SystemFillColorCautionBrush}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="WASAPI 배타 모드에서 이퀄라이저가 적용 중입니다 (오디오 신호 가공으로 인해 비트 퍼펙트 출력이 아닙니다)."
+                                                   FontSize="12" Foreground="{ThemeResource TextPrimaryBrush}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- ==================== 3. PLAYBACK & NORMALIZER SECTION ==================== -->
+                    <StackPanel x:Name="Section_Playback" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsPlaybackCategorySelected), Mode=OneWay}" Spacing="0">
+                        <TextBlock Text="재생 &amp; 음량 정규화 (Playback &amp; Normalizer)" Style="{StaticResource CategoryHeader}"/>
+
+                        <!-- 1. Hybrid Dynamic Normalizer Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="10">
+                                <!-- Master Toggle -->
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="음량 자동 정규화 (Volume Normalizer / AGC)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="곡마다 제각각인 녹음/마스터링 음량을 일정한 목표 레벨로 실시간 자동 평준화합니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
+                                                  IsOn="{x:Bind ViewModel.Playback.NormalizerEnabled, Mode=TwoWay}" OnContent="켬" OffContent="끔"/>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <!-- Normalizer Mode -->
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="정규화 동작 모드" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="하이브리드(태그 우선 + 미태그 실시간 조절), 실시간(항상 실시간 조절), ReplayGain(태그만 적용)" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ComboBox Grid.Column="1" Width="150" HorizontalAlignment="Right"
+                                              SelectedIndex="{x:Bind ViewModel.Playback.NormalizerModeIndex, Mode=TwoWay}">
+                                        <ComboBoxItem Content="하이브리드"/>
+                                        <ComboBoxItem Content="실시간"/>
+                                        <ComboBoxItem Content="ReplayGain"/>
+                                    </ComboBox>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <!-- Target Level -->
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="목표 음량 레벨 (Target Level)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="정규화 기준 목표 출력 크기 (-24.0 ~ -6.0 dBFS, 기본값 -12.0 dBFS)" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <Grid Grid.Column="1" HorizontalAlignment="Right" Width="300" ColumnSpacing="6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="48"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="48"/>
+                                            <ColumnDefinition Width="80"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="-24 dB" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        <Slider Grid.Column="1" Minimum="-24" Maximum="-6" StepFrequency="0.5"
+                                                Value="{x:Bind ViewModel.Playback.NormalizerTargetDb, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="2" Text="-6 dB" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                        <NumberBox Grid.Column="3" Minimum="-24" Maximum="-6" SmallChange="0.5"
+                                                   SpinButtonPlacementMode="Hidden" Value="{x:Bind ViewModel.Playback.NormalizerTargetDb, Mode=TwoWay}"
+                                                   FontSize="12" HorizontalContentAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <!-- Max Boost Limit -->
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="최대 증폭 한계 (Max Boost Limit)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="조용한 곡이나 인트로/아웃트로 구간에서 과도한 노이즈 증폭을 방지합니다 (0.0 ~ +18.0 dB)" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <Grid Grid.Column="1" HorizontalAlignment="Right" Width="300" ColumnSpacing="6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="48"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="48"/>
+                                            <ColumnDefinition Width="80"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="0 dB" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        <Slider Grid.Column="1" Minimum="0" Maximum="18" StepFrequency="0.5"
+                                                Value="{x:Bind ViewModel.Playback.NormalizerMaxBoostDb, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="2" Text="+18 dB" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                        <NumberBox Grid.Column="3" Minimum="0" Maximum="18" SmallChange="0.5"
+                                                   SpinButtonPlacementMode="Hidden" Value="{x:Bind ViewModel.Playback.NormalizerMaxBoostDb, Mode=TwoWay}"
+                                                   FontSize="12" HorizontalContentAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <!-- Response Speed -->
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="반응 속도 (Response Speed)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="음량 변화에 대한 게인 조절 완화 속도 (빠름 200ms, 표준 600ms, 부드러움 1500ms)" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ComboBox Grid.Column="1" Width="130" HorizontalAlignment="Right"
+                                              SelectedIndex="{x:Bind ViewModel.Playback.NormalizerSpeedIndex, Mode=TwoWay}">
+                                        <ComboBoxItem Content="빠름"/>
+                                        <ComboBoxItem Content="표준"/>
+                                        <ComboBoxItem Content="부드러움"/>
+                                    </ComboBox>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 2. ReplayGain Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="10">
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="ReplayGain 모드" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="음원 태그에 기록된 트랙 또는 앨범 게인을 기준으로 음량을 맞춥니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ComboBox Grid.Column="1" Width="130" HorizontalAlignment="Right"
+                                              SelectedIndex="{x:Bind ViewModel.Playback.ReplayGainModeIndex, Mode=TwoWay}">
+                                        <ComboBoxItem Content="끔"/>
+                                        <ComboBoxItem Content="트랙"/>
+                                        <ComboBoxItem Content="앨범"/>
+                                    </ComboBox>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="ReplayGain 사전 증폭 (Preamp)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="-12.0 ~ +12.0 dB 범위로 기준 음량을 미세 조절합니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <Grid Grid.Column="1" HorizontalAlignment="Right" Width="300" ColumnSpacing="6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="48"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="48"/>
+                                            <ColumnDefinition Width="80"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="-12 dB" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        <Slider Grid.Column="1" Minimum="-12" Maximum="12" StepFrequency="0.5"
+                                                Value="{x:Bind ViewModel.Playback.ReplayGainPreampDb, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="2" Text="+12 dB" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                        <NumberBox Grid.Column="3" Minimum="-12" Maximum="12" SmallChange="0.5"
+                                                   SpinButtonPlacementMode="Hidden" Value="{x:Bind ViewModel.Playback.ReplayGainPreampDb, Mode=TwoWay}"
+                                                   FontSize="12" HorizontalContentAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="클리핑 방지 (Prevent Clipping)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="증폭 시 피크 값을 넘는 왜곡을 방지하기 위해 자동으로 게인을 감쇄합니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
+                                                  IsOn="{x:Bind ViewModel.Playback.ReplayGainPreventClipping, Mode=TwoWay}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- ==================== 4. MUSIC LIBRARY SECTION ==================== -->
+                    <StackPanel x:Name="Section_Library" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsLibraryCategorySelected), Mode=OneWay}" Spacing="0">
+                        <TextBlock Text="음악 라이브러리 (Music Library)" Style="{StaticResource CategoryHeader}"/>
+
+                        <!-- Monitored Folders Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="12">
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="감시 폴더 목록" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="라이브러리에 색인할 로컬 및 네트워크 음악 폴더를 지정합니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                        <Button Content="폴더 추가" FontSize="12" Click="OnAddFolder"/>
+                                        <Button Content="제거" FontSize="12" Click="OnRemoveFolder"/>
+                                        <Button Content="지금 스캔" FontSize="12" Click="OnScanNow"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <ListView x:Name="FolderList" MaxHeight="180" SelectionMode="Single" BorderThickness="1"
+                                          BorderBrush="{ThemeResource SeparatorBrush}" CornerRadius="6" Padding="6"
+                                          ItemsSource="{x:Bind ViewModel.Library.Folders, Mode=OneWay}"
+                                          SelectedItem="{x:Bind ViewModel.Library.SelectedFolder, Mode=TwoWay}">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate x:DataType="x:String">
+                                            <TextBlock Text="{x:Bind}" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="시작할 때 자동 스캔" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="Dawn Player를 실행할 때 감시 폴더의 신규/수정된 음원을 자동으로 색인합니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
+                                                  IsOn="{x:Bind ViewModel.Library.ScanOnStartup, Mode=TwoWay}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- ==================== 5. LYRICS & TYPOGRAPHY SECTION ==================== -->
+                    <StackPanel x:Name="Section_Lyrics" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsLyricsCategorySelected), Mode=OneWay}" Spacing="0">
+                        <TextBlock Text="가사 &amp; 타이포그래피 (Lyrics &amp; Typography)" Style="{StaticResource CategoryHeader}"/>
+
+                        <!-- Typography Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="10">
+                                <!-- Font Family -->
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="가사 글꼴 (Font Family)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="가사 패널 및 에디터에 적용할 폰트 패밀리" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="6" HorizontalAlignment="Right">
+                                        <ComboBox Width="240" SelectedIndex="{x:Bind ViewModel.Lyrics.FontFamilyIndex, Mode=TwoWay}">
+                                            <ComboBoxItem Content="Segoe UI Variable (Windows 11)"/>
+                                            <ComboBoxItem Content="Pretendard (프리텐다드)"/>
+                                            <ComboBoxItem Content="맑은 고딕 (Malgun Gothic)"/>
+                                            <ComboBoxItem Content="나눔고딕 (NanumGothic)"/>
+                                            <ComboBoxItem Content="사용자 직접 입력..."/>
+                                        </ComboBox>
+                                        <TextBox Width="240" PlaceholderText="글꼴 이름 (예: Pretendard, Arial)"
+                                                 Text="{x:Bind ViewModel.Lyrics.CustomFontFamily, Mode=TwoWay}"
+                                                 Visibility="{x:Bind BooleanToVisibility(ViewModel.Lyrics.IsCustomFontVisible), Mode=OneWay}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <!-- Font Sizes -->
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="기본 가사 글꼴 크기" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="일반 가사 라인의 기본 글꼴 크기 (10 ~ 24px)" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <Slider Width="180" Minimum="10" Maximum="24" StepFrequency="0.5"
+                                                Value="{x:Bind ViewModel.Lyrics.FontSize, Mode=TwoWay}"/>
+                                        <TextBlock Text="{x:Bind ViewModel.Lyrics.FontSizeLabel, Mode=OneWay}" FontSize="12" Width="48" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="재생 중 활성 가사 크기" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="현재 재생 중인 강조 가사 라인의 글꼴 크기 (12 ~ 32px)" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <Slider Width="180" Minimum="12" Maximum="32" StepFrequency="0.5"
+                                                Value="{x:Bind ViewModel.Lyrics.ActiveFontSize, Mode=TwoWay}"/>
+                                        <TextBlock Text="{x:Bind ViewModel.Lyrics.ActiveFontSizeLabel, Mode=OneWay}" FontSize="12" Width="48" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <!-- Spacing -->
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="가사 자간 (Character Spacing)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="글자 사이의 간격 (-50 좁게 ~ +200 넓게)" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <Slider Width="180" Minimum="-50" Maximum="200" StepFrequency="5"
+                                                Value="{x:Bind ViewModel.Lyrics.CharacterSpacing, Mode=TwoWay}"/>
+                                        <TextBlock Text="{x:Bind ViewModel.Lyrics.CharacterSpacingLabel, Mode=OneWay}" FontSize="12" Width="48" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="가사 행간 (Line Height)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="가사 줄 높이 및 세로 간격 (18 ~ 48px)" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <Slider Width="180" Minimum="18" Maximum="48" StepFrequency="1"
+                                                Value="{x:Bind ViewModel.Lyrics.LineHeight, Mode=TwoWay}"/>
+                                        <TextBlock Text="{x:Bind ViewModel.Lyrics.LineHeightLabel, Mode=OneWay}" FontSize="12" Width="48" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <!-- Alignment & Focus -->
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="가사 정렬 방식" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="가사 텍스트의 가로 배치 정렬" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ComboBox Grid.Column="1" Width="180" HorizontalAlignment="Right"
+                                              SelectedIndex="{x:Bind ViewModel.Lyrics.AlignmentIndex, Mode=TwoWay}">
+                                        <ComboBoxItem Content="가운데 정렬 (Center)"/>
+                                        <ComboBoxItem Content="왼쪽 정렬 (Left)"/>
+                                        <ComboBoxItem Content="오른쪽 정렬 (Right)"/>
+                                    </ComboBox>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="가사 포커스 연출 (Focus Dimming)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="현재 재생 중인 가사 줄을 강조하고 이전/다음 줄을 부드럽게 감광(40% 투명도)합니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
+                                                  IsOn="{x:Bind ViewModel.Lyrics.EnableFocusEffect, Mode=TwoWay}"/>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="음원 파일 내장 가사(Embedded Lyrics) 자동 읽기" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="외부 .lrc 파일이 없을 때 MP3(ID3v2), FLAC, M4A 태그에 저장된 가사를 자동으로 읽어옵니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
+                                                  IsOn="{x:Bind ViewModel.Lyrics.ReadEmbeddedLyrics, Mode=TwoWay}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Live Lyrics Preview Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="실시간 가사 미리보기 (Live Preview)" FontSize="12.5" FontWeight="SemiBold"
+                                           Foreground="{ThemeResource TextTertiaryBrush}"/>
+                                <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" CornerRadius="6" Padding="14,16"
+                                        BorderBrush="{ThemeResource BorderSubtleBrush}" BorderThickness="1">
+                                    <StackPanel x:Name="LyricsPreviewContainer" Spacing="0">
+                                        <TextBlock x:Name="PreviewLine1" Text="어두운 밤하늘을 수놓은 별빛처럼"
+                                                   Foreground="{ThemeResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                                        <TextBlock x:Name="PreviewLine2" Text="새벽을 깨우는 음악이 흐르고 있어요"
+                                                   Foreground="{ThemeResource DawnAccentBrush}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                        <TextBlock x:Name="PreviewLine3" Text="마음 깊은 곳까지 울려 퍼지는 선율"
+                                                   Foreground="{ThemeResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- LRC Pattern Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <Grid Style="{StaticResource RowGrid}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="340"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Spacing="6" VerticalAlignment="Top">
+                                    <TextBlock Text=".lrc 파일 검색 패턴" Style="{StaticResource SettingTitle}"/>
+                                    <TextBlock Text="로컬 가사(.lrc) 파일을 탐색할 때 사용할 파일명 패턴을 한 줄에 하나씩 지정합니다. 위에서부터 순서대로 탐색합니다."
+                                               Style="{StaticResource SettingDesc}"/>
+
+                                    <!-- Token Guide Card -->
+                                    <Border Background="{ThemeResource PanelSubtleBrush}" BorderBrush="{ThemeResource BorderSubtleBrush}"
+                                            BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,4,0,0">
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="치환 토큰: %filename%, %artist%, %title%, %album%" FontSize="11" FontWeight="SemiBold"
+                                                       Foreground="{ThemeResource TextSecondaryBrush}"/>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Top">
+                                    <TextBox x:Name="LrcPatternsBox" AcceptsReturn="True" Height="100" TextWrapping="Wrap"
+                                             FontSize="12" FontFamily="Consolas, Cascadia Code, monospace"
+                                             Text="{x:Bind ViewModel.Lyrics.LrcPatternsText, Mode=TwoWay}"
+                                             LostFocus="OnLrcPatternsLostFocus"/>
+                                    <Button HorizontalAlignment="Right" Click="OnResetLrcPatterns" ToolTipService.ToolTip="기본 검색 패턴으로 복원">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <FontIcon Glyph="&#xE777;" FontSize="11"/>
+                                            <TextBlock Text="기본값 복원" FontSize="12"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- ==================== 6. APPEARANCE & THEME SECTION ==================== -->
+                    <StackPanel x:Name="Section_Appearance" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsAppearanceCategorySelected), Mode=OneWay}" Spacing="0">
+                        <TextBlock Text="외관 &amp; 테마 (Theme &amp; Appearance)" Style="{StaticResource CategoryHeader}"/>
+
+                        <!-- Theme & Backdrop Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="10">
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="테마 모드" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="라이트 / 다크 / OLED Pure Black / 시스템 기본 설정" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ComboBox Grid.Column="1" Width="200" HorizontalAlignment="Right"
+                                              SelectedIndex="{x:Bind ViewModel.Appearance.ThemeIndex, Mode=TwoWay}">
+                                        <ComboBoxItem Content="시스템 따르기"/>
+                                        <ComboBoxItem Content="밝게 (Eole Warm Slate)"/>
+                                        <ComboBoxItem Content="어둡게 (Eole Slate)"/>
+                                        <ComboBoxItem Content="OLED 블랙 (Pure Black)"/>
+                                    </ComboBox>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="창 배경 소재 (Backdrop)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="Windows 11 Fluent 반투명 또는 Eole 앨범 아트 블러 벽지" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ComboBox Grid.Column="1" Width="200" HorizontalAlignment="Right"
+                                              SelectedIndex="{x:Bind ViewModel.Appearance.BackdropIndex, Mode=TwoWay}">
+                                        <ComboBoxItem Content="Mica (Windows 11 표준)"/>
+                                        <ComboBoxItem Content="Mica Alt"/>
+                                        <ComboBoxItem Content="Acrylic"/>
+                                        <ComboBoxItem Content="단색 (Solid)"/>
+                                        <ComboBoxItem Content="앨범 아트 블러 (Eole Wallpaper)"/>
+                                    </ComboBox>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Accent Color Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="10">
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="앨범 아트 동적 테마 (Dynamic Theme)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="재생 중인 음악의 앨범 커버 색상을 액센트 및 하이라이트에 자동 적용합니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
+                                                  IsOn="{x:Bind ViewModel.Appearance.AutoAlbumArtAccent, Mode=TwoWay}"/>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="액센트 컬러 프리셋" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="플레이어 주요 버튼, 인디케이터 및 강조 색상" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ComboBox Grid.Column="1" Width="200" HorizontalAlignment="Right"
+                                              SelectedIndex="{x:Bind ViewModel.Appearance.AccentIndex, Mode=TwoWay}">
+                                        <ComboBoxItem Content="Eole Amber (기본)"/>
+                                        <ComboBoxItem Content="Electric Gold"/>
+                                        <ComboBoxItem Content="Forest Emerald"/>
+                                        <ComboBoxItem Content="Cyan Sapphire"/>
+                                        <ComboBoxItem Content="Crimson Red"/>
+                                        <ComboBoxItem Content="Modern Slate"/>
+                                        <ComboBoxItem Content="Nord Frost"/>
+                                        <ComboBoxItem Content="Tokyo Night"/>
+                                        <ComboBoxItem Content="Catppuccin Mocha"/>
+                                        <ComboBoxItem Content="Rose Pine"/>
+                                        <ComboBoxItem Content="Sunset Violet"/>
+                                        <ComboBoxItem Content="사용자 지정 (Custom)..."/>
+                                    </ComboBox>
+                                </Grid>
+
+                                <Grid Style="{StaticResource RowGrid}"
+                                      Visibility="{x:Bind BooleanToVisibility(ViewModel.Appearance.IsCustomColorVisible), Mode=OneWay}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="사용자 지정 액센트 컬러" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="원하는 16진수 HEX 색상 코드(#RRGGBB)를 직접 지정합니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <Border x:Name="CustomColorPreview" Width="28" Height="28" CornerRadius="14"
+                                                BorderBrush="{ThemeResource BorderSubtleBrush}" BorderThickness="1"
+                                                Background="{ThemeResource DawnAccentBrush}"/>
+                                        <TextBox Width="100" Text="{x:Bind ViewModel.Appearance.CustomAccentHex, Mode=TwoWay}"/>
+                                        <Button Content="색상 선택" FontSize="12">
+                                            <Button.Flyout>
+                                                <Flyout>
+                                                    <ColorPicker IsAlphaEnabled="False"
+                                                                 ColorChanged="OnColorPickerColorChanged"/>
+                                                </Flyout>
+                                            </Button.Flyout>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- ==================== 7. LAYOUT & SIZING SECTION ==================== -->
+                    <StackPanel x:Name="Section_Layout" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsLayoutCategorySelected), Mode=OneWay}" Spacing="0">
+                        <TextBlock Text="레이아웃 &amp; 디스플레이 (Layout &amp; Sizing)" Style="{StaticResource CategoryHeader}"/>
+
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="10">
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="앨범 커버 기본 크기" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="라이브러리 커버 그리드의 기본 타일 크기" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <Slider Width="180" Minimum="80" Maximum="260" StepFrequency="4"
+                                                Value="{x:Bind ViewModel.Layout.AlbumCoverSize, Mode=TwoWay}"/>
+                                        <TextBlock Text="{x:Bind ViewModel.Layout.AlbumCoverSizeText, Mode=OneWay}" FontSize="12" Width="42" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="사이드바 레이아웃 초기화" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="좌/우측 사이드바 및 가사 패널 너비를 기본값으로 복원" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <Button Content="레이아웃 초기화" Grid.Column="1" HorizontalAlignment="Right" Click="OnResetLayoutClick"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- ==================== 8. KEYBOARD SHORTCUTS SECTION ==================== -->
+                    <StackPanel x:Name="Section_Shortcuts" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsShortcutsCategorySelected), Mode=OneWay}" Spacing="0">
+                        <TextBlock Text="단축키 (Keyboard Shortcuts)" Style="{StaticResource CategoryHeader}"/>
+
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="키 항목을 눌러 새 조합을 입력하세요. 텍스트 입력 중에는 재생 단축키가 동작하지 않습니다." Style="{StaticResource SettingDesc}"/>
+
+                                <ItemsControl ItemsSource="{x:Bind ViewModel.Shortcuts.Groups}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:ShortcutGroupViewModel">
+                                            <StackPanel Spacing="4" Margin="0,10,0,4">
+                                                <TextBlock Text="{x:Bind Name}" FontSize="12" FontWeight="SemiBold"
+                                                           Foreground="{ThemeResource TextSecondaryBrush}"/>
+                                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+                                                <ItemsControl ItemsSource="{x:Bind Items}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate x:DataType="vm:ShortcutBindingViewModel">
+                                                            <Grid Style="{StaticResource RowGrid}" ColumnSpacing="12">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="150"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Grid.Column="0" Text="{x:Bind DisplayName}"
+                                                                           Style="{StaticResource SettingTitle}" VerticalAlignment="Center"
+                                                                           TextTrimming="CharacterEllipsis"/>
+                                                                <Button Grid.Column="1" HorizontalAlignment="Stretch"
+                                                                        Content="{x:Bind ChordText, Mode=OneWay}"
+                                                                        Tag="{x:Bind}"
+                                                                        Click="OnShortcutRebindClick"
+                                                                        ToolTipService.ToolTip="눌러서 새 단축키 지정"/>
+                                                                <Button Grid.Column="2" Content="기본값"
+                                                                        Tag="{x:Bind}"
+                                                                        IsEnabled="{x:Bind CanReset, Mode=OneWay}"
+                                                                        Click="OnShortcutResetClick"/>
+                                                                <Button Grid.Column="3" Content="지우기"
+                                                                        Tag="{x:Bind}"
+                                                                        IsEnabled="{x:Bind CanClear, Mode=OneWay}"
+                                                                        Click="OnShortcutClearClick"/>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Button Content="모든 단축키 기본값으로 되돌리기" HorizontalAlignment="Right" Click="OnShortcutResetAllClick"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- ==================== 9. ABOUT SECTION ==================== -->
+                    <StackPanel x:Name="Section_About" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsAboutCategorySelected), Mode=OneWay}" Spacing="0">
+                        <TextBlock Text="정보 (About Dawn Player)" Style="{StaticResource CategoryHeader}"/>
+
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="14">
+                                <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+                                    <Border Width="48" Height="48" CornerRadius="10" Background="{ThemeResource DawnAccentBrush}">
+                                        <FontIcon Glyph="&#xE8D6;" FontSize="24" Foreground="Black" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Text="Dawn Player" FontSize="16" FontWeight="Bold" Foreground="{ThemeResource TextPrimaryBrush}"/>
+                                        <TextBlock x:Name="AboutVersionText" Text="버전 - (x64) · foobar2000 &amp; Eole 영감 네이티브 플레이어" FontSize="12" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="오디오 엔진: NAudio 2.3 · NAudio.Vorbis (NVorbis) · Windows Media Foundation (WASAPI Exclusive Bit-Perfect)"
+                                               FontSize="12" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                                    <TextBlock Text="태그 및 메타데이터: TagLib# (ID3v2, Vorbis Comment, MP4, APE)"
+                                               FontSize="12" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                                    <TextBlock Text="데이터베이스: Microsoft.Data.Sqlite (SQLite)"
+                                               FontSize="12" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Page>

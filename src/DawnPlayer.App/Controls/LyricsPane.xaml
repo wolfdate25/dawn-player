@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="DawnPlayer.App.Controls.LyricsPane"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:DawnPlayer.App.Controls"
+    Width="336">
+
+    <UserControl.Resources>
+        <local:IsCurrentToBrushConverter x:Key="CurrentBrush"/>
+        <local:IsCurrentToFontWeightConverter x:Key="CurrentFontWeight"/>
+    </UserControl.Resources>
+
+    <Grid Background="{ThemeResource PanelBrush}" BorderBrush="{ThemeResource SeparatorBrush}" BorderThickness="1,0,0,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header: Section Title & Quick Tools -->
+        <Grid Grid.Row="0" Margin="18,14,18,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Text="가사" FontSize="13.5" FontWeight="SemiBold" FontStyle="Italic"
+                       Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+
+            <!-- Quick Tools -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                <Button Style="{StaticResource TransportButton}" Width="26" Height="26" Click="OnFontSmallerClick" AutomationProperties.Name="글꼴 축소" ToolTipService.ToolTip="글꼴 축소">
+                    <TextBlock Text="A-" FontSize="10" FontWeight="SemiBold"/>
+                </Button>
+                <Button Style="{StaticResource TransportButton}" Width="26" Height="26" Click="OnFontBiggerClick" AutomationProperties.Name="글꼴 확대" ToolTipService.ToolTip="글꼴 확대">
+                    <TextBlock Text="A+" FontSize="11" FontWeight="Bold"/>
+                </Button>
+                <Button Style="{StaticResource TransportButton}" Width="28" Height="28" Click="OnOpenEditorClick" AutomationProperties.Name="가사 편집기 열기" ToolTipService.ToolTip="가사 편집기 열기 (초정밀 오프셋/싱크/텍스트)">
+                    <FontIcon Glyph="&#xE70F;" FontSize="12" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Hairline Divider -->
+        <Border Grid.Row="0" Height="1" VerticalAlignment="Bottom" Background="{ThemeResource BorderSubtleBrush}" Margin="16,0,16,0"/>
+
+        <!-- Lyrics List -->
+        <Grid Grid.Row="1">
+            <ListView x:Name="LinesList" SelectionMode="None" IsItemClickEnabled="True"
+                      ItemClick="OnLineClick" Padding="12,12,12,60">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="MinHeight" Value="28"/>
+                        <Setter Property="Padding" Value="6,2"/>
+                        <Setter Property="Margin" Value="0,1"/>
+                        <Setter Property="CornerRadius" Value="6"/>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="local:LrcLineVm">
+                        <TextBlock Text="{x:Bind Text}" TextWrapping="Wrap"
+                                   HorizontalAlignment="Stretch"
+                                   Foreground="{x:Bind IsCurrent, Converter={StaticResource CurrentBrush}, Mode=OneWay}"
+                                   FontWeight="{x:Bind IsCurrent, Converter={StaticResource CurrentFontWeight}, Mode=OneWay}"
+                                   Opacity="{x:Bind Opacity, Mode=OneWay}"
+                                   FontSize="{x:Bind FontSize, Mode=OneWay}"
+                                   FontFamily="{x:Bind FontFamily, Mode=OneWay}"
+                                   CharacterSpacing="{x:Bind CharacterSpacing, Mode=OneWay}"
+                                   LineHeight="{x:Bind LineHeight, Mode=OneWay}"
+                                   LineStackingStrategy="BlockLineHeight"
+                                   TextAlignment="{x:Bind TextAlignment, Mode=OneWay}"/>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+
+            <!-- Empty State -->
+            <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Spacing="10" Margin="24,0">
+                <FontIcon Glyph="&#xEC4F;" FontSize="28" Foreground="{ThemeResource TextTertiaryBrush}"/>
+                <TextBlock Text="가사 없음" FontSize="13.5" FontWeight="SemiBold" HorizontalAlignment="Center"
+                           Foreground="{ThemeResource TextSecondaryBrush}"/>
+                <TextBlock Text="음원 파일과 같은 폴더에 .lrc 파일을 두거나 [가사 편집]을 눌러 새 가사를 작성하세요."
+                           FontSize="11.5" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
+                           Foreground="{ThemeResource TextTertiaryBrush}"/>
+                <Button Content="새 가사 작성하기" FontSize="12" Click="OnOpenEditorClick" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

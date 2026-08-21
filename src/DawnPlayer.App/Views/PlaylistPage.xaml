@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="DawnPlayer.App.Views.PlaylistPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:DawnPlayer.App.Controls"
+    xmlns:core="using:DawnPlayer.Core.Models"
+    xmlns:local="using:DawnPlayer.App.Views"
+    xmlns:play="using:DawnPlayer.Core.Playlists"
+    xmlns:services="using:DawnPlayer.App.Services"
+    NavigationCacheMode="Enabled">
+
+    <Page.Resources>
+        <services:TimeSpanTextConverter x:Key="TimeSpanText"/>
+        <services:BoolToVisibilityConverter x:Key="PlayingVis"/>
+        <services:InverseBoolToVisibilityConverter x:Key="NotPlayingVis"/>
+        <services:QueueIndexToVisibilityConverter x:Key="QueueVis"/>
+        <services:QueueIndexToTextConverter x:Key="QueueText"/>
+        <services:TrackNoFormatterConverter x:Key="TrackNoText"/>
+        <services:IsPlayingToFontWeightConverter x:Key="PlayingFontWeight"/>
+        <CollectionViewSource x:Name="PlaylistCvs" IsSourceGrouped="True" ItemsPath="Items"/>
+    </Page.Resources>
+
+    <Grid x:Name="MainLayoutGrid" Background="{ThemeResource LayerBgBrush}">
+        <Grid.ColumnDefinitions>
+            <!-- Panel 1: Left Playlists Sidebar (Resizable) -->
+            <ColumnDefinition x:Name="ColLeft" Width="200" MinWidth="140" MaxWidth="400"/>
+            <!-- Panel 2: Center Main Playlist View (Fluid) -->
+            <ColumnDefinition x:Name="ColCenter" Width="*"/>
+            <!-- Panel 3: Right Lyrics Panel (Auto/Resizable) -->
+            <ColumnDefinition x:Name="ColLyrics" Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- [Panel 1] Left Playlists Sidebar -->
+        <Grid Grid.Column="0" Background="{ThemeResource PanelSubtleBrush}"
+              BorderBrush="{ThemeResource SeparatorSubtleBrush}" BorderThickness="0,0,1,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Playlists Header -->
+            <Grid Grid.Row="0" Margin="16,14,14,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Playlists..." FontSize="13.5" FontWeight="SemiBold" FontStyle="Italic"
+                           Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                <TextBlock x:Name="PlaylistsCountText" Grid.Column="1" Text="0" FontSize="11.5"
+                           Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>
+            </Grid>
+
+            <!-- Create Playlist Action Button -->
+            <Button Grid.Row="1" Click="OnCreatePlaylistClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                    Margin="10,0,10,8" Padding="10,6" Background="Transparent" BorderThickness="0" CornerRadius="4">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE710;" FontSize="12" Foreground="{ThemeResource DawnAccentBrush}"/>
+                    <TextBlock Text="Create Playlist" FontSize="12" Foreground="{ThemeResource TextPrimaryBrush}"/>
+                </StackPanel>
+            </Button>
+
+            <!-- Playlists ListView -->
+            <ListView x:Name="PlaylistsSidebarList" Grid.Row="2"
+                      SelectionMode="Single"
+                      SelectionChanged="OnSidebarSelectionChanged"
+                      RightTapped="OnSidebarListRightTapped"
+                      KeyDown="OnSidebarListKeyDown"
+                      ContextRequested="OnSidebarListContextRequested"
+                      Padding="6,2,6,16">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="Padding" Value="10,6"/>
+                        <Setter Property="MinHeight" Value="32"/>
+                        <Setter Property="CornerRadius" Value="4"/>
+                        <Setter Property="Margin" Value="0,1"/>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="play:Playlist">
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <FontIcon Grid.Column="0" Glyph="&#xE8B9;" FontSize="12" Foreground="{ThemeResource TextTertiaryBrush}"/>
+                            <TextBlock Grid.Column="1" Text="{x:Bind Name, Mode=OneWay}" FontSize="12.5"
+                                       Foreground="{ThemeResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="{x:Bind Items.Count, Mode=OneWay}" FontSize="11"
+                                       Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+                <ListView.ContextFlyout>
+                    <MenuFlyout Opening="OnSidebarContextMenuOpening">
+                        <MenuFlyoutItem Text="재생목록 가져오기 (M3U8)..." Click="OnImportPlaylistClick">
+                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8E5;"/></MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutSeparator/>
+                        <MenuFlyoutItem x:Name="SidebarRenameMenuItem" Text="이름 변경..." Click="OnRenameSidebarPlaylist">
+                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8AC;"/></MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem Text="다른 이름으로 저장 (M3U8)..." Click="OnExportSidebarPlaylist">
+                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE78C;"/></MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutSeparator/>
+                        <MenuFlyoutItem x:Name="SidebarClearMenuItem" Text="재생목록 비우기" Click="OnClearSidebarPlaylist">
+                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE75C;"/></MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutSeparator x:Name="SidebarDeleteSeparator"/>
+                        <MenuFlyoutItem x:Name="SidebarDeleteMenuItem" Text="재생목록 삭제" Click="OnDeleteSidebarPlaylist">
+                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74D;"/></MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                    </MenuFlyout>
+                </ListView.ContextFlyout>
+            </ListView>
+
+            <!-- Left Splitter Grip -->
+            <Border x:Name="LeftSplitter" Grid.RowSpan="3" HorizontalAlignment="Right" Width="8" Margin="0,0,-4,0"
+                    Background="Transparent" Canvas.ZIndex="20"
+                    PointerEntered="OnSplitterPointerEntered" PointerExited="OnSplitterPointerExited"
+                    PointerPressed="OnLeftSplitterPressed" PointerMoved="OnLeftSplitterMoved" PointerReleased="OnLeftSplitterReleased">
+                <Rectangle x:Name="LeftSplitterLine" Width="2" HorizontalAlignment="Center" Fill="Transparent"/>
+            </Border>
+        </Grid>
+
+        <!-- [Panel 2] Center Main Playlist View -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Top Header (Playlist Title & Summary Stats & Tools) -->
+            <Grid Grid.Row="0" Margin="22,14,22,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Playlist Name (Italic) -->
+                <TextBlock x:Name="PlaylistTitleText" Text="Mixed selection"
+                           FontSize="15" FontWeight="SemiBold" FontStyle="Italic"
+                           Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"/>
+
+                <!-- Right: Summary Stats & Tools Menu Button -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <TextBlock x:Name="PlaylistStatsText" Text="0 items"
+                               FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>
+                    <Button Style="{StaticResource TransportButton}" Width="28" Height="28" AutomationProperties.Name="재생목록 도구 및 정렬" ToolTipService.ToolTip="재생목록 도구 및 정렬">
+                        <FontIcon Glyph="&#xE712;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                        <Button.Flyout>
+                            <MenuFlyout Opening="OnHeaderToolsMenuOpening">
+                                <MenuFlyoutItem Text="파일 추가..." Click="OnAddFilesClick">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8E5;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Text="폴더 추가..." Click="OnAddFolderClick">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8B7;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Text="재생목록 파일 가져오기 (M3U8)..." Click="OnImportPlaylistClick">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8E5;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutSeparator/>
+                                <ToggleMenuFlyoutItem x:Name="GroupToggleMenuItem" Text="앨범별 그룹화 표시" IsChecked="True" Click="OnGroupToggle"/>
+                                <ToggleMenuFlyoutItem x:Name="StopAfterCurrentMenuItem" Text="현재 곡 재생 후 정지 (Stop After Current)" Click="OnStopAfterCurrentClick"/>
+                                <MenuFlyoutSubItem Text="정렬 (Sort)">
+                                    <MenuFlyoutItem Text="제목 순" Click="OnSortTitle"/>
+                                    <MenuFlyoutItem Text="아티스트 순" Click="OnSortArtist"/>
+                                    <MenuFlyoutItem Text="앨범 · 트랙 순서" Click="OnSortAlbum"/>
+                                    <MenuFlyoutItem Text="트랙 번호 순" Click="OnSortTrackNo"/>
+                                    <MenuFlyoutItem Text="파일 경로 순" Click="OnSortPath"/>
+                                    <MenuFlyoutSeparator/>
+                                    <MenuFlyoutItem Text="무작위 셔플 (Random)" Click="OnSortRandom"/>
+                                    <MenuFlyoutItem Text="역순으로 뒤집기 (Reverse)" Click="OnSortReverse"/>
+                                </MenuFlyoutSubItem>
+                                <MenuFlyoutSeparator/>
+                                <MenuFlyoutItem Text="중복 트랙 제거" Click="OnRemoveDuplicates">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE71C;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Text="존재하지 않는 파일 정리" Click="OnRemoveDeadItemsClick">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74D;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem x:Name="HeaderRenameMenuItem" Text="이름 변경..." Click="OnRenameActivePlaylist">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8AC;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Text="다른 이름으로 저장 (M3U8)..." Click="OnExportActivePlaylist">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE78C;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutSeparator x:Name="HeaderDeleteSeparator"/>
+                                <MenuFlyoutItem x:Name="HeaderDeleteMenuItem" Text="현재 재생목록 삭제" Click="OnDeleteActivePlaylist">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74D;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem x:Name="HeaderClearMenuItem" Text="재생목록 비우기" Click="OnClearPlaylist">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE75C;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- Hairline Divider -->
+            <Border Grid.Row="0" Height="1" VerticalAlignment="Bottom" Background="{ThemeResource BorderSubtleBrush}" Margin="20,0,20,0"/>
+
+            <!-- Main Track List -->
+            <Grid Grid.Row="1">
+                <ListView x:Name="PlaylistList"
+                          SelectionMode="Extended"
+                          DoubleTapped="OnItemDoubleTapped"
+                          KeyDown="OnListKeyDown"
+                          ContextRequested="OnListContextRequested"
+                          AllowDrop="False"
+                          CanReorderItems="False"
+                          Padding="20,8,20,24">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="Padding" Value="6,2"/>
+                            <Setter Property="MinHeight" Value="28"/>
+                            <Setter Property="CornerRadius" Value="3"/>
+                            <Setter Property="Margin" Value="0,1"/>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+
+                    <!-- Track Row Template (Eole Flat Style with Playing Highlight Box) -->
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="core:PlaylistItem">
+                            <Grid Margin="0,1" MinHeight="28">
+                                <!-- Normal Track Row (when not playing) -->
+                                <Grid Height="28" Padding="2,0" ColumnSpacing="8"
+                                      Visibility="{x:Bind IsPlaying, Converter={StaticResource NotPlayingVis}, Mode=OneWay}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="28"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="54"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Italic Track No -->
+                                    <TextBlock Grid.Column="0" Text="{x:Bind Track.TrackNo, Converter={StaticResource TrackNoText}}"
+                                               FontStyle="Italic" FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}"
+                                               VerticalAlignment="Center"/>
+
+                                    <!-- Title - Italic Artist -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                        <TextBlock Text="{x:Bind Track.Title}" FontSize="12.5"
+                                                   Foreground="{ThemeResource TextPrimaryBrush}"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text=" - " FontSize="12" Foreground="{ThemeResource TextTertiaryBrush}"/>
+                                        <TextBlock Text="{x:Bind Track.Artist}" FontSize="12" FontStyle="Italic"
+                                                   Foreground="{ThemeResource TextTertiaryBrush}"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <Border Visibility="{x:Bind QueueIndex, Converter={StaticResource QueueVis}, Mode=OneWay}"
+                                                Style="{StaticResource CodecBadge}" Margin="4,0,0,0">
+                                            <TextBlock Style="{StaticResource BadgeText}"
+                                                       Foreground="{ThemeResource DawnAccentBrush}"
+                                                       Text="{x:Bind QueueIndex, Converter={StaticResource QueueText}, Mode=OneWay}"/>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- Static Duration -->
+                                    <TextBlock Grid.Column="2" FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}"
+                                               HorizontalAlignment="Right" VerticalAlignment="Center"
+                                               Text="{x:Bind DurationDisplay, Mode=OneWay}"/>
+                                </Grid>
+
+                                <!-- Eole Active Playing Highlight Box (when playing) -->
+                                <Border Height="30" CornerRadius="3"
+                                        Background="{ThemeResource DawnAccentMutedBrush}" BorderBrush="{ThemeResource DawnAccentGlowBrush}" BorderThickness="1"
+                                        Visibility="{x:Bind IsPlaying, Converter={StaticResource PlayingVis}, Mode=OneWay}">
+                                    <Grid ColumnSpacing="8" Padding="0,0,8,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="28"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Left Amber Accent Line -->
+                                        <Border Grid.Column="0" Width="3" HorizontalAlignment="Left"
+                                                Background="{ThemeResource DawnAccentBrush}" VerticalAlignment="Stretch"/>
+
+                                        <!-- Speaker Icon -->
+                                        <FontIcon Grid.Column="0" Glyph="&#xE767;" FontSize="11.5"
+                                                  Foreground="{ThemeResource DawnAccentBrush}"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                                        <!-- Title - Italic Artist (Bold / White) -->
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                            <TextBlock Text="{x:Bind Track.Title}" FontSize="12.5" FontWeight="SemiBold"
+                                                       Foreground="{ThemeResource TextPrimaryBrush}"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text=" - " FontSize="12" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                                            <TextBlock Text="{x:Bind Track.Artist}" FontSize="12" FontStyle="Italic"
+                                                       Foreground="{ThemeResource TextSecondaryBrush}"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <Border Visibility="{x:Bind QueueIndex, Converter={StaticResource QueueVis}, Mode=OneWay}"
+                                                    Style="{StaticResource CodecBadge}" Margin="4,0,0,0">
+                                                <TextBlock Style="{StaticResource BadgeText}"
+                                                           Foreground="{ThemeResource DawnAccentBrush}"
+                                                           Text="{x:Bind QueueIndex, Converter={StaticResource QueueText}, Mode=OneWay}"/>
+                                            </Border>
+                                        </StackPanel>
+
+                                        <!-- Remaining Time (e.g. -3:40) -->
+                                        <TextBlock Grid.Column="2" FontSize="11.5" Foreground="{ThemeResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                   Text="{x:Bind DurationDisplay, Mode=OneWay}"/>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+
+                    <!-- Album Group Header Template (Eole Flat Seamless Style) -->
+                    <ListView.GroupStyle>
+                        <GroupStyle>
+                            <GroupStyle.HeaderTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,18,0,6" Padding="2,2" Background="Transparent" ColumnSpacing="14">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Album Art Thumbnail (52x52 flat rounded) -->
+                                        <Border Grid.Column="0" Width="52" Height="52" CornerRadius="4"
+                                                Background="{ThemeResource PanelBrush}"
+                                                BorderBrush="{ThemeResource BorderSubtleBrush}" BorderThickness="1">
+                                            <Grid>
+                                                <FontIcon Glyph="&#xE90B;" FontSize="20" Foreground="{ThemeResource TextTertiaryBrush}"/>
+                                                <Border CornerRadius="3">
+                                                    <Image Source="{Binding Art}" Stretch="UniformToFill"/>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Album Title & Artist -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                            <TextBlock Text="{Binding Album}" FontSize="13.5" FontWeight="SemiBold" FontStyle="Italic"
+                                                       Foreground="{ThemeResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="{Binding Artist}" FontSize="12"
+                                                       Foreground="{ThemeResource TextTertiaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+
+                                        <!-- Right: Album Total Duration & Release Year -->
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2" HorizontalAlignment="Right" Margin="0,0,4,0">
+                                            <TextBlock Text="{Binding DurationFormatted}" FontSize="11.5"
+                                                       Foreground="{ThemeResource TextTertiaryBrush}" HorizontalAlignment="Right"/>
+                                            <TextBlock Text="{Binding YearFormatted}" FontSize="11"
+                                                       Foreground="{ThemeResource TextTertiaryBrush}" HorizontalAlignment="Right"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </GroupStyle.HeaderTemplate>
+                        </GroupStyle>
+                    </ListView.GroupStyle>
+
+                    <ListView.ContextFlyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem Text="재생" Click="OnPlayItems">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE768;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Text="다음에 재생 (대기열 선두)" Click="OnQueueNextItems">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8FD;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Text="대기열에 추가" Click="OnQueueItems">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE710;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutItem Text="위로 이동 (Alt+↑)" Click="OnMoveUpClick">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE70E;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Text="아래로 이동 (Alt+↓)" Click="OnMoveDownClick">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE70D;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutItem Text="재생목록에서 제거 (Del)" Click="OnRemoveItems">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74D;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                        </MenuFlyout>
+                    </ListView.ContextFlyout>
+                </ListView>
+
+                <!-- Empty State Display -->
+                <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10"
+                            Visibility="Collapsed" Margin="24">
+                    <FontIcon Glyph="&#xE90B;" FontSize="36" Foreground="{ThemeResource TextTertiaryBrush}"/>
+                    <TextBlock Text="재생목록이 비어 있습니다" FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center"
+                               Foreground="{ThemeResource TextSecondaryBrush}"/>
+                    <TextBlock Text="음악 파일이나 폴더를 창으로 끌어다 놓거나 우측 상단 메뉴의 [파일 추가]·[폴더 추가]를 사용하세요.&#x0a;라이브러리에서 원하는 트랙을 선택해 추가할 수도 있습니다."
+                               FontSize="12" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
+                               Foreground="{ThemeResource TextTertiaryBrush}" MaxWidth="440"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <!-- [Panel 3] Lyrics Sidebar Panel (Right, Resizable) -->
+        <Grid x:Name="LyricsPanelContainer" Grid.Column="2" Visibility="Collapsed">
+            <controls:LyricsPane x:Name="PlaylistLyricsPane" Width="300"/>
+            <Border x:Name="LyricsSplitter" HorizontalAlignment="Left" Width="8" Margin="-4,0,0,0"
+                    Background="Transparent" Canvas.ZIndex="20"
+                    PointerEntered="OnSplitterPointerEntered" PointerExited="OnSplitterPointerExited"
+                    PointerPressed="OnLyricsSplitterPressed" PointerMoved="OnLyricsSplitterMoved" PointerReleased="OnLyricsSplitterReleased">
+                <Rectangle x:Name="LyricsSplitterLine" Width="2" HorizontalAlignment="Center" Fill="Transparent"/>
+            </Border>
+        </Grid>
+    </Grid>
+</Page>

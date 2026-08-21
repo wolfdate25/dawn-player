@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build & Test
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore dependencies
+        run: dotnet restore DawnPlayer.slnx
+
+      - name: Build Solution (Debug)
+        run: dotnet build DawnPlayer.slnx -c Debug --no-restore
+
+      - name: Run Unit Tests (with coverage)
+        run: >
+          dotnet test tests/DawnPlayer.Tests/DawnPlayer.Tests.csproj -c Debug --no-build
+          --verbosity normal
+          --logger "trx;LogFileName=test_results.trx"
+          --collect:"XPlat Code Coverage"
+          --results-directory tests/DawnPlayer.Tests/TestResults
+
+      - name: Generate Coverage Summary
+        if: always()
+        shell: pwsh
+        run: |
+          dotnet tool install --global dotnet-reportgenerator-globaltool
+          reportgenerator -reports:"tests/DawnPlayer.Tests/TestResults/**/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:"MarkdownSummaryGithub;Html"
+          if (Test-Path coverage-report/SummaryGithub.md) {
+            Get-Content coverage-report/SummaryGithub.md >> $env:GITHUB_STEP_SUMMARY
+          }
+
+      - name: Upload Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage-report
+          if-no-files-found: ignore
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: tests/DawnPlayer.Tests/TestResults/**/*.trx
+          if-no-files-found: ignore
+
+      - name: Build Solution (Release)
+        run: dotnet build DawnPlayer.slnx -c Release --no-restore
+
+  package-dry-run:
+    name: Packaging Dry-Run
+    runs-on: windows-latest
+    timeout-minutes: 30
+    needs: test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Install Inno Setup 6
+        run: choco install innosetup --no-progress
+
+      - name: Run Build & Packaging Automation
+        run: pwsh -File tools/build-installer.ps1 -Version "0.0.0-ci"
+
+      - name: Upload Installer Dry-Run Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dawnplayer-ci-build
+          path: |
+            dist/installer/*.exe
+            dist/*.zip
+            dist/SHA256SUMS.txt
+          if-no-files-found: error

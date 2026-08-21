@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="DawnPlayer.App.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:DawnPlayer.App"
+    xmlns:controls="using:DawnPlayer.App.Controls"
+    xmlns:views="using:DawnPlayer.App.Views">
+
+    <Grid x:Name="RootGrid" AllowDrop="True" Background="Transparent"
+          DragOver="OnRootDragOver" Drop="OnRootDrop">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="42"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Eole Blurred Artwork Wallpaper Background Layer -->
+        <Grid Grid.RowSpan="3" IsHitTestVisible="False">
+            <Image x:Name="WallpaperImage" Stretch="UniformToFill" Opacity="0"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <Rectangle x:Name="WallpaperDimOverlay" Fill="#9918181D" Opacity="0"/>
+        </Grid>
+
+        <!-- 1. Eole Style Horizontal Top Bar & Navigation -->
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Height="40" Padding="12,0,140,0"
+              BorderBrush="{ThemeResource SeparatorSubtleBrush}" BorderThickness="0,0,0,1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Brand & Status Text -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Spacing="8" Margin="0,0,24,0">
+                <Button Style="{StaticResource TitleMenuButtonStyle}" AutomationProperties.Name="메뉴" ToolTipService.ToolTip="메뉴">
+                    <FontIcon Glyph="&#xE700;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem Text="라이브러리 새로고침" Click="OnMenuRescan">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE72C;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem x:Name="PreferencesMenuItem" Text="환경설정 (Preferences)" Click="OnMenuSettings">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE713;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutItem Text="종료" Click="OnMenuExit">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE711;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
+                <TextBlock Text="Dawn Player" FontSize="12.5" FontWeight="SemiBold"
+                           Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                <TextBlock Text="|" FontSize="11" Foreground="{ThemeResource SeparatorSubtleBrush}" VerticalAlignment="Center"/>
+                <TextBlock x:Name="TitleBarTrack" Text="No sound — Nothing played" FontSize="11.5"
+                           Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"
+                           MaxWidth="320" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+
+            <!-- Eole Horizontal Navigation Tabs (Library / Playlists) -->
+            <StackPanel x:Name="TopNavPanel" Grid.Column="1" Orientation="Horizontal" Spacing="2" VerticalAlignment="Stretch"
+                        DoubleTapped="OnTabDoubleTapped">
+                <RadioButton x:Name="TabLibrary" GroupName="TopNavGroup" IsChecked="True"
+                             AutomationProperties.AutomationId="TabLibrary"
+                             AutomationProperties.Name="Library"
+                             Style="{StaticResource EoleNavTabStyle}" Click="OnTabLibraryClick"
+                             DoubleTapped="OnTabDoubleTapped">
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <FontIcon Glyph="&#xE8B9;" FontSize="12"/>
+                        <TextBlock Text="Library" FontSize="12.5"/>
+                    </StackPanel>
+                </RadioButton>
+                <RadioButton x:Name="TabPlaylists" GroupName="TopNavGroup"
+                             AutomationProperties.AutomationId="TabPlaylists"
+                             AutomationProperties.Name="Playlists"
+                             Style="{StaticResource EoleNavTabStyle}" Click="OnTabPlaylistsClick"
+                             DoubleTapped="OnTabDoubleTapped">
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <FontIcon Glyph="&#xE90B;" FontSize="12"/>
+                        <TextBlock Text="Playlists" FontSize="12.5"/>
+                    </StackPanel>
+                </RadioButton>
+            </StackPanel>
+
+            <!-- 3. Dedicated Draggable Title Bar Area & Right Tools -->
+            <Grid Grid.Column="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid x:Name="AppTitleBarDragArea" Grid.Column="0" Background="Transparent"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,4,0">
+                    <Button x:Name="SettingsGearButton" Style="{StaticResource TitleMenuButtonStyle}" Click="OnMenuSettings">
+                        <FontIcon Glyph="&#xE713;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <!-- 2. Main Content Viewport (Full Width).
+             The lyrics pane lives inside LibraryPage and PlaylistPage, which own their own
+             splitter and width; a third window-level pane was never reachable and only cost a
+             duplicate lyrics load and polling timer per track change. -->
+        <Grid Grid.Row="1">
+            <views:LibraryPage x:Name="LibraryPageView" Visibility="Visible"/>
+            <views:PlaylistPage x:Name="PlaylistPageView" Visibility="Collapsed"/>
+            <Frame x:Name="ContentFrame" Visibility="Collapsed"/>
+        </Grid>
+
+        <!-- 3. Bottom Player Bar -->
+        <controls:NowPlayingBar x:Name="PlayerBar" Grid.Row="2"/>
+
+        <InfoBar x:Name="NotifyBar" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                 Margin="0,0,16,12" MaxWidth="460" IsOpen="False" Severity="Informational"/>
+    </Grid>
+</Window>

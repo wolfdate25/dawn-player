@@ -1,0 +1,30 @@
+* text=auto
+
+*.cs           text
+*.xaml         text
+*.csproj       text
+*.slnx         text
+*.props        text
+*.targets      text
+*.json         text
+*.yml          text
+*.yaml         text
+*.md           text
+*.ps1          text
+*.iss          text
+*.manifest     text
+*.editorconfig text
+*.gitignore    text
+*.gitattributes text
+
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.mp3  binary
+*.flac binary
+*.wav  binary
+*.m4a  binary
+*.ogg  binary
+*.db   binary

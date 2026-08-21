@@ -1,0 +1,19 @@
+<Project>
+
+  <!-- Shared build settings for every project in the repository.
+       LangVersion is pinned (not 'latest') so local SDK 10 and CI produce the same language surface. -->
+  <PropertyGroup>
+    <LangVersion>13.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+    <!-- Analyzers stay warnings-only until the rule set is triaged; do not flip
+         TreatWarningsAsErrors without curating the analyzer baseline first. -->
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+</Project>
