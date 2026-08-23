@@ -41,6 +41,12 @@ public sealed partial class MainWindow : Window
         // Alt+Tab and screen readers.
         Title = "Dawn Player";
 
+        var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "app.ico");
+        if (System.IO.File.Exists(iconPath))
+        {
+            AppWindow.SetIcon(iconPath);
+        }
+
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBarDragArea);
         SystemBackdrop = new Microsoft.UI.Xaml.Media.MicaBackdrop();
