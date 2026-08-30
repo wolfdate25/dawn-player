@@ -275,7 +275,7 @@ public class PlaylistSnapshotTests : IDisposable
         mockLib.AddTrack(t1);
         mockLib.AddTrack(t2);
 
-        IPlaylistManager manager = new PlaylistManager(mockLib);
+        PlaylistManager manager = new PlaylistManager(mockLib);
         var pl = manager.CreatePlaylist("Mock Playlist");
 
         Assert.NotNull(pl);
@@ -985,7 +985,7 @@ public class PlaylistSnapshotTests : IDisposable
                 {
                     exceptions.Add(ex);
                 }
-                Thread.Yield();
+                Thread.Sleep(1);
             }
         })).ToList();
 
@@ -1008,7 +1008,7 @@ public class PlaylistSnapshotTests : IDisposable
                 {
                     exceptions.Add(ex);
                 }
-                Thread.Yield();
+                Thread.Sleep(1);
             }
         })).ToList();
 
@@ -1028,7 +1028,7 @@ public class PlaylistSnapshotTests : IDisposable
                 {
                     exceptions.Add(ex);
                 }
-                Thread.Yield();
+                Thread.Sleep(1);
             }
         })).ToList();
 
@@ -1048,7 +1048,7 @@ public class PlaylistSnapshotTests : IDisposable
                 {
                     exceptions.Add(ex);
                 }
-                Thread.Yield();
+                Thread.Sleep(1);
             }
         })).ToList();
 
@@ -1076,7 +1076,7 @@ public class PlaylistSnapshotTests : IDisposable
                 {
                     exceptions.Add(ex);
                 }
-                Thread.Yield();
+                Thread.Sleep(1);
             }
         })).ToList();
 
@@ -1086,9 +1086,17 @@ public class PlaylistSnapshotTests : IDisposable
             .Concat(removersByName)
             .Concat(currentReaders));
 
-        var timeoutTask = Task.Delay(TimeSpan.FromSeconds(30));
-        var completed = await Task.WhenAny(allTasks, timeoutTask);
-        Assert.Same(allTasks, completed);
+        // Deadlock guard, not a perf bound: the workers stop at the 100ms cancellation and
+        // pace themselves with Sleep(1), so a healthy run finishes almost immediately. The
+        // bound must stay generous — a 2-core CI runner once starved this test's 30s-bound
+        // continuation for ~2h and failed the release build spuriously.
+        var completed = await Task.WhenAny(allTasks, Task.Delay(TimeSpan.FromMinutes(1)));
+        if (completed != allTasks)
+        {
+            cts.Cancel();
+            Assert.Fail("Worker tasks did not finish within 60s — possible PlaylistManager deadlock.");
+        }
+        await allTasks;
 
         Assert.Empty(exceptions);
         Assert.NotNull(manager.Current);

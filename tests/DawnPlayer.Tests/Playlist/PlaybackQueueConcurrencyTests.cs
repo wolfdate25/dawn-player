@@ -471,10 +471,12 @@ public class PlaybackQueueConcurrencyTests
             }
         })).ToArray();
 
+        // Deadlock guard, not a perf bound — keep it generous so a loaded CI scheduler
+        // cannot starve the continuation into a spurious failure.
         var allTasks = Task.WhenAll(tasks);
-        var timeoutTask = Task.Delay(TimeSpan.FromSeconds(2));
-        var completed = await Task.WhenAny(allTasks, timeoutTask);
-        Assert.Same(allTasks, completed);
+        var completed = await Task.WhenAny(allTasks, Task.Delay(TimeSpan.FromMinutes(1)));
+        Assert.True(completed == allTasks,
+            "Reentrant mutation tasks did not finish within 60s — event-handler deadlock?");
     }
 
     [Fact]
@@ -919,10 +921,12 @@ public class PlaybackQueueConcurrencyTests
             }
         })).ToArray();
 
+        // Deadlock guard, not a perf bound — keep it generous so a loaded CI scheduler
+        // cannot starve the continuation into a spurious failure.
         var allTasks = Task.WhenAll(tasks);
-        var timeoutTask = Task.Delay(TimeSpan.FromSeconds(2));
-        var completed = await Task.WhenAny(allTasks, timeoutTask);
-        Assert.Same(allTasks, completed);
+        var completed = await Task.WhenAny(allTasks, Task.Delay(TimeSpan.FromMinutes(1)));
+        Assert.True(completed == allTasks,
+            "Worker tasks did not finish within 60s — possible PlaybackQueue deadlock.");
         Assert.Empty(exceptions);
     }
 
