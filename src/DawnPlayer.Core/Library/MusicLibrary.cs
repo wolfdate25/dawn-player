@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Globalization;
 using DawnPlayer.Core.Models;
 using DawnPlayer.Core.Persistence;
 using DawnPlayer.Core.Util;
@@ -114,7 +115,7 @@ public sealed class MusicLibrary : IMusicLibrary
 
         cmd.CommandText = "PRAGMA user_version;";
         var stored = cmd.ExecuteScalar();
-        int version = stored is null or DBNull ? 0 : Convert.ToInt32(stored);
+        int version = stored is null or DBNull ? 0 : Convert.ToInt32(stored, CultureInfo.InvariantCulture);
 
         if (version < SchemaVersion)
         {

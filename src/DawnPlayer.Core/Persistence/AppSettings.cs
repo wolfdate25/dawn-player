@@ -23,6 +23,7 @@ public sealed class AppSettings
     public EqualizerSettings Equalizer { get; set; } = new();
     public LibrarySettings Library { get; set; } = new();
     public LyricsSettings Lyrics { get; set; } = new();
+    public LyricsOnlineSettings LyricsOnline { get; set; } = new();
     public UiSettings Ui { get; set; } = new();
     public ShortcutSettings Shortcuts { get; set; } = new();
 
@@ -39,7 +40,7 @@ public sealed class OutputSettings
     /// <summary>Requested buffer length in ms (higher = more resilient, higher latency).</summary>
     public int LatencyMs { get; set; } = 120;
     /// <summary>Allow digital volume/ReplayGain while in exclusive mode (breaks bit-perfect).</summary>
-    public bool AllowVolumeInExclusive { get; set; } = false;
+    public bool AllowVolumeInExclusive { get; set; }
 }
 
 public sealed class QueueSavedEntry
@@ -62,7 +63,7 @@ public sealed class PlaybackSettings
     public bool StopAfterCurrent { get; set; }
     public RepeatMode Repeat { get; set; } = RepeatMode.All;
     public ReplayGainMode ReplayGain { get; set; } = ReplayGainMode.Off;
-    public double ReplayGainPreampDb { get; set; } = 0; // -12..+12
+    public double ReplayGainPreampDb { get; set; } // -12..+12
     public bool ReplayGainPreventClipping { get; set; } = true;
     public string? ActivePlaylistName { get; set; }
     public string? LastPlayedTrackPath { get; set; }
@@ -92,7 +93,7 @@ public sealed class LyricsSettings
     public string FontFamily { get; set; } = "Segoe UI Variable, Malgun Gothic";
     public double FontSize { get; set; } = 13.5;          // 10.0 .. 24.0 px
     public double ActiveFontSize { get; set; } = 16.5;    // 12.0 .. 32.0 px
-    public int CharacterSpacing { get; set; } = 0;        // -50 .. 200 (1/1000 em)
+    public int CharacterSpacing { get; set; }        // -50 .. 200 (1/1000 em)
     public double LineHeight { get; set; } = 24.0;        // 16.0 .. 48.0 px
     public double LineSpacing { get; set; } = 4.0;        // 0.0 .. 20.0 px
     public string Alignment { get; set; } = "Center";     // Center, Left, Right
@@ -102,6 +103,44 @@ public sealed class LyricsSettings
 
     // Editor step preference
     public double DefaultOffsetStepMs { get; set; } = 0.5; // 0.5 ms default
+}
+
+/// <summary>Where an online-lyrics file is written: next to the track, or into a chosen folder.</summary>
+public enum LyricsSaveLocation { MusicFolder = 0, CustomFolder = 1 }
+
+/// <summary>
+/// Online lyrics plugins: master switches, per-plugin priority/enable state, and how fetched
+/// lyrics are persisted offline. Plugin ids in <see cref="PluginOrder"/> come from each
+/// plugin's <c>LyricsPluginAttribute.Id</c>; unknown ids (uninstalled plugins) are ignored at
+/// runtime and kept so reinstalling restores the user's ordering.
+/// </summary>
+public sealed class LyricsOnlineSettings
+{
+    public bool EnableOnline { get; set; } = true;
+    /// <summary>Look lyrics up online automatically when a track has no offline lyrics.</summary>
+    public bool AutoFetchOnPlay { get; set; } = true;
+    /// <summary>Prefer time-synced candidates over plain text when both are available.</summary>
+    public bool PreferSynced { get; set; } = true;
+
+    /// <summary>Plugin ids in priority order (first wins). Unlisted plugins run after listed ones.</summary>
+    public List<string> PluginOrder { get; set; } = new();
+    /// <summary>Plugin id → enabled. Absent means enabled (opt-out per plugin).</summary>
+    public Dictionary<string, bool> PluginEnabled { get; set; } = new();
+    /// <summary>Plugin id → user-provided settings (API keys etc.), surfaced via ILyricsPluginContext.</summary>
+    public Dictionary<string, Dictionary<string, string>> PluginOptions { get; set; } = new();
+
+    /// <summary>Save every automatically fetched lyrics file to disk as well.</summary>
+    public bool AutoSave { get; set; }
+    public LyricsSaveLocation SaveLocation { get; set; } = LyricsSaveLocation.MusicFolder;
+    /// <summary>Root for <see cref="LyricsSaveLocation.CustomFolder"/>; null/unset falls back to the music folder.</summary>
+    public string? CustomSaveFolder { get; set; }
+    /// <summary>
+    /// File name (and optional subfolders, e.g. "%album%\%title%.lrc") expanded from the track:
+    /// %filename% %title% %artist% %albumartist% %album% %year% %trackno%.
+    /// </summary>
+    public string SaveFileNameTemplate { get; set; } = "%filename%.lrc";
+    /// <summary>Allow saving over an existing .lrc file; otherwise existing files win.</summary>
+    public bool OverwriteExisting { get; set; }
 }
 
 /// <summary>
@@ -139,9 +178,9 @@ public sealed class UiSettings
     public double AlbumCoverSize { get; set; } = 144;
 
     // Library View & Tree State Persistence
-    public int LibraryTreeGroupMode { get; set; } = 0;
-    public int LibraryViewMode { get; set; } = 0; // 0 = Grid, 1 = List
-    public int LibrarySortColumn { get; set; } = 0;
+    public int LibraryTreeGroupMode { get; set; }
+    public int LibraryViewMode { get; set; } // 0 = Grid, 1 = List
+    public int LibrarySortColumn { get; set; }
     public bool LibrarySortAscending { get; set; } = true;
     public string? LibrarySelectedFilterType { get; set; }
     public string? LibrarySelectedFilterValue { get; set; }
@@ -154,7 +193,7 @@ public sealed class EqualizerSettings
     /// Global master enable toggle for the parametric equalizer.
     /// When disabled, all device equalizer DSP stages are bypassed (bit-perfect unity gain).
     /// </summary>
-    public bool Enabled { get; set; } = false;
+    public bool Enabled { get; set; }
 
     /// <summary>
     /// Collection of user-defined named EQ profiles keyed by profile ID.
@@ -215,7 +254,7 @@ public sealed class EqProfile
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public string Name { get; set; } = "새 프로필";
     public bool Enabled { get; set; } = true;
-    public double PreampDb { get; set; } = 0;          // -12..+12
+    public double PreampDb { get; set; }          // -12..+12
     public List<EqBandSettings> Bands { get; set; } = new();
 
     public EqProfile Clone() => new()
@@ -232,7 +271,7 @@ public sealed class EqBandSettings
 {
     public EqFilterType Type { get; set; } = EqFilterType.PeakEq;
     public double FrequencyHz { get; set; } = 1000;    // 20..20000
-    public double GainDb { get; set; } = 0;            // -15..+15
+    public double GainDb { get; set; }            // -15..+15
     public double Q { get; set; } = 1.0;               // 0.1..8
 
     public EqBandSettings Clone() => new()
@@ -246,7 +285,7 @@ public sealed class EqBandSettings
 
 public sealed class NormalizerSettings
 {
-    public bool Enabled { get; set; } = false;
+    public bool Enabled { get; set; }
     public NormalizerMode Mode { get; set; } = NormalizerMode.Hybrid;
     public double TargetLevelDb { get; set; } = -12.0; // -24.0 .. -6.0 dBFS
     public double MaxBoostDb { get; set; } = 12.0;     // 0.0 .. 18.0 dB

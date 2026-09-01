@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -116,9 +117,9 @@ public sealed class PlaylistItem : INotifyPropertyChanged
             var dur = Track.Duration;
             if (dur.TotalHours >= 1)
             {
-                return ((int)dur.TotalHours) + dur.ToString(@"\:mm\:ss");
+                return ((int)dur.TotalHours) + dur.ToString(@"\:mm\:ss", CultureInfo.InvariantCulture);
             }
-            return dur.ToString(@"m\:ss");
+            return dur.ToString(@"m\:ss", CultureInfo.InvariantCulture);
         }
     }
 

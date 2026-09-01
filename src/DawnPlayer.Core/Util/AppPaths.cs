@@ -71,6 +71,8 @@ public static class AppPaths
     public static string ArtCacheDir => ArtCacheDirIn(BaseDir);
     public static string PlaylistsDir => PlaylistsDirIn(BaseDir);
     public static string LogFile => LogFileIn(BaseDir);
+    public static string PluginsDir => PluginsDirIn(BaseDir);
+    public static string PluginsDataDir => PluginsDataDirIn(BaseDir);
 
     // Pure composition helpers. The layout of a data directory is worth asserting on its own,
     // and going through these keeps such checks from having to redirect the process-wide base
@@ -80,6 +82,8 @@ public static class AppPaths
     public static string ArtCacheDirIn(string baseDir) => Path.Combine(baseDir, "artcache");
     public static string PlaylistsDirIn(string baseDir) => Path.Combine(baseDir, "playlists");
     public static string LogFileIn(string baseDir) => Path.Combine(baseDir, "dawnplayer.log");
+    public static string PluginsDirIn(string baseDir) => Path.Combine(baseDir, "plugins");
+    public static string PluginsDataDirIn(string baseDir) => Path.Combine(baseDir, "plugins-data");
 
     /// <summary>
     /// Guards changes to the process-wide base directory. Redirecting it affects every thread, so
@@ -114,6 +118,7 @@ public static class AppPaths
             Directory.CreateDirectory(BaseDir);
             Directory.CreateDirectory(ArtCacheDir);
             Directory.CreateDirectory(PlaylistsDir);
+            Directory.CreateDirectory(PluginsDataDir);
         }
         catch { }
     }

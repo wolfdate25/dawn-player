@@ -70,6 +70,7 @@ public static class SettingsStore
         settings.Equalizer ??= new EqualizerSettings();
         settings.Library ??= new LibrarySettings();
         settings.Lyrics ??= new LyricsSettings();
+        settings.LyricsOnline ??= new LyricsOnlineSettings();
         settings.Ui ??= new UiSettings();
         settings.Shortcuts ??= new ShortcutSettings();
         return settings;

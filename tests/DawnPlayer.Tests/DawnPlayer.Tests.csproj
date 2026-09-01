@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
@@ -26,11 +26,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\DawnPlayer.Core\DawnPlayer.Core.csproj" />
+    <!-- Compiled ALC-loading fixture for LyricsPluginHost tests (samples/LrclibLyricsPlugin). -->
+    <ProjectReference Include="..\..\samples\LrclibLyricsPlugin\LrclibLyricsPlugin.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="..\..\src\DawnPlayer.App\Services\IAudioSettingsService.cs" Link="Services\IAudioSettingsService.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Services\AudioSettingsService.cs" Link="Services\AudioSettingsService.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Services\ILyricsOnlineService.cs" Link="Services\ILyricsOnlineService.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Services\IEqSettingsService.cs" Link="Services\IEqSettingsService.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Services\EqSettingsService.cs" Link="Services\EqSettingsService.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Services\IAppearanceSettingsService.cs" Link="Services\IAppearanceSettingsService.cs" />
@@ -58,6 +61,7 @@
     <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\PlaybackSettingsViewModel.cs" Link="ViewModels\Settings\PlaybackSettingsViewModel.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\LibrarySettingsViewModel.cs" Link="ViewModels\Settings\LibrarySettingsViewModel.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\LyricsSettingsViewModel.cs" Link="ViewModels\Settings\LyricsSettingsViewModel.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\LyricsOnlineSettingsViewModel.cs" Link="ViewModels\Settings\LyricsOnlineSettingsViewModel.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\AppearanceSettingsViewModel.cs" Link="ViewModels\Settings\AppearanceSettingsViewModel.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\LayoutSettingsViewModel.cs" Link="ViewModels\Settings\LayoutSettingsViewModel.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\ShortcutBindingViewModel.cs" Link="ViewModels\Settings\ShortcutBindingViewModel.cs" />

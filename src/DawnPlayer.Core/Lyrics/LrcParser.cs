@@ -159,11 +159,11 @@ public static partial class LrcParser
     public static string Format(LyricsDocument doc, double offsetMs = 0)
     {
         var sb = new StringBuilder();
-        if (!string.IsNullOrWhiteSpace(doc.Title)) sb.AppendLine($"[ti:{doc.Title.Trim()}]");
-        if (!string.IsNullOrWhiteSpace(doc.Artist)) sb.AppendLine($"[ar:{doc.Artist.Trim()}]");
-        if (!string.IsNullOrWhiteSpace(doc.Album)) sb.AppendLine($"[al:{doc.Album.Trim()}]");
-        if (!string.IsNullOrWhiteSpace(doc.By)) sb.AppendLine($"[by:{doc.By.Trim()}]");
-        if (Math.Abs(offsetMs) > 0.0001) sb.AppendLine($"[offset:{(long)Math.Round(offsetMs)}]");
+        if (!string.IsNullOrWhiteSpace(doc.Title)) sb.AppendLine(CultureInfo.InvariantCulture, $"[ti:{doc.Title.Trim()}]");
+        if (!string.IsNullOrWhiteSpace(doc.Artist)) sb.AppendLine(CultureInfo.InvariantCulture, $"[ar:{doc.Artist.Trim()}]");
+        if (!string.IsNullOrWhiteSpace(doc.Album)) sb.AppendLine(CultureInfo.InvariantCulture, $"[al:{doc.Album.Trim()}]");
+        if (!string.IsNullOrWhiteSpace(doc.By)) sb.AppendLine(CultureInfo.InvariantCulture, $"[by:{doc.By.Trim()}]");
+        if (Math.Abs(offsetMs) > 0.0001) sb.AppendLine(CultureInfo.InvariantCulture, $"[offset:{(long)Math.Round(offsetMs)}]");
 
         foreach (var line in doc.Lines)
         {
@@ -176,7 +176,7 @@ public static partial class LrcParser
                 int min = (int)line.Time.TotalMinutes;
                 int sec = line.Time.Seconds;
                 int ms = line.Time.Milliseconds;
-                sb.AppendLine($"[{min:D2}:{sec:D2}.{ms:D3}] {line.Text}");
+                sb.AppendLine(CultureInfo.InvariantCulture, $"[{min:D2}:{sec:D2}.{ms:D3}] {line.Text}");
             }
         }
         return sb.ToString();

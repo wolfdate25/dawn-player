@@ -1,4 +1,3 @@
-using System.Text;
 using DawnPlayer.Core.Models;
 using DawnPlayer.Core.Persistence;
 
@@ -56,18 +55,11 @@ public static class LyricsFinder
     public static List<string> BuildCandidates(Track track, AppSettings settings)
     {
         var dir = Path.GetDirectoryName(track.Path) ?? "";
-        var baseName = Path.GetFileNameWithoutExtension(track.Path);
-        var safeArtist = Sanitize(track.Artist);
-        var safeTitle = Sanitize(track.Title);
 
         var names = new List<string>();
         foreach (var pattern in settings.Lyrics.FilePatterns)
         {
-            var name = pattern
-                .Replace("%filename%", baseName, StringComparison.OrdinalIgnoreCase)
-                .Replace("%artist%", safeArtist, StringComparison.OrdinalIgnoreCase)
-                .Replace("%title%", safeTitle, StringComparison.OrdinalIgnoreCase)
-                .Replace("%album%", Sanitize(track.Album), StringComparison.OrdinalIgnoreCase);
+            var name = LyricsTokenExpander.Expand(pattern, track);
             if (name.IndexOfAny(InvalidChars) < 0 && !names.Contains(name, StringComparer.OrdinalIgnoreCase))
                 names.Add(name);
         }
@@ -80,13 +72,5 @@ public static class LyricsFinder
                 paths.Add(Path.Combine(root, name));
         }
         return paths;
-    }
-
-    private static string Sanitize(string s)
-    {
-        var sb = new StringBuilder(s.Length);
-        foreach (var c in s.Trim())
-            sb.Append(InvalidChars.Contains(c) ? '_' : c);
-        return sb.ToString();
     }
 }
