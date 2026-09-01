@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Linq;
 using DawnPlayer.Core.Persistence;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
@@ -76,11 +78,51 @@ public static class WasapiDeviceService
             for (int i = 0; i < count; i++)
             {
                 var caps = WaveOut.GetCapabilities(i);
-                list.Add(new OutputDeviceInfo(i.ToString(), caps.ProductName, false));
+                list.Add(new OutputDeviceInfo(i.ToString(CultureInfo.InvariantCulture), caps.ProductName, false));
             }
         }
         catch { }
         return list;
+    }
+
+    /// <summary>
+    /// The configured DirectSound device when it still exists, else the default primary driver.
+    /// A stale DeviceId (unplugged device, settings copied from another machine) must not kill
+    /// playback — the session factory and the controller's DesiredDeviceKey both resolve through
+    /// here so their answers agree and a fallback session is not rebuilt on every track.
+    /// </summary>
+    public static Guid ResolveDirectSoundDevice(string? configuredDeviceId)
+    {
+        if (!string.IsNullOrEmpty(configuredDeviceId)
+            && Guid.TryParse(configuredDeviceId, out var guid)
+            && guid != DirectSoundOut.DSDEVID_DefaultPlayback
+            && guid != Guid.Empty)
+        {
+            try
+            {
+                if (EnumerateDirectSoundDevices().Any(d => d.Id == guid.ToString()))
+                    return guid;
+            }
+            catch { }
+        }
+        return DirectSoundOut.DSDEVID_DefaultPlayback;
+    }
+
+    /// <summary>The configured WaveOut device number when it exists, else -1 (the default mapper).</summary>
+    public static int ResolveWaveOutDeviceNumber(string? configuredDeviceId)
+    {
+        if (!string.IsNullOrEmpty(configuredDeviceId)
+            && int.TryParse(configuredDeviceId, out var number)
+            && number >= 0)
+        {
+            try
+            {
+                if (number < WaveOut.DeviceCount)
+                    return number;
+            }
+            catch { }
+        }
+        return -1;
     }
 
     /// <summary>Opens the configured device, or the default render device when null.</summary>
@@ -153,7 +195,7 @@ public static class WasapiDeviceService
         }
     }
 
-    private static IEnumerable<int> SourceBitsThenFallback(int sourceBits) =>
+    private static int[] SourceBitsThenFallback(int sourceBits) =>
         sourceBits switch
         {
             16 => new[] { 16, 24, 32 },
@@ -177,7 +219,7 @@ public static class WasapiDeviceService
 
     /// <summary>Human-readable summary, e.g. "44.1 kHz / 24-bit / 2ch".</summary>
     public static string Describe(WaveFormat f) =>
-        $"{(f.SampleRate / 1000.0).ToString("0.###")} kHz / {f.BitsPerSample}-bit / {f.Channels}ch";
+        $"{(f.SampleRate / 1000.0).ToString("0.###", CultureInfo.InvariantCulture)} kHz / {f.BitsPerSample}-bit / {f.Channels}ch";
 
     // WASAPI error codes of interest for exclusive-mode diagnostics.
     // These were previously wrong, which mattered: the exclusive-failure message is chosen by

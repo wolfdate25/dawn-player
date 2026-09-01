@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Globalization;
 using DawnPlayer.Core.Models;
 using DawnPlayer.Core.Persistence;
 using NAudio.CoreAudioApi;
@@ -83,10 +84,11 @@ public sealed class OutputSessionFactory
 
     private OutputSession StartDirectSound(PendingTrack first, int latency)
     {
-        Guid dsGuid = DirectSoundOut.DSDEVID_DefaultPlayback;
-        if (!string.IsNullOrEmpty(_settings.Output.DeviceId) && Guid.TryParse(_settings.Output.DeviceId, out var parsedGuid))
+        Guid dsGuid = WasapiDeviceService.ResolveDirectSoundDevice(_settings.Output.DeviceId);
+        if (!string.IsNullOrEmpty(_settings.Output.DeviceId)
+            && (!Guid.TryParse(_settings.Output.DeviceId, out var configuredGuid) || configuredGuid != dsGuid))
         {
-            dsGuid = parsedGuid;
+            _warn("설정된 DirectSound 장치를 찾을 수 없어 기본 장치로 재생합니다.");
         }
 
         var rate = first.Reader.SourceFormat.SampleRate > 0 ? first.Reader.SourceFormat.SampleRate : 44100;
@@ -104,7 +106,7 @@ public sealed class OutputSessionFactory
 
         var devInfo = WasapiDeviceService.EnumerateDirectSoundDevices().FirstOrDefault(d => d.Id == dsGuid.ToString());
         string devName = devInfo?.Name ?? "DirectSound (Windows Audio)";
-        var info = new SessionInfo(devName, false, $"DirectSound • {rate / 1000.0:0.#}kHz / 32-bit float", latency);
+        var info = new SessionInfo(devName, false, $"DirectSound • {rate / 1000.0:0.#}kHz / 32-bit float", latency, AudioDriverType.DirectSound);
 
         return new OutputSession(seq, dsOutput, Device: null, Exclusive: false,
             AudioDriverType.DirectSound, dsGuid.ToString(), info);
@@ -112,16 +114,17 @@ public sealed class OutputSessionFactory
 
     private OutputSession StartWaveOut(PendingTrack first, int latency)
     {
-        int devNum = -1;
-        if (!string.IsNullOrEmpty(_settings.Output.DeviceId) && int.TryParse(_settings.Output.DeviceId, out var parsedDev))
+        int devNum = WasapiDeviceService.ResolveWaveOutDeviceNumber(_settings.Output.DeviceId);
+        if (!string.IsNullOrEmpty(_settings.Output.DeviceId)
+            && (!int.TryParse(_settings.Output.DeviceId, out var configuredNum) || configuredNum != devNum))
         {
-            devNum = parsedDev;
+            _warn("설정된 WaveOut 장치를 찾을 수 없어 기본 사운드 매퍼로 재생합니다.");
         }
 
         var rate = first.Reader.SourceFormat.SampleRate > 0 ? first.Reader.SourceFormat.SampleRate : 44100;
         var channels = first.Reader.SourceFormat.Channels > 0 ? first.Reader.SourceFormat.Channels : 2;
         var target = new WaveFormat(rate, 16, channels);
-        var eqProfile = EqualizerProfileResolver.Resolve(_settings.Equalizer, AudioDriverType.WaveOut, devNum.ToString());
+        var eqProfile = EqualizerProfileResolver.Resolve(_settings.Equalizer, AudioDriverType.WaveOut, devNum.ToString(CultureInfo.InvariantCulture));
 
         var seq = CreateSequencer(target, applyVolume: true, latency, eqProfile);
         seq.SwitchTo(first);
@@ -131,12 +134,12 @@ public sealed class OutputSessionFactory
         waveOut.Init(seq);
         waveOut.Play();
 
-        var devInfo = WasapiDeviceService.EnumerateWaveOutDevices().FirstOrDefault(d => d.Id == devNum.ToString());
+        var devInfo = WasapiDeviceService.EnumerateWaveOutDevices().FirstOrDefault(d => d.Id == devNum.ToString(CultureInfo.InvariantCulture));
         string devName = devInfo?.Name ?? "WaveOut (Windows Audio)";
-        var info = new SessionInfo(devName, false, $"WaveOut • {rate / 1000.0:0.#}kHz / 16-bit", latency);
+        var info = new SessionInfo(devName, false, $"WaveOut • {rate / 1000.0:0.#}kHz / 16-bit", latency, AudioDriverType.WaveOut);
 
         return new OutputSession(seq, waveOut, Device: null, Exclusive: false,
-            AudioDriverType.WaveOut, devNum.ToString(), info);
+            AudioDriverType.WaveOut, devNum.ToString(CultureInfo.InvariantCulture), info);
     }
 
     private OutputSession StartWasapi(PendingTrack first, int latency)
@@ -213,7 +216,7 @@ public sealed class OutputSessionFactory
         }
 
         var info = new SessionInfo(
-            device.FriendlyName, exclusive, WasapiDeviceService.Describe(target), latency);
+            device.FriendlyName, exclusive, WasapiDeviceService.Describe(target), latency, AudioDriverType.Wasapi);
 
         return new OutputSession(seq, output, device, exclusive, AudioDriverType.Wasapi, device.ID, info);
     }

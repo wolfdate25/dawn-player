@@ -1,3 +1,4 @@
+using System.Globalization;
 using DawnPlayer.Core.Models;
 using DawnPlayer.Core.Persistence;
 using DawnPlayer.Core.Playlists;
@@ -8,7 +9,8 @@ namespace DawnPlayer.Core.Audio;
 
 public enum PlaybackState { Stopped, Playing, Paused }
 
-public sealed record SessionInfo(string DeviceName, bool Exclusive, string FormatDescription, int LatencyMs);
+public sealed record SessionInfo(string DeviceName, bool Exclusive, string FormatDescription, int LatencyMs,
+    AudioDriverType Driver = AudioDriverType.Wasapi);
 
 /// <summary>
 /// An output session could not be opened, carrying a message that is already fit to show the user.
@@ -53,6 +55,7 @@ public sealed class PlaybackController : IPlaybackController
     private readonly System.Threading.Timer _pollTimer;
     private readonly SemaphoreSlim _commandGate = new(1, 1);
     private long _commandGeneration;
+    private long _lastPositionTicks;
     private int _disposed;
 
     private readonly object _stateLock = new();
@@ -133,8 +136,13 @@ public sealed class PlaybackController : IPlaybackController
     public PlaylistItem? CurrentItem { get { lock (_stateLock) return _currentItem; } }
     public Playlist? CurrentPlaylist { get { lock (_stateLock) return _currentPlaylist; } }
 
-    public TimeSpan Position => Sequencer?.GetPosition() ?? TimeSpan.Zero;
+    public TimeSpan Position => Sequencer?.GetPosition() ?? HeldPosition();
     public TimeSpan Duration => Sequencer?.TotalTime ?? CurrentItem?.Track.Duration ?? TimeSpan.Zero;
+
+    private TimeSpan HeldPosition() =>
+        State == PlaybackState.Stopped
+            ? TimeSpan.Zero
+            : new TimeSpan(Volatile.Read(ref _lastPositionTicks));
 
     // ---------------- public commands ----------------
 
@@ -468,6 +476,20 @@ public sealed class PlaybackController : IPlaybackController
                 session.Output.Play();
             return;
         }
+
+        if (pending.StartPosition is not null && session != null
+            && ReferenceEquals(session.Sequencer.CurrentItem, pending.Item))
+        {
+            pending = new PendingTrack
+            {
+                Playlist = pending.Playlist,
+                Item = pending.Item,
+                Reader = pending.Reader,
+                StartPosition = session.Sequencer.GetPosition(),
+                RequiresRestart = pending.RequiresRestart
+            };
+        }
+
         TeardownSessionLocked(); // rebuild (driver/device/mode/format changed)
         StartSessionLocked(pending);
     }
@@ -493,19 +515,15 @@ public sealed class PlaybackController : IPlaybackController
             switch (_settings.Output.DriverType)
             {
                 case AudioDriverType.DirectSound:
-                    return !string.IsNullOrEmpty(_settings.Output.DeviceId)
-                           && Guid.TryParse(_settings.Output.DeviceId, out var dsGuid)
-                        ? dsGuid.ToString()
-                        : DirectSoundOut.DSDEVID_DefaultPlayback.ToString();
+                    return WasapiDeviceService.ResolveDirectSoundDevice(_settings.Output.DeviceId).ToString();
                 case AudioDriverType.WaveOut:
-                    return int.TryParse(_settings.Output.DeviceId, out var waveNum)
-                        ? waveNum.ToString()
-                        : "-1";
+                    return WasapiDeviceService.ResolveWaveOutDeviceNumber(_settings.Output.DeviceId)
+                        .ToString(CultureInfo.InvariantCulture);
                 default:
-                {
-                    if (!string.IsNullOrEmpty(_settings.Output.DeviceId)) return _settings.Output.DeviceId;
-                    return DefaultRenderEndpointId();
-                }
+                    {
+                        if (!string.IsNullOrEmpty(_settings.Output.DeviceId)) return _settings.Output.DeviceId;
+                        return DefaultRenderEndpointId();
+                    }
             }
         }
         catch
@@ -612,6 +630,10 @@ public sealed class PlaybackController : IPlaybackController
     private void TeardownSessionLocked()
     {
         var session = _session;
+        if (session != null)
+        {
+            Volatile.Write(ref _lastPositionTicks, session.Sequencer.GetPosition().Ticks);
+        }
         Volatile.Write(ref _session, null);
         CurrentSessionInfo = null;
         if (session == null) return;
