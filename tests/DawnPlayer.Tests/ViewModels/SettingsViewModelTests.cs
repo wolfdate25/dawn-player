@@ -11,7 +11,7 @@ namespace DawnPlayer.Tests.ViewModels;
 
 public sealed class SettingsViewModelTests
 {
-    private (SettingsViewModel ViewModel, AppSettings Settings) CreateMasterViewModel()
+    private static (SettingsViewModel ViewModel, AppSettings Settings) CreateMasterViewModel()
     {
         var settings = new AppSettings();
         settings.Equalizer.EnsureDefaultProfile();
@@ -61,15 +61,18 @@ public sealed class SettingsViewModelTests
         Assert.True(vm.IsLyricsCategorySelected);
 
         vm.SelectedCategoryIndex = 5;
-        Assert.True(vm.IsAppearanceCategorySelected);
+        Assert.True(vm.IsOnlineLyricsCategorySelected);
 
         vm.SelectedCategoryIndex = 6;
-        Assert.True(vm.IsLayoutCategorySelected);
+        Assert.True(vm.IsAppearanceCategorySelected);
 
         vm.SelectedCategoryIndex = 7;
-        Assert.True(vm.IsShortcutsCategorySelected);
+        Assert.True(vm.IsLayoutCategorySelected);
 
         vm.SelectedCategoryIndex = 8;
+        Assert.True(vm.IsShortcutsCategorySelected);
+
+        vm.SelectedCategoryIndex = 9;
         Assert.True(vm.IsAboutCategorySelected);
     }
 

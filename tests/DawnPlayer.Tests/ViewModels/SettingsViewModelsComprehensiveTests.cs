@@ -11,7 +11,7 @@ namespace DawnPlayer.Tests.ViewModels;
 [Collection("SettingsStoreCollection")]
 public sealed class SettingsViewModelsComprehensiveTests
 {
-    private (SettingsViewModel Master, AppSettings Settings, AudioSettingsService AudioService, EqSettingsService EqService, AppearanceSettingsService AppearanceService) CreateEnvironment(bool isExclusive = false)
+    private static (SettingsViewModel Master, AppSettings Settings, AudioSettingsService AudioService, EqSettingsService EqService, AppearanceSettingsService AppearanceService) CreateEnvironment(bool isExclusive = false)
     {
         var settings = AppSettings.CreateDefault();
         var audioService = new AudioSettingsService(settings, null);
@@ -55,15 +55,18 @@ public sealed class SettingsViewModelsComprehensiveTests
         Assert.True(master.IsLyricsCategorySelected);
 
         master.SelectedCategoryIndex = 5;
-        Assert.True(master.IsAppearanceCategorySelected);
+        Assert.True(master.IsOnlineLyricsCategorySelected);
 
         master.SelectedCategoryIndex = 6;
-        Assert.True(master.IsLayoutCategorySelected);
+        Assert.True(master.IsAppearanceCategorySelected);
 
         master.SelectedCategoryIndex = 7;
-        Assert.True(master.IsShortcutsCategorySelected);
+        Assert.True(master.IsLayoutCategorySelected);
 
         master.SelectedCategoryIndex = 8;
+        Assert.True(master.IsShortcutsCategorySelected);
+
+        master.SelectedCategoryIndex = 9;
         Assert.True(master.IsAboutCategorySelected);
     }
 
