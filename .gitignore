@@ -1,3 +1,30 @@
 .zcode/
 tools/compare-env.ps1
 tools/test-run-app.ps1
+
+# Build output
+**/bin/
+**/obj/
+
+# Test results
+tests/**/TestResults/
+
+# Installer / distribution output
+dist/
+
+# Diagnostic logs
+*.log
+
+# AI assistant caches (Claude/Codex/etc. session stores)
+.agents/
+.claude/
+.aider*
+.continue/
+.cody/
+.cursor/
+.gemini/
+
+# Outdated agent docs (superseded by docs/ and README.md)
+GEMINI.md
+ORIGINAL_REQUEST.md
+THIRD-PARTY-NOTICES.md

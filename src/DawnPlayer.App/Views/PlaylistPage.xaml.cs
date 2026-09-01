@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Shapes;
+using System.Globalization;
 
 namespace DawnPlayer.App.Views;
 
@@ -43,7 +44,7 @@ public sealed partial class PlaylistPage : Page
     public void InitializePage()
     {
         PlaylistsSidebarList.ItemsSource = AppServices.Playlists.Playlists;
-        PlaylistsCountText.Text = AppServices.Playlists.Playlists.Count.ToString();
+        PlaylistsCountText.Text = AppServices.Playlists.Playlists.Count.ToString(CultureInfo.InvariantCulture);
 
         var activeName = AppServices.Settings.Playback.ActivePlaylistName;
         var targetPl = (!string.IsNullOrEmpty(activeName) ? AppServices.Playlists.Playlists.FirstOrDefault(p => p.Name == activeName) : null)
@@ -72,7 +73,7 @@ public sealed partial class PlaylistPage : Page
             InitializePage();
         }
 
-        PlaylistsCountText.Text = AppServices.Playlists.Playlists.Count.ToString();
+        PlaylistsCountText.Text = AppServices.Playlists.Playlists.Count.ToString(CultureInfo.InvariantCulture);
         SetLyricsVisibility(AppServices.Settings.Ui.ShowLyricsPane);
         PlaylistLyricsPane.OnTrackChanged(AppServices.Playback.CurrentItem);
     }
@@ -205,7 +206,7 @@ public sealed partial class PlaylistPage : Page
     private void OnCreatePlaylistClick(object sender, RoutedEventArgs e)
     {
         var pl = AppServices.Playlists.CreatePlaylist();
-        PlaylistsCountText.Text = AppServices.Playlists.Playlists.Count.ToString();
+        PlaylistsCountText.Text = AppServices.Playlists.Playlists.Count.ToString(CultureInfo.InvariantCulture);
         PlaylistsSidebarList.SelectedItem = pl;
         _ = PlaylistDialogs.ShowRenameDialogAsync(pl, XamlRoot, AppServices.Playlists);
     }
@@ -332,7 +333,7 @@ public sealed partial class PlaylistPage : Page
         AppServices.Playlists.RemovePlaylist(pl);
         var next = AppServices.Playlists.Current;
         PlaylistsSidebarList.SelectedItem = next;
-        PlaylistsCountText.Text = AppServices.Playlists.Playlists.Count.ToString();
+        PlaylistsCountText.Text = AppServices.Playlists.Playlists.Count.ToString(CultureInfo.InvariantCulture);
         Rebuild();
     }
 
@@ -409,7 +410,7 @@ public sealed partial class PlaylistPage : Page
                 var pl = await AppServices.Playlists.ImportPlaylistAsync(file);
                 if (pl != null)
                 {
-                    PlaylistsCountText.Text = AppServices.Playlists.Playlists.Count.ToString();
+                    PlaylistsCountText.Text = AppServices.Playlists.Playlists.Count.ToString(CultureInfo.InvariantCulture);
                     PlaylistsSidebarList.SelectedItem = pl;
                     AppServices.RaiseWarning($"'{pl.Name}' 재생목록을 가져왔습니다 ({pl.Items.Count}곡).");
                 }
@@ -435,7 +436,7 @@ public sealed partial class PlaylistPage : Page
 
             PlaylistTitleText.Text = pl.Name;
             PlaylistStatsText.Text = PlaybackUiHelper.FormatEolePlaylistStats(pl);
-            PlaylistsCountText.Text = AppServices.Playlists.Playlists.Count.ToString();
+            PlaylistsCountText.Text = AppServices.Playlists.Playlists.Count.ToString(CultureInfo.InvariantCulture);
 
             bool isEmpty = pl.Items.Count == 0;
             EmptyState.Visibility = isEmpty ? Visibility.Visible : Visibility.Collapsed;

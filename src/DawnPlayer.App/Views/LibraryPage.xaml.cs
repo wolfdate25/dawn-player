@@ -306,7 +306,7 @@ public sealed partial class LibraryPage : Page
         ScrollRightQueueToItem(AppServices.Playback.CurrentItem);
     }
 
-    private void UpdateRightQueuePlayingState(PlaylistItem? currentItem)
+    private static void UpdateRightQueuePlayingState(PlaylistItem? currentItem)
     {
         PlaybackUiHelper.UpdatePlayingState(AppServices.Playlists.NowPlaying?.Items, currentItem);
     }
@@ -603,7 +603,7 @@ public sealed partial class LibraryPage : Page
         }
     }
 
-    private void SaveTreeSelection(LibraryTreeNode node)
+    private static void SaveTreeSelection(LibraryTreeNode node)
     {
         AppServices.Settings.Ui.LibrarySelectedFilterType = node.FilterType;
         AppServices.Settings.Ui.LibrarySelectedFilterValue = node.FilterValue;

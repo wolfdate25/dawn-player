@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using DawnPlayer.App.Services;
@@ -26,7 +27,7 @@ public sealed class AlbumCard : INotifyPropertyChanged
     public int Count => Tracks.Count;
 
     public bool HasYear => Year > 0;
-    public string YearString => Year > 0 ? Year.ToString() : "";
+    public string YearString => Year > 0 ? Year.ToString(CultureInfo.InvariantCulture) : "";
     public string FormattedDuration => TextFormat.LongDuration(TimeSpan.FromMilliseconds(Tracks.Sum(t => t.DurationMs)));
 
     private bool _isSelected;

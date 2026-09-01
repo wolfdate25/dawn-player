@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 
 namespace DawnPlayer.App.Views;
 
@@ -14,7 +15,7 @@ public sealed class LibraryTreeNode
     public string FilterExtra { get; set; } = "";
     public string FilterExtra2 { get; set; } = "";
     public int Count { get; set; }
-    public string CountText => Count > 0 ? Count.ToString("N0") : "";
+    public string CountText => Count > 0 ? Count.ToString("N0", CultureInfo.InvariantCulture) : "";
     public ObservableCollection<LibraryTreeNode> Children { get; } = new();
 
     /// <summary>Whether the view should render this node already expanded.</summary>

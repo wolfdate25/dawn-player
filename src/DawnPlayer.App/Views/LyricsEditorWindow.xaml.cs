@@ -109,7 +109,7 @@ public sealed partial class LyricsEditorWindow : Window
     private readonly ObservableCollection<LrcEditLineVm> _lines = new();
 
     private double _stepMs = 0.5;
-    private double _totalOffsetMs = 0;
+    private double _totalOffsetMs;
     private string _targetLrcPath = "";
     private bool _updatingFromSync;
 
