@@ -124,10 +124,14 @@ public sealed class SequencerStream : IWaveProvider
     public IAudioDspChain DspChain => _dspChain;
 
     /// <summary>True when playback is paused; causes Read() to emit silence without advancing track position.</summary>
+    /// <remarks>Volatile fields, not properties: these flags are set from the UI thread and polled
+    /// on the real-time audio thread, and <c>volatile</c> only applies to fields.</remarks>
+#pragma warning disable CA1051
     public volatile bool IsPaused;
 
     /// <summary>True while the controller is opening the next reader.</summary>
     public volatile bool PrefetchPending;
+#pragma warning restore CA1051
 
     public bool HasPrefetched { get { lock (_prefetchLock) return _prefetched != null; } }
 

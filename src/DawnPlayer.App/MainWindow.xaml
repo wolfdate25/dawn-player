@@ -50,7 +50,7 @@
                         </MenuFlyout>
                     </Button.Flyout>
                 </Button>
-                <TextBlock Text="Dawn Player" FontSize="12.5" FontWeight="SemiBold"
+                <TextBlock x:Uid="AppBrand" Text="Dawn Player" FontSize="12.5" FontWeight="SemiBold"
                            Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                 <TextBlock Text="|" FontSize="11" Foreground="{ThemeResource SeparatorSubtleBrush}" VerticalAlignment="Center"/>
                 <TextBlock x:Name="TitleBarTrack" Text="No sound — Nothing played" FontSize="11.5"

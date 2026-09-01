@@ -12,6 +12,18 @@ namespace DawnPlayer.Plugins;
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class LyricsPluginAttribute : Attribute
 {
+    /// <param name="id">Stable unique identifier, e.g. "lrclib". Persisted in settings; never change it after release.</param>
+    /// <param name="name">Display name shown in the UI, e.g. "LRCLIB".</param>
+    /// <param name="version">Plugin version, e.g. "1.0.0".</param>
+    /// <param name="author">Plugin author shown in the UI.</param>
+    public LyricsPluginAttribute(string id, string name, string version, string author)
+    {
+        Id = id;
+        Name = name;
+        Version = version;
+        Author = author;
+    }
+
     /// <summary>Stable unique identifier, e.g. "lrclib". Persisted in settings; never change it after release.</summary>
     public string Id { get; }
 
@@ -23,12 +35,4 @@ public sealed class LyricsPluginAttribute : Attribute
 
     /// <summary>Plugin author shown in the UI.</summary>
     public string Author { get; }
-
-    public LyricsPluginAttribute(string id, string name, string version, string author)
-    {
-        Id = id;
-        Name = name;
-        Version = version;
-        Author = author;
-    }
 }

@@ -27,10 +27,6 @@ public sealed partial class SettingsPage : Page
 
     public SettingsPage()
     {
-        var layout = new LayoutSettingsViewModel(
-            AppServices.AppearanceSettings,
-            AppServices.Settings,
-            languageChanger: AppServices.ChangeLanguage);
         ViewModel = new SettingsViewModel(
             AppServices.Settings,
             AppServices.AudioSettings,
@@ -44,8 +40,7 @@ public sealed partial class SettingsPage : Page
                  AppServices.Playback.CurrentSessionInfo?.Exclusive == true),
             shortcutStore: AppServices.Shortcuts,
             logger: App.Log,
-            lyricsOnlineService: AppServices.LyricsOnline,
-            layoutViewModel: layout);
+            lyricsOnlineService: AppServices.LyricsOnline);
 
         InitializeComponent();
 
@@ -72,7 +67,6 @@ public sealed partial class SettingsPage : Page
     private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
         AppServices.OutputSessionChanged += OnOutputSessionChanged;
-        AppServices.LanguageChanged += OnLanguageChanged;
         ViewModel.Equalizer.PropertyChanged += OnEqualizerPropertyChanged;
         ViewModel.Lyrics.PropertyChanged += OnLyricsPropertyChanged;
         ViewModel.Shortcuts.AttachToStore();
@@ -85,17 +79,9 @@ public sealed partial class SettingsPage : Page
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
         AppServices.OutputSessionChanged -= OnOutputSessionChanged;
-        AppServices.LanguageChanged -= OnLanguageChanged;
         ViewModel.Equalizer.PropertyChanged -= OnEqualizerPropertyChanged;
         ViewModel.Lyrics.PropertyChanged -= OnLyricsPropertyChanged;
         ViewModel.Shortcuts.DetachFromStore();
-    }
-
-    private void OnLanguageChanged(UiLanguage language)
-    {
-        // Most strings re-resolve on the next render of x:Bind-driven UI; settings panes
-        // re-Activate on each open so the new language shows up the next time the user
-        // visits them.
     }
 
     private void OnOutputSessionChanged(SessionInfo info)

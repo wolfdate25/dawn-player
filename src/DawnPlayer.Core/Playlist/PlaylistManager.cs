@@ -510,7 +510,7 @@ public sealed class PlaylistManager : IPlaylistManager
         return pl;
     }
 
-    private void InsertItems(Playlist pl, List<PlaylistItem> items, int? insertAt)
+    private static void InsertItems(Playlist pl, List<PlaylistItem> items, int? insertAt)
     {
         if (items == null || items.Count == 0) return;
         lock (pl.SyncRoot)
@@ -567,9 +567,13 @@ public sealed class PlaylistManager : IPlaylistManager
         if (pl == null) return;
         Comparison<PlaylistItem> cmp = sort switch
         {
+            // Culture-aware on purpose: these are the linguistic sorts the user sees (Korean
+            // collation); ordinal comparison would visibly reorder Korean titles.
+#pragma warning disable CA1309
             PlaylistSort.Title => (a, b) => string.Compare(a.Track.Title, b.Track.Title, StringComparison.CurrentCultureIgnoreCase),
             PlaylistSort.Artist => (a, b) => string.Compare(a.Track.Artist, b.Track.Artist, StringComparison.CurrentCultureIgnoreCase),
             PlaylistSort.Album => (a, b) => string.Compare(a.Track.Album + a.Track.AlbumSortKey, b.Track.Album + b.Track.AlbumSortKey, StringComparison.CurrentCultureIgnoreCase),
+#pragma warning restore CA1309
             PlaylistSort.TrackNo => (a, b) => a.Track.AlbumSortKey.CompareTo(b.Track.AlbumSortKey),
             PlaylistSort.Path => (a, b) => string.Compare(a.Track.Path, b.Track.Path, StringComparison.OrdinalIgnoreCase),
             _ => (a, b) => 0
@@ -757,9 +761,9 @@ public sealed class PlaylistManager : IPlaylistManager
         }
     }
 
-    public void SavePlaylist(Playlist pl)
+    public void SavePlaylist(Playlist playlist)
     {
-        if (pl == null) return;
+        if (playlist == null) return;
 
         lock (_fileLock)
         {
@@ -767,16 +771,16 @@ public sealed class PlaylistManager : IPlaylistManager
             // after this write, or is seen here and skips the write entirely.
             lock (_saveLock)
             {
-                if (!Playlists.Contains(pl)) return; // Prevents ghost file recreation
+                if (!Playlists.Contains(playlist)) return; // Prevents ghost file recreation
             }
 
-            var snapshot = pl.GetSnapshot();
+            var snapshot = playlist.GetSnapshot();
             string name;
             List<string> unresolved;
-            lock (pl.SyncRoot)
+            lock (playlist.SyncRoot)
             {
-                name = pl.Name;
-                unresolved = [.. pl.UnresolvedPaths];
+                name = playlist.Name;
+                unresolved = [.. playlist.UnresolvedPaths];
             }
             string path = PlaylistFilePath(name);
 

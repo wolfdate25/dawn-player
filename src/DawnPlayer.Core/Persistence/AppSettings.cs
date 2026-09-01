@@ -13,7 +13,7 @@ public enum BackdropMode { Mica, MicaAlt, Acrylic, Solid, AlbumArtBlur }
 public enum EqFilterType { PeakEq, LowShelf, HighShelf, LowPass, HighPass }
 public enum NormalizerMode { Hybrid, AlwaysDynamic, ReplayGainOnly }
 public enum NormalizerSpeed { Fast, Balanced, Smooth }
-public enum UiLanguage { System, KoKR, EnUS, JaJP, ZhCN }
+public enum UiLanguage { System, KoKR, EnUS, JaJP }
 
 /// <summary>User settings, persisted as JSON under %AppData%\DawnPlayer.</summary>
 public sealed class AppSettings

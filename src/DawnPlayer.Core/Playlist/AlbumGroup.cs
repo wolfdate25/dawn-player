@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using DawnPlayer.Core.Models;
 
 namespace DawnPlayer.Core.Playlists;
@@ -52,7 +53,7 @@ public sealed class AlbumGroup : IReadOnlyList<PlaylistItem>
     }
 
     public string DurationFormatted => FormatEoleDuration(Duration);
-    public string YearFormatted => Year > 0 ? Year.ToString() : "";
+    public string YearFormatted => Year > 0 ? Year.ToString(CultureInfo.InvariantCulture) : "";
 
     public string Info
     {
@@ -60,7 +61,7 @@ public sealed class AlbumGroup : IReadOnlyList<PlaylistItem>
         {
             var parts = new List<string>(4);
             if (!string.IsNullOrEmpty(Artist)) parts.Add(Artist);
-            if (Year > 0) parts.Add(Year.ToString());
+            if (Year > 0) parts.Add(Year.ToString(CultureInfo.InvariantCulture));
             parts.Add($"{Count}곡");
             parts.Add(FormatEoleDuration(Duration));
             return string.Join("  •  ", parts);
@@ -76,7 +77,11 @@ public sealed class AlbumGroup : IReadOnlyList<PlaylistItem>
         }
     }
 
+    // Instance API kept deliberately: callers hold AlbumGroup references, and the test
+    // suite exercises it through one.
+#pragma warning disable CA1822
     public void InvalidateDuration()
+#pragma warning restore CA1822
     {
         // Dynamic calculation requires no internal cache invalidation, maintained for API compatibility
     }

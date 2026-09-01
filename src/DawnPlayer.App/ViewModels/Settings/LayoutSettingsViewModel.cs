@@ -12,16 +12,13 @@ public sealed class LayoutSettingsViewModel : ViewModelBase
 {
     private readonly IAppearanceSettingsService _appearanceSettingsService;
     private readonly AppSettings _settings;
-    private readonly Action<UiLanguage>? _languageChanger;
 
     public LayoutSettingsViewModel(
         IAppearanceSettingsService appearanceSettingsService,
-        AppSettings settings,
-        Action<UiLanguage>? languageChanger = null)
+        AppSettings settings)
     {
         _appearanceSettingsService = appearanceSettingsService ?? throw new ArgumentNullException(nameof(appearanceSettingsService));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
-        _languageChanger = languageChanger;
     }
 
     public double AlbumCoverSize
@@ -40,23 +37,6 @@ public sealed class LayoutSettingsViewModel : ViewModelBase
     }
 
     public string AlbumCoverSizeText => $"{(int)AlbumCoverSize}px";
-
-    /// <summary>Selected UI language, by enum index in the combo box.</summary>
-    public int LanguageIndex
-    {
-        get => (int)_settings.Ui.Language;
-        set
-        {
-            if (value < 0 || value > 4) return;
-            var newLanguage = (UiLanguage)value;
-            if (_settings.Ui.Language == newLanguage) return;
-            _settings.Ui.Language = newLanguage;
-            // The page wires AppServices.ChangeLanguage at construction; tests pass null and
-            // can verify the persisted setting without dragging the composition root in.
-            _languageChanger?.Invoke(newLanguage);
-            OnPropertyChanged();
-        }
-    }
 
     public void ResetLayoutToDefaults()
     {

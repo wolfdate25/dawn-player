@@ -18,6 +18,8 @@ public sealed class LyricsSettingsViewModel : ViewModelBase
     private string _customFontFamily = "";
     private string _lrcPatternsText = "";
 
+    private static readonly char[] LrcPatternSeparators = { '\r', '\n' };
+
     public LyricsSettingsViewModel(
         AppSettings settings,
         Action? lyricsChangedNotifier = null,
@@ -248,8 +250,6 @@ public sealed class LyricsSettingsViewModel : ViewModelBase
         get => _lrcPatternsText;
         set => SetProperty(ref _lrcPatternsText, value);
     }
-
-    private static readonly char[] LrcPatternSeparators = { '\r', '\n' };
 
     public void SaveLrcPatterns(string? rawText = null)
     {

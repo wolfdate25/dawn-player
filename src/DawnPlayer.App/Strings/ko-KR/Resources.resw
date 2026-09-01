@@ -33,5 +33,16 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="App_ProductTitle" xml:space="preserve"><value>Dawn Player</value></data>
+  <data name="App.Title" xml:space="preserve">
+    <value>Dawn Player</value>
+  </data>
+  <data name="MainWindow.Title" xml:space="preserve">
+    <value>Dawn Player</value>
+  </data>
+  <data name="AppBrand.Text" xml:space="preserve">
+    <value>Dawn Player</value>
+  </data>
+  <data name="WelcomeText.Text" xml:space="preserve">
+    <value>환영합니다!</value>
+  </data>
 </root>

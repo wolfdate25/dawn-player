@@ -53,9 +53,10 @@ public static class AppServices
         Controls.PlaybackUiHelper.Logger = App.Log;
 
         Settings = SettingsStore.Load();
-        // Apply language before any UI/service is built so the first frame already sees the
-        // user's choice and downstream components that read CurrentUICulture match.
-        StringsLoader.ApplyLanguage(Settings.Ui.Language);
+        // Apply the user's language before any UI/services build so the first frame already
+        // uses the right resource set. The window-level x:Uid bindings pick this up via
+        // the ResourceLoader the next time the visual tree is realized.
+        AppStrings.ApplyLanguage(Bcp47(Settings.Ui.Language));
         Library = OpenLibraryResilient(out var dbRecoveryMessage);
         Playlists = new PlaylistManager(Library)
         {
@@ -134,16 +135,34 @@ public static class AppServices
     public static event Action<DawnPlayer.Core.Library.ScanProgress>? ScanProgressChanged;
     public static event Action<UiLanguage>? LanguageChanged;
 
+    /// <summary>
+    /// Maps a <see cref="UiLanguage"/> enum to a BCP-47 tag for <see cref="AppStrings.ApplyLanguage"/>
+    /// and the PrimaryLanguageOverride setter. Null means "follow the system language".
+    /// </summary>
+    public static string? Bcp47(UiLanguage language) => language switch
+    {
+        UiLanguage.KoKR => "ko-KR",
+        UiLanguage.EnUS => "en-US",
+        UiLanguage.JaJP => "ja-JP",
+        _ => null
+    };
+
     public static void RunOnUi(Action action) => Ui?.TryEnqueue(() => action());
 
     /// <summary>Raises <see cref="WarningRaised"/> from anywhere (marshals to UI).</summary>
     public static void RaiseWarning(string message) => RunOnUi(() => WarningRaised?.Invoke(message));
 
-    /// <summary>Applies the new language and broadcasts the change so the UI can react.</summary>
+    /// <summary>
+    /// Updates the user's language preference, applies it to the resource pipeline, and
+    /// raises <see cref="LanguageChanged"/>. The window owner is responsible for reloading
+    /// its visual tree so already-rendered x:Uid bindings pick up the new strings — the
+    /// x:Uid -> property mapping only runs at XAML load time.
+    /// </summary>
     public static void ChangeLanguage(UiLanguage language)
     {
+        if (Settings.Ui.Language == language) return;
         Settings.Ui.Language = language;
-        StringsLoader.ApplyLanguage(language);
+        AppStrings.ApplyLanguage(Bcp47(language));
         SettingsWriter.Schedule(Settings);
         RunOnUi(() => LanguageChanged?.Invoke(language));
     }
