@@ -24,6 +24,7 @@ public sealed class SettingsViewModel : ViewModelBase
     public PlaybackSettingsViewModel Playback { get; }
     public LibrarySettingsViewModel Library { get; }
     public LyricsSettingsViewModel Lyrics { get; }
+    public LyricsOnlineSettingsViewModel OnlineLyrics { get; }
     public AppearanceSettingsViewModel Appearance { get; }
     public LayoutSettingsViewModel Layout { get; }
     public ShortcutSettingsViewModel Shortcuts { get; }
@@ -38,7 +39,8 @@ public sealed class SettingsViewModel : ViewModelBase
         Action<AppSettings>? settingsSaver = null,
         Func<bool>? isExclusiveSessionGetter = null,
         IShortcutBindingStore? shortcutStore = null,
-        Action<string>? logger = null)
+        Action<string>? logger = null,
+        ILyricsOnlineService? lyricsOnlineService = null)
     {
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _audioSettingsService = audioSettingsService ?? throw new ArgumentNullException(nameof(audioSettingsService));
@@ -65,6 +67,8 @@ public sealed class SettingsViewModel : ViewModelBase
 
         Lyrics = new LyricsSettingsViewModel(_settings, lyricsChangedNotifier, settingsSaver);
 
+        OnlineLyrics = new LyricsOnlineSettingsViewModel(_settings, lyricsOnlineService, lyricsChangedNotifier, settingsSaver);
+
         Appearance = new AppearanceSettingsViewModel(_appearanceSettingsService, _settings);
 
         Layout = new LayoutSettingsViewModel(_appearanceSettingsService, _settings);
@@ -89,6 +93,7 @@ public sealed class SettingsViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsPlaybackCategorySelected));
                 OnPropertyChanged(nameof(IsLibraryCategorySelected));
                 OnPropertyChanged(nameof(IsLyricsCategorySelected));
+                OnPropertyChanged(nameof(IsOnlineLyricsCategorySelected));
                 OnPropertyChanged(nameof(IsAppearanceCategorySelected));
                 OnPropertyChanged(nameof(IsLayoutCategorySelected));
                 OnPropertyChanged(nameof(IsShortcutsCategorySelected));
@@ -97,6 +102,10 @@ public sealed class SettingsViewModel : ViewModelBase
                 if (value == 1)
                 {
                     Equalizer.RecalculateVisualizer();
+                }
+                else if (value == 5)
+                {
+                    OnlineLyrics.RefreshPlugins();
                 }
             }
         }
@@ -107,10 +116,11 @@ public sealed class SettingsViewModel : ViewModelBase
     public bool IsPlaybackCategorySelected => _selectedCategoryIndex == 2;
     public bool IsLibraryCategorySelected => _selectedCategoryIndex == 3;
     public bool IsLyricsCategorySelected => _selectedCategoryIndex == 4;
-    public bool IsAppearanceCategorySelected => _selectedCategoryIndex == 5;
-    public bool IsLayoutCategorySelected => _selectedCategoryIndex == 6;
-    public bool IsShortcutsCategorySelected => _selectedCategoryIndex == 7;
-    public bool IsAboutCategorySelected => _selectedCategoryIndex == 8;
+    public bool IsOnlineLyricsCategorySelected => _selectedCategoryIndex == 5;
+    public bool IsAppearanceCategorySelected => _selectedCategoryIndex == 6;
+    public bool IsLayoutCategorySelected => _selectedCategoryIndex == 7;
+    public bool IsShortcutsCategorySelected => _selectedCategoryIndex == 8;
+    public bool IsAboutCategorySelected => _selectedCategoryIndex == 9;
 
     public void HandleSessionChanged(SessionInfo info)
     {
@@ -122,5 +132,6 @@ public sealed class SettingsViewModel : ViewModelBase
         Audio.RefreshDevices(_settings.Output.DeviceId);
         Equalizer.RefreshProfiles();
         Equalizer.RefreshDevicesAndBindings(_settings.Output.DeviceId);
+        OnlineLyrics.RefreshPlugins();
     }
 }

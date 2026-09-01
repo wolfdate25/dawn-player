@@ -118,10 +118,28 @@ public sealed partial class LyricsPane : UserControl
         if (item == null || AppServices.Settings == null)
         {
             ShowEmpty();
+            SetSourceBadge(null);
             return;
         }
 
         var doc = LyricsFinder.LoadLyrics(item.Track, AppServices.Settings);
+        string? onlineSource = null;
+
+        // Online fallback: lyrics fetched by a plugin earlier this session (auto lookup or the
+        // search window) display until an offline file shows up for the track.
+        if ((doc == null || !doc.HasLines) && AppServices.LyricsOnline != null)
+        {
+            var online = AppServices.LyricsOnline.GetSessionLyrics(item.Track.Path);
+            if (online is { Document.HasLines: true })
+            {
+                doc = online.Document;
+                onlineSource = online.IsSynced
+                    ? $"온라인 · {online.PluginName}"
+                    : $"온라인 · {online.PluginName} · 비동기";
+            }
+        }
+        SetSourceBadge(onlineSource);
+
         if (doc != null && doc.HasLines)
         {
             var s = AppServices.Settings.Lyrics;
@@ -278,5 +296,29 @@ public sealed partial class LyricsPane : UserControl
         {
             AppServices.RaiseWarning("현재 재생 중인 트랙이 없습니다.");
         }
+    }
+
+    private void OnOpenSearchClick(object sender, RoutedEventArgs e)
+    {
+        var track = _currentItem?.Track ?? AppServices.Playback?.CurrentItem?.Track;
+        if (track != null)
+        {
+            LyricsSearchWindow.OpenForTrack(track);
+        }
+        else
+        {
+            AppServices.RaiseWarning("현재 재생 중인 트랙이 없습니다.");
+        }
+    }
+
+    private void SetSourceBadge(string? text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            SourceBadge.Visibility = Visibility.Collapsed;
+            return;
+        }
+        SourceBadge.Text = text;
+        SourceBadge.Visibility = Visibility.Visible;
     }
 }

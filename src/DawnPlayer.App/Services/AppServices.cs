@@ -22,6 +22,7 @@ public static class AppServices
     public static IEqSettingsService EqSettings { get; set; } = null!;
     public static IAppearanceSettingsService AppearanceSettings { get; set; } = null!;
     public static IShortcutService Shortcuts { get; set; } = null!;
+    public static ILyricsOnlineService LyricsOnline { get; set; } = null!;
 
     public static DispatcherQueue? Ui { get; private set; }
     public static IntPtr MainWindowHandle { get; private set; }
@@ -66,6 +67,9 @@ public static class AppServices
         EqSettings = new EqSettingsService(Settings, Playback);
         AppearanceSettings = new AppearanceSettingsService(Settings);
         Shortcuts = new ShortcutService(Settings);
+        var lyricsOnline = new LyricsOnlineService(() => Settings, App.Log);
+        LyricsOnline = lyricsOnline;
+        lyricsOnline.Initialize();
         AppearanceSettings.AppearanceChanged += () => RunOnUi(() => App.MainWin?.ApplyTheme());
 
         Smtc = new SmtcService(Playback);

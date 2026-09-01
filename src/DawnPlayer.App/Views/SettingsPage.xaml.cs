@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using DawnPlayer.App.Calculators;
@@ -38,7 +39,8 @@ public sealed partial class SettingsPage : Page
                  AppServices.Settings.Output.UseExclusiveMode &&
                  AppServices.Playback.CurrentSessionInfo?.Exclusive == true),
             shortcutStore: AppServices.Shortcuts,
-            logger: App.Log);
+            logger: App.Log,
+            lyricsOnlineService: AppServices.LyricsOnline);
 
         InitializeComponent();
 
@@ -54,7 +56,13 @@ public sealed partial class SettingsPage : Page
         Unloaded += OnPageUnloaded;
     }
 
+    // Called through x:Bind generated code (this.dataRoot.BooleanToVisibility), which
+    // requires an instance member.
+#pragma warning disable CA1822
     public Visibility BooleanToVisibility(bool value) => value ? Visibility.Visible : Visibility.Collapsed;
+
+    public Visibility BooleanToVisibilityNot(bool value) => value ? Visibility.Collapsed : Visibility.Visible;
+#pragma warning restore CA1822
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
@@ -124,6 +132,63 @@ public sealed partial class SettingsPage : Page
     private void OnRefreshDevices(object sender, RoutedEventArgs e) =>
         ViewModel.Audio.RefreshDevices();
 
+    // ---------------- online lyrics plugins ----------------
+
+    private void OnRescanPluginsClick(object sender, RoutedEventArgs e) =>
+        ViewModel.OnlineLyrics.Rescan();
+
+    private async void OnOpenPluginsFolderClick(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            System.IO.Directory.CreateDirectory(ViewModel.OnlineLyrics.PluginsFolder);
+            await Windows.System.Launcher.LaunchFolderPathAsync(ViewModel.OnlineLyrics.PluginsFolder);
+        }
+        catch (Exception ex)
+        {
+            App.Log($"[OnlineLyrics] 플러그인 폴더 열기 실패: {ex.Message}");
+        }
+    }
+
+    private async void OnPickLyricsSaveFolderClick(object sender, RoutedEventArgs e)
+    {
+        var picker = new Windows.Storage.Pickers.FolderPicker
+        {
+            SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.MusicLibrary
+        };
+        picker.FileTypeFilter.Add("*");
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, AppServices.MainWindowHandle);
+
+        var folder = await picker.PickSingleFolderAsync();
+        if (folder != null)
+        {
+            ViewModel.OnlineLyrics.SetCustomSaveFolder(folder.Path);
+        }
+    }
+
+    private void OnPluginMoveUpClick(object sender, RoutedEventArgs e) =>
+        MovePlugin(sender, -1);
+
+    private void OnPluginMoveDownClick(object sender, RoutedEventArgs e) =>
+        MovePlugin(sender, +1);
+
+    private void MovePlugin(object sender, int delta)
+    {
+        if (sender is FrameworkElement { Tag: ViewModels.Settings.LyricsPluginItemVm item })
+        {
+            if (delta < 0) ViewModel.OnlineLyrics.MovePluginUp(item);
+            else ViewModel.OnlineLyrics.MovePluginDown(item);
+        }
+    }
+
+    private void OnPluginToggled(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: ViewModels.Settings.LyricsPluginItemVm item })
+        {
+            ViewModel.OnlineLyrics.SetPluginEnabled(item);
+        }
+    }
+
     // ---------------- keyboard shortcuts ----------------
 
     private async void OnShortcutRebindClick(object sender, RoutedEventArgs e)
@@ -147,7 +212,7 @@ public sealed partial class SettingsPage : Page
                 var overwrite = new ContentDialog
                 {
                     Title = "단축키 충돌",
-                    Content = string.Format("'{0}' 은(는) 이미 '{1}'에 할당되어 있습니다. 덮어쓰면 해당 명령의 단축키가 해제됩니다.",
+                    Content = string.Format(CultureInfo.InvariantCulture, "'{0}' 은(는) 이미 '{1}'에 할당되어 있습니다. 덮어쓰면 해당 명령의 단축키가 해제됩니다.",
                         chord.ToDisplayString(),
                         ShortcutSettingsViewModel.GetCommandDisplayName(conflicting)),
                     PrimaryButtonText = "덮어쓰기",
@@ -198,7 +263,7 @@ public sealed partial class SettingsPage : Page
         }
     }
 
-    private Task ShowShortcutNoticeAsync(string title, string body) =>
+    private Task<ContentDialogResult> ShowShortcutNoticeAsync(string title, string body) =>
         new ContentDialog
         {
             Title = title,

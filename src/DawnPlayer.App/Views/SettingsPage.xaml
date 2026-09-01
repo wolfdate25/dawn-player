@@ -123,7 +123,15 @@
                         </StackPanel>
                     </ListViewItem>
 
-                    <!-- 6. Appearance & Theme -->
+                    <!-- 6. Online Lyrics -->
+                    <ListViewItem Tag="OnlineLyrics">
+                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xE721;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                            <TextBlock Text="온라인 가사 (Plugins)" FontSize="13" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </ListViewItem>
+
+                    <!-- 7. Appearance & Theme -->
                     <ListViewItem Tag="Appearance">
                         <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                             <FontIcon Glyph="&#xE790;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
@@ -1044,7 +1052,217 @@
                         </Border>
                     </StackPanel>
 
-                    <!-- ==================== 6. APPEARANCE & THEME SECTION ==================== -->
+                    <!-- ==================== 6. ONLINE LYRICS (PLUGINS) SECTION ==================== -->
+                    <StackPanel x:Name="Section_OnlineLyrics" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsOnlineLyricsCategorySelected), Mode=OneWay}" Spacing="0">
+                        <TextBlock Text="온라인 가사 (Online Lyrics)" Style="{StaticResource CategoryHeader}"/>
+
+                        <!-- Lookup Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="10">
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="온라인 가사 사용" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="오프라인 가사(.lrc · 임베디드)가 없을 때 플러그인으로 검색합니다" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <ToggleSwitch IsOn="{x:Bind ViewModel.OnlineLyrics.EnableOnline, Mode=TwoWay}" OnContent="사용" OffContent="사용 안 함"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="재생 시 자동 검색" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="트랙이 바뀔 때 플러그인 우선순위대로 자동으로 가사를 찾아 표시합니다" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <ToggleSwitch IsOn="{x:Bind ViewModel.OnlineLyrics.AutoFetchOnPlay, Mode=TwoWay}" OnContent="켬" OffContent="끔"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="동기 가사 우선" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="시간 동기(LRC) 가사와 일반 가사가 함께 있을 때 동기 가사를 우선 선택" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <ToggleSwitch IsOn="{x:Bind ViewModel.OnlineLyrics.PreferSynced, Mode=TwoWay}" OnContent="우선" OffContent="구분 없음"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Plugins Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="10">
+                                <Grid>
+                                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="가사 플러그인" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Style="{StaticResource SettingDesc}" TextWrapping="Wrap"
+                                                   Text="{x:Bind ViewModel.OnlineLyrics.PluginsFolder, Mode=OneWay}"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <Button Click="OnRescanPluginsClick" ToolTipService.ToolTip="플러그인 폴더를 다시 스캔합니다">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <FontIcon Glyph="&#xE72C;" FontSize="11"/>
+                                                <TextBlock Text="다시 스캔" FontSize="12"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Click="OnOpenPluginsFolderClick" ToolTipService.ToolTip="플러그인 폴더를 탐색기에서 엽니다">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <FontIcon Glyph="&#xE838;" FontSize="11"/>
+                                                <TextBlock Text="폴더 열기" FontSize="12"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Text="플러그인별 하위 폴더에 DLL을 넣으면 자동으로 인식됩니다. 목록 순서가 검색 우선순위입니다."
+                                           FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}" TextWrapping="Wrap"/>
+
+                                <TextBlock Text="설치된 플러그인이 없습니다. 폴더에 플러그인을 넣고 '다시 스캔'을 누르세요. 개발 방법은 docs/plugin-development.md를 참고하세요."
+                                           FontSize="12" Foreground="{ThemeResource TextSecondaryBrush}" TextWrapping="Wrap"
+                                           Visibility="{x:Bind BooleanToVisibilityNot(ViewModel.OnlineLyrics.HasPlugins), Mode=OneWay}"/>
+
+                                <ListView ItemsSource="{x:Bind ViewModel.OnlineLyrics.Plugins, Mode=OneWay}"
+                                          SelectionMode="None" IsItemClickEnabled="False">
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="ListViewItem">
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                            <Setter Property="Padding" Value="8,4"/>
+                                            <Setter Property="MinHeight" Value="0"/>
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:LyricsPluginItemVm">
+                                            <Grid ColumnSpacing="8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                                                    <Button Style="{StaticResource TransportButton}" Width="24" Height="24" Padding="0"
+                                                            Click="OnPluginMoveUpClick" Tag="{x:Bind}" AutomationProperties.Name="우선순위 올리기" ToolTipService.ToolTip="우선순위 올리기">
+                                                        <FontIcon Glyph="&#xE74A;" FontSize="10"/>
+                                                    </Button>
+                                                    <Button Style="{StaticResource TransportButton}" Width="24" Height="24" Padding="0"
+                                                            Click="OnPluginMoveDownClick" Tag="{x:Bind}" AutomationProperties.Name="우선순위 내리기" ToolTipService.ToolTip="우선순위 내리기">
+                                                        <FontIcon Glyph="&#xE74B;" FontSize="10"/>
+                                                    </Button>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{x:Bind Header}" FontSize="12.5" FontWeight="SemiBold"/>
+                                                    <TextBlock FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}">
+                                                        <Run Text="{x:Bind Author}"/> · <Run Text="{x:Bind SourceLabel}"/>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="2" IsOn="{x:Bind IsEnabled, Mode=TwoWay}" OnContent="사용" OffContent="사용 안 함"
+                                                              Toggled="OnPluginToggled" Tag="{x:Bind}" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+
+                                <TextBlock Text="{x:Bind ViewModel.OnlineLyrics.LoadErrorsText, Mode=OneWay}"
+                                           FontSize="11.5" Foreground="{ThemeResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Save Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="10">
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="가사 자동 저장" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="온라인에서 가져온 가사를 아래 위치와 템플릿으로 자동 저장합니다" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <ToggleSwitch IsOn="{x:Bind ViewModel.OnlineLyrics.AutoSave, Mode=TwoWay}" OnContent="저장" OffContent="저장 안 함"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="저장 위치" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="온라인 가사를 파일로 저장하는 기준 폴더" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <ComboBox Width="240" SelectedIndex="{x:Bind ViewModel.OnlineLyrics.SaveLocationIndex, Mode=TwoWay}">
+                                            <ComboBoxItem Content="음원과 같은 폴더"/>
+                                            <ComboBoxItem Content="지정 폴더"/>
+                                        </ComboBox>
+                                        <StackPanel Orientation="Horizontal" Spacing="6"
+                                                    Visibility="{x:Bind BooleanToVisibility(ViewModel.OnlineLyrics.IsCustomFolderSelected), Mode=OneWay}">
+                                            <TextBlock Text="{x:Bind ViewModel.OnlineLyrics.CustomSaveFolderLabel, Mode=OneWay}" FontSize="11.5"
+                                                       Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center" MaxWidth="140" TextTrimming="CharacterEllipsis"/>
+                                            <Button Content="폴더 선택..." FontSize="11.5" Click="OnPickLyricsSaveFolderClick"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="파일명 템플릿" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="변수: %filename% %title% %artist% %albumartist% %album% %year% %trackno% — 하위 폴더 경로 포함 가능 (예: %album%\%title%.lrc)" Style="{StaticResource SettingDesc}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <TextBox Width="240" FontFamily="Consolas" FontSize="12"
+                                                 Text="{x:Bind ViewModel.OnlineLyrics.SaveFileNameTemplate, Mode=TwoWay}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="기존 파일 덮어쓰기" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock Text="끔이면 이미 있는 .lrc 파일은 그대로 둡니다" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <ToggleSwitch IsOn="{x:Bind ViewModel.OnlineLyrics.OverwriteExisting, Mode=TwoWay}" OnContent="덮어씀" OffContent="건너뜀"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- ==================== 7. APPEARANCE & THEME SECTION ==================== -->
                     <StackPanel x:Name="Section_Appearance" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsAppearanceCategorySelected), Mode=OneWay}" Spacing="0">
                         <TextBlock Text="외관 &amp; 테마 (Theme &amp; Appearance)" Style="{StaticResource CategoryHeader}"/>
 
