@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>LrclibLyricsPlugin</RootNamespace>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DawnPlayer.Plugin.Abstractions\DawnPlayer.Plugin.Abstractions.csproj" />
+    <!-- netstandard2.0 does not include System.Text.Json; plugins bring their own dependencies. -->
+    <PackageReference Include="System.Text.Json" Version="10.0.11" />
+  </ItemGroup>
+
+</Project>

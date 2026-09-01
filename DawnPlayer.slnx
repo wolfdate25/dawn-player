@@ -2,6 +2,10 @@
   <Folder Name="/src/">
     <Project Path="src/DawnPlayer.App/DawnPlayer.App.csproj" />
     <Project Path="src/DawnPlayer.Core/DawnPlayer.Core.csproj" />
+    <Project Path="src/DawnPlayer.Plugin.Abstractions/DawnPlayer.Plugin.Abstractions.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/LrclibLyricsPlugin/LrclibLyricsPlugin.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/DawnPlayer.Tests/DawnPlayer.Tests.csproj" />

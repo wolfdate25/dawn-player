@@ -1,7 +1,7 @@
 # Dawn Player
 
 foobar2000의 기능성과 [Eole 테마](https://github.com/Ottodix/Eole-foobar-theme)의 디자인에서 영감을 받은
-네이티브 Windows 뮤직 플레이어 (WinUI 3 / .NET 8).
+네이티브 Windows 뮤직 플레이어 (WinUI 3 / .NET 10).
 
 ![release](https://img.shields.io/github/v/tag/wolfdate25/dawn-player?label=release&color=blue)
 
@@ -37,6 +37,9 @@ foobar2000의 기능성과 [Eole 테마](https://github.com/Ottodix/Eole-foobar-
 ### 가사
 - **.lrc 동기 가사** — 자동 검색(`음원파일명.lrc`, `아티스트 - 제목.lrc`, `제목.lrc` 및 사용자 패턴),
   현재 줄 강조 + 자동 스크롤, 줄 클릭 시크, ±0.5초 오프셋 조정
+- **온라인 가사 플러그인** — .NET DLL 플러그인으로 사이트별 가사 검색 지원 (개발 가이드: `docs/plugin-development.md`).
+  플러그인 우선순위 설정·재생 중 자동 검색(오프라인 가사 우선), 제목/아티스트/앨범 검색 창, 미리보기 후 적용,
+  온라인 가사를 오프라인 .lrc로 저장 — 저장 위치(음원 폴더/지정 폴더)와 파일명 템플릿(`%title%` 등 변수) 지원
 - 표준/멀티 타임스탬프/`[offset:]`/확장(단어 단위) LRC 지원, UTF-8/ANSI 자동 인식
 - **LRC 가사 에디터** — 줄 단위 타임스탬프 편집/동기화, 줄 순서 이동, 클립보드에서 가사 가져오기
 
@@ -52,13 +55,13 @@ foobar2000의 기능성과 [Eole 테마](https://github.com/Ottodix/Eole-foobar-
 
 ## 빌드 및 실행
 
-요구 사항: .NET SDK 10 (`global.json`으로 고정 — `.slnx` 솔루션 형식은 SDK 9.0.2xx 이상이 필요합니다.
-대상 프레임워크는 net8.0이므로 .NET 8 런타임도 함께 설치되어 있어야 합니다), Windows 10 19041 이상
+요구 사항: .NET SDK 10 (`global.json`으로 고정 — `.slnx` 솔루션 형식은 SDK 9.0.2xx 이상이 필요합니다),
+Windows 10 19041 이상
 
 ```powershell
 dotnet build DawnPlayer.slnx -c Debug
 # 실행
-src/DawnPlayer.App/bin/Debug/net8.0-windows10.0.19041.0/win-x64/DawnPlayer.App.exe
+src/DawnPlayer.App/bin/Debug/net10.0-windows10.0.19041.0/win-x64/DawnPlayer.App.exe
 ```
 
 언패키지드(비 MSIX) + Windows App SDK 셀프 컨테인드로 빌드되어 별도 런타임 설치 없이 exe를 바로
