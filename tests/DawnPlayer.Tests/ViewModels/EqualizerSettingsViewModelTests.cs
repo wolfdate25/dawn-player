@@ -10,7 +10,7 @@ namespace DawnPlayer.Tests.ViewModels;
 
 public sealed class EqualizerSettingsViewModelTests
 {
-    private (EqualizerSettingsViewModel ViewModel, AppSettings Settings, EqSettingsService EqService, AudioSettingsService AudioService) CreateViewModel(bool isExclusive = false)
+    private static (EqualizerSettingsViewModel ViewModel, AppSettings Settings, EqSettingsService EqService, AudioSettingsService AudioService) CreateViewModel(bool isExclusive = false)
     {
         var settings = new AppSettings();
         settings.Equalizer.EnsureDefaultProfile();

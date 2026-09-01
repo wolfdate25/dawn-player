@@ -98,7 +98,7 @@ public class LibraryAndPlaybackConcurrencyTests
                     catch (OperationCanceledException) when (cts.IsCancellationRequested) { }
                     catch (Exception ex)
                     {
-                        exceptions.Add(new Exception($"Scan worker {workerId} failed at iter {iter}", ex));
+                        exceptions.Add(new InvalidOperationException($"Scan worker {workerId} failed at iter {iter}", ex));
                     }
                 }
             })).ToList();
@@ -123,7 +123,7 @@ public class LibraryAndPlaybackConcurrencyTests
                     }
                     catch (Exception ex)
                     {
-                        exceptions.Add(new Exception($"Read worker {workerId} failed at iter {iter}", ex));
+                        exceptions.Add(new InvalidOperationException($"Read worker {workerId} failed at iter {iter}", ex));
                     }
                     Thread.Yield();
                 }
@@ -384,7 +384,7 @@ public class LibraryAndPlaybackConcurrencyTests
                     }
                     catch (Exception ex)
                     {
-                        exceptions.Add(new Exception($"Worker {workerId} failed at op {op}", ex));
+                        exceptions.Add(new InvalidOperationException($"Worker {workerId} failed at op {op}", ex));
                     }
                     await Task.Yield();
                 }

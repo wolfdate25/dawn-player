@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using DawnPlayer.App.Controls;
 using DawnPlayer.Core.Audio;
 using DawnPlayer.Core.Models;
+using DawnPlayer.Core.Persistence;
 using DawnPlayer.Core.Playlists;
 using Xunit;
 
@@ -393,7 +394,7 @@ public class ControlsCalculatorTests
         Assert.True(QueuePopupController.ShouldShowBadge(controller.Entries.Count));
 
         // Clear queue
-        controller.RequestClear(queue);
+        QueuePopupController.RequestClear(queue);
         Assert.Equal(0, queue.Count);
 
         controller.SyncFromQueue(queue.Entries);
@@ -443,29 +444,29 @@ public class ControlsCalculatorTests
         queue.Enqueue(playlist, items);
 
         // Boundary/invalid 1-based indices
-        controller.RequestRemoveAt(queue, int.MinValue);
-        controller.RequestRemoveAt(queue, -100);
-        controller.RequestRemoveAt(queue, 0);
-        controller.RequestRemoveAt(queue, 4); // count is 3
-        controller.RequestRemoveAt(queue, 100);
-        controller.RequestRemoveAt(queue, int.MaxValue);
+        QueuePopupController.RequestRemoveAt(queue, int.MinValue);
+        QueuePopupController.RequestRemoveAt(queue, -100);
+        QueuePopupController.RequestRemoveAt(queue, 0);
+        QueuePopupController.RequestRemoveAt(queue, 4); // count is 3
+        QueuePopupController.RequestRemoveAt(queue, 100);
+        QueuePopupController.RequestRemoveAt(queue, int.MaxValue);
 
         Assert.Equal(3, queue.Count);
 
         // Valid removals at boundaries: last element (3), then first element (1)
-        controller.RequestRemoveAt(queue, 3); // removes "C"
+        QueuePopupController.RequestRemoveAt(queue, 3); // removes "C"
         Assert.Equal(2, queue.Count);
         Assert.Equal("B", queue.Entries[1].Title);
 
-        controller.RequestRemoveAt(queue, 1); // removes "A"
+        QueuePopupController.RequestRemoveAt(queue, 1); // removes "A"
         Assert.Equal(1, queue.Count);
         Assert.Equal("B", queue.Entries[0].Title);
 
-        controller.RequestRemoveAt(queue, 1); // removes "B"
+        QueuePopupController.RequestRemoveAt(queue, 1); // removes "B"
         Assert.Equal(0, queue.Count);
 
         // Removing from empty queue
-        controller.RequestRemoveAt(queue, 1);
+        QueuePopupController.RequestRemoveAt(queue, 1);
         Assert.Equal(0, queue.Count);
     }
 
@@ -531,7 +532,7 @@ public class ControlsCalculatorTests
     }
 
     [Fact]
-    public void AudioFormatBadgeFormatter_FormatBadgeText_HighResAndOddSampleRates()
+    public void AudioFormatBadgeFormatter_FormatTrackBadgeText_HighResAndOddSampleRates()
     {
         // 1. DXD / Extreme Hi-Res: 32-bit 384kHz
         var dxdTrack = new Track
@@ -540,8 +541,7 @@ public class ControlsCalculatorTests
             BitsPerSample = 32,
             SampleRate = 384000
         };
-        var session = new SessionInfo("DAC", true, "32-bit 384000Hz", 100);
-        Assert.Equal("FLAC · 32bit/384kHz · WASAPI 배타", AudioFormatBadgeFormatter.FormatBadgeText(dxdTrack, session));
+        Assert.Equal("FLAC · 32bit/384kHz", AudioFormatBadgeFormatter.FormatTrackBadgeText(dxdTrack));
 
         // 2. Fractional kHz: 24-bit 88.2kHz
         var hiRes88 = new Track
@@ -550,7 +550,7 @@ public class ControlsCalculatorTests
             BitsPerSample = 24,
             SampleRate = 88200
         };
-        Assert.Equal("FLAC · 24bit/88.2kHz · WASAPI 배타", AudioFormatBadgeFormatter.FormatBadgeText(hiRes88, session));
+        Assert.Equal("FLAC · 24bit/88.2kHz", AudioFormatBadgeFormatter.FormatTrackBadgeText(hiRes88));
 
         // 3. Fractional kHz: 16-bit 44.1kHz
         var cd44 = new Track
@@ -559,7 +559,7 @@ public class ControlsCalculatorTests
             BitsPerSample = 16,
             SampleRate = 44100
         };
-        Assert.Equal("FLAC · 16bit/44.1kHz · WASAPI 배타", AudioFormatBadgeFormatter.FormatBadgeText(cd44, session));
+        Assert.Equal("FLAC · 16bit/44.1kHz", AudioFormatBadgeFormatter.FormatTrackBadgeText(cd44));
 
         // 4. Low sample rate: 16-bit 11.025kHz
         var lowRate = new Track
@@ -568,7 +568,7 @@ public class ControlsCalculatorTests
             BitsPerSample = 16,
             SampleRate = 11025
         };
-        Assert.Equal("WAV · 16bit/11.0kHz · WASAPI 배타", AudioFormatBadgeFormatter.FormatBadgeText(lowRate, session));
+        Assert.Equal("WAV · 16bit/11.0kHz", AudioFormatBadgeFormatter.FormatTrackBadgeText(lowRate));
 
         // 5. Zero bits per sample with valid sample rate (e.g. lossy AAC stream)
         var aacStream = new Track
@@ -577,7 +577,7 @@ public class ControlsCalculatorTests
             BitsPerSample = 0,
             SampleRate = 48000
         };
-        Assert.Equal("AAC · 48kHz · WASAPI 배타", AudioFormatBadgeFormatter.FormatBadgeText(aacStream, session));
+        Assert.Equal("AAC · 48kHz", AudioFormatBadgeFormatter.FormatTrackBadgeText(aacStream));
 
         // 6. Zero sample rate with bitrate only
         var mp3BitrateOnly = new Track
@@ -587,15 +587,15 @@ public class ControlsCalculatorTests
             SampleRate = 0,
             BitrateKbps = 320
         };
-        Assert.Equal("MP3 · 320kbps · WASAPI 배타", AudioFormatBadgeFormatter.FormatBadgeText(mp3BitrateOnly, session));
+        Assert.Equal("MP3 · 320kbps", AudioFormatBadgeFormatter.FormatTrackBadgeText(mp3BitrateOnly));
     }
 
     [Fact]
-    public void AudioFormatBadgeFormatter_FormatBadgeText_NullsAndZeroValues()
+    public void AudioFormatBadgeFormatter_FormatTrackBadgeText_NullsAndZeroValues()
     {
-        // Empty track (all zeros / nulls) + null session
+        // Empty track (all zeros / nulls)
         var emptyTrack = new Track();
-        Assert.Equal("", AudioFormatBadgeFormatter.FormatBadgeText(emptyTrack, null));
+        Assert.Equal("", AudioFormatBadgeFormatter.FormatTrackBadgeText(emptyTrack));
 
         // Track with negative values
         var negTrack = new Track
@@ -604,15 +604,33 @@ public class ControlsCalculatorTests
             SampleRate = -44100,
             BitrateKbps = -320
         };
-        Assert.Equal("", AudioFormatBadgeFormatter.FormatBadgeText(negTrack, null));
+        Assert.Equal("", AudioFormatBadgeFormatter.FormatTrackBadgeText(negTrack));
 
         // Track with path fallback only
         var pathTrack = new Track { Path = "D:\\Songs\\test.flac" };
-        Assert.Equal("FLAC", AudioFormatBadgeFormatter.FormatBadgeText(pathTrack, null));
+        Assert.Equal("FLAC", AudioFormatBadgeFormatter.FormatTrackBadgeText(pathTrack));
 
-        // Session only
-        var sharedSession = new SessionInfo("Default", false, "16-bit 44100Hz", 50);
-        Assert.Equal("공유", AudioFormatBadgeFormatter.FormatBadgeText(null, sharedSession));
+        // Null track
+        Assert.Equal("", AudioFormatBadgeFormatter.FormatTrackBadgeText(null));
+    }
+
+    [Fact]
+    public void AudioFormatBadgeFormatter_FormatOutputBadgeText_DriverAndDeviceCombinations()
+    {
+        var session = new SessionInfo("DAC", true, "32-bit 384000Hz", 100, AudioDriverType.Wasapi);
+        Assert.Equal("WASAPI 배타 · DAC", AudioFormatBadgeFormatter.FormatOutputBadgeText(session));
+
+        var sharedSession = new SessionInfo("Default", false, "16-bit 44100Hz", 50, AudioDriverType.Wasapi);
+        Assert.Equal("WASAPI 공유 · Default", AudioFormatBadgeFormatter.FormatOutputBadgeText(sharedSession));
+
+        var dsSession = new SessionInfo("스피커", false, "32-bit float", 50, AudioDriverType.DirectSound);
+        Assert.Equal("DirectSound · 스피커", AudioFormatBadgeFormatter.FormatOutputBadgeText(dsSession));
+
+        var waveSession = new SessionInfo("헤드폰", false, "16-bit", 50, AudioDriverType.WaveOut);
+        Assert.Equal("WaveOut · 헤드폰", AudioFormatBadgeFormatter.FormatOutputBadgeText(waveSession));
+
+        var nullSession = (SessionInfo?)null;
+        Assert.Equal("", AudioFormatBadgeFormatter.FormatOutputBadgeText(nullSession));
     }
 
     [Theory]

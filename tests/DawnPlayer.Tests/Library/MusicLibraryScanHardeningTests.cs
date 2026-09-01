@@ -113,10 +113,10 @@ public sealed class MusicLibraryScanHardeningTests
             File.WriteAllBytes(cover, new byte[] { 1, 2, 3 });
 
             var memo = new ConcurrentDictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
-            var first = AlbumArtService.FindFolderArt(Path.Combine(root, "01.flac"), memo);
+        var first = AlbumArtService.FindFolderArt(Path.Combine(root, "01.flac"), memo);
 
-            Assert.Equal(cover, first);
-            Assert.Equal(1, memo.Count);
+        Assert.Equal(cover, first);
+        Assert.Single(memo);
 
             // Removing the cover makes a fresh probe observable: the memoized calls must keep
             // returning the first answer, and no second directory entry may appear.
@@ -126,8 +126,8 @@ public sealed class MusicLibraryScanHardeningTests
             {
                 Assert.Equal(cover, AlbumArtService.FindFolderArt(Path.Combine(root, $"{i:D2}.flac"), memo));
             }
-            Assert.Equal(cover, TagReader.FindFolderArt(Path.Combine(root, "06.flac"), memo));
-            Assert.Equal(1, memo.Count);
+        Assert.Equal(cover, TagReader.FindFolderArt(Path.Combine(root, "06.flac"), memo));
+        Assert.Single(memo);
 
             Assert.Null(AlbumArtService.FindFolderArt(Path.Combine(root, "01.flac"), null));
         }

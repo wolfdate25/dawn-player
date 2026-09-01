@@ -205,8 +205,8 @@ public class PlaybackLifecycleTests
     {
         public WaveFormat WaveFormat { get; }
         public volatile bool IsPaused;
-        public int RealReadCount = 0;
-        public int SilenceReadCount = 0;
+        public int RealReadCount;
+        public int SilenceReadCount;
 
         public TestCountingSampleProvider(WaveFormat fmt) => WaveFormat = fmt;
 

@@ -10,6 +10,8 @@ namespace DawnPlayer.Tests;
 
 public class ComprehensiveSettingsPersistenceTests
 {
+    private static readonly JsonSerializerOptions IndentedJsonOptions = new() { WriteIndented = true };
+
     [Fact]
     public void TestAllOutputSettingsRoundtripPersistence()
     {
@@ -21,7 +23,7 @@ public class ComprehensiveSettingsPersistenceTests
         settings.Output.LatencyMs = 240;
         settings.Output.AllowVolumeInExclusive = true;
 
-        var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(settings, IndentedJsonOptions);
         var loaded = JsonSerializer.Deserialize<AppSettings>(json);
 
         Assert.NotNull(loaded);
@@ -53,7 +55,7 @@ public class ComprehensiveSettingsPersistenceTests
             new() { PlaylistName = "Default", TrackPath = @"C:\Music\song2.mp3" }
         };
 
-        var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(settings, IndentedJsonOptions);
         var loaded = JsonSerializer.Deserialize<AppSettings>(json);
 
         Assert.NotNull(loaded);
@@ -98,7 +100,7 @@ public class ComprehensiveSettingsPersistenceTests
         settings.Ui.LibrarySelectedFilterValue = @"H:\Music\OST";
         settings.Ui.LibrarySelectedFilterExtra = "ExtraData";
 
-        var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(settings, IndentedJsonOptions);
         var loaded = JsonSerializer.Deserialize<AppSettings>(json);
 
         Assert.NotNull(loaded);
@@ -205,7 +207,7 @@ public class ComprehensiveSettingsPersistenceTests
 
         settings.Equalizer.DeviceBindings["wasapi:{0.0.0.00000000}.{custom-endpoint}"] = "prof-hd600";
 
-        var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(settings, IndentedJsonOptions);
         var loaded = JsonSerializer.Deserialize<AppSettings>(json);
 
         Assert.NotNull(loaded);

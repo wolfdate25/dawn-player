@@ -109,7 +109,7 @@ public sealed class SeekbarLyricsAndQueueInteractionTests
         Assert.Equal("5", QueuePopupController.FormatBadgeText(5));
         Assert.Equal("99+", QueuePopupController.FormatBadgeText(150));
 
-        controller.RequestRemoveAt(queue, 1);
+        QueuePopupController.RequestRemoveAt(queue, 1);
         Assert.Equal(1, queue.Count);
         Assert.Equal("Song 2", queue.Entries[0].Title);
     }

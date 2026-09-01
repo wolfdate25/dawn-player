@@ -14,7 +14,7 @@ namespace DawnPlayer.Tests.ViewModels;
 
 public sealed class AdversarialEqAndSettingsStressTests
 {
-    private (SettingsViewModel ViewModel, AppSettings Settings, EqSettingsService EqService, AudioSettingsService AudioService) CreateMasterViewModel(bool isExclusive = false)
+    private static (SettingsViewModel ViewModel, AppSettings Settings, EqSettingsService EqService, AudioSettingsService AudioService) CreateMasterViewModel(bool isExclusive = false)
     {
         var settings = new AppSettings();
         settings.Equalizer.EnsureDefaultProfile();

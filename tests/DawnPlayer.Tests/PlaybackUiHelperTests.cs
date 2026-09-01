@@ -102,11 +102,11 @@ public class PlaybackUiHelperTests
         queue.Enqueue(playlist, items);
         Assert.Equal(2, queue.Count);
 
-        controller.RequestClear(queue);
+        QueuePopupController.RequestClear(queue);
         Assert.Equal(0, queue.Count);
 
         // Safe with null
-        controller.RequestClear(null);
+        QueuePopupController.RequestClear(null);
     }
 
     [Fact]
@@ -125,17 +125,17 @@ public class PlaybackUiHelperTests
         Assert.Equal(3, queue.Count);
 
         // Remove 2nd item ("Song 2") via 1-based index 2
-        controller.RequestRemoveAt(queue, 2);
+        QueuePopupController.RequestRemoveAt(queue, 2);
 
         Assert.Equal(2, queue.Count);
         Assert.Equal("Song 1", queue.Entries[0].Title);
         Assert.Equal("Song 3", queue.Entries[1].Title);
 
         // Invalid indices (0, -1, 10) should safely no-op
-        controller.RequestRemoveAt(queue, 0);
-        controller.RequestRemoveAt(queue, -1);
-        controller.RequestRemoveAt(queue, 10);
-        controller.RequestRemoveAt(null, 1);
+        QueuePopupController.RequestRemoveAt(queue, 0);
+        QueuePopupController.RequestRemoveAt(queue, -1);
+        QueuePopupController.RequestRemoveAt(queue, 10);
+        QueuePopupController.RequestRemoveAt(null, 1);
         Assert.Equal(2, queue.Count);
     }
 
@@ -312,25 +312,19 @@ public class PlaybackUiHelperTests
     }
 
     [Theory]
-    [InlineData(true, "WASAPI 배타")]
-    [InlineData(false, "공유")]
-    public void AudioFormatBadgeFormatter_GetSessionMode_ReturnsCorrectLabel(bool exclusive, string expected)
+    [InlineData(AudioDriverType.Wasapi, true, "WASAPI 배타")]
+    [InlineData(AudioDriverType.Wasapi, false, "WASAPI 공유")]
+    [InlineData(AudioDriverType.DirectSound, true, "DirectSound")]
+    [InlineData(AudioDriverType.DirectSound, false, "DirectSound")]
+    [InlineData(AudioDriverType.WaveOut, true, "WaveOut")]
+    [InlineData(AudioDriverType.WaveOut, false, "WaveOut")]
+    public void AudioFormatBadgeFormatter_GetDriverLabel_ReturnsCorrectLabel(AudioDriverType driver, bool exclusive, string expected)
     {
-        Assert.Equal(expected, AudioFormatBadgeFormatter.GetSessionMode(exclusive));
+        Assert.Equal(expected, AudioFormatBadgeFormatter.GetDriverLabel(driver, exclusive));
     }
 
     [Fact]
-    public void AudioFormatBadgeFormatter_FormatBadgeText_StringOverload()
-    {
-        Assert.Equal("FLAC · WASAPI 배타", AudioFormatBadgeFormatter.FormatBadgeText("FLAC", "WASAPI 배타"));
-        Assert.Equal("FLAC", AudioFormatBadgeFormatter.FormatBadgeText("FLAC", ""));
-        Assert.Equal("WASAPI 배타", AudioFormatBadgeFormatter.FormatBadgeText("", "WASAPI 배타"));
-        Assert.Equal("", AudioFormatBadgeFormatter.FormatBadgeText("", ""));
-        Assert.Equal("", AudioFormatBadgeFormatter.FormatBadgeText((string?)null, (string?)null));
-    }
-
-    [Fact]
-    public void AudioFormatBadgeFormatter_FormatBadgeText_TrackAndSession()
+    public void AudioFormatBadgeFormatter_FormatTrackBadgeText_FormatsTrackDetails()
     {
         var track = new Track
         {
@@ -338,23 +332,42 @@ public class PlaybackUiHelperTests
             BitsPerSample = 24,
             SampleRate = 96000
         };
-        var session = new SessionInfo("Speakers", true, "24-bit 96000Hz", 50);
-
-        var result = AudioFormatBadgeFormatter.FormatBadgeText(track, session);
-        Assert.Equal("FLAC · 24bit/96kHz · WASAPI 배타", result);
+        Assert.Equal("FLAC · 24bit/96kHz", AudioFormatBadgeFormatter.FormatTrackBadgeText(track));
 
         var mp3Track = new Track
         {
             Codec = "MP3",
             BitrateKbps = 320
         };
-        var sharedSession = new SessionInfo("Speakers", false, "16-bit 44100Hz", 50);
-        var mp3Result = AudioFormatBadgeFormatter.FormatBadgeText(mp3Track, sharedSession);
-        Assert.Equal("MP3 · 320kbps · 공유", mp3Result);
+        Assert.Equal("MP3 · 320kbps", AudioFormatBadgeFormatter.FormatTrackBadgeText(mp3Track));
 
         // Null handling
-        Assert.Equal("WASAPI 배타", AudioFormatBadgeFormatter.FormatBadgeText(null, session));
-        Assert.Equal("", AudioFormatBadgeFormatter.FormatBadgeText((Track?)null, (SessionInfo?)null));
+        Assert.Equal("", AudioFormatBadgeFormatter.FormatTrackBadgeText(null));
+    }
+
+    [Fact]
+    public void AudioFormatBadgeFormatter_FormatOutputBadgeText_FormatsDriverAndDevice()
+    {
+        var wasapiEx = new SessionInfo("스피커 (Realtek Audio)", true, "24-bit 96000Hz", 50, AudioDriverType.Wasapi);
+        Assert.Equal("WASAPI 배타 · 스피커 (Realtek Audio)", AudioFormatBadgeFormatter.FormatOutputBadgeText(wasapiEx));
+
+        var wasapiShared = new SessionInfo("스피커", false, "16-bit 44100Hz", 50, AudioDriverType.Wasapi);
+        Assert.Equal("WASAPI 공유 · 스피커", AudioFormatBadgeFormatter.FormatOutputBadgeText(wasapiShared));
+
+        var directSound = new SessionInfo("스피커", false, "32-bit float", 50, AudioDriverType.DirectSound);
+        Assert.Equal("DirectSound · 스피커", AudioFormatBadgeFormatter.FormatOutputBadgeText(directSound));
+
+        var waveOut = new SessionInfo("스피커", false, "16-bit", 50, AudioDriverType.WaveOut);
+        Assert.Equal("WaveOut · 스피커", AudioFormatBadgeFormatter.FormatOutputBadgeText(waveOut));
+
+        var noDeviceName = new SessionInfo("", false, "16-bit", 50, AudioDriverType.DirectSound);
+        Assert.Equal("DirectSound", AudioFormatBadgeFormatter.FormatOutputBadgeText(noDeviceName));
+
+        var nullDeviceName = new SessionInfo(null!, false, "16-bit", 50, AudioDriverType.WaveOut);
+        Assert.Equal("WaveOut", AudioFormatBadgeFormatter.FormatOutputBadgeText(nullDeviceName));
+
+        // Null handling
+        Assert.Equal("", AudioFormatBadgeFormatter.FormatOutputBadgeText(null));
     }
 
     [Theory]
@@ -566,7 +579,7 @@ public class PlaybackUiHelperTests
         // Remove from the middle repeatedly
         for (int i = 0; i < 100; i++)
         {
-            controller.RequestRemoveAt(queue, 50);
+            QueuePopupController.RequestRemoveAt(queue, 50);
         }
         Assert.Equal(400, queue.Count);
 
@@ -605,25 +618,25 @@ public class PlaybackUiHelperTests
     [Fact]
     public void AudioFormatBadgeFormatter_VariousAudioSpecs_FormatsCleanBadges()
     {
-        // 1. 44.1kHz 16-bit FLAC with Exclusive
+        // 1. 44.1kHz 16-bit FLAC
         var track44 = new Track
         {
             Codec = "FLAC",
             BitsPerSample = 16,
             SampleRate = 44100
         };
-        var res44 = AudioFormatBadgeFormatter.FormatBadgeText(track44, new SessionInfo("Dev", true, "16-bit 44.1kHz", 20));
-        Assert.Equal("FLAC · 16bit/44.1kHz · WASAPI 배타", res44);
+        var res44 = AudioFormatBadgeFormatter.FormatTrackBadgeText(track44);
+        Assert.Equal("FLAC · 16bit/44.1kHz", res44);
 
-        // 2. 192kHz 24-bit WAV with Shared
+        // 2. 192kHz 24-bit WAV
         var track192 = new Track
         {
             Codec = "WAV",
             BitsPerSample = 24,
             SampleRate = 192000
         };
-        var res192 = AudioFormatBadgeFormatter.FormatBadgeText(track192, new SessionInfo("Dev", false, "24-bit 192kHz", 50));
-        Assert.Equal("WAV · 24bit/192kHz · 공유", res192);
+        var res192 = AudioFormatBadgeFormatter.FormatTrackBadgeText(track192);
+        Assert.Equal("WAV · 24bit/192kHz", res192);
 
         // 3. Track with only SampleRate
         var trackOnlySr = new Track
@@ -631,7 +644,7 @@ public class PlaybackUiHelperTests
             Codec = "AAC",
             SampleRate = 48000
         };
-        var resSr = AudioFormatBadgeFormatter.FormatBadgeText(trackOnlySr, null);
+        var resSr = AudioFormatBadgeFormatter.FormatTrackBadgeText(trackOnlySr);
         Assert.Equal("AAC · 48kHz", resSr);
 
         // 4. Track with only Bitrate
@@ -640,7 +653,7 @@ public class PlaybackUiHelperTests
             Codec = "MP3",
             BitrateKbps = 256
         };
-        var resBr = AudioFormatBadgeFormatter.FormatBadgeText(trackOnlyBr, null);
+        var resBr = AudioFormatBadgeFormatter.FormatTrackBadgeText(trackOnlyBr);
         Assert.Equal("MP3 · 256kbps", resBr);
     }
 

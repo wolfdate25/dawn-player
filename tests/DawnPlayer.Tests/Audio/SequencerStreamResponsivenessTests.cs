@@ -60,7 +60,7 @@ public sealed class SequencerStreamResponsivenessTests
 
         public void Dispose() => Disposed = true;
 
-        private sealed class BlockingSamples : ISampleProvider
+        private sealed class BlockingSamples : ISampleProvider, IDisposable
         {
             private readonly ManualResetEventSlim _gate = new(false);
             public readonly ManualResetEventSlim Entered = new(false);
@@ -69,6 +69,12 @@ public sealed class SequencerStreamResponsivenessTests
             public WaveFormat WaveFormat { get; }
 
             public void Release() => _gate.Set();
+
+            public void Dispose()
+            {
+                _gate.Dispose();
+                Entered.Dispose();
+            }
 
             public int Read(float[] buffer, int offset, int count)
             {

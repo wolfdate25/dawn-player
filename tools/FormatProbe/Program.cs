@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using DawnPlayer.Core.Audio;
 using DawnPlayer.Core.Persistence;
@@ -114,7 +115,7 @@ internal static class Program
                 }
                 catch (Exception ex)
                 {
-                    var hr = ex.HResult.ToString("X8");
+                    var hr = ex.HResult.ToString("X8", CultureInfo.InvariantCulture);
                     result = $"EX:{ex.Message.Split('\n')[0]}({hr})";
                 }
                 Console.Write($"{result,10}");

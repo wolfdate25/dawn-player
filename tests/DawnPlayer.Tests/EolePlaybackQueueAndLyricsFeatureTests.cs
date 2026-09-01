@@ -327,8 +327,10 @@ public sealed class EolePlaybackQueueAndLyricsFeatureTests
         group.Items.Add(pi1);
         group.Items.Add(pi2);
 
-        // Test IReadOnlyList properties
+        // Test IReadOnlyList properties — assigning through the interface is the point.
+#pragma warning disable CA1859
         IReadOnlyList<PlaylistItem> readOnlyList = group;
+#pragma warning restore CA1859
         Assert.Equal(2, readOnlyList.Count);
         Assert.Same(pi1, readOnlyList[0]);
         Assert.Same(pi2, readOnlyList[1]);

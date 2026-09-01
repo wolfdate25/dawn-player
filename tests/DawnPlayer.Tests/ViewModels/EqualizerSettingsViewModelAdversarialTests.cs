@@ -12,7 +12,7 @@ namespace DawnPlayer.Tests.ViewModels;
 
 public sealed class EqualizerSettingsViewModelAdversarialTests
 {
-    private (EqualizerSettingsViewModel ViewModel, AppSettings Settings, EqSettingsService EqService, AudioSettingsService AudioService) CreateViewModel(bool isExclusive = false)
+    private static (EqualizerSettingsViewModel ViewModel, AppSettings Settings, EqSettingsService EqService, AudioSettingsService AudioService) CreateViewModel(bool isExclusive = false)
     {
         var settings = new AppSettings();
         settings.Equalizer.EnsureDefaultProfile();
@@ -585,7 +585,7 @@ public sealed class EqualizerSettingsViewModelAdversarialTests
         Assert.Equal(2, vm.VisualizerData.BandPins.Count);
 
         // 5. Switch back to Default Profile
-        string defaultId = vm.Profiles.First().Id;
+        string defaultId = vm.Profiles[0].Id;
         vm.SelectedProfile = vm.Profiles.First(p => p.Id == defaultId);
         Assert.True(vm.VisualizerData.IsEnabled);
         Assert.Single(vm.VisualizerData.BandPins);

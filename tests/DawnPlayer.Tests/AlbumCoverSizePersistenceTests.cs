@@ -9,6 +9,8 @@ namespace DawnPlayer.Tests;
 
 public class AlbumCoverSizePersistenceTests
 {
+    private static readonly JsonSerializerOptions IndentedJsonOptions = new() { WriteIndented = true };
+
     [Theory]
     [InlineData(80.0)]
     [InlineData(100.0)]
@@ -21,7 +23,7 @@ public class AlbumCoverSizePersistenceTests
         var settings = new AppSettings();
         settings.Ui.AlbumCoverSize = coverSize;
 
-        var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(settings, IndentedJsonOptions);
         var restored = JsonSerializer.Deserialize<AppSettings>(json);
 
         Assert.NotNull(restored);

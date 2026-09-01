@@ -1,5 +1,8 @@
+using System.Threading.Tasks;
 using DawnPlayer.Core.Audio;
+using DawnPlayer.Core.Library;
 using DawnPlayer.Core.Models;
+using DawnPlayer.Core.Persistence;
 using DawnPlayer.Core.Playlists;
 using NAudio.Wave;
 
@@ -126,5 +129,98 @@ public class PlaybackRestartTests : IDisposable
         var pending = MakePending(pl, item, reader);
 
         Assert.Null(pending.StartPosition);
+    }
+
+    [Fact]
+    [Trait("Category", "RequiresAudio")]
+    public async Task PlaybackController_RestartIfPlaying_MaintainsContinuousPosition_WithoutZeroReset()
+    {
+        var path = CreateWav("restart_continuity.wav", 15);
+        using var lib = new MusicLibrary();
+        var pm = new PlaylistManager(lib);
+        var pl = pm.CreatePlaylist("RestartTest");
+        var settings = new AppSettings { Output = new OutputSettings { DriverType = AudioDriverType.DirectSound } };
+        using var controller = new PlaybackController(settings, pm);
+
+        var item = new PlaylistItem(new Track { Path = path, Title = "restart_continuity", DurationMs = 15000 });
+        pl.Items.Add(item);
+
+        await controller.PlayAsync(pl, item);
+
+        // Wait until playback reaches at least 1.5s
+        var timeout = DateTime.UtcNow.AddSeconds(5);
+        while (controller.Position < TimeSpan.FromSeconds(1.5) && DateTime.UtcNow < timeout)
+        {
+            await Task.Delay(50);
+        }
+
+        if (controller.State != DawnPlayer.Core.Audio.PlaybackState.Playing || controller.Position < TimeSpan.FromSeconds(1.0))
+        {
+            // DirectSound output unavailable in headless environment
+            return;
+        }
+
+        var posBefore = controller.Position;
+        bool droppedToZero = false;
+        bool droppedSignificantly = false;
+
+        // Change device setting and trigger restart
+        settings.Output.DeviceId = Guid.NewGuid().ToString();
+        controller.RestartIfPlaying();
+
+        // High frequency poll during session rebuild window (~2 seconds)
+        var pollEnd = DateTime.UtcNow.AddSeconds(2);
+        while (DateTime.UtcNow < pollEnd)
+        {
+            var pos = controller.Position;
+            if (pos == TimeSpan.Zero)
+            {
+                droppedToZero = true;
+            }
+            if (pos < posBefore - TimeSpan.FromSeconds(0.5))
+            {
+                droppedSignificantly = true;
+            }
+            await Task.Delay(1);
+        }
+
+        Assert.False(droppedToZero, "controller.Position should not drop to zero during session rebuild");
+        Assert.False(droppedSignificantly, $"controller.Position should not drop below {posBefore - TimeSpan.FromSeconds(0.5)}");
+        Assert.True(controller.Position >= posBefore - TimeSpan.FromSeconds(0.5), "position after restart should be continuous");
+    }
+
+    [Fact]
+    [Trait("Category", "RequiresAudio")]
+    public async Task PlaybackController_Stop_ResetsPositionToZero_HeldPositionDoesNotLeak()
+    {
+        var path = CreateWav("stop_reset.wav", 10);
+        using var lib = new MusicLibrary();
+        var pm = new PlaylistManager(lib);
+        var pl = pm.CreatePlaylist("StopTest");
+        var settings = new AppSettings { Output = new OutputSettings { DriverType = AudioDriverType.DirectSound } };
+        using var controller = new PlaybackController(settings, pm);
+
+        var item = new PlaylistItem(new Track { Path = path, Title = "stop_reset", DurationMs = 10000 });
+        pl.Items.Add(item);
+
+        await controller.PlayAsync(pl, item);
+
+        var timeout = DateTime.UtcNow.AddSeconds(5);
+        while (controller.Position < TimeSpan.FromSeconds(0.5) && DateTime.UtcNow < timeout)
+        {
+            await Task.Delay(50);
+        }
+
+        if (controller.State != DawnPlayer.Core.Audio.PlaybackState.Playing)
+        {
+            return;
+        }
+
+        Assert.True(controller.Position > TimeSpan.Zero);
+
+        controller.Stop();
+
+        Assert.Equal(DawnPlayer.Core.Audio.PlaybackState.Stopped, controller.State);
+        Assert.Equal(TimeSpan.Zero, controller.Position);
     }
 }

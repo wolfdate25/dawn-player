@@ -10,7 +10,7 @@ namespace DawnPlayer.Tests.Audio;
 /// </summary>
 public sealed class AudioErrorMessagesTests
 {
-    private static Exception WithHResult(int hr) => new InvalidOperationException("driver said no") { HResult = hr };
+    private static InvalidOperationException WithHResult(int hr) => new InvalidOperationException("driver said no") { HResult = hr };
 
     [Theory]
     [InlineData(WasapiDeviceService.AudclntDeviceInUse, "배타")]

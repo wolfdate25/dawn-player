@@ -73,10 +73,10 @@ public sealed class DawnPlayerE2ETests
     {
         var relative = new[]
         {
-            @"..\..\..\..\..\src\DawnPlayer.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\DawnPlayer.App.exe",
-            @"..\..\..\..\src\DawnPlayer.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\DawnPlayer.App.exe",
-            @"..\..\..\..\..\src\DawnPlayer.App\bin\Release\net8.0-windows10.0.19041.0\win-x64\DawnPlayer.App.exe",
-            @"..\..\..\..\src\DawnPlayer.App\bin\Release\net8.0-windows10.0.19041.0\win-x64\DawnPlayer.App.exe",
+            @"..\..\..\..\..\src\DawnPlayer.App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\DawnPlayer.App.exe",
+            @"..\..\..\..\src\DawnPlayer.App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\DawnPlayer.App.exe",
+            @"..\..\..\..\..\src\DawnPlayer.App\bin\Release\net10.0-windows10.0.19041.0\win-x64\DawnPlayer.App.exe",
+            @"..\..\..\..\src\DawnPlayer.App\bin\Release\net10.0-windows10.0.19041.0\win-x64\DawnPlayer.App.exe",
             @"..\..\..\..\..\dist\publish\DawnPlayer.App.exe",
             @"..\..\..\..\dist\publish\DawnPlayer.App.exe",
         };
@@ -114,7 +114,7 @@ public sealed class DawnPlayerE2ETests
         }
     }
 
-    private AppSession Launch()
+    private static AppSession Launch()
     {
         Assert.False(string.IsNullOrEmpty(AppExePath),
             "DawnPlayer.App.exe was not found. Build the solution before running the E2E tests.");

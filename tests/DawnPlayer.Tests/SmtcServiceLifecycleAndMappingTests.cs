@@ -41,7 +41,7 @@ public class SmtcServiceLifecycleAndMappingTests : IDisposable
     #region Pure Mapping & Test Doubles
 
     /// <summary>
-    /// Mirror of WinRT MediaPlaybackStatus enum for pure test verification in net8.0-windows.
+    /// Mirror of WinRT MediaPlaybackStatus enum for pure test verification in net10.0-windows.
     /// </summary>
     public enum SmtcPlaybackStatus
     {
@@ -128,10 +128,10 @@ public class SmtcServiceLifecycleAndMappingTests : IDisposable
 
         public void UpdateTrack(PlaylistItem? item)
         {
-            _ = UpdateTrackAsync(item, CancellationToken.None);
+            _ = UpdateTrackAsync(item, ct: CancellationToken.None);
         }
 
-        public async Task UpdateTrackAsync(PlaylistItem? item, CancellationToken ct = default, int artificialDelayMs = 0)
+        public async Task UpdateTrackAsync(PlaylistItem? item, int artificialDelayMs = 0, CancellationToken ct = default)
         {
             int targetVersion = Interlocked.Increment(ref _currentUpdateVersion);
             if (!_isInitialized || _isDisposed) return;
@@ -162,7 +162,11 @@ public class SmtcServiceLifecycleAndMappingTests : IDisposable
             CurrentStatus = MapPlaybackState(state);
         }
 
+        // Mirrors the real SMTC service's instance API; the shared test double is invoked
+        // through instances across two test files.
+#pragma warning disable CA1822
         public void UpdateTimeline(TimeSpan position, TimeSpan duration)
+#pragma warning restore CA1822
         {
             // Safe timeline no-op
         }
@@ -506,10 +510,10 @@ public class SmtcServiceLifecycleAndMappingTests : IDisposable
         var item2 = new PlaylistItem(track2);
 
         // Launch Track 1 with a 20ms artificial delay (simulating slow disk/thumbnail read)
-        var task1 = smtc.UpdateTrackAsync(item1, CancellationToken.None, artificialDelayMs: 20);
+        var task1 = smtc.UpdateTrackAsync(item1, artificialDelayMs: 20, ct: CancellationToken.None);
 
         // Immediately launch Track 2 with no delay (user skipped fast)
-        var task2 = smtc.UpdateTrackAsync(item2, CancellationToken.None, artificialDelayMs: 0);
+        var task2 = smtc.UpdateTrackAsync(item2, artificialDelayMs: 0, ct: CancellationToken.None);
 
         await Task.WhenAll(task1, task2);
 
@@ -539,7 +543,7 @@ public class SmtcServiceLifecycleAndMappingTests : IDisposable
 
             tasks[i] = Task.Run(async () =>
             {
-                await smtc.UpdateTrackAsync(item, CancellationToken.None, artificialDelayMs: delay);
+                await smtc.UpdateTrackAsync(item, artificialDelayMs: delay, ct: CancellationToken.None);
             });
         }
 
@@ -730,7 +734,7 @@ public class SmtcServiceLifecycleAndMappingTests : IDisposable
                 // Alternate between track updates and state changes
                 smtc.UpdateTrack(item);
                 smtc.UpdateState((PlaybackState)(threadId % 3));
-                await smtc.UpdateTrackAsync(item, CancellationToken.None, artificialDelayMs: 2);
+                await smtc.UpdateTrackAsync(item, artificialDelayMs: 2, ct: CancellationToken.None);
                 smtc.UpdateTimeline(TimeSpan.FromSeconds(threadId * 10), TimeSpan.FromSeconds(300));
             });
         }
