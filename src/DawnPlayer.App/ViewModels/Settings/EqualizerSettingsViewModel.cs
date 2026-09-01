@@ -238,7 +238,7 @@ public sealed class EqualizerSettingsViewModel : ViewModelBase
             ? profileList.FirstOrDefault(p => p.Id == selectProfileId)
             : null)
             ?? profileList.FirstOrDefault(p => p.Id == defaultId)
-            ?? profileList.FirstOrDefault();
+            ?? (profileList.Count > 0 ? profileList[0] : null);
 
         _selectedProfile = target;
         OnPropertyChanged(nameof(SelectedProfile));

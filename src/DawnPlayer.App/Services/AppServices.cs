@@ -1,3 +1,4 @@
+using DawnPlayer.App.Localization;
 using DawnPlayer.Core.Audio;
 using DawnPlayer.Core.Library;
 using DawnPlayer.Core.Models;
@@ -52,6 +53,9 @@ public static class AppServices
         Controls.PlaybackUiHelper.Logger = App.Log;
 
         Settings = SettingsStore.Load();
+        // Apply language before any UI/service is built so the first frame already sees the
+        // user's choice and downstream components that read CurrentUICulture match.
+        StringsLoader.ApplyLanguage(Settings.Ui.Language);
         Library = OpenLibraryResilient(out var dbRecoveryMessage);
         Playlists = new PlaylistManager(Library)
         {
@@ -128,11 +132,21 @@ public static class AppServices
     }
 
     public static event Action<DawnPlayer.Core.Library.ScanProgress>? ScanProgressChanged;
+    public static event Action<UiLanguage>? LanguageChanged;
 
     public static void RunOnUi(Action action) => Ui?.TryEnqueue(() => action());
 
     /// <summary>Raises <see cref="WarningRaised"/> from anywhere (marshals to UI).</summary>
     public static void RaiseWarning(string message) => RunOnUi(() => WarningRaised?.Invoke(message));
+
+    /// <summary>Applies the new language and broadcasts the change so the UI can react.</summary>
+    public static void ChangeLanguage(UiLanguage language)
+    {
+        Settings.Ui.Language = language;
+        StringsLoader.ApplyLanguage(language);
+        SettingsWriter.Schedule(Settings);
+        RunOnUi(() => LanguageChanged?.Invoke(language));
+    }
 
     /// <summary>Starts a library scan (cancels any running one).</summary>
     public static void StartLibraryScan()

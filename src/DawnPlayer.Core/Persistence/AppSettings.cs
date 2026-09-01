@@ -13,6 +13,7 @@ public enum BackdropMode { Mica, MicaAlt, Acrylic, Solid, AlbumArtBlur }
 public enum EqFilterType { PeakEq, LowShelf, HighShelf, LowPass, HighPass }
 public enum NormalizerMode { Hybrid, AlwaysDynamic, ReplayGainOnly }
 public enum NormalizerSpeed { Fast, Balanced, Smooth }
+public enum UiLanguage { System, KoKR, EnUS, JaJP, ZhCN }
 
 /// <summary>User settings, persisted as JSON under %AppData%\DawnPlayer.</summary>
 public sealed class AppSettings
@@ -170,6 +171,9 @@ public sealed class UiSettings
     public bool ShowLyricsPane { get; set; }
     public string LastNavTab { get; set; } = "Library";
     public bool PlaylistGroupedView { get; set; } = true;
+
+    /// <summary>Selected UI language (System follows the Windows display language).</summary>
+    public UiLanguage Language { get; set; } = UiLanguage.System;
 
     // Eole Layout Customization
     public double LeftSidebarWidth { get; set; } = 220;

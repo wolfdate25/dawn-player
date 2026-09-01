@@ -40,7 +40,8 @@ public sealed class SettingsViewModel : ViewModelBase
         Func<bool>? isExclusiveSessionGetter = null,
         IShortcutBindingStore? shortcutStore = null,
         Action<string>? logger = null,
-        ILyricsOnlineService? lyricsOnlineService = null)
+        ILyricsOnlineService? lyricsOnlineService = null,
+        LayoutSettingsViewModel? layoutViewModel = null)
     {
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _audioSettingsService = audioSettingsService ?? throw new ArgumentNullException(nameof(audioSettingsService));
@@ -71,7 +72,7 @@ public sealed class SettingsViewModel : ViewModelBase
 
         Appearance = new AppearanceSettingsViewModel(_appearanceSettingsService, _settings);
 
-        Layout = new LayoutSettingsViewModel(_appearanceSettingsService, _settings);
+        Layout = layoutViewModel ?? new LayoutSettingsViewModel(_appearanceSettingsService, _settings);
 
         // Falls back to a detached in-memory store so the section still renders (and tests can
         // construct this ViewModel) when no shortcut service was supplied. In the app that

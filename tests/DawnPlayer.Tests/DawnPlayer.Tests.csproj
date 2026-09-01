@@ -33,6 +33,18 @@
   <ItemGroup>
     <Compile Include="..\..\src\DawnPlayer.App\Services\IAudioSettingsService.cs" Link="Services\IAudioSettingsService.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Services\AudioSettingsService.cs" Link="Services\AudioSettingsService.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Localization\StringsLoader.cs" Link="Localization\StringsLoader.cs" />
+
+    <!-- Embedded neutral + satellite resources so ResourceManager.FindResourceSet works at test time.
+         LogicalName is what ResourceManager uses to look up the manifest, so it must match the
+         loader's baseName ("DawnPlayer.App.Localization.Strings") even though we link from a
+         different assembly. -->
+    <EmbeddedResource Include="..\..\src\DawnPlayer.App\Localization\Strings.resx"
+                      Link="Localization\Strings.resx"
+                      LogicalName="DawnPlayer.App.Localization.Strings.resources" />
+    <EmbeddedResource Include="..\..\src\DawnPlayer.App\Localization\Strings.ko-KR.resx"
+                      Link="Localization\Strings.ko-KR.resx"
+                      LogicalName="DawnPlayer.App.Localization.Strings.ko-KR.resources" />
     <Compile Include="..\..\src\DawnPlayer.App\Services\ILyricsOnlineService.cs" Link="Services\ILyricsOnlineService.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Services\IEqSettingsService.cs" Link="Services\IEqSettingsService.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Services\EqSettingsService.cs" Link="Services\EqSettingsService.cs" />

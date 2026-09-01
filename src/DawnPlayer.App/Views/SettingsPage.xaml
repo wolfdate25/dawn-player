@@ -1266,6 +1266,29 @@
                     <StackPanel x:Name="Section_Appearance" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsAppearanceCategorySelected), Mode=OneWay}" Spacing="0">
                         <TextBlock Text="외관 &amp; 테마 (Theme &amp; Appearance)" Style="{StaticResource CategoryHeader}"/>
 
+                        <!-- Language Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <Grid Style="{StaticResource RowGrid}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="320"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                    <TextBlock Text="언어 (Language)" Style="{StaticResource SettingTitle}"/>
+                                    <TextBlock Text="앱 UI 언어. &quot;시스템 기본&quot;은 Windows 표시 언어를 따릅니다. 변경 시 일부 텍스트는 설정 창을 다시 열면 갱신됩니다." Style="{StaticResource SettingDesc}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <ComboBox Width="240" SelectedIndex="{x:Bind ViewModel.Layout.LanguageIndex, Mode=TwoWay}">
+                                        <ComboBoxItem Content="시스템 기본 (System)"/>
+                                        <ComboBoxItem Content="한국어 (Korean)"/>
+                                        <ComboBoxItem Content="English (US)"/>
+                                        <ComboBoxItem Content="日本語 (Japanese)"/>
+                                        <ComboBoxItem Content="中文 (Chinese, Simplified)"/>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
                         <!-- Theme & Backdrop Card -->
                         <Border Style="{StaticResource SectionCard}">
                             <StackPanel Spacing="10">

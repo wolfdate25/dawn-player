@@ -249,11 +249,13 @@ public sealed class LyricsSettingsViewModel : ViewModelBase
         set => SetProperty(ref _lrcPatternsText, value);
     }
 
+    private static readonly char[] LrcPatternSeparators = { '\r', '\n' };
+
     public void SaveLrcPatterns(string? rawText = null)
     {
         string text = rawText ?? _lrcPatternsText;
         var patterns = text
-            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Split(LrcPatternSeparators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Where(p => p.EndsWith(".lrc", StringComparison.OrdinalIgnoreCase))
             .ToList();
 

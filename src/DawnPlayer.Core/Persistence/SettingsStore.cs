@@ -73,6 +73,10 @@ public static class SettingsStore
         settings.LyricsOnline ??= new LyricsOnlineSettings();
         settings.Ui ??= new UiSettings();
         settings.Shortcuts ??= new ShortcutSettings();
+        // Add a new member to a known enum? Unrecognized values fall back to the default here so
+        // a settings.json written by a future build never breaks the current one.
+        if (!Enum.IsDefined(typeof(UiLanguage), settings.Ui.Language))
+            settings.Ui.Language = UiLanguage.System;
         return settings;
     }
 
