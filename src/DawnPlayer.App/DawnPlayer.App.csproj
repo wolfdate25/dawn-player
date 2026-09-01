@@ -25,6 +25,9 @@
     </Content>
   </ItemGroup>
 
+  <!-- Localization/Strings*.resx are picked up as EmbeddedResource by the SDK's default items;
+       satellites (.ko-KR, .en-US, ...) chain off the neutral Strings.resx via LogicalName. -->
+
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.4.0" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2526" />

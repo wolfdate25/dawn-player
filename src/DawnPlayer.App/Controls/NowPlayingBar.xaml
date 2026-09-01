@@ -80,12 +80,20 @@
                     <TextBlock x:Name="TrackArtist" Text="" FontSize="11.5"
                                Foreground="{ThemeResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
 
-                    <!-- Audio format / session mini tag -->
-                    <Border x:Name="FormatBadge" Style="{StaticResource CodecBadge}" HorizontalAlignment="Left"
-                            Margin="0,1,0,0" Visibility="Collapsed">
-                        <TextBlock x:Name="FormatBadgeText" Text="FLAC · WASAPI" Style="{StaticResource BadgeText}"
-                                   FontSize="9" Foreground="{ThemeResource DawnAccentBrush}"/>
-                    </Border>
+                    <!-- Audio format and output session badges -->
+                    <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,1,0,0">
+                        <Border x:Name="FormatBadge" Style="{StaticResource CodecBadge}" HorizontalAlignment="Left"
+                                Visibility="Collapsed">
+                            <TextBlock x:Name="FormatBadgeText" Text="FLAC · 24bit/96kHz" Style="{StaticResource BadgeText}"
+                                       FontSize="9" Foreground="{ThemeResource DawnAccentBrush}"/>
+                        </Border>
+                        <Border x:Name="OutputBadge" Style="{StaticResource CodecBadge}" HorizontalAlignment="Left"
+                                Visibility="Collapsed" MaxWidth="220">
+                            <TextBlock x:Name="OutputBadgeText" Text="WASAPI 배타" Style="{StaticResource BadgeText}"
+                                       FontSize="9" Foreground="{ThemeResource TextSecondaryBrush}"
+                                       TextTrimming="CharacterEllipsis"/>
+                        </Border>
+                    </StackPanel>
                 </StackPanel>
             </Grid>
 

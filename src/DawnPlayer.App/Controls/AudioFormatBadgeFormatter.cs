@@ -1,5 +1,6 @@
 using DawnPlayer.Core.Audio;
 using DawnPlayer.Core.Models;
+using DawnPlayer.Core.Persistence;
 
 namespace DawnPlayer.App.Controls;
 
@@ -33,59 +34,54 @@ public static class AudioFormatBadgeFormatter
         return string.Empty;
     }
 
-    public static string GetSessionMode(bool exclusive) => exclusive ? "WASAPI 배타" : "공유";
-
-    public static string FormatBadgeText(string? codec, string? sessionMode)
+    public static string GetDriverLabel(AudioDriverType driver, bool exclusive) => driver switch
     {
-        bool hasCodec = !string.IsNullOrWhiteSpace(codec);
-        bool hasSession = !string.IsNullOrWhiteSpace(sessionMode);
+        AudioDriverType.DirectSound => "DirectSound",
+        AudioDriverType.WaveOut => "WaveOut",
+        _ => exclusive ? "WASAPI 배타" : "WASAPI 공유"
+    };
 
-        if (hasCodec && hasSession) return $"{codec} · {sessionMode}";
-        if (hasCodec) return codec!;
-        if (hasSession) return sessionMode!;
-        return string.Empty;
-    }
-
-    public static string FormatBadgeText(Track? track, SessionInfo? sessionInfo)
+    public static string FormatTrackBadgeText(Track? track)
     {
+        if (track == null) return string.Empty;
+
         var parts = new List<string>();
-
-        if (track != null)
+        var codec = GetCodec(track.Codec, track.Path);
+        if (!string.IsNullOrEmpty(codec))
         {
-            var codec = GetCodec(track.Codec, track.Path);
-            if (!string.IsNullOrEmpty(codec))
-            {
-                parts.Add(codec);
-            }
-
-            if (track.BitsPerSample > 0 && track.SampleRate > 0)
-            {
-                double khz = track.SampleRate / 1000.0;
-                string sampleRateStr = khz % 1 == 0 ? $"{khz:0}kHz" : $"{khz:0.0}kHz";
-                parts.Add($"{track.BitsPerSample}bit/{sampleRateStr}");
-            }
-            else if (track.SampleRate > 0)
-            {
-                double khz = track.SampleRate / 1000.0;
-                string sampleRateStr = khz % 1 == 0 ? $"{khz:0}kHz" : $"{khz:0.0}kHz";
-                parts.Add(sampleRateStr);
-            }
-            else if (track.BitrateKbps > 0)
-            {
-                parts.Add($"{track.BitrateKbps}kbps");
-            }
+            parts.Add(codec);
         }
 
-        if (sessionInfo != null)
+        if (track.BitsPerSample > 0 && track.SampleRate > 0)
         {
-            var sessionMode = GetSessionMode(sessionInfo.Exclusive);
-            if (!string.IsNullOrEmpty(sessionMode))
-            {
-                parts.Add(sessionMode);
-            }
+            double khz = track.SampleRate / 1000.0;
+            string sampleRateStr = khz % 1 == 0 ? $"{khz:0}kHz" : $"{khz:0.0}kHz";
+            parts.Add($"{track.BitsPerSample}bit/{sampleRateStr}");
+        }
+        else if (track.SampleRate > 0)
+        {
+            double khz = track.SampleRate / 1000.0;
+            string sampleRateStr = khz % 1 == 0 ? $"{khz:0}kHz" : $"{khz:0.0}kHz";
+            parts.Add(sampleRateStr);
+        }
+        else if (track.BitrateKbps > 0)
+        {
+            parts.Add($"{track.BitrateKbps}kbps");
         }
 
         return string.Join(" · ", parts);
+    }
+
+    public static string FormatOutputBadgeText(SessionInfo? sessionInfo)
+    {
+        if (sessionInfo == null) return string.Empty;
+
+        var driverLabel = GetDriverLabel(sessionInfo.Driver, sessionInfo.Exclusive);
+        if (!string.IsNullOrWhiteSpace(sessionInfo.DeviceName))
+        {
+            return $"{driverLabel} · {sessionInfo.DeviceName}";
+        }
+        return driverLabel;
     }
 
     public static bool IsBadgeVisible(string? badgeText) => !string.IsNullOrWhiteSpace(badgeText);

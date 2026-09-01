@@ -22,8 +22,8 @@ public sealed partial class NowPlayingBar : UserControl
     private bool _updatingSliderFromTimer;
     private double _lastVolume = 0.8;
     private int _smtcTick;
-    private string _currentCodec = "";
-    private string _sessionMode = "";
+    private string _formatBadgeText = "";
+    private string _outputBadgeText = "";
     private bool _volumeAvailableInSession = true;
     private int _artGeneration;
 
@@ -86,12 +86,12 @@ public sealed partial class NowPlayingBar : UserControl
         {
             TrackTitle.Text = "재생 중인 트랙 없음";
             TrackArtist.Text = "";
+            _formatBadgeText = "";
             FormatBadge.Visibility = Visibility.Collapsed;
             ArtImage.Source = null;
             ArtFlyoutImage.Source = null;
             ArtImage.Visibility = Visibility.Collapsed;
             ArtPlaceholder.Visibility = Visibility.Visible;
-            _currentCodec = "";
             return;
         }
 
@@ -100,7 +100,7 @@ public sealed partial class NowPlayingBar : UserControl
         TrackArtist.Text = string.IsNullOrEmpty(t.Artist) ? t.Album : t.Artist;
 
         // format badge
-        _currentCodec = AudioFormatBadgeFormatter.GetCodec(t.Codec, t.Path);
+        _formatBadgeText = AudioFormatBadgeFormatter.FormatTrackBadgeText(t);
         UpdateFormatBadge();
 
         UpdateArt(t);
@@ -183,8 +183,8 @@ public sealed partial class NowPlayingBar : UserControl
 
     public void OnOutputSession(SessionInfo info)
     {
-        _sessionMode = AudioFormatBadgeFormatter.GetSessionMode(info.Exclusive);
-        UpdateFormatBadge();
+        _outputBadgeText = AudioFormatBadgeFormatter.FormatOutputBadgeText(info);
+        UpdateOutputBadge();
 
         // Exclusive sessions without the "allow volume" option run bit-perfect:
         // digital volume has no effect, so disable the controls instead.
@@ -215,19 +215,42 @@ public sealed partial class NowPlayingBar : UserControl
         bool compact = e.NewSize.Width < 730;
         var wanted = compact ? Visibility.Collapsed : Visibility.Visible;
         if (VolumeSlider.Visibility != wanted) VolumeSlider.Visibility = wanted;
+
+        if (OutputBadge != null)
+        {
+            var outputWanted = compact || !AudioFormatBadgeFormatter.IsBadgeVisible(_outputBadgeText)
+                ? Visibility.Collapsed
+                : Visibility.Visible;
+            if (OutputBadge.Visibility != outputWanted) OutputBadge.Visibility = outputWanted;
+        }
     }
 
     private void UpdateFormatBadge()
     {
-        string text = AudioFormatBadgeFormatter.FormatBadgeText(_currentCodec, _sessionMode);
-        if (!AudioFormatBadgeFormatter.IsBadgeVisible(text))
+        if (!AudioFormatBadgeFormatter.IsBadgeVisible(_formatBadgeText))
         {
             FormatBadge.Visibility = Visibility.Collapsed;
             return;
         }
 
-        FormatBadgeText.Text = text;
+        FormatBadgeText.Text = _formatBadgeText;
         FormatBadge.Visibility = Visibility.Visible;
+    }
+
+    private void UpdateOutputBadge()
+    {
+        if (OutputBadge == null) return;
+        if (!AudioFormatBadgeFormatter.IsBadgeVisible(_outputBadgeText))
+        {
+            OutputBadge.Visibility = Visibility.Collapsed;
+            ToolTipService.SetToolTip(OutputBadge, null);
+            return;
+        }
+
+        OutputBadgeText.Text = _outputBadgeText;
+        ToolTipService.SetToolTip(OutputBadge, _outputBadgeText);
+        bool compact = ActualWidth > 0 && ActualWidth < 730;
+        OutputBadge.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
     }
 
     public void OnStateChanged()
@@ -433,7 +456,7 @@ public sealed partial class NowPlayingBar : UserControl
     }
 
     private void OnQueueClearClick(object sender, RoutedEventArgs e) =>
-        _queueController.RequestClear(AppServices.Playback?.Queue);
+        QueuePopupController.RequestClear(AppServices.Playback?.Queue);
 
     private void OnQueueSaveClick(object sender, RoutedEventArgs e)
     {
@@ -459,7 +482,7 @@ public sealed partial class NowPlayingBar : UserControl
 
         if (index > 0)
         {
-            _queueController.RequestRemoveAt(AppServices.Playback?.Queue, index);
+            QueuePopupController.RequestRemoveAt(AppServices.Playback?.Queue, index);
         }
     }
 

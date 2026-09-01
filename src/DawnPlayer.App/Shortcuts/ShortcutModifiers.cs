@@ -5,7 +5,7 @@ namespace DawnPlayer.App.Shortcuts;
 /// <summary>
 /// Modifier flags for a <see cref="KeyChord"/>. The numeric values deliberately mirror
 /// <c>Windows.System.VirtualKeyModifiers</c> so the App layer can cast straight across, while this
-/// model stays free of WinRT: the test project targets plain <c>net8.0-windows</c> with no Windows
+/// model stays free of WinRT: the test project targets plain <c>net10.0-windows</c> with no Windows
 /// SDK projection and links these files in as source.
 /// </summary>
 [Flags]

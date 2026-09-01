@@ -64,7 +64,7 @@ public partial class App : Application
             try
             {
                 var nl = Environment.NewLine;
-                MessageBox(IntPtr.Zero,
+                _ = MessageBox(IntPtr.Zero,
                     $"Dawn Player를 시작할 수 없습니다.{nl}{nl}{ex.Message}{nl}{nl}자세한 내용: {AppPaths.LogFile}",
                     "Dawn Player", 0x00000010 /* MB_ICONERROR */);
             }

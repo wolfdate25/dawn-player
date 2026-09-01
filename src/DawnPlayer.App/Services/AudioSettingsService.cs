@@ -38,7 +38,7 @@ public sealed class AudioSettingsService : IAudioSettingsService
 
         return devices.FirstOrDefault(d => d.Id == deviceId)
             ?? devices.FirstOrDefault(d => d.IsDefault)
-            ?? devices.FirstOrDefault();
+            ?? (devices.Count > 0 ? devices[0] : null);
     }
 
     public ExclusiveModeStatus GetExclusiveModeStatus(string? deviceId)

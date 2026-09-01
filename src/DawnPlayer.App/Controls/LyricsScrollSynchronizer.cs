@@ -35,7 +35,7 @@ public sealed class LrcLineVm : INotifyPropertyChanged
     public double Opacity => IsCurrent ? 1.0 : (EnableFocusEffect ? 0.40 : 0.85);
 
     public string FontFamily { get; set; } = "Segoe UI Variable, Malgun Gothic";
-    public int CharacterSpacing { get; set; } = 0;
+    public int CharacterSpacing { get; set; }
     public double LineHeight { get; set; } = 24.0;
     public string TextAlignment { get; set; } = "Center";
 

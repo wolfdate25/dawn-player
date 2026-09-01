@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using DawnPlayer.Core.Playlists;
 
 namespace DawnPlayer.App.Controls;
@@ -36,17 +37,17 @@ public sealed class QueuePopupController
     {
         if (count <= 0) return string.Empty;
         if (count > 99) return "99+";
-        return count.ToString();
+        return count.ToString(CultureInfo.InvariantCulture);
     }
 
     public static bool ShouldShowBadge(int count) => count > 0;
 
-    public void RequestClear(IPlaybackQueue? queue)
+    public static void RequestClear(IPlaybackQueue? queue)
     {
         queue?.Clear();
     }
 
-    public void RequestRemoveAt(IPlaybackQueue? queue, int oneBasedIndex)
+    public static void RequestRemoveAt(IPlaybackQueue? queue, int oneBasedIndex)
     {
         if (queue == null || oneBasedIndex < 1 || oneBasedIndex > queue.Count)
             return;

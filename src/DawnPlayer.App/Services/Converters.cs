@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
@@ -11,7 +12,7 @@ public sealed class TimeSpanTextConverter : IValueConverter
 {
     public static string Convert(TimeSpan t) =>
         t < TimeSpan.Zero ? "0:00" :
-        t.TotalHours >= 1 ? ((int)t.TotalHours) + t.ToString(@"\:mm\:ss") : t.ToString(@"m\:ss");
+        t.TotalHours >= 1 ? ((int)t.TotalHours) + t.ToString(@"\:mm\:ss", CultureInfo.InvariantCulture) : t.ToString(@"m\:ss", CultureInfo.InvariantCulture);
 
     public object Convert(object value, Type targetType, object parameter, string language)
         => value is TimeSpan ts ? Convert(ts) : "";
@@ -57,7 +58,7 @@ public sealed class TrackNoFormatterConverter : IValueConverter
     {
         if (value is int no && no > 0)
         {
-            return no < 10 ? $"0{no}" : no.ToString();
+            return no < 10 ? $"0{no}" : no.ToString(CultureInfo.InvariantCulture);
         }
         return "-";
     }

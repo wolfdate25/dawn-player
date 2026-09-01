@@ -15,6 +15,35 @@ dotnet_sort_system_directives_first = true
 # Keep style analyzers advisory until the analyzer baseline is curated.
 dotnet_analyzer_diagnostic.category-Style.severity = suggestion
 
+# Test methods use the standard xunit underscore naming convention
+# (Subject_Scenario_Expectation); CA1707 flags every one of them.
+[tests/**.cs]
+dotnet_diagnostic.CA1707.severity = none
+# Test-only noise: failure-message formatting (CA1305), fixture Dispose methods without
+# finalizers (CA1816), and literal arrays in InlineData / arrange code (CA1861).
+dotnet_diagnostic.CA1305.severity = none
+dotnet_diagnostic.CA1816.severity = none
+dotnet_diagnostic.CA1861.severity = none
+
+[*.cs]
+# Domain naming: SequencerStream is an audio sample stream, PlaybackQueue is a playback queue.
+dotnet_diagnostic.CA1711.severity = none
+# Single-language codebase; renaming interface members (Stop, template) is cross-language
+# politeness this app has no consumers for.
+dotnet_diagnostic.CA1716.severity = none
+
+# SHA1 here is a non-crypto content fingerprint (album-art cache keys), not security hashing.
+[src/DawnPlayer.Core/Library/TagReader.cs]
+dotnet_diagnostic.CA5350.severity = none
+
+[tests/DawnPlayer.Tests/AlbumArtServiceConcurrencyTests.cs]
+dotnet_diagnostic.CA5350.severity = none
+
+# These tests measure blocking behavior with deliberate timed waits on dedicated
+# LongRunning threads; awaiting would remove the very property under test.
+[tests/DawnPlayer.Tests/Audio/SequencerStreamResponsivenessTests.cs]
+dotnet_diagnostic.xUnit1031.severity = none
+
 [*.{xaml,csproj,slnx,props,targets,yml,yaml,json}]
 indent_size = 2
 
