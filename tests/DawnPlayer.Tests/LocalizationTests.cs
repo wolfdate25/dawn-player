@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using DawnPlayer.App.Localization;
 using Xunit;
 
@@ -161,19 +162,16 @@ public class LocalizationTests
     [Fact]
     public void ReswFiles_HaveValidXml_AndIdenticalKeySets()
     {
-        var baseDir = AppContext.BaseDirectory;
-        // Search up towards src/DawnPlayer.App/Strings/
-        var dir = new System.IO.DirectoryInfo(baseDir);
-        while (dir != null && !System.IO.File.Exists(System.IO.Path.Combine(dir.FullName, "DawnPlayer.sln")))
-        {
-            dir = dir.Parent;
-        }
+        var dir = FindRepoRoot();
+        // Fail loudly rather than silently skipping: a green-but-skipped parity test is how
+        // key drift between languages ships unnoticed. (The old lookup matched "DawnPlayer.sln"
+        // and quietly no-op'd after the solution became DawnPlayer.slnx.)
+        Assert.True(dir != null,
+            "DawnPlayer.slnx not found above the test output directory; resource checks require a source checkout.");
 
-        if (dir == null) return; // Skip if run outside repository context
-
-        var koPath = System.IO.Path.Combine(dir.FullName, "src", "DawnPlayer.App", "Strings", "ko-KR", "Resources.resw");
-        var enPath = System.IO.Path.Combine(dir.FullName, "src", "DawnPlayer.App", "Strings", "en-US", "Resources.resw");
-        var jaPath = System.IO.Path.Combine(dir.FullName, "src", "DawnPlayer.App", "Strings", "ja-JP", "Resources.resw");
+        var koPath = System.IO.Path.Combine(dir!.FullName, "src", "DawnPlayer.App", "Strings", "ko-KR", "Resources.resw");
+        var enPath = System.IO.Path.Combine(dir!.FullName, "src", "DawnPlayer.App", "Strings", "en-US", "Resources.resw");
+        var jaPath = System.IO.Path.Combine(dir!.FullName, "src", "DawnPlayer.App", "Strings", "ja-JP", "Resources.resw");
 
         Assert.True(System.IO.File.Exists(koPath), "ko-KR Resources.resw must exist");
         Assert.True(System.IO.File.Exists(enPath), "en-US Resources.resw must exist");
@@ -202,6 +200,108 @@ public class LocalizationTests
         Assert.True(extraInEn.Count == 0, $"Keys present in en-US but missing in ko-KR: {string.Join(", ", extraInEn)}");
         Assert.True(extraInJa.Count == 0, $"Keys present in ja-JP but missing in ko-KR: {string.Join(", ", extraInJa)}");
     }
+
+    // ---------- x:Uid / lookup-key cross-checks against the resw catalog ----------
+    //
+    // A missing key is a silent runtime bug: x:Uid quietly no-ops and AppStrings.Get quietly
+    // returns the fallback, so drift only surfaces as a stray hard-coded string in the UI.
+    // These tests turn that drift red at build time. tools/check_i18n.py stays around for
+    // on-demand lint reports (unused keys, non-localized literals) that are too noisy to gate.
+
+    [Fact]
+    public void Xaml_XUid_Values_Resolve_ToReswKeys()
+    {
+        var uidBases = ReswKeySet().Select(k => k.Split('.')[0]).ToHashSet();
+        var missing = ScanAppSources(".xaml", XUidPattern)
+            .Where(hit => !uidBases.Contains(hit.Value))
+            .ToList();
+
+        Assert.True(missing.Count == 0,
+            "x:Uid values with no matching resw key base:\n" + FormatHits(missing));
+    }
+
+    [Fact]
+    public void CSharp_LiteralLookupKeys_Exist_InResw()
+    {
+        var keys = ReswKeySet();
+        var missing = ScanAppSources(".cs", LiteralKeyPattern)
+            .Where(hit => !keys.Contains(hit.Value))
+            .ToList();
+
+        Assert.True(missing.Count == 0,
+            "AppStrings literal keys missing from the resw catalog:\n" + FormatHits(missing));
+    }
+
+    [Fact]
+    public void CSharp_InterpolatedPrefixes_HaveReswKeys()
+    {
+        var keys = ReswKeySet();
+        var missing = ScanAppSources(".cs", InterpolatedPrefixPattern)
+            .Where(hit => !keys.Any(k => k.StartsWith(hit.Value, StringComparison.Ordinal)))
+            .ToList();
+
+        Assert.True(missing.Count == 0,
+            "AppStrings interpolated prefixes with no resw key under them:\n" + FormatHits(missing));
+    }
+
+    private static readonly Regex XUidPattern = new("x:Uid=\"([^\"]+)\"", RegexOptions.Compiled);
+    private static readonly Regex LiteralKeyPattern =
+        new("AppStrings\\.(?:Get|GetString|Format|GetPlural)\\(\\s*\"([^\"]+)\"", RegexOptions.Compiled);
+    private static readonly Regex InterpolatedPrefixPattern =
+        new("AppStrings\\.(?:Get|GetString|Format|GetPlural)\\(\\s*\\$\"([^\"{]+)\\{", RegexOptions.Compiled);
+
+    /// <summary>Walks up from the test output directory to the checkout owning DawnPlayer.slnx.</summary>
+    private static DirectoryInfo? FindRepoRoot()
+    {
+        for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir != null; dir = dir.Parent)
+        {
+            if (System.IO.File.Exists(System.IO.Path.Combine(dir.FullName, "DawnPlayer.slnx")))
+            {
+                return dir;
+            }
+        }
+
+        return null;
+    }
+
+    private static string AppSourceDir(DirectoryInfo root) =>
+        System.IO.Path.Combine(root.FullName, "src", "DawnPlayer.App");
+
+    /// <summary>Key set of the ko-KR catalog — the reference language every other file must match.</summary>
+    private static HashSet<string> ReswKeySet()
+    {
+        var root = FindRepoRoot();
+        Assert.True(root != null, "Repository root not found; see ReswFiles_HaveValidXml_AndIdenticalKeySets.");
+        return LoadReswKeys(System.IO.Path.Combine(AppSourceDir(root!), "Strings", "ko-KR", "Resources.resw")).ToHashSet();
+    }
+
+    private static IEnumerable<(string RelativePath, int Line, string Value)> ScanAppSources(
+        string extension, Regex pattern)
+    {
+        var root = FindRepoRoot();
+        Assert.True(root != null, "Repository root not found; see ReswFiles_HaveValidXml_AndIdenticalKeySets.");
+
+        foreach (var file in Directory.EnumerateFiles(AppSourceDir(root!), "*" + extension, SearchOption.AllDirectories))
+        {
+            var sep = System.IO.Path.DirectorySeparatorChar;
+            if (file.Contains($"{sep}bin{sep}") || file.Contains($"{sep}obj{sep}"))
+            {
+                continue;
+            }
+
+            var lines = System.IO.File.ReadAllLines(file);
+            for (var i = 0; i < lines.Length; i++)
+            {
+                foreach (Match match in pattern.Matches(lines[i]).Cast<Match>())
+                {
+                    yield return (System.IO.Path.GetRelativePath(root!.FullName, file), i + 1, match.Groups[1].Value);
+                }
+            }
+        }
+    }
+
+    private static string FormatHits(List<(string RelativePath, int Line, string Value)> hits) =>
+        string.Join("\n", hits.Select(h => $"  {h.RelativePath}:{h.Line} -> {h.Value}"));
 
     private static List<string> LoadReswKeys(string path)
     {

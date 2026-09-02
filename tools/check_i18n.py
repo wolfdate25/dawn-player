@@ -1,14 +1,17 @@
 """Localization consistency checker for Dawn Player.
 
-Verifies, against the ko-KR Resources.resw as reference:
-  1. key parity across all language files (+ no duplicates)
-  2. every x:Uid in App XAML has at least one matching resw key
-  3. every literal AppStrings.Get/Format/GetPlural key exists in resw
-  4. interpolated lookups (AppStrings.Get($"Prefix_{expr}", ...)) have resw keys under Prefix_
-  5. resw keys not referenced by any of the above are reported
-  6. Korean string literals in App C# outside AppStrings fallback/log positions are reported
+The drift-critical checks (key parity, x:Uid resolution, literal/interpolated lookup
+keys) are enforced by LocalizationTests in the xUnit suite — those turn red on `dotnet
+test`. This script remains for on-demand lint reports that are too noisy to gate on:
+unused resw keys and hard-coded Korean literals outside AppStrings fallback positions.
 
-Exit code is non-zero only for problems 1-4; 5-6 are informational (review the list).
+Reports, against the ko-KR Resources.resw as reference:
+  1. key parity across all language files (+ no duplicates)   [also gated by tests]
+  2. x:Uid resolution                                          [also gated by tests]
+  3. literal AppStrings keys                                   [also gated by tests]
+  4. interpolated lookup prefixes                              [also gated by tests]
+  5. resw keys not referenced by any of the above             [lint only]
+  6. Korean literals outside fallback/log positions           [lint only]
 """
 import collections
 import glob
