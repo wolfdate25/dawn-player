@@ -44,6 +44,11 @@ public interface IAppearanceSettingsService
     void SetAutoAlbumArtAccent(bool enabled);
 
     /// <summary>
+    /// Sets whether the window close button hides to the notification area instead of exiting.
+    /// </summary>
+    void SetCloseToTray(bool enabled);
+
+    /// <summary>
     /// Manually triggers the AppearanceChanged notification.
     /// </summary>
     void RefreshAppearance();

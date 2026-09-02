@@ -42,6 +42,13 @@
   <data name="MainWindow_TitleMenuButton.AutomationProperties.Name" xml:space="preserve"><value>メニュー</value></data>
   <data name="MainWindow_TitleMenuButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>メニュー</value></data>
   <data name="MainWindow_Menu_Rescan.Text" xml:space="preserve"><value>ライブラリを再スキャン</value></data>
+  <data name="MainWindow_Menu_SleepTimer" xml:space="preserve"><value>スリープタイマー</value></data>
+  <data name="MainWindow_Menu_Sleep_Off" xml:space="preserve"><value>オフ</value></data>
+  <data name="MainWindow_Menu_Sleep_15" xml:space="preserve"><value>15分</value></data>
+  <data name="MainWindow_Menu_Sleep_30" xml:space="preserve"><value>30分</value></data>
+  <data name="MainWindow_Menu_Sleep_60" xml:space="preserve"><value>1時間</value></data>
+  <data name="MainWindow_Menu_Sleep_Track" xml:space="preserve"><value>現在の曲の後</value></data>
+  <data name="MainWindow_Menu_Sleep_RemainingFormat" xml:space="preserve"><value>{0} ({1:mm\:ss})</value></data>
   <data name="MainWindow_Menu_Settings.Text" xml:space="preserve"><value>設定</value></data>
   <data name="MainWindow_Menu_Exit.Text" xml:space="preserve"><value>終了</value></data>
   <data name="MainWindow_TitleBarTrack.Text" xml:space="preserve"><value>再生中の曲はありません</value></data>
@@ -54,6 +61,10 @@
   <data name="NowPlaying_AlbumArtButton.AutomationProperties.Name" xml:space="preserve"><value>アルバムアートを拡大</value></data>
   <data name="NowPlaying_AlbumArtButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>アルバムアートを拡大</value></data>
   <data name="NowPlaying_TrackTitle_Empty.Text" xml:space="preserve"><value>再生中の曲はありません</value></data>
+  <data name="NowPlaying_ABRepeatButton.AutomationProperties.Name" xml:space="preserve"><value>A-Bリピート</value></data>
+  <data name="NowPlaying_ABRepeat_Tooltip_Off" xml:space="preserve"><value>A-Bリピート: クリックで現在位置をA地点に設定</value></data>
+  <data name="NowPlaying_ABRepeat_Tooltip_Marking" xml:space="preserve"><value>A-Bリピート: A地点設定済み — もう一度クリックでB地点を設定</value></data>
+  <data name="NowPlaying_ABRepeat_Tooltip_Looping" xml:space="preserve"><value>A-Bリピート中 — クリックで解除</value></data>
   <data name="NowPlaying_ShuffleTip_Tracks" xml:space="preserve"><value>シャッフル: トラック (ランダム再生)</value></data>
   <data name="NowPlaying_ShuffleTip_Albums" xml:space="preserve"><value>シャッフル: アルバム (アルバムを順に再生し、次のアルバムをランダム選曲)</value></data>
   <data name="NowPlaying_ShuffleTip_Off" xml:space="preserve"><value>シャッフルオフ (順次再生)</value></data>
@@ -306,6 +317,14 @@
   <data name="Msg_LanguageChangedMessage" xml:space="preserve"><value>言語変更を適用するにはアプリの再起動が必要です。今すぐ再起動しますか？</value></data>
   <data name="Msg_LanguageChangedRestart" xml:space="preserve"><value>今すぐ再起動</value></data>
   <data name="Msg_LanguageChangedLater" xml:space="preserve"><value>後で</value></data>
+  <data name="Tray_TooltipIdle" xml:space="preserve"><value>Dawn Player</value></data>
+  <data name="Tray_Play" xml:space="preserve"><value>再生</value></data>
+  <data name="Tray_Pause" xml:space="preserve"><value>一時停止</value></data>
+  <data name="Tray_Stop" xml:space="preserve"><value>停止</value></data>
+  <data name="Tray_Previous" xml:space="preserve"><value>前の曲</value></data>
+  <data name="Tray_Next" xml:space="preserve"><value>次の曲</value></data>
+  <data name="Tray_Open" xml:space="preserve"><value>ウィンドウを開く</value></data>
+  <data name="Tray_Exit" xml:space="preserve"><value>終了</value></data>
   <data name="Msg_LibraryScanFailed" xml:space="preserve"><value>ライブラリスキャン失敗: {0}</value></data>
 
   <!-- Window & Drag-Drop Messages -->
@@ -604,6 +623,8 @@
   <data name="Settings_Appearance_Lang_Korean.Content" xml:space="preserve"><value>韓国語 (Korean)</value></data>
   <data name="Settings_Appearance_Lang_English.Content" xml:space="preserve"><value>英語 (US)</value></data>
   <data name="Settings_Appearance_Lang_Japanese.Content" xml:space="preserve"><value>日本語 (Japanese)</value></data>
+  <data name="Settings_Appearance_Tray_Title.Text" xml:space="preserve"><value>トレイに格納 (Close to Tray)</value></data>
+  <data name="Settings_Appearance_Tray_Desc.Text" xml:space="preserve"><value>閉じるボタンでアプリを終了せず通知領域に格納します。完全に終了するにはトレイメニューを使用します。</value></data>
   <data name="Settings_Appearance_Theme_Title.Text" xml:space="preserve"><value>テーマモード</value></data>
   <data name="Settings_Appearance_Theme_Desc.Text" xml:space="preserve"><value>ライト / ダーク / OLED Pure Black / システム設定に従う</value></data>
   <data name="Settings_Appearance_Theme_System.Content" xml:space="preserve"><value>システムに従う</value></data>
@@ -644,6 +665,9 @@
   <data name="Settings_Shortcuts_Clear_Button.Content" xml:space="preserve"><value>クリア</value></data>
   <data name="Settings_Shortcuts_ResetAll_Button.Content" xml:space="preserve"><value>すべてのショートカットをデフォルトに戻す</value></data>
   <data name="Settings_Shortcuts_Unassigned" xml:space="preserve"><value>なし</value></data>
+  <data name="Smart_MostPlayed" xml:space="preserve"><value>よく再生</value></data>
+  <data name="Smart_RecentlyAdded" xml:space="preserve"><value>最近追加</value></data>
+  <data name="Smart_NotRecentlyPlayed" xml:space="preserve"><value>久しく聴いていない</value></data>
   <data name="Settings_Shortcuts_Cat_Playback" xml:space="preserve"><value>再生コントロール</value></data>
   <data name="Settings_Shortcuts_Cat_Seek" xml:space="preserve"><value>シーク</value></data>
   <data name="Settings_Shortcuts_Cat_Volume" xml:space="preserve"><value>音量</value></data>
@@ -655,6 +679,7 @@
   <data name="Shortcut_Command_ShuffleCycle" xml:space="preserve"><value>シャッフル切り替え (オフ → トラック → アルバム)</value></data>
   <data name="Shortcut_Command_RepeatCycle" xml:space="preserve"><value>リピート切り替え (オフ → 全曲 → 1曲)</value></data>
   <data name="Shortcut_Command_StopAfterCurrentToggle" xml:space="preserve"><value>現在の曲の再生後に停止を切り替え</value></data>
+  <data name="Shortcut_Command_ABRepeatCycle" xml:space="preserve"><value>A-Bリピート切替 (A設定 → B設定 → 解除)</value></data>
   <data name="Shortcut_Command_SeekForward" xml:space="preserve"><value>5秒進む</value></data>
   <data name="Shortcut_Command_SeekBackward" xml:space="preserve"><value>5秒戻る</value></data>
   <data name="Shortcut_Command_SeekToStart" xml:space="preserve"><value>現在の曲の先頭へ</value></data>

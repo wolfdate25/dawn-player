@@ -58,6 +58,12 @@ public sealed class AppearanceSettingsService : IAppearanceSettingsService
         SaveAndNotify();
     }
 
+    public void SetCloseToTray(bool enabled)
+    {
+        _settings.Ui.CloseToTray = enabled;
+        SaveAndNotify();
+    }
+
     public void RefreshAppearance()
     {
         AppearanceChanged?.Invoke();

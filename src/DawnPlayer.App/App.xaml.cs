@@ -57,6 +57,10 @@ public partial class App : Application
         {
             MainWin = new MainWindow();
             MainWin.Activate();
+            if (Services.AppServices.Settings.Ui.CloseToTray)
+            {
+                Services.TrayIconService.EnsureCreated();
+            }
             Log("MainWindow activated");
         }
         catch (Exception ex)

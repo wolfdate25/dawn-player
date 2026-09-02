@@ -162,6 +162,20 @@ public sealed class AppearanceSettingsViewModel : ViewModelBase
         }
     }
 
+    /// <summary>Close button hides to the tray instead of exiting (the tray menu exits for real).</summary>
+    public bool CloseToTray
+    {
+        get => _settings.Ui.CloseToTray;
+        set
+        {
+            if (_settings.Ui.CloseToTray != value)
+            {
+                _appearanceSettingsService.SetCloseToTray(value);
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public AccentColorPreset AccentPreset
     {
         get => _settings.Ui.AccentColor;

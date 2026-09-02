@@ -24,6 +24,7 @@ public static class AppServices
     public static IAppearanceSettingsService AppearanceSettings { get; set; } = null!;
     public static IShortcutService Shortcuts { get; set; } = null!;
     public static ILyricsOnlineService LyricsOnline { get; set; } = null!;
+    public static SleepTimerService SleepTimer { get; private set; } = null!;
 
     public static DispatcherQueue? Ui { get; private set; }
     public static IntPtr MainWindowHandle { get; private set; }
@@ -86,7 +87,16 @@ public static class AppServices
             UiInvoke = RunOnUi
         };
         Playlists.LoadAll();
+        // Names are injected because Core cannot reach the app's localized resources; a language
+        // change recreates them on the next launch.
+        Playlists.EnsureSmartPlaylists(new[]
+        {
+            (SmartPlaylistKind.MostPlayed, AppStrings.Get("Smart_MostPlayed", "많이 재생")),
+            (SmartPlaylistKind.RecentlyAdded, AppStrings.Get("Smart_RecentlyAdded", "최근 추가")),
+            (SmartPlaylistKind.NotRecentlyPlayed, AppStrings.Get("Smart_NotRecentlyPlayed", "한동안 안 들은")),
+        });
         Playback = new PlaybackController(Settings, Playlists);
+        SleepTimer = new SleepTimerService();
         Playlists.ItemsRemoved += (_, items) => Playback.Queue.RemoveItems(items);
 
         AudioSettings = new AudioSettingsService(Settings, Playback);
@@ -96,21 +106,105 @@ public static class AppServices
         var lyricsOnline = new LyricsOnlineService(() => Settings, App.Log);
         LyricsOnline = lyricsOnline;
         lyricsOnline.Initialize();
-        AppearanceSettings.AppearanceChanged += () => RunOnUi(() => App.MainWin?.ApplyTheme());
+        AppearanceSettings.AppearanceChanged += () => RunOnUi(() =>
+        {
+            App.MainWin?.ApplyTheme();
+            // Close-to-tray may have just been toggled: keep the tray icon's lifetime in sync. A
+            // disable while the window is hidden would strand the app with no visible surface, so
+            // the window comes back up before the icon goes away.
+            if (Settings.Ui.CloseToTray)
+            {
+                TrayIconService.EnsureCreated();
+            }
+            else if (TrayIconService.IsRunning)
+            {
+                if (TrayIconService.IsWindowHidden) TrayIconService.RestoreFromTray();
+                TrayIconService.Destroy();
+            }
+        });
 
         Smtc = new SmtcService(Playback);
         Smtc.TryInitialize(MainWindowHandle);
 
         Playback.CurrentChanged += item => RunOnUi(() => CurrentTrackChanged?.Invoke(item));
         Playback.StateChanged += () => RunOnUi(() => PlaybackStateChanged?.Invoke());
-        Playback.StopAfterCurrentChanged += () => RunOnUi(() => StopAfterCurrentChanged?.Invoke());
+        Playback.StopAfterCurrentChanged += () => RunOnUi(() =>
+        {
+            // The one-shot stop flag drops back to false the moment the stop lands — feed that
+            // into the sleep timer so "sleep after this track" resets its menu state too.
+            if (!Playback.StopAfterCurrent) SleepTimer.OnStopAfterCurrentConsumed();
+            StopAfterCurrentChanged?.Invoke();
+        });
+        Playback.AbRepeatChanged += () => RunOnUi(() => AbRepeatChanged?.Invoke());
+        Playback.TrackLeft += OnPlaybackTrackLeft;
         Playback.Warning += msg => { App.Log($"[Playback] {msg}"); RunOnUi(() => WarningRaised?.Invoke(msg)); };
         Playback.SessionStarted += info => { App.Log($"[Session] {info.DeviceName} exclusive={info.Exclusive} {info.FormatDescription}"); RunOnUi(() => OutputSessionChanged?.Invoke(info)); };
-        Library.TracksChanged += () => RunOnUi(() => LibraryChanged?.Invoke());
+        Library.TracksChanged += () =>
+        {
+            // A scan re-sorts every smart playlist; coalesce here so the UI event and the refresh
+            // land in the same dispatch.
+            RunOnUi(() =>
+            {
+                Playlists.RefreshSmartPlaylists();
+                LibraryChanged?.Invoke();
+            });
+        };
         Library.ScanProgress += p => RunOnUi(() => ScanProgressChanged?.Invoke(p));
         Playback.Queue.Changed += () => RunOnUi(() => QueueChanged?.Invoke());
 
         if (dbRecoveryMessage != null) RaiseWarning(dbRecoveryMessage);
+    }
+
+    /// <summary>Raised on the UI thread after the A-B repeat stage changed (see PlaybackController).</summary>
+    public static event Action? AbRepeatChanged;
+
+    // Play-count heuristics, shared by every leave reason: a track counts as played when it
+    // drained on its own or was left past 75% of its length, and as skipped only for an early
+    // manual jump on a substantial track (a 20 s jingle skipped at 10 s heard most of it).
+    private static readonly TimeSpan SkippedMaxPosition = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan SkippedMinDuration = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// Stats sink for <see cref="PlaybackController.TrackLeft"/>: applies the play/skip heuristics
+    /// to the working-set track, persists the counts, and refreshes the smart playlists. Runs on a
+    /// ThreadPool thread; the Track model mutations are plain field writes the UI never binds.
+    /// </summary>
+    private static void OnPlaybackTrackLeft(PlaylistItem item, TimeSpan position, PlaybackLeaveReason reason)
+    {
+        try
+        {
+            var track = item.Track;
+            var duration = track.Duration;
+            bool counted = reason == PlaybackLeaveReason.NaturalEnd
+                           || (duration > TimeSpan.Zero && position >= TimeSpan.FromTicks(duration.Ticks * 3 / 4));
+            bool skipped = !counted
+                           && reason == PlaybackLeaveReason.ManualAdvance
+                           && duration >= SkippedMinDuration
+                           && position <= SkippedMaxPosition
+                           && duration > TimeSpan.Zero
+                           && position < TimeSpan.FromTicks(duration.Ticks / 4);
+
+            if (counted)
+            {
+                track.PlayCount++;
+                track.LastPlayedUtcTicks = DateTime.UtcNow.Ticks;
+            }
+            else if (skipped)
+            {
+                track.SkipCount++;
+            }
+            else
+            {
+                return;
+            }
+
+            Library.UpdateStats(track);
+            RunOnUi(Playlists.RefreshSmartPlaylists);
+        }
+        catch (Exception ex)
+        {
+            App.Log($"[stats] failed to record: {ex}");
+        }
     }
 
     /// <summary>

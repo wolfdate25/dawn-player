@@ -42,6 +42,13 @@
   <data name="MainWindow_TitleMenuButton.AutomationProperties.Name" xml:space="preserve"><value>Menu</value></data>
   <data name="MainWindow_TitleMenuButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Menu</value></data>
   <data name="MainWindow_Menu_Rescan.Text" xml:space="preserve"><value>Rescan Library</value></data>
+  <data name="MainWindow_Menu_SleepTimer" xml:space="preserve"><value>Sleep Timer</value></data>
+  <data name="MainWindow_Menu_Sleep_Off" xml:space="preserve"><value>Off</value></data>
+  <data name="MainWindow_Menu_Sleep_15" xml:space="preserve"><value>15 min</value></data>
+  <data name="MainWindow_Menu_Sleep_30" xml:space="preserve"><value>30 min</value></data>
+  <data name="MainWindow_Menu_Sleep_60" xml:space="preserve"><value>1 hour</value></data>
+  <data name="MainWindow_Menu_Sleep_Track" xml:space="preserve"><value>After current track</value></data>
+  <data name="MainWindow_Menu_Sleep_RemainingFormat" xml:space="preserve"><value>{0} ({1:mm\:ss})</value></data>
   <data name="MainWindow_Menu_Settings.Text" xml:space="preserve"><value>Preferences</value></data>
   <data name="MainWindow_Menu_Exit.Text" xml:space="preserve"><value>Exit</value></data>
   <data name="MainWindow_TitleBarTrack.Text" xml:space="preserve"><value>No sound — Nothing played</value></data>
@@ -54,6 +61,10 @@
   <data name="NowPlaying_AlbumArtButton.AutomationProperties.Name" xml:space="preserve"><value>Expand album cover</value></data>
   <data name="NowPlaying_AlbumArtButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Expand album cover</value></data>
   <data name="NowPlaying_TrackTitle_Empty.Text" xml:space="preserve"><value>No track playing</value></data>
+  <data name="NowPlaying_ABRepeatButton.AutomationProperties.Name" xml:space="preserve"><value>A-B repeat</value></data>
+  <data name="NowPlaying_ABRepeat_Tooltip_Off" xml:space="preserve"><value>A-B repeat: click to mark point A here</value></data>
+  <data name="NowPlaying_ABRepeat_Tooltip_Marking" xml:space="preserve"><value>A-B repeat: A marked — click again to mark B</value></data>
+  <data name="NowPlaying_ABRepeat_Tooltip_Looping" xml:space="preserve"><value>A-B repeat looping — click to clear</value></data>
   <data name="NowPlaying_ShuffleTip_Tracks" xml:space="preserve"><value>Shuffle: Tracks (play random tracks)</value></data>
   <data name="NowPlaying_ShuffleTip_Albums" xml:space="preserve"><value>Shuffle: Albums (album in order, then a random next album)</value></data>
   <data name="NowPlaying_ShuffleTip_Off" xml:space="preserve"><value>Shuffle off (sequential playback)</value></data>
@@ -306,6 +317,14 @@
   <data name="Msg_LanguageChangedMessage" xml:space="preserve"><value>The app must restart to apply the language change. Restart now?</value></data>
   <data name="Msg_LanguageChangedRestart" xml:space="preserve"><value>Restart Now</value></data>
   <data name="Msg_LanguageChangedLater" xml:space="preserve"><value>Later</value></data>
+  <data name="Tray_TooltipIdle" xml:space="preserve"><value>Dawn Player</value></data>
+  <data name="Tray_Play" xml:space="preserve"><value>Play</value></data>
+  <data name="Tray_Pause" xml:space="preserve"><value>Pause</value></data>
+  <data name="Tray_Stop" xml:space="preserve"><value>Stop</value></data>
+  <data name="Tray_Previous" xml:space="preserve"><value>Previous</value></data>
+  <data name="Tray_Next" xml:space="preserve"><value>Next</value></data>
+  <data name="Tray_Open" xml:space="preserve"><value>Open Window</value></data>
+  <data name="Tray_Exit" xml:space="preserve"><value>Exit</value></data>
   <data name="Msg_LibraryScanFailed" xml:space="preserve"><value>Library scan failed: {0}</value></data>
 
   <!-- Window & Drag-Drop Messages -->
@@ -604,6 +623,8 @@
   <data name="Settings_Appearance_Lang_Korean.Content" xml:space="preserve"><value>한국어 (Korean)</value></data>
   <data name="Settings_Appearance_Lang_English.Content" xml:space="preserve"><value>English (US)</value></data>
   <data name="Settings_Appearance_Lang_Japanese.Content" xml:space="preserve"><value>日本語 (Japanese)</value></data>
+  <data name="Settings_Appearance_Tray_Title.Text" xml:space="preserve"><value>Close to Tray</value></data>
+  <data name="Settings_Appearance_Tray_Desc.Text" xml:space="preserve"><value>The close button hides the app to the notification area instead of exiting. Use the tray menu to quit for real.</value></data>
   <data name="Settings_Appearance_Theme_Title.Text" xml:space="preserve"><value>Theme Mode</value></data>
   <data name="Settings_Appearance_Theme_Desc.Text" xml:space="preserve"><value>Light / Dark / OLED Pure Black / Follow System</value></data>
   <data name="Settings_Appearance_Theme_System.Content" xml:space="preserve"><value>Follow System</value></data>
@@ -644,6 +665,9 @@
   <data name="Settings_Shortcuts_Clear_Button.Content" xml:space="preserve"><value>Clear</value></data>
   <data name="Settings_Shortcuts_ResetAll_Button.Content" xml:space="preserve"><value>Reset All Shortcuts to Defaults</value></data>
   <data name="Settings_Shortcuts_Unassigned" xml:space="preserve"><value>None</value></data>
+  <data name="Smart_MostPlayed" xml:space="preserve"><value>Most Played</value></data>
+  <data name="Smart_RecentlyAdded" xml:space="preserve"><value>Recently Added</value></data>
+  <data name="Smart_NotRecentlyPlayed" xml:space="preserve"><value>Not Recently Played</value></data>
   <data name="Settings_Shortcuts_Cat_Playback" xml:space="preserve"><value>Playback Control</value></data>
   <data name="Settings_Shortcuts_Cat_Seek" xml:space="preserve"><value>Seek</value></data>
   <data name="Settings_Shortcuts_Cat_Volume" xml:space="preserve"><value>Volume</value></data>
@@ -655,6 +679,7 @@
   <data name="Shortcut_Command_ShuffleCycle" xml:space="preserve"><value>Shuffle Cycle (Off → Track → Album)</value></data>
   <data name="Shortcut_Command_RepeatCycle" xml:space="preserve"><value>Repeat Cycle (Off → All → One)</value></data>
   <data name="Shortcut_Command_StopAfterCurrentToggle" xml:space="preserve"><value>Toggle Stop After Current Track</value></data>
+  <data name="Shortcut_Command_ABRepeatCycle" xml:space="preserve"><value>A-B repeat cycle (mark A → mark B → off)</value></data>
   <data name="Shortcut_Command_SeekForward" xml:space="preserve"><value>Seek 5s Forward</value></data>
   <data name="Shortcut_Command_SeekBackward" xml:space="preserve"><value>Seek 5s Backward</value></data>
   <data name="Shortcut_Command_SeekToStart" xml:space="preserve"><value>Seek to Beginning of Track</value></data>

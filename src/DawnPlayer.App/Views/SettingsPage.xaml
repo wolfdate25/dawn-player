@@ -1287,6 +1287,22 @@
                             </Grid>
                         </Border>
 
+                        <!-- Close-to-Tray Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <Grid Style="{StaticResource RowGrid}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="320"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                    <TextBlock x:Uid="Settings_Appearance_Tray_Title" Text="트레이로 닫기 (Close to Tray)" Style="{StaticResource SettingTitle}"/>
+                                    <TextBlock x:Uid="Settings_Appearance_Tray_Desc" Text="닫기 버튼으로 앱을 종료하지 않고 알림 영역으로 숨깁니다. 완전히 종료는 트레이 메뉴에서." Style="{StaticResource SettingDesc}" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
+                                              IsOn="{x:Bind ViewModel.Appearance.CloseToTray, Mode=TwoWay}"/>
+                            </Grid>
+                        </Border>
+
                         <!-- Theme & Backdrop Card -->
                         <Border Style="{StaticResource SectionCard}">
                             <StackPanel Spacing="10">

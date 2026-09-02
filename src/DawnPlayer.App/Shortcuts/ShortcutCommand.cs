@@ -13,6 +13,7 @@ public enum ShortcutCommand
     ShuffleCycle,
     RepeatCycle,
     StopAfterCurrentToggle,
+    ABRepeatCycle,
     SeekForward,
     SeekBackward,
     SeekToStart,

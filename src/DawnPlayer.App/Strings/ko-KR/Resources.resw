@@ -42,6 +42,13 @@
   <data name="MainWindow_TitleMenuButton.AutomationProperties.Name" xml:space="preserve"><value>메뉴</value></data>
   <data name="MainWindow_TitleMenuButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>메뉴</value></data>
   <data name="MainWindow_Menu_Rescan.Text" xml:space="preserve"><value>라이브러리 새로고침</value></data>
+  <data name="MainWindow_Menu_SleepTimer" xml:space="preserve"><value>수면 타이머</value></data>
+  <data name="MainWindow_Menu_Sleep_Off" xml:space="preserve"><value>끔</value></data>
+  <data name="MainWindow_Menu_Sleep_15" xml:space="preserve"><value>15분</value></data>
+  <data name="MainWindow_Menu_Sleep_30" xml:space="preserve"><value>30분</value></data>
+  <data name="MainWindow_Menu_Sleep_60" xml:space="preserve"><value>1시간</value></data>
+  <data name="MainWindow_Menu_Sleep_Track" xml:space="preserve"><value>현재 곡 끝나고</value></data>
+  <data name="MainWindow_Menu_Sleep_RemainingFormat" xml:space="preserve"><value>{0} ({1:mm\:ss})</value></data>
   <data name="MainWindow_Menu_Settings.Text" xml:space="preserve"><value>환경설정 (Preferences)</value></data>
   <data name="MainWindow_Menu_Exit.Text" xml:space="preserve"><value>종료</value></data>
   <data name="MainWindow_TitleBarTrack.Text" xml:space="preserve"><value>재생 중인 곡 없음</value></data>
@@ -54,6 +61,10 @@
   <data name="NowPlaying_AlbumArtButton.AutomationProperties.Name" xml:space="preserve"><value>앨범 커버 크게 보기</value></data>
   <data name="NowPlaying_AlbumArtButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>앨범 커버 크게 보기</value></data>
   <data name="NowPlaying_TrackTitle_Empty.Text" xml:space="preserve"><value>재생 중인 트랙 없음</value></data>
+  <data name="NowPlaying_ABRepeatButton.AutomationProperties.Name" xml:space="preserve"><value>A-B 반복</value></data>
+  <data name="NowPlaying_ABRepeat_Tooltip_Off" xml:space="preserve"><value>A-B 반복: 눌러서 현재 위치를 A 지점으로 설정</value></data>
+  <data name="NowPlaying_ABRepeat_Tooltip_Marking" xml:space="preserve"><value>A-B 반복: A 지점 설정됨 — 다시 눌러 B 지점 설정</value></data>
+  <data name="NowPlaying_ABRepeat_Tooltip_Looping" xml:space="preserve"><value>A-B 반복 반복 중 — 눌러서 해제</value></data>
   <data name="NowPlaying_ShuffleTip_Tracks" xml:space="preserve"><value>셔플: 트랙 (무작위 곡 재생)</value></data>
   <data name="NowPlaying_ShuffleTip_Albums" xml:space="preserve"><value>셔플: 앨범 (앨범 순차 재생 후 다음 앨범 셔플)</value></data>
   <data name="NowPlaying_ShuffleTip_Off" xml:space="preserve"><value>셔플 끄기 (순차 재생)</value></data>
@@ -306,6 +317,14 @@
   <data name="Msg_LanguageChangedMessage" xml:space="preserve"><value>언어 변경을 적용하려면 앱을 다시 시작해야 합니다. 지금 다시 시작할까요?</value></data>
   <data name="Msg_LanguageChangedRestart" xml:space="preserve"><value>지금 다시 시작</value></data>
   <data name="Msg_LanguageChangedLater" xml:space="preserve"><value>나중에</value></data>
+  <data name="Tray_TooltipIdle" xml:space="preserve"><value>Dawn Player</value></data>
+  <data name="Tray_Play" xml:space="preserve"><value>재생</value></data>
+  <data name="Tray_Pause" xml:space="preserve"><value>일시정지</value></data>
+  <data name="Tray_Stop" xml:space="preserve"><value>정지</value></data>
+  <data name="Tray_Previous" xml:space="preserve"><value>이전 트랙</value></data>
+  <data name="Tray_Next" xml:space="preserve"><value>다음 트랙</value></data>
+  <data name="Tray_Open" xml:space="preserve"><value>창 열기</value></data>
+  <data name="Tray_Exit" xml:space="preserve"><value>종료</value></data>
   <data name="Msg_LibraryScanFailed" xml:space="preserve"><value>라이브러리 스캔 실패: {0}</value></data>
 
   <!-- Window & Drag-Drop Messages -->
@@ -604,6 +623,8 @@
   <data name="Settings_Appearance_Lang_Korean.Content" xml:space="preserve"><value>한국어 (Korean)</value></data>
   <data name="Settings_Appearance_Lang_English.Content" xml:space="preserve"><value>English (US)</value></data>
   <data name="Settings_Appearance_Lang_Japanese.Content" xml:space="preserve"><value>日本語 (Japanese)</value></data>
+  <data name="Settings_Appearance_Tray_Title.Text" xml:space="preserve"><value>트레이로 닫기 (Close to Tray)</value></data>
+  <data name="Settings_Appearance_Tray_Desc.Text" xml:space="preserve"><value>닫기 버튼으로 앱을 종료하지 않고 알림 영역으로 숨깁니다. 완전히 종료는 트레이 메뉴에서 할 수 있습니다.</value></data>
   <data name="Settings_Appearance_Theme_Title.Text" xml:space="preserve"><value>테마 모드</value></data>
   <data name="Settings_Appearance_Theme_Desc.Text" xml:space="preserve"><value>라이트 / 다크 / OLED Pure Black / 시스템 기본 설정</value></data>
   <data name="Settings_Appearance_Theme_System.Content" xml:space="preserve"><value>시스템 따르기</value></data>
@@ -644,6 +665,9 @@
   <data name="Settings_Shortcuts_Clear_Button.Content" xml:space="preserve"><value>지우기</value></data>
   <data name="Settings_Shortcuts_ResetAll_Button.Content" xml:space="preserve"><value>모든 단축키 기본값으로 되돌리기</value></data>
   <data name="Settings_Shortcuts_Unassigned" xml:space="preserve"><value>없음</value></data>
+  <data name="Smart_MostPlayed" xml:space="preserve"><value>많이 재생</value></data>
+  <data name="Smart_RecentlyAdded" xml:space="preserve"><value>최근 추가</value></data>
+  <data name="Smart_NotRecentlyPlayed" xml:space="preserve"><value>한동안 안 들은</value></data>
   <data name="Settings_Shortcuts_Cat_Playback" xml:space="preserve"><value>재생 제어</value></data>
   <data name="Settings_Shortcuts_Cat_Seek" xml:space="preserve"><value>탐색</value></data>
   <data name="Settings_Shortcuts_Cat_Volume" xml:space="preserve"><value>볼륨</value></data>
@@ -655,6 +679,7 @@
   <data name="Shortcut_Command_ShuffleCycle" xml:space="preserve"><value>셔플 순환 (끔 → 트랙 → 앨범)</value></data>
   <data name="Shortcut_Command_RepeatCycle" xml:space="preserve"><value>반복 순환 (끔 → 전체 → 한 곡)</value></data>
   <data name="Shortcut_Command_StopAfterCurrentToggle" xml:space="preserve"><value>현재 곡 재생 후 정지 전환</value></data>
+  <data name="Shortcut_Command_ABRepeatCycle" xml:space="preserve"><value>A-B 반복 순환 (지점 A 설정 → B 설정 → 해제)</value></data>
   <data name="Shortcut_Command_SeekForward" xml:space="preserve"><value>5초 앞으로</value></data>
   <data name="Shortcut_Command_SeekBackward" xml:space="preserve"><value>5초 뒤로</value></data>
   <data name="Shortcut_Command_SeekToStart" xml:space="preserve"><value>현재 곡 처음으로</value></data>

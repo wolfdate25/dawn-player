@@ -61,6 +61,8 @@ public static class ShortcutCommandCatalog
             new KeyChord(ShortcutModifiers.Control, 'R'), false),
         new(ShortcutCommand.StopAfterCurrentToggle, ShortcutCategory.Playback, "현재 곡 재생 후 정지 전환",
             new KeyChord(ShortcutModifiers.Control | ShortcutModifiers.Shift, 'S'), false),
+        new(ShortcutCommand.ABRepeatCycle, ShortcutCategory.Playback, "A-B 반복 순환 (지점 A 설정 → B 설정 → 해제)",
+            null, false),
 
         new(ShortcutCommand.SeekForward, ShortcutCategory.Seek, "5초 앞으로",
             new KeyChord(ShortcutModifiers.None, KeyRight), true),

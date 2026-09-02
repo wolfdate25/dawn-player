@@ -130,6 +130,12 @@
                               Click="OnRepeatClick" ToolTipService.ToolTip="반복 (끔 / 전체 / 한 곡)">
                     <FontIcon x:Name="RepeatIcon" Glyph="&#xE8EE;" FontSize="13"/>
                 </ToggleButton>
+
+                <ToggleButton x:Uid="NowPlaying_ABRepeatButton" x:Name="ABRepeatButton" Style="{StaticResource TransportToggleButton}"
+                              AutomationProperties.Name="A-B 반복"
+                              Click="OnABRepeatClick" ToolTipService.ToolTip="A-B 반복">
+                    <TextBlock x:Name="ABRepeatLabel" Text="A–B" FontSize="11" FontWeight="SemiBold"/>
+                </ToggleButton>
             </StackPanel>
 
             <!-- 2c. Volume / Queue / Lyrics (Right) -->

@@ -63,6 +63,7 @@ public sealed partial class NowPlayingBar : UserControl
         UpdateRepeatVisual();
         UpdateShuffleVisual();
         UpdateVolumeIcon(VolumeSlider.Value);
+        UpdateAbRepeatVisual();
         OnQueueChanged();
         OnStateChanged();
         _timer.Start();
@@ -349,6 +350,29 @@ public sealed partial class NowPlayingBar : UserControl
     private void OnShuffleClick(object sender, RoutedEventArgs e) => CycleShuffle();
 
     private void OnRepeatClick(object sender, RoutedEventArgs e) => CycleRepeat();
+
+    private void OnABRepeatClick(object sender, RoutedEventArgs e) => AppServices.Playback?.CycleAbRepeat();
+
+    /// <summary>Refreshes the A-B affordance from the controller stage. Called by MainWindow on
+    /// AppServices.AbRepeatChanged (already on the UI thread).</summary>
+    public void UpdateAbRepeatVisual()
+    {
+        var stage = AppServices.Playback?.AbRepeat ?? AbRepeatStage.Off;
+        ABRepeatButton.IsChecked = stage == AbRepeatStage.Looping;
+        ABRepeatLabel.Foreground = stage == AbRepeatStage.Off
+            ? ThemeResourceHelper.GetBrush("TextSecondaryBrush")
+            : ThemeResourceHelper.GetBrush("DawnAccentBrush");
+        string tooltip = stage switch
+        {
+            AbRepeatStage.WaitingForB => AppStrings.Get("NowPlaying_ABRepeat_Tooltip_Marking",
+                "A-B 반복: A 지점 설정됨 — 다시 눌러 B 지점 설정"),
+            AbRepeatStage.Looping => AppStrings.Get("NowPlaying_ABRepeat_Tooltip_Looping",
+                "A-B 반복 반복 중 — 눌러서 해제"),
+            _ => AppStrings.Get("NowPlaying_ABRepeat_Tooltip_Off",
+                "A-B 반복: 눌러서 현재 위치를 A 지점으로 설정")
+        };
+        ToolTipService.SetToolTip(ABRepeatButton, tooltip);
+    }
 
     /// <summary>
     /// Advances the shuffle mode and refreshes the button. Public because the keyboard shortcut

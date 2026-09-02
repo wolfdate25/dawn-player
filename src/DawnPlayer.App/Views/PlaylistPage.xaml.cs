@@ -186,8 +186,13 @@ public sealed partial class PlaylistPage : Page
             if (_playlist != null) _playlist.Items.CollectionChanged -= OnItemsChanged;
             _playlist = pl;
             AppServices.Playlists.SelectPlaylist(pl);
-            AppServices.Settings.Playback.ActivePlaylistName = pl.Name;
-            SettingsWriter.Schedule(AppServices.Settings);
+            // Smart playlist names are localized and rebuilt every launch; persisting one would
+            // try to restore it by a name that may not exist (or mean something else) next time.
+            if (!pl.IsSmart)
+            {
+                AppServices.Settings.Playback.ActivePlaylistName = pl.Name;
+                SettingsWriter.Schedule(AppServices.Settings);
+            }
             pl.Items.CollectionChanged += OnItemsChanged;
             Rebuild();
         }
@@ -268,19 +273,25 @@ public sealed partial class PlaylistPage : Page
     private void OnSidebarContextMenuOpening(object sender, object e)
     {
         var pl = ResolveSidebarPlaylist(null);
-        bool isSystem = pl?.IsSystem ?? false;
+        // System (Now Playing) and smart (generated) playlists cannot be renamed, exported as a
+        // user file, or deleted; smart ones cannot be cleared either — the next refresh would
+        // just regenerate the contents.
+        bool locked = pl is { IsSystem: true } or { IsSmart: true };
 
         if (SidebarRenameMenuItem != null)
-            SidebarRenameMenuItem.Visibility = isSystem ? Visibility.Collapsed : Visibility.Visible;
+            SidebarRenameMenuItem.Visibility = locked ? Visibility.Collapsed : Visibility.Visible;
 
         if (SidebarDeleteSeparator != null)
-            SidebarDeleteSeparator.Visibility = isSystem ? Visibility.Collapsed : Visibility.Visible;
+            SidebarDeleteSeparator.Visibility = locked ? Visibility.Collapsed : Visibility.Visible;
 
         if (SidebarDeleteMenuItem != null)
-            SidebarDeleteMenuItem.Visibility = isSystem ? Visibility.Collapsed : Visibility.Visible;
+            SidebarDeleteMenuItem.Visibility = locked ? Visibility.Collapsed : Visibility.Visible;
 
         if (SidebarClearMenuItem != null)
         {
+            bool isSystem = pl?.IsSystem ?? false;
+            bool isSmart = pl?.IsSmart ?? false;
+            SidebarClearMenuItem.Visibility = isSmart ? Visibility.Collapsed : Visibility.Visible;
             SidebarClearMenuItem.Text = isSystem
                 ? AppStrings.Get("Msg_PlaylistClearQueue", "대기열 비우기")
                 : AppStrings.Get("Msg_PlaylistClearPlaylist", "재생목록 비우기");
@@ -289,19 +300,24 @@ public sealed partial class PlaylistPage : Page
 
     private void OnHeaderToolsMenuOpening(object sender, object e)
     {
-        bool isSystem = Current?.IsSystem ?? false;
+        var current = Current;
+        bool locked = current is { IsSystem: true } or { IsSmart: true };
 
         if (HeaderRenameMenuItem != null)
-            HeaderRenameMenuItem.Visibility = isSystem ? Visibility.Collapsed : Visibility.Visible;
+            HeaderRenameMenuItem.Visibility = locked ? Visibility.Collapsed : Visibility.Visible;
 
         if (HeaderDeleteSeparator != null)
-            HeaderDeleteSeparator.Visibility = isSystem ? Visibility.Collapsed : Visibility.Visible;
+            HeaderDeleteSeparator.Visibility = locked ? Visibility.Collapsed : Visibility.Visible;
 
         if (HeaderDeleteMenuItem != null)
-            HeaderDeleteMenuItem.Visibility = isSystem ? Visibility.Collapsed : Visibility.Visible;
+            HeaderDeleteMenuItem.Visibility = locked ? Visibility.Collapsed : Visibility.Visible;
 
         if (HeaderClearMenuItem != null)
         {
+            // Clearing a smart playlist is pointless — it regenerates on the next refresh.
+            bool isSystem = current?.IsSystem ?? false;
+            bool isSmart = current?.IsSmart ?? false;
+            HeaderClearMenuItem.Visibility = isSmart ? Visibility.Collapsed : Visibility.Visible;
             HeaderClearMenuItem.Text = isSystem
                 ? AppStrings.Get("Msg_PlaylistClearQueue", "대기열 비우기")
                 : AppStrings.Get("Msg_PlaylistClearPlaylist", "재생목록 비우기");
@@ -311,7 +327,7 @@ public sealed partial class PlaylistPage : Page
     private void OnClearSidebarPlaylist(object sender, RoutedEventArgs e)
     {
         var pl = ResolveSidebarPlaylist(sender);
-        if (pl == null) return;
+        if (pl == null || pl.IsSmart) return;
         AppServices.Playlists.RemoveAll(pl);
         Rebuild();
     }

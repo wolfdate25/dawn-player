@@ -59,6 +59,10 @@ internal static class ShortcutCommandExecutor
                 if (playback != null) playback.StopAfterCurrent = !playback.StopAfterCurrent;
                 break;
 
+            case ShortcutCommand.ABRepeatCycle:
+                playback?.CycleAbRepeat();
+                break;
+
             case ShortcutCommand.SeekForward:
                 if (playback != null) playback.Seek(playback.Position + SeekStep);
                 break;

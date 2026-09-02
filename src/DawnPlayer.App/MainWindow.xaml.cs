@@ -71,6 +71,7 @@ public sealed partial class MainWindow : Window
         PlayerBar.InitializeState();
 
         AppServices.PlaybackStateChanged += PlayerBar.OnStateChanged;
+        AppServices.AbRepeatChanged += PlayerBar.UpdateAbRepeatVisual;
         AppServices.CurrentTrackChanged += PlayerBar.OnTrackChanged;
         AppServices.QueueChanged += PlayerBar.OnQueueChanged;
         PlayerBar.LyricsToggleRequested += () => ToggleLyrics();
@@ -94,12 +95,31 @@ public sealed partial class MainWindow : Window
         AppWindow.Closing += (sender, args) =>
         {
             if (_closing) return;
+
+            // "Close to tray": hide instead of shutting down so playback keeps running. The tray
+            // icon's Exit entry (and any real exit path) comes back through CloseFromTray, which
+            // pre-sets _closing and lands here for the actual shutdown.
+            if (AppServices.Settings.Ui.CloseToTray && Services.TrayIconService.IsRunning)
+            {
+                args.Cancel = true;
+                Services.TrayIconService.HideToTray();
+                return;
+            }
+
             _closing = true;
             ShutdownForReal();
         };
 
         if (AppServices.Settings.Library is { ScanOnStartup: true, Folders.Count: > 0 })
             AppServices.StartLibraryScan();
+    }
+
+    /// <summary>Real exit from the tray: pre-set the closing latch so AppWindow.Closing runs the
+    /// shutdown path instead of hiding to the tray again.</summary>
+    public void CloseFromTray()
+    {
+        _closing = true;
+        Close();
     }
 
     private void ShutdownForReal()
@@ -298,6 +318,36 @@ public sealed partial class MainWindow : Window
     {
         AppServices.StartLibraryScan();
     }
+
+    // ---------------- sleep timer menu ----------------
+
+    // The flyout is rebuilt from the service every time it opens, so the checkmarks and the
+    // remaining-time label never go stale while the menu is closed.
+    private void OnTitleMenuOpening(object sender, object e)
+    {
+        SyncSleepTimerMenu();
+    }
+
+    private void SyncSleepTimerMenu()
+    {
+        var active = AppServices.SleepTimer.Active;
+        SleepOffItem.IsChecked = active == SleepTimerOption.Off;
+        Sleep15Item.IsChecked = active == SleepTimerOption.Minutes15;
+        Sleep30Item.IsChecked = active == SleepTimerOption.Minutes30;
+        Sleep60Item.IsChecked = active == SleepTimerOption.Minutes60;
+        SleepTrackItem.IsChecked = active == SleepTimerOption.AfterCurrentTrack;
+
+        // Header carries the live state ("수면 타이머 · 30분 (28:41)") so the countdown is visible
+        // before committing to an option.
+        var header = AppStrings.Get("MainWindow_Menu_SleepTimer", "수면 타이머");
+        SleepTimerMenu.Text = active == SleepTimerOption.Off ? header : $"{header} · {AppServices.SleepTimer.DescribeActive()}";
+    }
+
+    private void OnSleepTimerOff(object sender, RoutedEventArgs e) => AppServices.SleepTimer.Set(SleepTimerOption.Off);
+    private void OnSleepTimer15(object sender, RoutedEventArgs e) => AppServices.SleepTimer.Set(SleepTimerOption.Minutes15);
+    private void OnSleepTimer30(object sender, RoutedEventArgs e) => AppServices.SleepTimer.Set(SleepTimerOption.Minutes30);
+    private void OnSleepTimer60(object sender, RoutedEventArgs e) => AppServices.SleepTimer.Set(SleepTimerOption.Minutes60);
+    private void OnSleepTimerAfterTrack(object sender, RoutedEventArgs e) => AppServices.SleepTimer.Set(SleepTimerOption.AfterCurrentTrack);
 
     public void NavigateToSettings()
     {
