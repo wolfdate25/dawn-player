@@ -29,6 +29,18 @@ public sealed class Playlist : INotifyPropertyChanged
         set { if (_isSystem != value) { _isSystem = value; OnPropertyChanged(); } }
     }
 
+    private bool _isSmart;
+    /// <summary>
+    /// A virtual playlist synthesized from library queries (most played, recently added, ...).
+    /// Smart playlists are rebuilt, never renamed/deleted/saved, and are not eligible as the
+    /// "current" playlist fallback.
+    /// </summary>
+    public bool IsSmart
+    {
+        get => _isSmart;
+        set { if (_isSmart != value) { _isSmart = value; OnPropertyChanged(); } }
+    }
+
     public object SyncRoot { get; } = new();
 
     /// <summary>

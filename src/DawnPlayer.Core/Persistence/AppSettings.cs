@@ -175,6 +175,10 @@ public sealed class UiSettings
     /// <summary>Selected UI language (System follows the Windows display language).</summary>
     public UiLanguage Language { get; set; } = UiLanguage.System;
 
+    /// <summary>Hide to the tray icon instead of exiting when the window close button is used.
+    /// Real exit stays available from the tray menu.</summary>
+    public bool CloseToTray { get; set; }
+
     // Eole Layout Customization
     public double LeftSidebarWidth { get; set; } = 220;
     public double RightSidebarWidth { get; set; } = 300;

@@ -131,6 +131,16 @@ public sealed class SequencerStream : IWaveProvider
 
     /// <summary>True while the controller is opening the next reader.</summary>
     public volatile bool PrefetchPending;
+
+    /// <summary>
+    /// A-B repeat window in output-format bytes; either being 0 disables the loop. Set from the UI
+    /// thread via <see cref="PlaybackController"/>, enforced on the audio thread inside the render
+    /// pass. Published with <see cref="Volatile"/> rather than <c>volatile</c> because C# does not
+    /// allow the modifier on <see langword="long"/> — the same treatment <see cref="_bytesServed"/>
+    /// gets. Cleared on every track change: the window is per-track, not per-session.
+    /// </summary>
+    public long AbLoopStartBytes;
+    public long AbLoopEndBytes;
 #pragma warning restore CA1051
 
     public bool HasPrefetched { get { lock (_prefetchLock) return _prefetched != null; } }
@@ -138,8 +148,12 @@ public sealed class SequencerStream : IWaveProvider
     /// <summary>Fires on the audio thread when the first samples of a track leave the sequencer.</summary>
     public event Action<PendingTrack>? TrackStarted;
 
-    /// <summary>Fires on the audio thread when the sequence cannot continue (see reasons).</summary>
-    public event Action<SequencerEndReason>? SequenceEnded;
+    /// <summary>
+    /// Fires on the audio thread when the sequence cannot continue (see reasons). The argument is
+    /// the item that just drained, captured before the sequencer clears it — the controller needs
+    /// it to attribute the end to the right track without racing the ThreadPool.
+    /// </summary>
+    public event Action<SequencerEndReason, PlaylistItem?>? SequenceEnded;
 
     public event Action<Exception>? ReadError;
 
@@ -265,6 +279,8 @@ public sealed class SequencerStream : IWaveProvider
             Volatile.Write(ref _facts, null);
             _endFired = false;
             _trackStartedFired = false;
+            Volatile.Write(ref AbLoopStartBytes, 0);
+            Volatile.Write(ref AbLoopEndBytes, 0);
             _dspChain.Reset();
         }
     }
@@ -349,6 +365,7 @@ public sealed class SequencerStream : IWaveProvider
                     int floatsRead = _sourceProvider.Read(_floatBuf, 0, floatsWanted);
                     if (floatsRead <= 0)
                     {
+                        var endedItem = _current.Track.Item;
                         // current track drained → try to chain the prefetched one
                         var next = TakeChainablePrefetched(out bool requiresRestart);
                         if (requiresRestart)
@@ -362,7 +379,9 @@ public sealed class SequencerStream : IWaveProvider
                             _sourceProvider = null;
                             Volatile.Write(ref _volumeNode, null);
                             Volatile.Write(ref _facts, null);
-                            FireEndedLocked(SequencerEndReason.FormatChange);
+                            Volatile.Write(ref AbLoopStartBytes, 0);
+                            Volatile.Write(ref AbLoopEndBytes, 0);
+                            FireEndedLocked(SequencerEndReason.FormatChange, endedItem);
                             break;
                         }
                         if (next != null)
@@ -375,7 +394,9 @@ public sealed class SequencerStream : IWaveProvider
                         _current = null;
                         _sourceProvider = null;
                         Volatile.Write(ref _facts, null);
-                        FireEndedLocked(SequencerEndReason.NaturalEnd);
+                        Volatile.Write(ref AbLoopStartBytes, 0);
+                        Volatile.Write(ref AbLoopEndBytes, 0);
+                        FireEndedLocked(SequencerEndReason.NaturalEnd, endedItem);
                         break;
                     }
 
@@ -394,6 +415,29 @@ public sealed class SequencerStream : IWaveProvider
                     served += (long)frames * blockAlign;
                     // Published so the lock-free position getters see the progress of this pass.
                     Volatile.Write(ref _bytesServed, served);
+
+                    // A-B repeat: bounce back to the loop start on the thread that already owns
+                    // the gate, mirroring what SeekLocked does. Overshoot is bounded by this one
+                    // render block, so the loop point stays tight without any UI-thread polling.
+                    long loopEnd = Volatile.Read(ref AbLoopEndBytes);
+                    if (loopEnd > 0 && served >= loopEnd)
+                    {
+                        long loopStart = Volatile.Read(ref AbLoopStartBytes);
+                        if (loopStart <= 0 || loopStart >= loopEnd)
+                        {
+                            // Degenerate window (A cleared or A >= B): stop looping rather than
+                            // spinning the render thread on a no-op seek.
+                            Volatile.Write(ref AbLoopEndBytes, 0);
+                        }
+                        else
+                        {
+                            _current.Track.Reader.CurrentTime =
+                                TimeSpan.FromSeconds((double)loopStart / _outFormat.AverageBytesPerSecond);
+                            served = loopStart;
+                            Volatile.Write(ref _bytesServed, served);
+                            _dspChain.Reset();
+                        }
+                    }
                 }
             }
             return total;
@@ -468,6 +512,9 @@ public sealed class SequencerStream : IWaveProvider
         // Without this the one-shot latch survives the switch and a reused sequencer never
         // reports end-of-stream again, so playback simply stops at the next track boundary.
         _endFired = false;
+        // The A-B window is per-track: a new track must not inherit the previous one's loop.
+        Volatile.Write(ref AbLoopStartBytes, 0);
+        Volatile.Write(ref AbLoopEndBytes, 0);
 
         _sourceProvider = prepared.Source;
         Volatile.Write(ref _volumeNode, prepared.Volume);
@@ -488,10 +535,10 @@ public sealed class SequencerStream : IWaveProvider
         }
     }
 
-    private void FireEndedLocked(SequencerEndReason reason)
+    private void FireEndedLocked(SequencerEndReason reason, PlaylistItem? endedItem)
     {
         if (_endFired) return;
         _endFired = true;
-        SequenceEnded?.Invoke(reason);
+        SequenceEnded?.Invoke(reason, endedItem);
     }
 }

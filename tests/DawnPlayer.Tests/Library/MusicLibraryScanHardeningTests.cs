@@ -167,7 +167,7 @@ public sealed class MusicLibraryScanHardeningTests
     }
 
     [Fact]
-    public void MusicLibrary_NewDatabase_StampsSchemaVersionOne()
+    public void MusicLibrary_NewDatabase_StampsCurrentSchemaVersion()
     {
         var root = NewTempDir("SchemaVersion");
         var dbPath = Path.Combine(root, "version.db");
@@ -175,11 +175,11 @@ public sealed class MusicLibraryScanHardeningTests
         {
             using (var created = new MusicLibrary(dbPath))
             {
-                Assert.Equal(1, created.DatabaseSchemaVersion);
+                Assert.Equal(2, created.DatabaseSchemaVersion);
             }
 
             using var reopened = new MusicLibrary(dbPath);
-            Assert.Equal(1, reopened.DatabaseSchemaVersion);
+            Assert.Equal(2, reopened.DatabaseSchemaVersion);
         }
         finally
         {

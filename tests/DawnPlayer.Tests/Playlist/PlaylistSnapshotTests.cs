@@ -252,6 +252,8 @@ public class PlaylistSnapshotTests : IDisposable
         public Track? GetTrack(string path) =>
             _tracks.TryGetValue(path, out var t) ? t : null;
 
+        public void UpdateStats(Track track) { }
+
         public void LoadFromDb() { }
 
         public Task ScanAsync(AppSettings settings, CancellationToken ct = default)

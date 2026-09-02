@@ -100,7 +100,15 @@ public sealed class SequencerStreamResponsivenessTests
         public ISampleProvider Samples => _samples;
         public WaveFormat SourceFormat => Format;
         public TimeSpan TotalTime { get; }
-        public TimeSpan CurrentTime { get; set; }
+
+        // Seekable like a real reader: the sequencer's A-B loop repositions through this setter,
+        // so an auto-property would silently disable looping in tests that use this fixture.
+        public TimeSpan CurrentTime
+        {
+            get => TimeSpan.FromSeconds((double)_samples.ServedFrames / Format.SampleRate);
+            set => _samples.SeekFrames((int)(value.TotalSeconds * Format.SampleRate));
+        }
+
         public string Path => @"C:\m\finite.flac";
         public bool Disposed { get; private set; }
 
@@ -121,6 +129,14 @@ public sealed class SequencerStreamResponsivenessTests
 
             public WaveFormat WaveFormat { get; }
 
+            public int ServedFrames => _served / WaveFormat.Channels;
+
+            public void SeekFrames(int frames)
+            {
+                int totalFrames = _totalFloats / WaveFormat.Channels;
+                _served = Math.Clamp(frames, 0, totalFrames) * WaveFormat.Channels;
+            }
+
             public int Read(float[] buffer, int offset, int count)
             {
                 int remaining = _totalFloats - _served;
@@ -136,6 +152,49 @@ public sealed class SequencerStreamResponsivenessTests
 
     private static SequencerStream CreateSequencer(bool applyVolume = true) =>
         new(Format, applyVolume, gainProvider: _ => 1.0f, latencyMs: 50);
+
+    [Fact]
+    public void AbLoop_BouncesBackToStart_AndNeverStalls()
+    {
+        var seq = CreateSequencer(applyVolume: false);
+        var reader = new FiniteReader(44100 * 3); // three seconds of audio
+        seq.SwitchTo(Pending(reader));
+
+        int bps = Format.AverageBytesPerSecond;
+        seq.AbLoopStartBytes = bps / 2; // A at 0.5 s
+        seq.AbLoopEndBytes = bps;       // B at 1.0 s
+
+        var buffer = new byte[bps / 10]; // 100 ms chunks
+        int total = 0;
+        for (int i = 0; i < 100 && total < bps * 20; i++)
+        {
+            int read = seq.Read(buffer, 0, buffer.Length);
+            Assert.True(read > 0, "the loop must keep producing samples, not stall");
+
+            // The loop may overshoot B by at most the render block being processed.
+            Assert.True(
+                seq.GetPosition() <= TimeSpan.FromSeconds(1.0) + TimeSpan.FromMilliseconds(200),
+                $"position ran past B: {seq.GetPosition()}");
+            total += read;
+        }
+
+        Assert.True(total >= bps * 5, "several loop iterations must have been served");
+        Assert.True(seq.GetPosition() < TimeSpan.FromSeconds(1.0), "position must be back inside the loop window");
+    }
+
+    [Fact]
+    public void AbLoop_IsClearedOnTrackSwitch()
+    {
+        var seq = CreateSequencer(applyVolume: false);
+        seq.SwitchTo(Pending(new FiniteReader(44100)));
+        seq.AbLoopStartBytes = 1000;
+        seq.AbLoopEndBytes = 100_000;
+
+        seq.SwitchTo(Pending(new FiniteReader(44100), @"C:\m\second.flac"));
+
+        Assert.Equal(0, seq.AbLoopStartBytes);
+        Assert.Equal(0, seq.AbLoopEndBytes);
+    }
 
     [Fact]
     public void UiFacingReads_DoNotBlock_WhileDecoderIsStalledInsideRead()
@@ -328,7 +387,7 @@ public sealed class SequencerStreamResponsivenessTests
         seq.SwitchTo(Pending(first, @"C:\m\first.flac"));
 
         SequencerEndReason? reason = null;
-        seq.SequenceEnded += r => reason = r;
+        seq.SequenceEnded += (r, _) => reason = r;
 
         var restartPending = new PendingTrack
         {

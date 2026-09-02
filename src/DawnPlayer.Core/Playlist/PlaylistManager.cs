@@ -16,6 +16,17 @@ namespace DawnPlayer.Core.Playlists;
 
 public enum PlaylistSort { Title, Artist, Album, TrackNo, Path, Random, Reverse }
 
+/// <summary>The built-in library queries smart playlists are generated from.</summary>
+public enum SmartPlaylistKind
+{
+    /// <summary>Most played tracks first.</summary>
+    MostPlayed,
+    /// <summary>Newest additions to the library first.</summary>
+    RecentlyAdded,
+    /// <summary>Least recently played (never-played included) — the "forgotten music" view.</summary>
+    NotRecentlyPlayed
+}
+
 /// <summary>Owns the playlist collection: creation, batch editing, parallel tag reading, and m3u8 persistence.</summary>
 public sealed class PlaylistManager : IPlaylistManager
 {
@@ -36,6 +47,10 @@ public sealed class PlaylistManager : IPlaylistManager
     public ObservableCollection<Playlist> Playlists { get; } = new();
     private Playlist? _current;
     private Playlist? _nowPlaying;
+    private readonly Dictionary<SmartPlaylistKind, Playlist> _smartPlaylists = new();
+
+    /// <summary>Upper bound on the size of each generated smart playlist.</summary>
+    private const int SmartPlaylistCap = 100;
 
     public Playlist NowPlaying
     {
@@ -63,6 +78,83 @@ public sealed class PlaylistManager : IPlaylistManager
         }
     }
 
+    /// <summary>
+    /// Creates (once) the built-in smart playlists and places them right under Now Playing.
+    /// Names come from the caller because Core cannot reach the app's localized resources; pass
+    /// the display names in the order the sidebar should show them. Idempotent and safe to call
+    /// again after a language change.
+    /// </summary>
+    public void EnsureSmartPlaylists(IReadOnlyList<(SmartPlaylistKind Kind, string Name)> definitions)
+    {
+        if (definitions == null) return;
+
+        _ = NowPlaying; // pin the system playlist at index 0 first
+
+        lock (_saveLock)
+        {
+            int insertAt = 1;
+            foreach (var (kind, name) in definitions)
+            {
+                if (_smartPlaylists.TryGetValue(kind, out var existing) && Playlists.Contains(existing))
+                {
+                    existing.Name = name;
+                }
+                else
+                {
+                    var pl = new Playlist(name) { IsSmart = true };
+                    // No CollectionChanged → ScheduleSave subscription on purpose: the contents are
+                    // generated, and every refresh would otherwise rewrite an M3U8 for them.
+                    _smartPlaylists[kind] = pl;
+                    Playlists.Insert(Math.Min(insertAt, Playlists.Count), pl);
+                }
+                insertAt++;
+            }
+        }
+
+        RefreshSmartPlaylists();
+    }
+
+    /// <summary>Regenerates the contents of every smart playlist from the current library state.
+    /// Call on the UI thread (items collections are bound) after a scan, a load, or a stats update.</summary>
+    public void RefreshSmartPlaylists()
+    {
+        foreach (var kv in _smartPlaylists)
+        {
+            if (!Playlists.Contains(kv.Value)) continue;
+            ReplaceWithTracks(kv.Value, QuerySmartPlaylist(kv.Key));
+        }
+    }
+
+    private IEnumerable<Track> QuerySmartPlaylist(SmartPlaylistKind kind)
+    {
+        var tracks = _library.Tracks;
+        switch (kind)
+        {
+            case SmartPlaylistKind.MostPlayed:
+                return tracks
+                    .Where(t => t.PlayCount > 0)
+                    .OrderByDescending(t => t.PlayCount)
+                    .ThenByDescending(t => t.LastPlayedUtcTicks)
+                    .ThenBy(t => t.AlbumSortKey)
+                    .Take(SmartPlaylistCap);
+
+            case SmartPlaylistKind.RecentlyAdded:
+                return tracks
+                    .OrderByDescending(t => t.FirstSeenUtcTicks)
+                    .ThenBy(t => t.AlbumSortKey)
+                    .Take(SmartPlaylistCap);
+
+            default:
+                // Never-played tracks (last_played = 0) sort first, which is the point: this view
+                // surfaces music the library has on disk but the user has not heard.
+                return tracks
+                    .OrderBy(t => t.LastPlayedUtcTicks)
+                    .ThenBy(t => t.PlayCount)
+                    .ThenBy(t => t.AlbumSortKey)
+                    .Take(SmartPlaylistCap);
+        }
+    }
+
     public Playlist Current
     {
         get
@@ -72,7 +164,7 @@ public sealed class PlaylistManager : IPlaylistManager
                 if (_current != null && Playlists.Contains(_current))
                     return _current;
 
-                var userPl = Playlists.FirstOrDefault(p => p != null && !p.IsSystem);
+                var userPl = Playlists.FirstOrDefault(p => p != null && !p.IsSystem && !p.IsSmart);
                 if (userPl != null)
                 {
                     _current = userPl;
@@ -100,7 +192,7 @@ public sealed class PlaylistManager : IPlaylistManager
         {
             if (_current != null && Playlists.Contains(_current)) return _current;
 
-            var userPl = Playlists.FirstOrDefault(p => p != null && !p.IsSystem);
+            var userPl = Playlists.FirstOrDefault(p => p != null && !p.IsSystem && !p.IsSmart);
             if (userPl != null) return userPl;
 
             if (_nowPlaying != null && Playlists.Contains(_nowPlaying)) return _nowPlaying;
@@ -192,7 +284,7 @@ public sealed class PlaylistManager : IPlaylistManager
         pl.Items.CollectionChanged += (_, _) => ScheduleSave(pl);
         pl.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Playlist.Name)) ScheduleSave(pl); };
         Playlists.Add(pl);
-        if (_current == null || _current.IsSystem)
+        if (_current == null || _current.IsSystem || _current.IsSmart)
         {
             _current = pl;
         }
@@ -275,6 +367,12 @@ public sealed class PlaylistManager : IPlaylistManager
             return;
         }
 
+        if (pl.IsSmart)
+        {
+            // Generated playlists are code-owned; a deleted one would resurrect on the next refresh.
+            return;
+        }
+
         Timer? timerToDispose = null;
         int idx;
         lock (_saveLock)
@@ -288,11 +386,11 @@ public sealed class PlaylistManager : IPlaylistManager
 
             if (_current == pl)
             {
-                var nextUserPl = Playlists.FirstOrDefault(p => p != null && !p.IsSystem);
+                var nextUserPl = Playlists.FirstOrDefault(p => p != null && !p.IsSystem && !p.IsSmart);
                 _current = nextUserPl ?? (Playlists.Count > 0 ? Playlists[Math.Min(idx, Playlists.Count - 1)] : null);
             }
 
-            if (!Playlists.Any(p => p != null && !p.IsSystem))
+            if (!Playlists.Any(p => p != null && !p.IsSystem && !p.IsSmart))
             {
                 _current = CreatePlaylistLocked();
             }
@@ -315,7 +413,7 @@ public sealed class PlaylistManager : IPlaylistManager
         Playlist? pl;
         lock (_saveLock)
         {
-            pl = Playlists.FirstOrDefault(p => p != null && !p.IsSystem && string.Equals(p.Name, playlistIdOrName, StringComparison.OrdinalIgnoreCase))
+                pl = Playlists.FirstOrDefault(p => p != null && !p.IsSystem && !p.IsSmart && string.Equals(p.Name, playlistIdOrName, StringComparison.OrdinalIgnoreCase))
                 ?? Playlists.FirstOrDefault(p => p != null && string.Equals(p.Name, playlistIdOrName, StringComparison.OrdinalIgnoreCase));
         }
         if (pl != null)
@@ -326,7 +424,7 @@ public sealed class PlaylistManager : IPlaylistManager
 
     public void RenamePlaylist(Playlist pl, string newName)
     {
-        if (pl == null || pl.IsSystem || string.IsNullOrWhiteSpace(newName)) return;
+        if (pl == null || pl.IsSystem || pl.IsSmart || string.IsNullOrWhiteSpace(newName)) return;
 
         string old;
         lock (pl.SyncRoot)
@@ -764,6 +862,10 @@ public sealed class PlaylistManager : IPlaylistManager
     public void SavePlaylist(Playlist playlist)
     {
         if (playlist == null) return;
+
+        // Smart playlists are generated from library state; an M3U8 snapshot would be stale the
+        // moment it landed (and would resurrect as a user playlist on the next load).
+        if (playlist.IsSmart) return;
 
         lock (_fileLock)
         {

@@ -27,6 +27,10 @@ public interface IMusicLibrary : IDisposable
     /// <summary>Retrieves a cached track by file path.</summary>
     Track? GetTrack(string path);
 
+    /// <summary>Persists the listening statistics of a working-set track (play/skip counts,
+    /// last played) without touching any other column.</summary>
+    void UpdateStats(Track track);
+
     /// <summary>Loads track catalog into memory from SQLite database.</summary>
     void LoadFromDb();
 

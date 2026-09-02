@@ -13,7 +13,7 @@ public sealed record ScanProgress(int Done, int Total, string CurrentFile, bool 
 public sealed class MusicLibrary : IMusicLibrary
 {
     /// <summary>Layout stamped into the file as <c>PRAGMA user_version</c>.</summary>
-    private const int SchemaVersion = 1;
+    private const int SchemaVersion = 2;
 
     /// <summary>
     /// The one column order shared by the SELECT in <see cref="LoadFromDb"/>, the INSERT in
@@ -22,7 +22,8 @@ public sealed class MusicLibrary : IMusicLibrary
     private const string TrackColumns =
         "path,title,artist,album_artist,album,genre,year,track_no,disc_no,duration_ms," +
         "sample_rate,channels,bits,codec,bitrate,size,mtime,has_lrc,art_path," +
-        "rg_track_gain,rg_track_peak,rg_album_gain,rg_album_peak";
+        "rg_track_gain,rg_track_peak,rg_album_gain,rg_album_peak," +
+        "play_count,skip_count,last_played,first_seen";
 
     /// <summary>Shortest gap between two non-final scan reports, in milliseconds.</summary>
     private const int ProgressThrottleMs = 100;
@@ -104,7 +105,11 @@ public sealed class MusicLibrary : IMusicLibrary
                 has_lrc INTEGER NOT NULL DEFAULT 0,
                 art_path TEXT,
                 rg_track_gain REAL, rg_track_peak REAL,
-                rg_album_gain REAL, rg_album_peak REAL
+                rg_album_gain REAL, rg_album_peak REAL,
+                play_count INTEGER NOT NULL DEFAULT 0,
+                skip_count INTEGER NOT NULL DEFAULT 0,
+                last_played INTEGER NOT NULL DEFAULT 0,
+                first_seen INTEGER NOT NULL DEFAULT 0
             );
             """;
         cmd.ExecuteNonQuery();
@@ -119,9 +124,10 @@ public sealed class MusicLibrary : IMusicLibrary
 
         if (version < SchemaVersion)
         {
-            // A future migration branches here: step the file up one version at a time, then let
-            // the stamp below record where it landed. Version 1 is the first stamped layout and is
-            // identical to the unstamped one, so nothing has to be rewritten yet.
+            // Migrations step the file up one version at a time; the stamp below records where it
+            // landed. A database created by the CREATE above already has the current layout, and
+            // each migration is idempotent, so fresh and upgraded files converge on the same shape.
+            MigrateToV2(cmd);
             try
             {
                 cmd.CommandText = $"PRAGMA user_version = {SchemaVersion};";
@@ -129,12 +135,50 @@ public sealed class MusicLibrary : IMusicLibrary
             }
             catch
             {
-                // Read-only media: the layout is version 1 regardless, it just cannot be stamped.
+                // Read-only media: the layout is current regardless, it just cannot be stamped.
             }
             version = SchemaVersion;
         }
 
         DatabaseSchemaVersion = version;
+    }
+
+    /// <summary>v1 → v2: listening statistics columns. Idempotent — a table that already has the
+    /// columns (fresh create, or a partial migration on read-only media) is left untouched.</summary>
+    private static void MigrateToV2(SqliteCommand cmd)
+    {
+        var present = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        cmd.CommandText = "PRAGMA table_info(tracks);";
+        using (var reader = cmd.ExecuteReader())
+        {
+            int nameOrdinal = reader.GetOrdinal("name");
+            while (reader.Read()) present.Add(reader.GetString(nameOrdinal));
+        }
+
+        void AddIfMissing(string column, string ddl)
+        {
+            if (present.Contains(column)) return;
+            try
+            {
+                cmd.CommandText = $"ALTER TABLE tracks ADD COLUMN {ddl};";
+                cmd.ExecuteNonQuery();
+            }
+            catch { /* read-only media: scan/stats writes will fail softly later */ }
+        }
+
+        AddIfMissing("play_count", "play_count INTEGER NOT NULL DEFAULT 0");
+        AddIfMissing("skip_count", "skip_count INTEGER NOT NULL DEFAULT 0");
+        AddIfMissing("last_played", "last_played INTEGER NOT NULL DEFAULT 0");
+        AddIfMissing("first_seen", "first_seen INTEGER NOT NULL DEFAULT 0");
+
+        // Rows indexed before v2 have no real first-seen stamp. The file mtime is the best
+        // available approximation and keeps "Recently added" meaningful right after the upgrade.
+        try
+        {
+            cmd.CommandText = "UPDATE tracks SET first_seen = mtime WHERE first_seen = 0 AND mtime > 0;";
+            cmd.ExecuteNonQuery();
+        }
+        catch { }
     }
 
     public Track? GetTrack(string path) =>
@@ -276,6 +320,25 @@ public sealed class MusicLibrary : IMusicLibrary
                         var art = (pic != null ? TagReader.TryExtractArt(t, albumKey, pic) : null)
                                   ?? TagReader.FindFolderArt(file, folderArt);
                         var track = t with { ArtPath = art };
+
+                        // INSERT OR REPLACE rewrites the whole row, but listening history belongs
+                        // to the file path, not to the tag snapshot: a retagged or rescanned file
+                        // must carry its play counts and first-seen stamp forward.
+                        if (existing.TryGetValue(file, out var previous))
+                        {
+                            track = track with
+                            {
+                                PlayCount = previous.PlayCount,
+                                SkipCount = previous.SkipCount,
+                                LastPlayedUtcTicks = previous.LastPlayedUtcTicks,
+                                FirstSeenUtcTicks = previous.FirstSeenUtcTicks,
+                            };
+                        }
+                        if (track.FirstSeenUtcTicks == 0)
+                        {
+                            track = track with { FirstSeenUtcTicks = DateTime.UtcNow.Ticks };
+                        }
+
                         result[file] = track;
                         upserts.Add(track);
                     }
@@ -423,6 +486,10 @@ public sealed class MusicLibrary : IMusicLibrary
             RgTrackPeak = r.IsDBNull(20) ? null : r.GetDouble(20),
             RgAlbumGainDb = r.IsDBNull(21) ? null : r.GetDouble(21),
             RgAlbumPeak = r.IsDBNull(22) ? null : r.GetDouble(22),
+            PlayCount = r.GetInt32(23),
+            SkipCount = r.GetInt32(24),
+            LastPlayedUtcTicks = r.GetInt64(25),
+            FirstSeenUtcTicks = r.GetInt64(26),
         };
     }
 
@@ -433,7 +500,7 @@ public sealed class MusicLibrary : IMusicLibrary
         cmd.CommandText =
             "INSERT OR REPLACE INTO tracks (" + TrackColumns + ") VALUES " +
             "(@p,@t,@a,@aa,@al,@g,@y,@tn,@dn,@dur,@sr,@ch,@bits,@codec,@br,@size,@mtime,@lrc,@art," +
-            " @rg1,@rg2,@rg3,@rg4)";
+            " @rg1,@rg2,@rg3,@rg4,@pc,@sc,@lp,@fs)";
 
         cmd.Parameters.Add("@p", SqliteType.Text);
         cmd.Parameters.Add("@t", SqliteType.Text);
@@ -458,6 +525,10 @@ public sealed class MusicLibrary : IMusicLibrary
         cmd.Parameters.Add("@rg2", SqliteType.Real);
         cmd.Parameters.Add("@rg3", SqliteType.Real);
         cmd.Parameters.Add("@rg4", SqliteType.Real);
+        cmd.Parameters.Add("@pc", SqliteType.Integer);
+        cmd.Parameters.Add("@sc", SqliteType.Integer);
+        cmd.Parameters.Add("@lp", SqliteType.Integer);
+        cmd.Parameters.Add("@fs", SqliteType.Integer);
         cmd.Prepare();
         return cmd;
     }
@@ -488,7 +559,41 @@ public sealed class MusicLibrary : IMusicLibrary
         p["@rg2"].Value = (object?)t.RgTrackPeak ?? DBNull.Value;
         p["@rg3"].Value = (object?)t.RgAlbumGainDb ?? DBNull.Value;
         p["@rg4"].Value = (object?)t.RgAlbumPeak ?? DBNull.Value;
+        p["@pc"].Value = t.PlayCount;
+        p["@sc"].Value = t.SkipCount;
+        p["@lp"].Value = t.LastPlayedUtcTicks;
+        p["@fs"].Value = t.FirstSeenUtcTicks;
         cmd.ExecuteNonQuery();
+    }
+
+    /// <summary>
+    /// Persists the listening statistics of a working-set track. The upsert path rewrites whole
+    /// rows, so statistics updates go through this dedicated single-column UPDATE instead and a
+    /// rescan never races a play count.
+    /// </summary>
+    public void UpdateStats(Track track)
+    {
+        if (track == null || string.IsNullOrEmpty(track.Path)) return;
+
+        lock (_ioLock)
+        {
+            using var cmd = _conn.CreateCommand();
+            cmd.CommandText =
+                "UPDATE tracks SET play_count=@pc, skip_count=@sc, last_played=@lp WHERE path=@p";
+            cmd.Parameters.AddWithValue("@pc", track.PlayCount);
+            cmd.Parameters.AddWithValue("@sc", track.SkipCount);
+            cmd.Parameters.AddWithValue("@lp", track.LastPlayedUtcTicks);
+            cmd.Parameters.AddWithValue("@p", track.Path);
+            try
+            {
+                cmd.ExecuteNonQuery();
+            }
+            catch
+            {
+                // Read-only media or a track deleted between scan batches: the in-memory stats
+                // still stand, and the next scan reconciles the row.
+            }
+        }
     }
 
     public void Dispose()

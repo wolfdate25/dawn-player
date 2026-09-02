@@ -35,6 +35,16 @@ public sealed record Track
     public double? RgAlbumGainDb { get; set; }
     public double? RgAlbumPeak { get; set; }
 
+    // Listening statistics (library schema v2). Mutated in place by the playback stats recorder
+    // after playback leaves a track; safe for the AlbumKey memo because none of these feed the key.
+    public int PlayCount { get; set; }
+    public int SkipCount { get; set; }
+    /// <summary>UTC ticks of the last counted play; 0 = never played.</summary>
+    public long LastPlayedUtcTicks { get; set; }
+    /// <summary>UTC ticks of the first scan that saw the file; 0 = unknown (pre-v2 rows are
+    /// backfilled from the file mtime at migration time).</summary>
+    public long FirstSeenUtcTicks { get; set; }
+
     public TimeSpan Duration => TimeSpan.FromMilliseconds(DurationMs);
 
     /// <summary>Primary sort artist: album artist if present, otherwise performer.</summary>

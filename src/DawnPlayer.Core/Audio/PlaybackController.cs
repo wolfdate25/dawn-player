@@ -9,6 +9,20 @@ namespace DawnPlayer.Core.Audio;
 
 public enum PlaybackState { Stopped, Playing, Paused }
 
+/// <summary>Why playback left a track — drives play/skip counting in the stats sink.</summary>
+public enum PlaybackLeaveReason
+{
+    /// <summary>The track drained on its own (gapless chain, end of playlist, stop-after-current).</summary>
+    NaturalEnd,
+    /// <summary>The user switched away (next / previous / double-clicked another item).</summary>
+    ManualAdvance,
+    /// <summary>The user pressed stop while the track was playing.</summary>
+    ManualStop
+}
+
+/// <summary>A-B repeat cycle state: Off → WaitingForB (A marked) → Looping (A..B) → Off.</summary>
+public enum AbRepeatStage { Off, WaitingForB, Looping }
+
 public sealed record SessionInfo(string DeviceName, bool Exclusive, string FormatDescription, int LatencyMs,
     AudioDriverType Driver = AudioDriverType.Wasapi);
 
@@ -63,6 +77,15 @@ public sealed class PlaybackController : IPlaybackController
     private Playlist? _currentPlaylist;
     private readonly Stack<(Playlist Playlist, PlaylistItem Item)> _history = new();
 
+    // Distinguishes a user-command switch (Next/Previous/double-click) from a natural gapless
+    // advance when the successor's TrackStarted arrives: manual paths stamp the outgoing item here
+    // before switching, so OnTrackStarted attributes the leave correctly. Reference published via
+    // Volatile because it is written on command threads and read on a ThreadPool handler.
+    private PlaylistItem? _manualLeaveMarker;
+
+    // An enum cannot be volatile, so the backing int is what gets published (same pattern as _state).
+    private int _abStage;
+
     // An enum cannot be volatile, so the backing int is what gets published. State is written from
     // command paths (no lock) and from session paths (under _sessionLock) alike.
     private int _state;
@@ -98,6 +121,15 @@ public sealed class PlaybackController : IPlaybackController
 
     public event Action<PlaylistItem?>? CurrentChanged;   // null → stopped keeping last track hidden
     public event Action? StateChanged;
+
+    /// <summary>
+    /// Raised exactly once per played track when playback leaves it (natural drain, user switch,
+    /// user stop), with the position at the moment of leaving. Background thread; UI must marshal.
+    /// </summary>
+    public event Action<PlaylistItem, TimeSpan, PlaybackLeaveReason>? TrackLeft;
+
+    /// <summary>Raised when the A-B repeat stage changes (user cycle or per-track reset).</summary>
+    public event Action? AbRepeatChanged;
     public event Action? StopAfterCurrentChanged;
     public event Action<string>? Warning;
     public event Action<SessionInfo>? SessionStarted;
@@ -175,6 +207,7 @@ public sealed class PlaybackController : IPlaybackController
                 pending.Reader.Dispose();
                 return;
             }
+            FireManualLeave(PlaybackLeaveReason.ManualAdvance);
             PushHistory();
             StartPending(pending, cmdId);
         }
@@ -219,6 +252,8 @@ public sealed class PlaybackController : IPlaybackController
         // Invalidate anything still opening a file: without this a slow Open() completing after
         // Stop would build a session and start playing seconds after the user stopped playback.
         Interlocked.Increment(ref _commandGeneration);
+        FireManualLeave(PlaybackLeaveReason.ManualStop);
+        SetAbStage(AbRepeatStage.Off);
         lock (_sessionLock)
         {
             TeardownSessionLocked();
@@ -250,6 +285,7 @@ public sealed class PlaybackController : IPlaybackController
                 pending.Reader.Dispose();
                 return;
             }
+            FireManualLeave(PlaybackLeaveReason.ManualAdvance);
             await PlayPendingAsync(pending, pushHistory: true, cmdId);
         }
         finally
@@ -310,6 +346,7 @@ public sealed class PlaybackController : IPlaybackController
                 pending.Reader.Dispose();
                 return;
             }
+            FireManualLeave(PlaybackLeaveReason.ManualAdvance);
             await PlayPendingAsync(pending, pushHistory: false, cmdId);
         }
         finally
@@ -321,6 +358,88 @@ public sealed class PlaybackController : IPlaybackController
     public void Seek(TimeSpan position)
     {
         Sequencer?.Seek(position);
+    }
+
+    // ---------------- A-B repeat ----------------
+
+    public AbRepeatStage AbRepeat => (AbRepeatStage)Volatile.Read(ref _abStage);
+
+    /// <summary>
+    /// Cycles A-B repeat: first press marks point A at the current position, second marks B and
+    /// starts looping between them (the sequencer enforces the loop sample-tight on the audio
+    /// thread), third press clears. The window is per-track and resets on every track change.
+    /// Returns the resulting stage so callers can refresh their affordances.
+    /// </summary>
+    public AbRepeatStage CycleAbRepeat()
+    {
+        var seq = Sequencer;
+        if (seq == null || State == PlaybackState.Stopped)
+        {
+            SetAbStage(AbRepeatStage.Off);
+            return AbRepeatStage.Off;
+        }
+
+        var pos = seq.GetPosition();
+        switch (AbRepeat)
+        {
+            case AbRepeatStage.Off:
+                Volatile.Write(ref seq.AbLoopEndBytes, 0);
+                Volatile.Write(ref seq.AbLoopStartBytes, MfTrackReader.TimeToBytes(seq.WaveFormat, pos));
+                SetAbStage(AbRepeatStage.WaitingForB);
+                break;
+
+            case AbRepeatStage.WaitingForB:
+                // A second press before A has audibly landed just re-marks A.
+                if (pos.Ticks - AbBytesToTime(seq, Volatile.Read(ref seq.AbLoopStartBytes)).Ticks > TimeSpan.TicksPerSecond / 5)
+                {
+                    long start = Volatile.Read(ref seq.AbLoopStartBytes);
+                    var end = MfTrackReader.TimeToBytes(seq.WaveFormat, pos);
+                    if (end > start)
+                    {
+                        Volatile.Write(ref seq.AbLoopEndBytes, end);
+                        SetAbStage(AbRepeatStage.Looping);
+                    }
+                }
+                else
+                {
+                    Volatile.Write(ref seq.AbLoopStartBytes, MfTrackReader.TimeToBytes(seq.WaveFormat, pos));
+                }
+                break;
+
+            default:
+                Volatile.Write(ref seq.AbLoopStartBytes, 0);
+                Volatile.Write(ref seq.AbLoopEndBytes, 0);
+                SetAbStage(AbRepeatStage.Off);
+                break;
+        }
+
+        return AbRepeat;
+    }
+
+    private static TimeSpan AbBytesToTime(SequencerStream seq, long bytes) =>
+        TimeSpan.FromSeconds((double)bytes / seq.WaveFormat.AverageBytesPerSecond);
+
+    private void SetAbStage(AbRepeatStage stage)
+    {
+        if (Interlocked.Exchange(ref _abStage, (int)stage) != (int)stage)
+        {
+            AbRepeatChanged?.Invoke();
+        }
+    }
+
+    /// <summary>
+    /// Records the outgoing track for statistics and stamps the marker so the successor's
+    /// TrackStarted does not also report it as a natural end. Called from the manual command
+    /// paths after their generation check, outside every other lock.
+    /// </summary>
+    private void FireManualLeave(PlaybackLeaveReason reason)
+    {
+        PlaylistItem? current;
+        lock (_stateLock) current = _currentItem;
+        if (current?.Track == null) return;
+
+        Volatile.Write(ref _manualLeaveMarker, current);
+        TrackLeft?.Invoke(current, Position, reason);
     }
 
     public double Volume
@@ -381,7 +500,7 @@ public sealed class PlaybackController : IPlaybackController
             try
             {
                 var reader = AudioFileReaderFactory.Open(item.Track.Path);
-                await PlayPendingAsync(BuildPending(pl, item, reader, startPosition: pos), pushHistory: false, restartCmdId);
+                await PlayPendingAsync(BuildPending(pl, item, reader, startPosition: pos), pushHistory: false, restartCmdId, recordLeave: false);
                 if (Volatile.Read(ref _commandGeneration) != restartCmdId) return;
                 if (resumePaused)
                 {
@@ -419,9 +538,12 @@ public sealed class PlaybackController : IPlaybackController
 
     // ---------------- session management ----------------
 
-    private async Task PlayPendingAsync(PendingTrack pending, bool pushHistory, long cmdId)
+    private async Task PlayPendingAsync(PendingTrack pending, bool pushHistory, long cmdId, bool recordLeave = true)
     {
         if (pushHistory) PushHistory();
+        // A device/mode restart replays the SAME item at the same position: not a leave, or every
+        // output-settings change would inflate the skip counter.
+        if (recordLeave) FireManualLeave(PlaybackLeaveReason.ManualAdvance);
         await Task.Run(() => StartPending(pending, cmdId));
     }
 
@@ -586,7 +708,7 @@ public sealed class PlaybackController : IPlaybackController
     private void SubscribeSequencer(SequencerStream seq)
     {
         seq.TrackStarted += pending => OnTrackStarted(seq, pending);
-        seq.SequenceEnded += reason => OnSequenceEnded(seq, reason);
+        seq.SequenceEnded += (reason, endedItem) => OnSequenceEnded(seq, reason, endedItem);
         seq.ReadError += ex => OnReadError(seq, ex);
     }
 
@@ -671,10 +793,24 @@ public sealed class PlaybackController : IPlaybackController
             // and a dead file at the head then trapped playback on one track forever.
             Queue.Consume(pending.Item);
 
+            // Stats: a predecessor that was NOT left by a user command ended on its own — gapless
+            // chain, repeat-one wrap or a format-change rebuild. Its full duration is the position.
+            if (prev?.Track != null && !ReferenceEquals(prev, Volatile.Read(ref _manualLeaveMarker)))
+            {
+                TrackLeft?.Invoke(prev, prev.Track.Duration, PlaybackLeaveReason.NaturalEnd);
+            }
+            Volatile.Write(ref _manualLeaveMarker, null);
+
+            // The A-B window is per-track; any new track resets it so the UI affordance follows.
+            if (Interlocked.Exchange(ref _abStage, (int)AbRepeatStage.Off) != (int)AbRepeatStage.Off)
+            {
+                AbRepeatChanged?.Invoke();
+            }
+
             CurrentChanged?.Invoke(pending.Item);
         });
 
-    private void OnSequenceEnded(SequencerStream raiser, SequencerEndReason reason) =>
+    private void OnSequenceEnded(SequencerStream raiser, SequencerEndReason reason, PlaylistItem? endedItem) =>
         ThreadPool.QueueUserWorkItem(_ =>
         {
             // Guards evaluated before the lock, and again inside it: a user command can land while
@@ -684,12 +820,20 @@ public sealed class PlaybackController : IPlaybackController
             if (session == null || !ReferenceEquals(session.Sequencer, raiser)) return;
             if (raiser.CurrentItem != null) return;
 
+            // The sequencer has already dropped the drained item, so it arrives as an argument —
+            // _currentItem cannot be trusted here, its ThreadPool update can lag this handler.
+            var finished = endedItem;
+
             if (_stopAfterCurrent)
             {
                 lock (_sessionLock)
                 {
                     if (!ReferenceEquals(_session, session)) return;
                     _stopAfterCurrent = false;
+                    if (finished?.Track != null)
+                    {
+                        TrackLeft?.Invoke(finished, finished.Track.Duration, PlaybackLeaveReason.NaturalEnd);
+                    }
                     TeardownSessionLocked();
                     State = PlaybackState.Stopped;
                 }
@@ -710,10 +854,15 @@ public sealed class PlaybackController : IPlaybackController
                 {
                     if (ReferenceEquals(_session, session))
                     {
+                        if (finished?.Track != null)
+                        {
+                            TrackLeft?.Invoke(finished, finished.Track.Duration, PlaybackLeaveReason.NaturalEnd);
+                        }
                         TeardownSessionLocked();
                         State = PlaybackState.Stopped;
                     }
                 }
+                SetAbStage(AbRepeatStage.Off);
                 StateChanged?.Invoke();
                 return;
             }
