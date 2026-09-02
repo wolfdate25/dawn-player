@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using DawnPlayer.App.Localization;
 
 namespace DawnPlayer.App.Controls;
 
@@ -101,11 +102,11 @@ public static class LyricsScrollSynchronizer
     public static string FormatOffsetLabel(double offsetMs)
     {
         if (double.IsNaN(offsetMs) || double.IsInfinity(offsetMs) || Math.Abs(offsetMs) < 0.001)
-            return "오프셋 0.0s";
+            return AppStrings.Get("LyricsPane_OffsetZero", "오프셋 0.0s");
 
         double sec = offsetMs / 1000.0;
         string sign = offsetMs > 0 ? "+" : "";
-        return $"오프셋 {sign}{sec:0.#}s";
+        return AppStrings.Format("LyricsPane_OffsetFormat", "오프셋 {0}", $"{sign}{sec:0.#}s");
     }
 
     public static TimeSpan CalculateSeekTarget(TimeSpan lineTimestamp, double offsetMs)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DawnPlayer.App.Localization;
 using DawnPlayer.Core.Models;
 
 namespace DawnPlayer.App.Views;
@@ -45,7 +46,7 @@ public static class LibraryTreeModelBuilder
 
         var allNode = new LibraryTreeNode
         {
-            Title = "전체 (All)",
+            Title = AppStrings.Get("Library_AllNode", "전체"),
             Glyph = "\uE8B9",
             FilterType = "All",
             Count = tracks.Count,

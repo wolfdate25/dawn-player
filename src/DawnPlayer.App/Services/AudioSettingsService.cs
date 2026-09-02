@@ -1,3 +1,4 @@
+using DawnPlayer.App.Localization;
 using DawnPlayer.Core.Audio;
 using DawnPlayer.Core.Persistence;
 
@@ -51,11 +52,15 @@ public sealed class AudioSettingsService : IAudioSettingsService
                 bool exclusiveAllowed = WasapiDeviceService.IsExclusiveModeEnabledInWindows(dev);
                 bool priorityAllowed = WasapiDeviceService.IsExclusivePriorityEnabledInWindows(dev);
 
-                string exclusiveStr = exclusiveAllowed ? "허용됨" : "꺼짐 (배타 불가)";
-                string priorityStr = priorityAllowed ? "허용됨 (우선권 자동 획득)" : "꺼짐 (다른 앱 실행 시 실패)";
+                string exclusiveStr = exclusiveAllowed
+                    ? AppStrings.Get("Audio_ExclusiveAllowed", "허용됨")
+                    : AppStrings.Get("Audio_ExclusiveDisabled", "꺼짐 (배타 불가)");
+                string priorityStr = priorityAllowed
+                    ? AppStrings.Get("Audio_PriorityAllowed", "허용됨 (우선권 자동 획득)")
+                    : AppStrings.Get("Audio_PriorityDisabled", "꺼짐 (다른 앱 실행 시 실패)");
 
-                string statusText = $"독점 제어: {exclusiveStr}  |  우선 순위: {priorityStr}";
-                string detailsText = $"독점 제어 허용: {exclusiveAllowed}, 우선 순위 부여: {priorityAllowed}";
+                string statusText = AppStrings.Format("Audio_ExclusiveStatusFormat", exclusiveStr, priorityStr);
+                string detailsText = AppStrings.Format("Audio_ExclusiveDetailsFormat", exclusiveAllowed, priorityAllowed);
 
                 return new ExclusiveModeStatus(exclusiveAllowed, priorityAllowed, statusText, detailsText);
             }
@@ -65,8 +70,8 @@ public sealed class AudioSettingsService : IAudioSettingsService
         return new ExclusiveModeStatus(
             false,
             false,
-            "장치 상태를 확인할 수 없습니다.",
-            "장치를 열 수 없거나 WASAPI 엔드포인트를 찾을 수 없습니다.");
+            AppStrings.Get("Audio_DeviceStatusUnknown", "장치 상태를 확인할 수 없습니다."),
+            AppStrings.Get("Audio_DeviceOpenFailed", "장치를 열 수 없거나 WASAPI 엔드포인트를 찾을 수 없습니다."));
     }
 
     public void SetDriverType(AudioDriverType driverType)

@@ -46,18 +46,18 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="Playlists..." FontSize="13.5" FontWeight="SemiBold" FontStyle="Italic"
+                <TextBlock x:Uid="Playlist_SidebarHeader" Text="Playlists..." FontSize="13.5" FontWeight="SemiBold" FontStyle="Italic"
                            Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                 <TextBlock x:Name="PlaylistsCountText" Grid.Column="1" Text="0" FontSize="11.5"
                            Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>
             </Grid>
 
             <!-- Create Playlist Action Button -->
-            <Button Grid.Row="1" Click="OnCreatePlaylistClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+            <Button x:Uid="Playlist_CreateButton" Grid.Row="1" Click="OnCreatePlaylistClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
                     Margin="10,0,10,8" Padding="10,6" Background="Transparent" BorderThickness="0" CornerRadius="4">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <FontIcon Glyph="&#xE710;" FontSize="12" Foreground="{ThemeResource DawnAccentBrush}"/>
-                    <TextBlock Text="Create Playlist" FontSize="12" Foreground="{ThemeResource TextPrimaryBrush}"/>
+                    <TextBlock x:Uid="Playlist_CreateButtonText" Text="Create Playlist" FontSize="12" Foreground="{ThemeResource TextPrimaryBrush}"/>
                 </StackPanel>
             </Button>
 
@@ -96,22 +96,22 @@
                 </ListView.ItemTemplate>
                 <ListView.ContextFlyout>
                     <MenuFlyout Opening="OnSidebarContextMenuOpening">
-                        <MenuFlyoutItem Text="재생목록 가져오기 (M3U8)..." Click="OnImportPlaylistClick">
+                        <MenuFlyoutItem x:Uid="Playlist_SidebarMenu_Import" Text="재생목록 가져오기 (M3U8)..." Click="OnImportPlaylistClick">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8E5;"/></MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
                         <MenuFlyoutSeparator/>
-                        <MenuFlyoutItem x:Name="SidebarRenameMenuItem" Text="이름 변경..." Click="OnRenameSidebarPlaylist">
+                        <MenuFlyoutItem x:Uid="Playlist_SidebarMenu_Rename" x:Name="SidebarRenameMenuItem" Text="이름 변경..." Click="OnRenameSidebarPlaylist">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8AC;"/></MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
-                        <MenuFlyoutItem Text="다른 이름으로 저장 (M3U8)..." Click="OnExportSidebarPlaylist">
+                        <MenuFlyoutItem x:Uid="Playlist_SidebarMenu_Export" Text="다른 이름으로 저장 (M3U8)..." Click="OnExportSidebarPlaylist">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE78C;"/></MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
                         <MenuFlyoutSeparator/>
-                        <MenuFlyoutItem x:Name="SidebarClearMenuItem" Text="재생목록 비우기" Click="OnClearSidebarPlaylist">
+                        <MenuFlyoutItem x:Uid="Playlist_SidebarMenu_Clear" x:Name="SidebarClearMenuItem" Text="재생목록 비우기" Click="OnClearSidebarPlaylist">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE75C;"/></MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
                         <MenuFlyoutSeparator x:Name="SidebarDeleteSeparator"/>
-                        <MenuFlyoutItem x:Name="SidebarDeleteMenuItem" Text="재생목록 삭제" Click="OnDeleteSidebarPlaylist">
+                        <MenuFlyoutItem x:Uid="Playlist_SidebarMenu_Delete" x:Name="SidebarDeleteMenuItem" Text="재생목록 삭제" Click="OnDeleteSidebarPlaylist">
                             <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74D;"/></MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
                     </MenuFlyout>
@@ -151,50 +151,50 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                     <TextBlock x:Name="PlaylistStatsText" Text="0 items"
                                FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>
-                    <Button Style="{StaticResource TransportButton}" Width="28" Height="28" AutomationProperties.Name="재생목록 도구 및 정렬" ToolTipService.ToolTip="재생목록 도구 및 정렬">
+                    <Button x:Uid="Playlist_ToolsButton" Style="{StaticResource TransportButton}" Width="28" Height="28" AutomationProperties.Name="재생목록 도구 및 정렬" ToolTipService.ToolTip="재생목록 도구 및 정렬">
                         <FontIcon Glyph="&#xE712;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
                         <Button.Flyout>
                             <MenuFlyout Opening="OnHeaderToolsMenuOpening">
-                                <MenuFlyoutItem Text="파일 추가..." Click="OnAddFilesClick">
+                                <MenuFlyoutItem x:Uid="Playlist_ToolsMenu_AddFiles" Text="파일 추가..." Click="OnAddFilesClick">
                                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8E5;"/></MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem Text="폴더 추가..." Click="OnAddFolderClick">
+                                <MenuFlyoutItem x:Uid="Playlist_ToolsMenu_AddFolder" Text="폴더 추가..." Click="OnAddFolderClick">
                                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8B7;"/></MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem Text="재생목록 파일 가져오기 (M3U8)..." Click="OnImportPlaylistClick">
+                                <MenuFlyoutItem x:Uid="Playlist_ToolsMenu_Import" Text="재생목록 파일 가져오기 (M3U8)..." Click="OnImportPlaylistClick">
                                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8E5;"/></MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
                                 <MenuFlyoutSeparator/>
-                                <ToggleMenuFlyoutItem x:Name="GroupToggleMenuItem" Text="앨범별 그룹화 표시" IsChecked="True" Click="OnGroupToggle"/>
-                                <ToggleMenuFlyoutItem x:Name="StopAfterCurrentMenuItem" Text="현재 곡 재생 후 정지 (Stop After Current)" Click="OnStopAfterCurrentClick"/>
-                                <MenuFlyoutSubItem Text="정렬 (Sort)">
-                                    <MenuFlyoutItem Text="제목 순" Click="OnSortTitle"/>
-                                    <MenuFlyoutItem Text="아티스트 순" Click="OnSortArtist"/>
-                                    <MenuFlyoutItem Text="앨범 · 트랙 순서" Click="OnSortAlbum"/>
-                                    <MenuFlyoutItem Text="트랙 번호 순" Click="OnSortTrackNo"/>
-                                    <MenuFlyoutItem Text="파일 경로 순" Click="OnSortPath"/>
+                                <ToggleMenuFlyoutItem x:Uid="Playlist_ToolsMenu_GroupToggle" x:Name="GroupToggleMenuItem" Text="앨범별 그룹화 표시" IsChecked="True" Click="OnGroupToggle"/>
+                                <ToggleMenuFlyoutItem x:Uid="Playlist_ToolsMenu_StopAfterCurrent" x:Name="StopAfterCurrentMenuItem" Text="현재 곡 재생 후 정지 (Stop After Current)" Click="OnStopAfterCurrentClick"/>
+                                <MenuFlyoutSubItem x:Uid="Playlist_ToolsMenu_SortSubItem" Text="정렬 (Sort)">
+                                    <MenuFlyoutItem x:Uid="Playlist_Sort_Title" Text="제목 순" Click="OnSortTitle"/>
+                                    <MenuFlyoutItem x:Uid="Playlist_Sort_Artist" Text="아티스트 순" Click="OnSortArtist"/>
+                                    <MenuFlyoutItem x:Uid="Playlist_Sort_Album" Text="앨범 · 트랙 순서" Click="OnSortAlbum"/>
+                                    <MenuFlyoutItem x:Uid="Playlist_Sort_TrackNo" Text="트랙 번호 순" Click="OnSortTrackNo"/>
+                                    <MenuFlyoutItem x:Uid="Playlist_Sort_Path" Text="파일 경로 순" Click="OnSortPath"/>
                                     <MenuFlyoutSeparator/>
-                                    <MenuFlyoutItem Text="무작위 셔플 (Random)" Click="OnSortRandom"/>
-                                    <MenuFlyoutItem Text="역순으로 뒤집기 (Reverse)" Click="OnSortReverse"/>
+                                    <MenuFlyoutItem x:Uid="Playlist_Sort_Random" Text="무작위 셔플 (Random)" Click="OnSortRandom"/>
+                                    <MenuFlyoutItem x:Uid="Playlist_Sort_Reverse" Text="역순으로 뒤집기 (Reverse)" Click="OnSortReverse"/>
                                 </MenuFlyoutSubItem>
                                 <MenuFlyoutSeparator/>
-                                <MenuFlyoutItem Text="중복 트랙 제거" Click="OnRemoveDuplicates">
+                                <MenuFlyoutItem x:Uid="Playlist_ToolsMenu_RemoveDuplicates" Text="중복 트랙 제거" Click="OnRemoveDuplicates">
                                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE71C;"/></MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem Text="존재하지 않는 파일 정리" Click="OnRemoveDeadItemsClick">
+                                <MenuFlyoutItem x:Uid="Playlist_ToolsMenu_RemoveDeadItems" Text="존재하지 않는 파일 정리" Click="OnRemoveDeadItemsClick">
                                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74D;"/></MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem x:Name="HeaderRenameMenuItem" Text="이름 변경..." Click="OnRenameActivePlaylist">
+                                <MenuFlyoutItem x:Uid="Playlist_ToolsMenu_Rename" x:Name="HeaderRenameMenuItem" Text="이름 변경..." Click="OnRenameActivePlaylist">
                                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8AC;"/></MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem Text="다른 이름으로 저장 (M3U8)..." Click="OnExportActivePlaylist">
+                                <MenuFlyoutItem x:Uid="Playlist_ToolsMenu_Export" Text="다른 이름으로 저장 (M3U8)..." Click="OnExportActivePlaylist">
                                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE78C;"/></MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
                                 <MenuFlyoutSeparator x:Name="HeaderDeleteSeparator"/>
-                                <MenuFlyoutItem x:Name="HeaderDeleteMenuItem" Text="현재 재생목록 삭제" Click="OnDeleteActivePlaylist">
+                                <MenuFlyoutItem x:Uid="Playlist_ToolsMenu_Delete" x:Name="HeaderDeleteMenuItem" Text="현재 재생목록 삭제" Click="OnDeleteActivePlaylist">
                                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74D;"/></MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem x:Name="HeaderClearMenuItem" Text="재생목록 비우기" Click="OnClearPlaylist">
+                                <MenuFlyoutItem x:Uid="Playlist_ToolsMenu_Clear" x:Name="HeaderClearMenuItem" Text="재생목록 비우기" Click="OnClearPlaylist">
                                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE75C;"/></MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
                             </MenuFlyout>
@@ -361,24 +361,24 @@
 
                     <ListView.ContextFlyout>
                         <MenuFlyout>
-                            <MenuFlyoutItem Text="재생" Click="OnPlayItems">
+                            <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Play" Text="재생" Click="OnPlayItems">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE768;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
-                            <MenuFlyoutItem Text="다음에 재생 (대기열 선두)" Click="OnQueueNextItems">
+                            <MenuFlyoutItem x:Uid="Playlist_TrackMenu_QueueNext" Text="다음에 재생 (대기열 선두)" Click="OnQueueNextItems">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8FD;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
-                            <MenuFlyoutItem Text="대기열에 추가" Click="OnQueueItems">
+                            <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Queue" Text="대기열에 추가" Click="OnQueueItems">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE710;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                             <MenuFlyoutSeparator/>
-                            <MenuFlyoutItem Text="위로 이동 (Alt+↑)" Click="OnMoveUpClick">
+                            <MenuFlyoutItem x:Uid="Playlist_TrackMenu_MoveUp" Text="위로 이동 (Alt+↑)" Click="OnMoveUpClick">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE70E;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
-                            <MenuFlyoutItem Text="아래로 이동 (Alt+↓)" Click="OnMoveDownClick">
+                            <MenuFlyoutItem x:Uid="Playlist_TrackMenu_MoveDown" Text="아래로 이동 (Alt+↓)" Click="OnMoveDownClick">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE70D;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                             <MenuFlyoutSeparator/>
-                            <MenuFlyoutItem Text="재생목록에서 제거 (Del)" Click="OnRemoveItems">
+                            <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Remove" Text="재생목록에서 제거 (Del)" Click="OnRemoveItems">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74D;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                         </MenuFlyout>
@@ -389,9 +389,9 @@
                 <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10"
                             Visibility="Collapsed" Margin="24">
                     <FontIcon Glyph="&#xE90B;" FontSize="36" Foreground="{ThemeResource TextTertiaryBrush}"/>
-                    <TextBlock Text="재생목록이 비어 있습니다" FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center"
+                    <TextBlock x:Uid="Playlist_EmptyTitle" Text="재생목록이 비어 있습니다" FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextSecondaryBrush}"/>
-                    <TextBlock Text="음악 파일이나 폴더를 창으로 끌어다 놓거나 우측 상단 메뉴의 [파일 추가]·[폴더 추가]를 사용하세요.&#x0a;라이브러리에서 원하는 트랙을 선택해 추가할 수도 있습니다."
+                    <TextBlock x:Uid="Playlist_EmptyDesc" Text="음악 파일이나 폴더를 창으로 끌어다 놓거나 우측 상단 메뉴의 [파일 추가]·[폴더 추가]를 사용하세요.&#x0a;라이브러리에서 원하는 트랙을 선택해 추가할 수도 있습니다."
                                FontSize="12" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
                                Foreground="{ThemeResource TextTertiaryBrush}" MaxWidth="440"/>
                 </StackPanel>

@@ -1,5 +1,6 @@
 using DawnPlayer.App.Controls;
 using DawnPlayer.App.Helpers;
+using DawnPlayer.App.Localization;
 using DawnPlayer.App.Services;
 using DawnPlayer.Core.Models;
 using DawnPlayer.Core.Persistence;
@@ -243,7 +244,7 @@ public sealed partial class PlaylistPage : Page
         {
             if (pl.IsSystem)
             {
-                AppServices.RaiseWarning("시스템 재생목록(Now Playing)의 이름은 변경할 수 없습니다.");
+                AppServices.RaiseWarning(AppStrings.Get("Msg_SystemPlaylistRenameNotAllowed", "시스템 재생목록(Now Playing)의 이름은 변경할 수 없습니다."));
                 return;
             }
             _ = PlaylistDialogs.ShowRenameDialogAsync(pl, XamlRoot, AppServices.Playlists);
@@ -280,7 +281,9 @@ public sealed partial class PlaylistPage : Page
 
         if (SidebarClearMenuItem != null)
         {
-            SidebarClearMenuItem.Text = isSystem ? "대기열 비우기" : "재생목록 비우기";
+            SidebarClearMenuItem.Text = isSystem
+                ? AppStrings.Get("Msg_PlaylistClearQueue", "대기열 비우기")
+                : AppStrings.Get("Msg_PlaylistClearPlaylist", "재생목록 비우기");
         }
     }
 
@@ -299,7 +302,9 @@ public sealed partial class PlaylistPage : Page
 
         if (HeaderClearMenuItem != null)
         {
-            HeaderClearMenuItem.Text = isSystem ? "대기열 비우기" : "재생목록 비우기";
+            HeaderClearMenuItem.Text = isSystem
+                ? AppStrings.Get("Msg_PlaylistClearQueue", "대기열 비우기")
+                : AppStrings.Get("Msg_PlaylistClearPlaylist", "재생목록 비우기");
         }
     }
 
@@ -325,7 +330,7 @@ public sealed partial class PlaylistPage : Page
         if (pl.IsSystem)
         {
             AppServices.Playlists.RemoveAll(pl);
-            AppServices.RaiseWarning("현재 재생 대기열(Now Playing)의 모든 곡을 비웠습니다.");
+            AppServices.RaiseWarning(AppStrings.Get("Msg_ClearedNowPlayingQueue", "현재 재생 대기열(Now Playing)의 모든 곡을 비웠습니다."));
             Rebuild();
             return;
         }
@@ -351,7 +356,7 @@ public sealed partial class PlaylistPage : Page
         if (Current == null) return;
         if (Current.IsSystem)
         {
-            AppServices.RaiseWarning("시스템 재생목록(Now Playing)의 이름은 변경할 수 없습니다.");
+            AppServices.RaiseWarning(AppStrings.Get("Msg_SystemPlaylistRenameNotAllowed", "시스템 재생목록(Now Playing)의 이름은 변경할 수 없습니다."));
             return;
         }
         _ = PlaylistDialogs.ShowRenameDialogAsync(Current, XamlRoot, AppServices.Playlists);
@@ -412,14 +417,14 @@ public sealed partial class PlaylistPage : Page
                 {
                     PlaylistsCountText.Text = AppServices.Playlists.Playlists.Count.ToString(CultureInfo.InvariantCulture);
                     PlaylistsSidebarList.SelectedItem = pl;
-                    AppServices.RaiseWarning($"'{pl.Name}' 재생목록을 가져왔습니다 ({pl.Items.Count}곡).");
+                    AppServices.RaiseWarning(AppStrings.Format("Msg_PlaylistImported", pl.Name, pl.Items.Count));
                 }
             }
         }
         catch (Exception ex)
         {
             App.Log($"[OnImportPlaylistClick Error] {ex}");
-            AppServices.RaiseWarning($"가져오기 실패: {ex.Message}");
+            AppServices.RaiseWarning(AppStrings.Format("Msg_ImportFailed", ex.Message));
         }
     }
 
@@ -499,11 +504,11 @@ public sealed partial class PlaylistPage : Page
             int removed = await AppServices.Playlists.RemoveDeadItemsAsync(Current);
             if (removed > 0)
             {
-                AppServices.RaiseWarning($"존재하지 않는 파일 {removed}곡을 재생목록에서 제거했습니다.");
+                AppServices.RaiseWarning(AppStrings.Format("Msg_RemovedMissingFiles", removed));
             }
             else
             {
-                AppServices.RaiseWarning("제거할 누락된 파일이 없습니다.");
+                AppServices.RaiseWarning(AppStrings.Get("Msg_NoMissingFiles", "제거할 누락된 파일이 없습니다."));
             }
         }
         catch (Exception ex)

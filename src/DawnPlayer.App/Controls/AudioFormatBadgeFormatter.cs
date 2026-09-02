@@ -1,3 +1,4 @@
+using DawnPlayer.App.Localization;
 using DawnPlayer.Core.Audio;
 using DawnPlayer.Core.Models;
 using DawnPlayer.Core.Persistence;
@@ -38,7 +39,9 @@ public static class AudioFormatBadgeFormatter
     {
         AudioDriverType.DirectSound => "DirectSound",
         AudioDriverType.WaveOut => "WaveOut",
-        _ => exclusive ? "WASAPI 배타" : "WASAPI 공유"
+        _ => exclusive
+            ? AppStrings.Get("Badge_WasapiExclusive", "WASAPI 배타")
+            : AppStrings.Get("Badge_WasapiShared", "WASAPI 공유")
     };
 
     public static string FormatTrackBadgeText(Track? track)

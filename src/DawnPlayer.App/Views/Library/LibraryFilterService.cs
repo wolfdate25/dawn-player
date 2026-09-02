@@ -1,3 +1,4 @@
+using DawnPlayer.App.Localization;
 using DawnPlayer.Core.Models;
 
 namespace DawnPlayer.App.Views;
@@ -96,8 +97,8 @@ public static class LibraryFilterService
             var first = g.First();
             result.Add(new AlbumCardModel(
                 g.Key,
-                string.IsNullOrEmpty(first.Album) ? "(앨범 없음)" : first.Album,
-                string.IsNullOrEmpty(first.Artist) ? "(아티스트 없음)" : first.Artist,
+                string.IsNullOrEmpty(first.Album) ? AppStrings.Get("Library_NoAlbum", "(앨범 없음)") : first.Album,
+                string.IsNullOrEmpty(first.Artist) ? AppStrings.Get("Library_NoArtist", "(아티스트 없음)") : first.Artist,
                 first.Year,
                 first.ArtPath,
                 g.ToList()));

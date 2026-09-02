@@ -75,7 +75,7 @@
             </Grid.RowDefinitions>
 
             <Grid Grid.Row="0" Margin="12,10,12,6">
-                <TextBlock Text="Library Tree" FontSize="11" FontWeight="SemiBold"
+                <TextBlock x:Uid="Library_TreeHeader" Text="Library Tree" FontSize="11" FontWeight="SemiBold"
                            Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>
             </Grid>
 
@@ -83,13 +83,13 @@
             <ComboBox x:Name="TreeGroupModeBox" Grid.Row="1" Margin="10,0,10,8"
                       HorizontalAlignment="Stretch" Height="30" Padding="8,3"
                       SelectedIndex="0" SelectionChanged="OnTreeGroupModeChanged">
-                <ComboBoxItem Content="아티스트 / 앨범"/>
-                <ComboBoxItem Content="아티스트"/>
-                <ComboBoxItem Content="장르 / 아티스트"/>
-                <ComboBoxItem Content="장르 / 아티스트 / 앨범"/>
-                <ComboBoxItem Content="앨범"/>
-                <ComboBoxItem Content="장르"/>
-                <ComboBoxItem Content="폴더 구조"/>
+                <ComboBoxItem x:Uid="Library_TreeMode_ArtistAlbum" Content="아티스트 / 앨범"/>
+                <ComboBoxItem x:Uid="Library_TreeMode_Artist" Content="아티스트"/>
+                <ComboBoxItem x:Uid="Library_TreeMode_GenreArtist" Content="장르 / 아티스트"/>
+                <ComboBoxItem x:Uid="Library_TreeMode_GenreArtistAlbum" Content="장르 / 아티스트 / 앨범"/>
+                <ComboBoxItem x:Uid="Library_TreeMode_Album" Content="앨범"/>
+                <ComboBoxItem x:Uid="Library_TreeMode_Genre" Content="장르"/>
+                <ComboBoxItem x:Uid="Library_TreeMode_Folder" Content="폴더 구조"/>
             </ComboBox>
 
             <!-- Hierarchical Library TreeView -->
@@ -106,16 +106,16 @@
                               AutomationProperties.Name="{Binding Content.Title}">
                             <Grid.ContextFlyout>
                                 <MenuFlyout Opening="OnTreeContextMenuOpening">
-                                    <MenuFlyoutItem Text="재생 (플레이리스트 대체)" Click="OnTreeContextMenuPlay">
+                                    <MenuFlyoutItem x:Uid="Library_TreeMenu_Play" Text="재생 (플레이리스트 대체)" Click="OnTreeContextMenuPlay">
                                         <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE768;"/></MenuFlyoutItem.Icon>
                                     </MenuFlyoutItem>
-                                    <MenuFlyoutItem Text="현재 재생목록에 추가" Click="OnTreeContextMenuAddToPlaylist">
+                                    <MenuFlyoutItem x:Uid="Library_TreeMenu_AddToPlaylist" Text="현재 재생목록에 추가" Click="OnTreeContextMenuAddToPlaylist">
                                         <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE710;"/></MenuFlyoutItem.Icon>
                                     </MenuFlyoutItem>
-                                    <MenuFlyoutSubItem Tag="SendToPlaylist" Text="특정 재생목록에 추가">
+                                    <MenuFlyoutSubItem x:Uid="Library_TreeMenu_SendToPlaylist" Tag="SendToPlaylist" Text="특정 재생목록에 추가">
                                         <MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xE8B9;"/></MenuFlyoutSubItem.Icon>
                                     </MenuFlyoutSubItem>
-                                    <MenuFlyoutItem Text="대기열에 추가" Click="OnTreeContextMenuEnqueue">
+                                    <MenuFlyoutItem x:Uid="Library_TreeMenu_Enqueue" Text="대기열에 추가" Click="OnTreeContextMenuEnqueue">
                                         <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8D2;"/></MenuFlyoutItem.Icon>
                                     </MenuFlyoutItem>
                                 </MenuFlyout>
@@ -171,19 +171,19 @@
 
                 <!-- Right: Search, View Mode Toggle, Zoom Flyout & Rescan -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                    <AutoSuggestBox x:Name="SearchBox" Width="140" Height="28" PlaceholderText="Search..."
+                    <AutoSuggestBox x:Uid="Library_SearchBox" x:Name="SearchBox" Width="140" Height="28" PlaceholderText="Search..."
                                     QueryIcon="Find" TextChanged="OnSearchChanged" FontSize="11.5"/>
 
                     <!-- Segmented View Mode Toggle (Grid / List) -->
                     <Border Background="{ThemeResource PanelSubtleBrush}" BorderBrush="{ThemeResource BorderSubtleBrush}"
                             BorderThickness="1" CornerRadius="4" Padding="2" Height="28" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Spacing="2">
-                            <RadioButton x:Name="ViewGridBtn" GroupName="ViewModeGroup" IsChecked="True"
+                            <RadioButton x:Uid="Library_ViewGridBtn" x:Name="ViewGridBtn" GroupName="ViewModeGroup" IsChecked="True"
                                          Style="{StaticResource SegmentedTabStyle}" Click="OnViewGridClick"
                                          AutomationProperties.Name="커버 그리드 뷰" ToolTipService.ToolTip="커버 그리드 뷰">
                                 <FontIcon Glyph="&#xE80A;" FontSize="11"/>
                             </RadioButton>
-                            <RadioButton x:Name="ViewListBtn" GroupName="ViewModeGroup"
+                            <RadioButton x:Uid="Library_ViewListBtn" x:Name="ViewListBtn" GroupName="ViewModeGroup"
                                          Style="{StaticResource SegmentedTabStyle}" Click="OnViewListClick"
                                          AutomationProperties.Name="목록 테이블 뷰" ToolTipService.ToolTip="목록 테이블 뷰">
                                 <FontIcon Glyph="&#xE8D2;" FontSize="11"/>
@@ -192,14 +192,14 @@
                     </Border>
 
                     <!-- Cover Zoom Flyout Button -->
-                    <Button Style="{StaticResource TransportButton}" Width="28" Height="28"
+                    <Button x:Uid="Library_Zoom_Button" Style="{StaticResource TransportButton}" Width="28" Height="28"
                             AutomationProperties.Name="커버 크기 조절" ToolTipService.ToolTip="커버 크기 조절 (Ctrl+마우스 휠)">
                         <FontIcon Glyph="&#xE71E;" FontSize="11"/>
                         <Button.Flyout>
                             <Flyout Placement="Bottom" Opened="OnCoverZoomFlyoutOpened">
                                 <StackPanel Width="190" Spacing="8" Padding="6">
                                     <Grid>
-                                        <TextBlock Text="커버 크기" FontSize="11.5" FontWeight="SemiBold"/>
+                                        <TextBlock x:Uid="Library_Zoom_Title" Text="커버 크기" FontSize="11.5" FontWeight="SemiBold"/>
                                         <TextBlock x:Name="ZoomLabel" Text="144px" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}" HorizontalAlignment="Right"/>
                                     </Grid>
                                     <Slider x:Name="CoverZoomSlider" Minimum="80" Maximum="260" StepFrequency="4"
@@ -211,17 +211,17 @@
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <Button Grid.Column="0" Content="소" FontSize="10.5" Padding="0,2" HorizontalAlignment="Stretch" Click="OnZoomSmall"/>
-                                        <Button Grid.Column="1" Content="중" FontSize="10.5" Padding="0,2" HorizontalAlignment="Stretch" Click="OnZoomMedium"/>
-                                        <Button Grid.Column="2" Content="대" FontSize="10.5" Padding="0,2" HorizontalAlignment="Stretch" Click="OnZoomLarge"/>
-                                        <Button Grid.Column="3" Content="특대" FontSize="10.5" Padding="0,2" HorizontalAlignment="Stretch" Click="OnZoomExtraLarge"/>
+                                        <Button x:Uid="Library_Zoom_Small" Grid.Column="0" Content="소" FontSize="10.5" Padding="0,2" HorizontalAlignment="Stretch" Click="OnZoomSmall"/>
+                                        <Button x:Uid="Library_Zoom_Medium" Grid.Column="1" Content="중" FontSize="10.5" Padding="0,2" HorizontalAlignment="Stretch" Click="OnZoomMedium"/>
+                                        <Button x:Uid="Library_Zoom_Large" Grid.Column="2" Content="대" FontSize="10.5" Padding="0,2" HorizontalAlignment="Stretch" Click="OnZoomLarge"/>
+                                        <Button x:Uid="Library_Zoom_ExtraLarge" Grid.Column="3" Content="특대" FontSize="10.5" Padding="0,2" HorizontalAlignment="Stretch" Click="OnZoomExtraLarge"/>
                                     </Grid>
                                 </StackPanel>
                             </Flyout>
                         </Button.Flyout>
                     </Button>
 
-                    <Button x:Name="RescanButton" Style="{StaticResource TransportButton}" Width="28" Height="28"
+                    <Button x:Uid="Library_RescanButton" x:Name="RescanButton" Style="{StaticResource TransportButton}" Width="28" Height="28"
                             Click="OnRescanClick" AutomationProperties.Name="라이브러리 새로고침" ToolTipService.ToolTip="라이브러리 새로고침">
                         <FontIcon Glyph="&#xE72C;" FontSize="11"/>
                     </Button>
@@ -263,18 +263,18 @@
                                                     <Button Style="{StaticResource AlbumCardButtonStyle}"
                                                             Tapped="OnAlbumCardTapped"
                                                             DoubleTapped="OnAlbumCardDoubleTapped">
-                                                        <Button.ContextFlyout>
+                                                         <Button.ContextFlyout>
                                                             <MenuFlyout Opening="OnAlbumMenuOpening">
-                                                                <MenuFlyoutItem Text="앨범 재생" Click="OnAlbumPlaySelected">
+                                                                <MenuFlyoutItem x:Uid="Library_AlbumMenu_Play" Text="앨범 재생" Click="OnAlbumPlaySelected">
                                                                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE768;"/></MenuFlyoutItem.Icon>
                                                                 </MenuFlyoutItem>
-                                                                <MenuFlyoutItem Text="현재 재생목록에 추가" Click="OnAlbumAddToPlaylist">
+                                                                <MenuFlyoutItem x:Uid="Library_AlbumMenu_AddToPlaylist" Text="현재 재생목록에 추가" Click="OnAlbumAddToPlaylist">
                                                                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE710;"/></MenuFlyoutItem.Icon>
                                                                 </MenuFlyoutItem>
-                                                                <MenuFlyoutSubItem Tag="SendToPlaylist" Text="특정 재생목록에 추가">
+                                                                <MenuFlyoutSubItem x:Uid="Library_AlbumMenu_SendToPlaylist" Tag="SendToPlaylist" Text="특정 재생목록에 추가">
                                                                     <MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xE8B9;"/></MenuFlyoutSubItem.Icon>
                                                                 </MenuFlyoutSubItem>
-                                                                <MenuFlyoutItem Text="대기열에 추가" Click="OnAlbumEnqueue">
+                                                                <MenuFlyoutItem x:Uid="Library_AlbumMenu_Enqueue" Text="대기열에 추가" Click="OnAlbumEnqueue">
                                                                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8FD;"/></MenuFlyoutItem.Icon>
                                                                 </MenuFlyoutItem>
                                                             </MenuFlyout>
@@ -369,19 +369,19 @@
                                                             
                                                             <!-- Quick Action Toolbar -->
                                                             <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Margin="6,0,0,0">
-                                                                <Button Style="{StaticResource TransportButton}" Width="26" Height="26"
+                                                                <Button x:Uid="Library_Drawer_PlayAlbum" Style="{StaticResource TransportButton}" Width="26" Height="26"
                                                                         Click="OnDrawerPlayAlbumClick" AutomationProperties.Name="앨범 전체 재생" ToolTipService.ToolTip="앨범 전체 재생">
                                                                     <FontIcon Glyph="&#xE768;" FontSize="11" Foreground="{ThemeResource TextSecondaryBrush}"/>
                                                                 </Button>
-                                                                <Button Style="{StaticResource TransportButton}" Width="26" Height="26"
+                                                                <Button x:Uid="Library_Drawer_EnqueueAlbum" Style="{StaticResource TransportButton}" Width="26" Height="26"
                                                                         Click="OnDrawerEnqueueAlbumClick" AutomationProperties.Name="대기열에 추가" ToolTipService.ToolTip="대기열에 추가">
                                                                     <FontIcon Glyph="&#xE8FD;" FontSize="11" Foreground="{ThemeResource TextSecondaryBrush}"/>
                                                                 </Button>
-                                                                <Button Style="{StaticResource TransportButton}" Width="26" Height="26"
+                                                                <Button x:Uid="Library_Drawer_AddToPlaylist" Style="{StaticResource TransportButton}" Width="26" Height="26"
                                                                         Click="OnDrawerAddToPlaylistClick" AutomationProperties.Name="현재 재생목록에 추가" ToolTipService.ToolTip="현재 재생목록에 추가">
                                                                     <FontIcon Glyph="&#xE710;" FontSize="11" Foreground="{ThemeResource TextSecondaryBrush}"/>
                                                                 </Button>
-                                                                <Button Style="{StaticResource TransportButton}" Width="26" Height="26"
+                                                                <Button x:Uid="Library_Drawer_Close" Style="{StaticResource TransportButton}" Width="26" Height="26"
                                                                         Click="OnCloseRowDrawerClick" AutomationProperties.Name="닫기" ToolTipService.ToolTip="닫기 (Esc)" Margin="4,0,0,0">
                                                                     <FontIcon Glyph="&#xE711;" FontSize="10" Foreground="{ThemeResource TextTertiaryBrush}"/>
                                                                 </Button>
@@ -410,20 +410,20 @@
                                                                         DoubleTapped="OnDrawerTrackDoubleTapped">
                                                                     <Button.ContextFlyout>
                                                                         <MenuFlyout Opening="OnDrawerTrackMenuOpening">
-                                                                            <MenuFlyoutItem Text="재생" Click="OnDrawerTrackPlaySelected">
+                                                                            <MenuFlyoutItem x:Uid="Library_TrackMenu_Play" Text="재생" Click="OnDrawerTrackPlaySelected">
                                                                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE768;"/></MenuFlyoutItem.Icon>
                                                                             </MenuFlyoutItem>
-                                                                            <MenuFlyoutItem Text="현재 재생목록에 추가" Click="OnDrawerTrackAddToPlaylist">
+                                                                            <MenuFlyoutItem x:Uid="Library_TrackMenu_AddToPlaylist" Text="현재 재생목록에 추가" Click="OnDrawerTrackAddToPlaylist">
                                                                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE710;"/></MenuFlyoutItem.Icon>
                                                                             </MenuFlyoutItem>
-                                                                            <MenuFlyoutSubItem Tag="SendToPlaylist" Text="특정 재생목록에 추가">
+                                                                            <MenuFlyoutSubItem x:Uid="Library_TrackMenu_SendToPlaylist" Tag="SendToPlaylist" Text="특정 재생목록에 추가">
                                                                                 <MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xE8B9;"/></MenuFlyoutSubItem.Icon>
                                                                             </MenuFlyoutSubItem>
-                                                                            <MenuFlyoutItem Text="대기열에 추가" Click="OnDrawerTrackEnqueue">
+                                                                            <MenuFlyoutItem x:Uid="Library_TrackMenu_Enqueue" Text="대기열에 추가" Click="OnDrawerTrackEnqueue">
                                                                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8FD;"/></MenuFlyoutItem.Icon>
                                                                             </MenuFlyoutItem>
                                                                             <MenuFlyoutSeparator/>
-                                                                            <MenuFlyoutItem Text="탐색기에서 보기" Click="OnDrawerTrackShowInExplorer">
+                                                                            <MenuFlyoutItem x:Uid="Library_TrackMenu_ShowInExplorer" Text="탐색기에서 보기" Click="OnDrawerTrackShowInExplorer">
                                                                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE838;"/></MenuFlyoutItem.Icon>
                                                                             </MenuFlyoutItem>
                                                                         </MenuFlyout>
@@ -441,8 +441,8 @@
                                                                                        Visibility="{x:Bind IsPlaying, Mode=OneWay, Converter={StaticResource NotPlayingVis}}"
                                                                                        FontSize="11.5" FontStyle="Italic" Foreground="{ThemeResource TextTertiaryBrush}"/>
                                                                             <FontIcon Glyph="&#xE767;" FontSize="11"
-                                                                                      Foreground="{ThemeResource DawnAccentBrush}"
-                                                                                      Visibility="{x:Bind IsPlaying, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
+                                                                                       Foreground="{ThemeResource DawnAccentBrush}"
+                                                                                       Visibility="{x:Bind IsPlaying, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
                                                                         </Grid>
 
                                                                         <!-- Title -->
@@ -471,20 +471,20 @@
                                                                         DoubleTapped="OnDrawerTrackDoubleTapped">
                                                                     <Button.ContextFlyout>
                                                                         <MenuFlyout Opening="OnDrawerTrackMenuOpening">
-                                                                            <MenuFlyoutItem Text="재생" Click="OnDrawerTrackPlaySelected">
+                                                                            <MenuFlyoutItem x:Uid="Library_TrackMenu_Play" Text="재생" Click="OnDrawerTrackPlaySelected">
                                                                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE768;"/></MenuFlyoutItem.Icon>
                                                                             </MenuFlyoutItem>
-                                                                            <MenuFlyoutItem Text="현재 재생목록에 추가" Click="OnDrawerTrackAddToPlaylist">
+                                                                            <MenuFlyoutItem x:Uid="Library_TrackMenu_AddToPlaylist" Text="현재 재생목록에 추가" Click="OnDrawerTrackAddToPlaylist">
                                                                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE710;"/></MenuFlyoutItem.Icon>
                                                                             </MenuFlyoutItem>
-                                                                            <MenuFlyoutSubItem Tag="SendToPlaylist" Text="특정 재생목록에 추가">
+                                                                            <MenuFlyoutSubItem x:Uid="Library_TrackMenu_SendToPlaylist" Tag="SendToPlaylist" Text="특정 재생목록에 추가">
                                                                                 <MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xE8B9;"/></MenuFlyoutSubItem.Icon>
                                                                             </MenuFlyoutSubItem>
-                                                                            <MenuFlyoutItem Text="대기열에 추가" Click="OnDrawerTrackEnqueue">
+                                                                            <MenuFlyoutItem x:Uid="Library_TrackMenu_Enqueue" Text="대기열에 추가" Click="OnDrawerTrackEnqueue">
                                                                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8FD;"/></MenuFlyoutItem.Icon>
                                                                             </MenuFlyoutItem>
                                                                             <MenuFlyoutSeparator/>
-                                                                            <MenuFlyoutItem Text="탐색기에서 보기" Click="OnDrawerTrackShowInExplorer">
+                                                                            <MenuFlyoutItem x:Uid="Library_TrackMenu_ShowInExplorer" Text="탐색기에서 보기" Click="OnDrawerTrackShowInExplorer">
                                                                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE838;"/></MenuFlyoutItem.Icon>
                                                                             </MenuFlyoutItem>
                                                                         </MenuFlyout>
@@ -502,8 +502,8 @@
                                                                                        Visibility="{x:Bind IsPlaying, Mode=OneWay, Converter={StaticResource NotPlayingVis}}"
                                                                                        FontSize="11.5" FontStyle="Italic" Foreground="{ThemeResource TextTertiaryBrush}"/>
                                                                             <FontIcon Glyph="&#xE767;" FontSize="11"
-                                                                                      Foreground="{ThemeResource DawnAccentBrush}"
-                                                                                      Visibility="{x:Bind IsPlaying, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
+                                                                                       Foreground="{ThemeResource DawnAccentBrush}"
+                                                                                       Visibility="{x:Bind IsPlaying, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
                                                                         </Grid>
 
                                                                         <!-- Title -->
@@ -549,19 +549,19 @@
                         </Grid.ColumnDefinitions>
 
                         <Button Grid.Column="0" Style="{StaticResource ColumnHeaderButton}" Click="OnSortByTrackNo">
-                            <TextBlock x:Name="HeaderTrackNo" Text="#" Style="{StaticResource ColumnHeaderText}"/>
+                            <TextBlock x:Uid="Library_Header_TrackNo" x:Name="HeaderTrackNo" Text="#" Style="{StaticResource ColumnHeaderText}"/>
                         </Button>
                         <Button Grid.Column="1" Style="{StaticResource ColumnHeaderButton}" Click="OnSortByTitle">
-                            <TextBlock x:Name="HeaderTitle" Text="제목" Style="{StaticResource ColumnHeaderText}"/>
+                            <TextBlock x:Uid="Library_Header_Title" x:Name="HeaderTitle" Text="제목" Style="{StaticResource ColumnHeaderText}"/>
                         </Button>
                         <Button Grid.Column="2" Style="{StaticResource ColumnHeaderButton}" Click="OnSortByArtist">
-                            <TextBlock x:Name="HeaderArtist" Text="아티스트" Style="{StaticResource ColumnHeaderText}"/>
+                            <TextBlock x:Uid="Library_Header_Artist" x:Name="HeaderArtist" Text="아티스트" Style="{StaticResource ColumnHeaderText}"/>
                         </Button>
                         <Button Grid.Column="3" Style="{StaticResource ColumnHeaderButton}" Click="OnSortByAlbum">
-                            <TextBlock x:Name="HeaderAlbum" Text="앨범" Style="{StaticResource ColumnHeaderText}"/>
+                            <TextBlock x:Uid="Library_Header_Album" x:Name="HeaderAlbum" Text="앨범" Style="{StaticResource ColumnHeaderText}"/>
                         </Button>
                         <Button Grid.Column="4" Style="{StaticResource ColumnHeaderButton}" Click="OnSortByDuration">
-                            <TextBlock x:Name="HeaderDuration" Text="길이" Style="{StaticResource ColumnHeaderText}" HorizontalAlignment="Right"/>
+                            <TextBlock x:Uid="Library_Header_Duration" x:Name="HeaderDuration" Text="길이" Style="{StaticResource ColumnHeaderText}" HorizontalAlignment="Right"/>
                         </Button>
                     </Grid>
 
@@ -598,28 +598,28 @@
                         </ListView.ItemTemplate>
                         <ListView.ContextFlyout>
                             <MenuFlyout Opening="OnTrackMenuOpening">
-                                <MenuFlyoutItem Text="재생" Click="OnPlaySelected">
+                                <MenuFlyoutItem x:Uid="Library_TrackMenu_Play" Text="재생" Click="OnPlaySelected">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE768;"/>
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem Text="현재 재생목록에 추가" Click="OnAddSelectedToPlaylist">
+                                <MenuFlyoutItem x:Uid="Library_TrackMenu_AddToPlaylist" Text="현재 재생목록에 추가" Click="OnAddSelectedToPlaylist">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE710;"/>
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutSubItem x:Name="TrackSendToPlaylistSubMenu" Text="특정 재생목록에 추가">
+                                <MenuFlyoutSubItem x:Uid="Library_TrackMenu_SendToPlaylist" x:Name="TrackSendToPlaylistSubMenu" Text="특정 재생목록에 추가">
                                     <MenuFlyoutSubItem.Icon>
                                         <FontIcon Glyph="&#xE8B9;"/>
                                     </MenuFlyoutSubItem.Icon>
                                 </MenuFlyoutSubItem>
-                                <MenuFlyoutItem Text="대기열에 추가" Click="OnQueueSelected">
+                                <MenuFlyoutItem x:Uid="Library_TrackMenu_Enqueue" Text="대기열에 추가" Click="OnQueueSelected">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE8FD;"/>
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
                                 <MenuFlyoutSeparator/>
-                                <MenuFlyoutItem Text="탐색기에서 보기" Click="OnShowInExplorer">
+                                <MenuFlyoutItem x:Uid="Library_TrackMenu_ShowInExplorer" Text="탐색기에서 보기" Click="OnShowInExplorer">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE838;"/>
                                     </MenuFlyoutItem.Icon>
@@ -669,7 +669,7 @@
                 </Grid.ColumnDefinitions>
 
                 <FontIcon Grid.Column="0" Glyph="&#xE721;" FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}" Margin="0,0,8,0"/>
-                <TextBlock Grid.Column="1" Text="Playing tracks..." FontSize="12"
+                <TextBlock x:Uid="Library_RightQueue_Title" Grid.Column="1" Text="Playing tracks..." FontSize="12"
                            Foreground="{ThemeResource TextSecondaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                 <TextBlock Grid.Column="2" x:Name="RightQueueStatsText" Text="0 items" FontSize="11"
                            Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>

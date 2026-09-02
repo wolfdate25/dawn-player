@@ -1,3 +1,4 @@
+using DawnPlayer.App.Localization;
 using DawnPlayer.App.Services;
 using DawnPlayer.Core.Persistence;
 using DawnPlayer.Core.Playlists;
@@ -23,13 +24,13 @@ public static class PlaylistDialogs
     /// </summary>
     public static async Task<bool> ShowRenameDialogAsync(Playlist pl, XamlRoot xamlRoot, PlaylistManager playlists)
     {
-        var box = new TextBox { Text = pl.Name, Header = "재생목록 이름" };
+        var box = new TextBox { Text = pl.Name, Header = AppStrings.Get("Msg_PlaylistName", "재생목록 이름") };
         var dialog = new ContentDialog
         {
-            Title = "재생목록 이름 변경",
+            Title = AppStrings.Get("Msg_RenamePlaylistTitle", "재생목록 이름 변경"),
             Content = box,
-            PrimaryButtonText = "확인",
-            CloseButtonText = "취소",
+            PrimaryButtonText = AppStrings.Get("Common_OK", "확인"),
+            CloseButtonText = AppStrings.Get("Common_Cancel", "취소"),
             DefaultButton = ContentDialogButton.Primary,
             XamlRoot = xamlRoot
         };
@@ -49,7 +50,7 @@ public static class PlaylistDialogs
     public static async Task ExportPlaylistAsync(Playlist pl, IntPtr windowHandle)
     {
         var picker = new FileSavePicker { SuggestedFileName = pl.Name };
-        picker.FileTypeChoices.Add("M3U8 재생목록", new List<string> { ".m3u8" });
+        picker.FileTypeChoices.Add(AppStrings.Get("Msg_M3U8FileType", "M3U8 재생목록"), new List<string> { ".m3u8" });
         InitializeWithWindow.Initialize(picker, windowHandle);
 
         var file = await picker.PickSaveFileAsync();
@@ -61,7 +62,7 @@ public static class PlaylistDialogs
             }
             catch (Exception ex)
             {
-                AppServices.RaiseWarning($"저장 실패: {ex.Message}");
+                AppServices.RaiseWarning(AppStrings.Format("Msg_SaveFailed", ex.Message));
             }
         }
     }

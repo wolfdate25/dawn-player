@@ -1,4 +1,5 @@
 using DawnPlayer.App.Helpers;
+using DawnPlayer.App.Localization;
 using DawnPlayer.App.Services;
 using DawnPlayer.Core.Audio;
 using DawnPlayer.Core.Library;
@@ -84,7 +85,7 @@ public sealed partial class NowPlayingBar : UserControl
     {
         if (item == null)
         {
-            TrackTitle.Text = "재생 중인 트랙 없음";
+            TrackTitle.Text = AppStrings.Get("NowPlaying_TrackTitle_Empty.Text", "재생 중인 트랙 없음");
             TrackArtist.Text = "";
             _formatBadgeText = "";
             FormatBadge.Visibility = Visibility.Collapsed;
@@ -192,20 +193,20 @@ public sealed partial class NowPlayingBar : UserControl
         if (allowVolume != _volumeAvailableInSession)
         {
             _volumeAvailableInSession = allowVolume;
-            ApplyVolumeAvailability();
+            UpdateVolumeControlAvailability();
         }
     }
 
-    private void ApplyVolumeAvailability()
+    private void UpdateVolumeControlAvailability()
     {
         VolumeSlider.IsEnabled = _volumeAvailableInSession;
         MuteButton.IsEnabled = _volumeAvailableInSession;
         ToolTipService.SetToolTip(VolumeSlider, _volumeAvailableInSession
-            ? "볼륨"
-            : "WASAPI 배타 모드에서는 볼륨 조절이 적용되지 않습니다");
+            ? AppStrings.Get("Settings_Shortcuts_Cat_Volume", "볼륨")
+            : AppStrings.Get("Msg_VolumeDisabledInExclusive", "WASAPI 배타 모드에서는 볼륨 조절이 적용되지 않습니다"));
         ToolTipService.SetToolTip(MuteButton, _volumeAvailableInSession
-            ? "음소거"
-            : "WASAPI 배타 모드에서는 볼륨 조절이 적용되지 않습니다");
+            ? AppStrings.Get("Shortcut_Command_MuteToggle", "음소거")
+            : AppStrings.Get("Msg_VolumeDisabledInExclusive", "WASAPI 배타 모드에서는 볼륨 조절이 적용되지 않습니다"));
     }
 
     /// <summary>Hides the volume slider on narrow windows so the bar compresses
@@ -386,9 +387,9 @@ public sealed partial class NowPlayingBar : UserControl
 
         string tip = mode switch
         {
-            ShuffleMode.Tracks => "셔플: 트랙 (무작위 곡 재생)",
-            ShuffleMode.Albums => "셔플: 앨범 (앨범 순차 재생 후 다음 앨범 셔플)",
-            _ => "셔플 끄기 (순차 재생)"
+            ShuffleMode.Tracks => AppStrings.Get("NowPlaying_ShuffleTip_Tracks", "셔플: 트랙 (무작위 곡 재생)"),
+            ShuffleMode.Albums => AppStrings.Get("NowPlaying_ShuffleTip_Albums", "셔플: 앨범 (앨범 순차 재생 후 다음 앨범 셔플)"),
+            _ => AppStrings.Get("NowPlaying_ShuffleTip_Off", "셔플 끄기 (순차 재생)")
         };
         ToolTipService.SetToolTip(ShuffleButton, tip);
     }
@@ -465,8 +466,8 @@ public sealed partial class NowPlayingBar : UserControl
         var tracks = playback.Queue.Entries.Select(entry => entry.Item?.Track).Where(t => t != null).Cast<Track>().ToList();
         if (tracks.Count > 0)
         {
-            var pl = AppServices.Playlists.CreatePlaylistFromTracks("대기열 저장", tracks);
-            AppServices.RaiseWarning($"대기열 {tracks.Count}곡을 '{pl.Name}'에 저장했습니다.");
+            var pl = AppServices.Playlists.CreatePlaylistFromTracks(AppStrings.Get("Msg_DefaultSavedQueueName", "대기열 저장"), tracks);
+            AppServices.RaiseWarning(AppStrings.Format("Msg_SavedQueueToPlaylist", tracks.Count, pl.Name));
         }
     }
 
@@ -508,16 +509,21 @@ public sealed partial class NowPlayingBar : UserControl
         var map = AppServices.Shortcuts?.Map;
         if (map == null) return;
 
-        SetHint(PreviousButton, "이전 트랙", map.GetChord(Shortcuts.ShortcutCommand.Previous));
-        SetHint(PlayButton, "재생/일시정지", map.GetChord(Shortcuts.ShortcutCommand.PlayPause));
-        SetHint(NextButton, "다음 트랙", map.GetChord(Shortcuts.ShortcutCommand.Next));
-        SetHint(StopButton, "정지", map.GetChord(Shortcuts.ShortcutCommand.Stop));
-        SetHint(ShuffleButton, "무작위 재생", map.GetChord(Shortcuts.ShortcutCommand.ShuffleCycle));
-        SetHint(RepeatButton, "반복 (끔 / 전체 / 한 곡)", map.GetChord(Shortcuts.ShortcutCommand.RepeatCycle));
-        SetHint(MuteButton, "음소거", map.GetChord(Shortcuts.ShortcutCommand.MuteToggle));
-        SetHint(LyricsButton, "가사 패널", map.GetChord(Shortcuts.ShortcutCommand.ToggleLyrics));
-        SetHint(SettingsButton, "환경설정", map.GetChord(Shortcuts.ShortcutCommand.OpenPreferences));
+        // Labels come from the catalog's localized names so the tooltip, the settings list and
+        // conflict dialogs all show the same string for a command.
+        SetHint(PreviousButton, CommandName(Shortcuts.ShortcutCommand.Previous, "이전 트랙"), map.GetChord(Shortcuts.ShortcutCommand.Previous));
+        SetHint(PlayButton, CommandName(Shortcuts.ShortcutCommand.PlayPause, "재생/일시정지"), map.GetChord(Shortcuts.ShortcutCommand.PlayPause));
+        SetHint(NextButton, CommandName(Shortcuts.ShortcutCommand.Next, "다음 트랙"), map.GetChord(Shortcuts.ShortcutCommand.Next));
+        SetHint(StopButton, CommandName(Shortcuts.ShortcutCommand.Stop, "정지"), map.GetChord(Shortcuts.ShortcutCommand.Stop));
+        SetHint(ShuffleButton, CommandName(Shortcuts.ShortcutCommand.ShuffleCycle, "무작위 재생"), map.GetChord(Shortcuts.ShortcutCommand.ShuffleCycle));
+        SetHint(RepeatButton, CommandName(Shortcuts.ShortcutCommand.RepeatCycle, "반복 (끔 / 전체 / 한 곡)"), map.GetChord(Shortcuts.ShortcutCommand.RepeatCycle));
+        SetHint(MuteButton, CommandName(Shortcuts.ShortcutCommand.MuteToggle, "음소거"), map.GetChord(Shortcuts.ShortcutCommand.MuteToggle));
+        SetHint(LyricsButton, CommandName(Shortcuts.ShortcutCommand.ToggleLyrics, "가사 패널"), map.GetChord(Shortcuts.ShortcutCommand.ToggleLyrics));
+        SetHint(SettingsButton, CommandName(Shortcuts.ShortcutCommand.OpenPreferences, "환경설정"), map.GetChord(Shortcuts.ShortcutCommand.OpenPreferences));
     }
+
+    private static string CommandName(Shortcuts.ShortcutCommand command, string fallback) =>
+        AppStrings.Get($"Shortcut_Command_{command}", fallback);
 
     private static void SetHint(DependencyObject? target, string label, Shortcuts.KeyChord? chord)
     {

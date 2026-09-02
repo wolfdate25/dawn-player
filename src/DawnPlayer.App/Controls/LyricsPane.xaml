@@ -25,7 +25,7 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="0">
-                <TextBlock Text="가사" FontSize="13.5" FontWeight="SemiBold" FontStyle="Italic"
+                <TextBlock x:Uid="LyricsPane_HeaderTitle" Text="가사" FontSize="13.5" FontWeight="SemiBold" FontStyle="Italic"
                            Foreground="{ThemeResource TextPrimaryBrush}"/>
                 <TextBlock x:Name="SourceBadge" Text="" FontSize="10"
                            Foreground="{ThemeResource TextTertiaryBrush}" Visibility="Collapsed"/>
@@ -33,16 +33,16 @@
 
             <!-- Quick Tools -->
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
-                <Button Style="{StaticResource TransportButton}" Width="26" Height="26" Click="OnFontSmallerClick" AutomationProperties.Name="글꼴 축소" ToolTipService.ToolTip="글꼴 축소">
+                <Button x:Uid="LyricsPane_FontSmallerButton" Style="{StaticResource TransportButton}" Width="26" Height="26" Click="OnFontSmallerClick" AutomationProperties.Name="글꼴 축소" ToolTipService.ToolTip="글꼴 축소">
                     <TextBlock Text="A-" FontSize="10" FontWeight="SemiBold"/>
                 </Button>
-                <Button Style="{StaticResource TransportButton}" Width="26" Height="26" Click="OnFontBiggerClick" AutomationProperties.Name="글꼴 확대" ToolTipService.ToolTip="글꼴 확대">
+                <Button x:Uid="LyricsPane_FontBiggerButton" Style="{StaticResource TransportButton}" Width="26" Height="26" Click="OnFontBiggerClick" AutomationProperties.Name="글꼴 확대" ToolTipService.ToolTip="글꼴 확대">
                     <TextBlock Text="A+" FontSize="11" FontWeight="Bold"/>
                 </Button>
-                <Button Style="{StaticResource TransportButton}" Width="28" Height="28" Click="OnOpenSearchClick" AutomationProperties.Name="온라인 가사 검색" ToolTipService.ToolTip="온라인 가사 검색">
+                <Button x:Uid="LyricsPane_SearchButton" Style="{StaticResource TransportButton}" Width="28" Height="28" Click="OnOpenSearchClick" AutomationProperties.Name="온라인 가사 검색" ToolTipService.ToolTip="온라인 가사 검색">
                     <FontIcon Glyph="&#xE721;" FontSize="12" Foreground="{ThemeResource TextSecondaryBrush}"/>
                 </Button>
-                <Button Style="{StaticResource TransportButton}" Width="28" Height="28" Click="OnOpenEditorClick" AutomationProperties.Name="가사 편집기 열기" ToolTipService.ToolTip="가사 편집기 열기 (초정밀 오프셋/싱크/텍스트)">
+                <Button x:Uid="LyricsPane_EditorButton" Style="{StaticResource TransportButton}" Width="28" Height="28" Click="OnOpenEditorClick" AutomationProperties.Name="가사 편집기 열기" ToolTipService.ToolTip="가사 편집기 열기 (초정밀 오프셋/싱크/텍스트)">
                     <FontIcon Glyph="&#xE70F;" FontSize="12" Foreground="{ThemeResource TextSecondaryBrush}"/>
                 </Button>
             </StackPanel>
@@ -85,13 +85,13 @@
             <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center"
                         Spacing="10" Margin="24,0">
                 <FontIcon Glyph="&#xEC4F;" FontSize="28" Foreground="{ThemeResource TextTertiaryBrush}"/>
-                <TextBlock Text="가사 없음" FontSize="13.5" FontWeight="SemiBold" HorizontalAlignment="Center"
+                <TextBlock x:Uid="LyricsPane_EmptyTitle" Text="가사 없음" FontSize="13.5" FontWeight="SemiBold" HorizontalAlignment="Center"
                            Foreground="{ThemeResource TextSecondaryBrush}"/>
-                <TextBlock Text="음원 파일과 같은 폴더에 .lrc 파일을 두거나 [가사 편집]을 눌러 새 가사를 작성하세요."
+                <TextBlock x:Uid="LyricsPane_EmptyDesc" Text="음원 파일과 같은 폴더에 .lrc 파일을 두거나 [가사 편집]을 눌러 새 가사를 작성하세요."
                            FontSize="11.5" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
                            Foreground="{ThemeResource TextTertiaryBrush}"/>
-                <Button Content="새 가사 작성하기" FontSize="12" Click="OnOpenEditorClick" HorizontalAlignment="Center"/>
-                <Button Content="온라인에서 찾기" FontSize="12" Click="OnOpenSearchClick" HorizontalAlignment="Center"/>
+                <Button x:Uid="LyricsPane_CreateLyricsButton" Content="새 가사 작성하기" FontSize="12" Click="OnOpenEditorClick" HorizontalAlignment="Center"/>
+                <Button x:Uid="LyricsPane_SearchOnlineButton" Content="온라인에서 찾기" FontSize="12" Click="OnOpenSearchClick" HorizontalAlignment="Center"/>
             </StackPanel>
         </Grid>
     </Grid>

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DawnPlayer.App.Localization;
 
 namespace DawnPlayer.App.Shortcuts;
 
@@ -21,7 +22,15 @@ public sealed record ShortcutCommandInfo(
     ShortcutCategory Category,
     string DisplayName,
     KeyChord? DefaultChord,
-    bool RequiresTextInputGuard);
+    bool RequiresTextInputGuard)
+{
+    /// <summary>
+    /// Localized display name. <see cref="DisplayName"/> stores the shipped ko-KR fallback so the
+    /// catalog stays usable without the resource pipeline (unit tests, log lines); UI surfaces
+    /// should resolve through this property instead.
+    /// </summary>
+    public string LocalizedName => AppStrings.Get($"Shortcut_Command_{Command}", DisplayName);
+}
 
 /// <summary>
 /// The single source of truth for what commands exist, what they are called, and how they are bound
@@ -96,9 +105,9 @@ public static class ShortcutCommandCatalog
 
     public static string GetCategoryName(ShortcutCategory category) => category switch
     {
-        ShortcutCategory.Playback => "재생 제어",
-        ShortcutCategory.Seek => "탐색",
-        ShortcutCategory.Volume => "볼륨",
-        _ => "네비게이션 & 창"
+        ShortcutCategory.Playback => AppStrings.Get("Settings_Shortcuts_Cat_Playback", "재생 제어"),
+        ShortcutCategory.Seek => AppStrings.Get("Settings_Shortcuts_Cat_Seek", "탐색"),
+        ShortcutCategory.Volume => AppStrings.Get("Settings_Shortcuts_Cat_Volume", "볼륨"),
+        _ => AppStrings.Get("Settings_Shortcuts_Cat_Navigation", "네비게이션 & 창")
     };
 }

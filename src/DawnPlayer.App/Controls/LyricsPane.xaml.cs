@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using DawnPlayer.App.Helpers;
+using DawnPlayer.App.Localization;
 using DawnPlayer.App.Services;
 using DawnPlayer.App.Views;
 using DawnPlayer.Core.Audio;
@@ -134,8 +135,8 @@ public sealed partial class LyricsPane : UserControl
             {
                 doc = online.Document;
                 onlineSource = online.IsSynced
-                    ? $"온라인 · {online.PluginName}"
-                    : $"온라인 · {online.PluginName} · 비동기";
+                    ? AppStrings.Format("LyricsPane_SourceOnlineFormat", "온라인 · {0}", online.PluginName)
+                    : AppStrings.Format("LyricsPane_SourceOnlineUnsyncedFormat", "온라인 · {0} · 비동기", online.PluginName);
             }
         }
         SetSourceBadge(onlineSource);
@@ -294,7 +295,7 @@ public sealed partial class LyricsPane : UserControl
         }
         else
         {
-            AppServices.RaiseWarning("현재 재생 중인 트랙이 없습니다.");
+            AppServices.RaiseWarning(AppStrings.Get("Msg_NoTrackPlayingWarning", "현재 재생 중인 트랙이 없습니다."));
         }
     }
 
@@ -307,7 +308,7 @@ public sealed partial class LyricsPane : UserControl
         }
         else
         {
-            AppServices.RaiseWarning("현재 재생 중인 트랙이 없습니다.");
+            AppServices.RaiseWarning(AppStrings.Get("Msg_NoTrackPlayingWarning", "현재 재생 중인 트랙이 없습니다."));
         }
     }
 

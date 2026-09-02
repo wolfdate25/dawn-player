@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DawnPlayer.App.Localization;
 using DawnPlayer.Core.Audio;
 using DawnPlayer.Core.Persistence;
 
@@ -221,7 +222,7 @@ public static class EqVisualizerCalculator
                 double gain = double.IsFinite(b.GainDb) ? b.GainDb : 0.0;
                 double by = YFromDb(gain + preamp, plotH, pTop);
                 string colorHex = GetBandColorHex(i);
-                bandPins.Add(new BandPinData(i, bx, by, colorHex, $"밴드 {i + 1}"));
+                bandPins.Add(new BandPinData(i, bx, by, colorHex, AppStrings.Format("Settings_Eq_BandFormat", "밴드 {0}", i + 1)));
             }
         }
 

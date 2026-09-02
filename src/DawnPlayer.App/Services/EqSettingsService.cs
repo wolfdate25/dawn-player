@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DawnPlayer.App.Localization;
 using DawnPlayer.Core.Audio;
 using DawnPlayer.Core.Persistence;
 
@@ -43,7 +44,7 @@ public sealed class EqSettingsService : IEqSettingsService
     public EqProfile CreateProfile(string name, EqProfile? template = null)
     {
         _settings.Equalizer.EnsureDefaultProfile();
-        string cleanName = string.IsNullOrWhiteSpace(name) ? "새 프로필" : name.Trim();
+        string cleanName = string.IsNullOrWhiteSpace(name) ? AppStrings.Get("Eq_DefaultProfileName", "새 프로필") : name.Trim();
         string newId = Guid.NewGuid().ToString("N");
 
         var newProfile = template != null ? template.Clone() : new EqProfile();

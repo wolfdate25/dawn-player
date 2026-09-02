@@ -1,5 +1,6 @@
 using System.Linq;
 using DawnPlayer.App.Helpers;
+using DawnPlayer.App.Localization;
 using DawnPlayer.App.Shortcuts;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -29,13 +30,13 @@ internal sealed class ShortcutCaptureDialog : ContentDialog
 
     public ShortcutCaptureDialog(string commandDisplayName)
     {
-        Title = $"단축키 지정 — {commandDisplayName}";
-        CloseButtonText = "취소";
+        Title = AppStrings.Format("Msg_ShortcutCaptureTitle", commandDisplayName);
+        CloseButtonText = AppStrings.Get("Common_Cancel", "취소");
         DefaultButton = ContentDialogButton.None;
 
         _hint = new TextBlock
         {
-            Text = "Esc를 누르면 취소됩니다. Tab, Esc, Backspace 등 일부 키는 단축키로 쓸 수 없습니다.",
+            Text = AppStrings.Get("Msg_ShortcutCaptureHint", "Esc를 누르면 취소됩니다. Tab, Esc, Backspace 등 일부 키는 단축키로 쓸 수 없습니다."),
             FontSize = 12,
             TextWrapping = TextWrapping.Wrap
         };
@@ -45,7 +46,7 @@ internal sealed class ShortcutCaptureDialog : ContentDialog
             Spacing = 10,
             Children =
             {
-                new TextBlock { Text = "새 키 조합을 누르세요.", FontSize = 15, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
+                new TextBlock { Text = AppStrings.Get("Msg_ShortcutCaptureInstruction", "새 키 조합을 누르세요."), FontSize = 15, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
                 _hint
             }
         };
@@ -73,7 +74,7 @@ internal sealed class ShortcutCaptureDialog : ContentDialog
         if (!ShortcutKeyNames.IsAllowedKey(code))
         {
             // Left unhandled on purpose: Esc must still close the dialog and Tab must still move focus.
-            _hint.Text = "이 키는 단축키로 사용할 수 없습니다. 다른 키를 눌러 주세요.";
+            _hint.Text = AppStrings.Get("Msg_ShortcutDisallowedKey", "이 키는 단축키로 사용할 수 없습니다. 다른 키를 눌러 주세요.");
             return;
         }
 

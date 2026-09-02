@@ -33,18 +33,18 @@
 
             <!-- Brand & Status Text -->
             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Spacing="8" Margin="0,0,24,0">
-                <Button Style="{StaticResource TitleMenuButtonStyle}" AutomationProperties.Name="메뉴" ToolTipService.ToolTip="메뉴">
+                <Button x:Uid="MainWindow_TitleMenuButton" Style="{StaticResource TitleMenuButtonStyle}" AutomationProperties.Name="메뉴" ToolTipService.ToolTip="메뉴">
                     <FontIcon Glyph="&#xE700;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
                     <Button.Flyout>
                         <MenuFlyout>
-                            <MenuFlyoutItem Text="라이브러리 새로고침" Click="OnMenuRescan">
+                            <MenuFlyoutItem x:Uid="MainWindow_Menu_Rescan" Text="라이브러리 새로고침" Click="OnMenuRescan">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE72C;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
-                            <MenuFlyoutItem x:Name="PreferencesMenuItem" Text="환경설정 (Preferences)" Click="OnMenuSettings">
+                            <MenuFlyoutItem x:Uid="MainWindow_Menu_Settings" x:Name="PreferencesMenuItem" Text="환경설정 (Preferences)" Click="OnMenuSettings">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE713;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                             <MenuFlyoutSeparator/>
-                            <MenuFlyoutItem Text="종료" Click="OnMenuExit">
+                            <MenuFlyoutItem x:Uid="MainWindow_Menu_Exit" Text="종료" Click="OnMenuExit">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE711;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                         </MenuFlyout>
@@ -53,7 +53,7 @@
                 <TextBlock x:Uid="AppBrand" Text="Dawn Player" FontSize="12.5" FontWeight="SemiBold"
                            Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                 <TextBlock Text="|" FontSize="11" Foreground="{ThemeResource SeparatorSubtleBrush}" VerticalAlignment="Center"/>
-                <TextBlock x:Name="TitleBarTrack" Text="No sound — Nothing played" FontSize="11.5"
+                <TextBlock x:Uid="MainWindow_TitleBarTrack" x:Name="TitleBarTrack" Text="No sound — Nothing played" FontSize="11.5"
                            Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"
                            MaxWidth="320" TextTrimming="CharacterEllipsis"/>
             </StackPanel>
@@ -68,7 +68,7 @@
                              DoubleTapped="OnTabDoubleTapped">
                     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                         <FontIcon Glyph="&#xE8B9;" FontSize="12"/>
-                        <TextBlock Text="Library" FontSize="12.5"/>
+                        <TextBlock x:Uid="MainWindow_Tab_Library" Text="Library" FontSize="12.5"/>
                     </StackPanel>
                 </RadioButton>
                 <RadioButton x:Name="TabPlaylists" GroupName="TopNavGroup"
@@ -78,7 +78,7 @@
                              DoubleTapped="OnTabDoubleTapped">
                     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                         <FontIcon Glyph="&#xE90B;" FontSize="12"/>
-                        <TextBlock Text="Playlists" FontSize="12.5"/>
+                        <TextBlock x:Uid="MainWindow_Tab_Playlists" Text="Playlists" FontSize="12.5"/>
                     </StackPanel>
                 </RadioButton>
             </StackPanel>
@@ -91,7 +91,7 @@
                 </Grid.ColumnDefinitions>
                 <Grid x:Name="AppTitleBarDragArea" Grid.Column="0" Background="Transparent"/>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,4,0">
-                    <Button x:Name="SettingsGearButton" Style="{StaticResource TitleMenuButtonStyle}" Click="OnMenuSettings">
+                    <Button x:Uid="MainWindow_SettingsGearButton" x:Name="SettingsGearButton" Style="{StaticResource TitleMenuButtonStyle}" Click="OnMenuSettings" ToolTipService.ToolTip="환경설정">
                         <FontIcon Glyph="&#xE713;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
                     </Button>
                 </StackPanel>

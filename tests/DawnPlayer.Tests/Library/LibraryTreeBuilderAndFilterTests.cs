@@ -51,7 +51,7 @@ public sealed class LibraryTreeBuilderAndFilterTests
 
             Assert.Single(roots);
             Assert.Same(all, roots[0]);
-            Assert.Equal("전체 (All)", all.Title);
+            Assert.Equal("전체", all.Title);
             Assert.Equal(0, all.Count);
             Assert.Equal("All", all.FilterType);
             Assert.True(all.DefaultExpanded);
@@ -92,7 +92,7 @@ public sealed class LibraryTreeBuilderAndFilterTests
 
         // roots[0]은 "전체", 이후 아티스트 알파벳 순: Pink Floyd, Queen
         Assert.Equal(3, roots.Count);
-        Assert.Equal("전체 (All)", roots[0].Title);
+        Assert.Equal("전체", roots[0].Title);
 
         var pinkFloyd = roots[1];
         Assert.Equal("Pink Floyd", pinkFloyd.Title);
@@ -332,7 +332,7 @@ public sealed class LibraryTreeBuilderAndFilterTests
 
         // 전체 + C:\Audio + D:\FLAC + E:\Library\HighRes
         Assert.Equal(4, roots.Count);
-        Assert.Equal("전체 (All)", roots[0].Title);
+        Assert.Equal("전체", roots[0].Title);
         Assert.Equal(@"C:\Audio", roots[1].Title);
         Assert.Equal(@"D:\FLAC", roots[2].Title);
         Assert.Equal(@"E:\Library\HighRes", roots[3].Title);

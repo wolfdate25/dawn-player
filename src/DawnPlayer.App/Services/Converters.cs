@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using DawnPlayer.App.Localization;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
@@ -90,9 +91,9 @@ public static class TextFormat
 
     public static string LongDuration(TimeSpan t)
     {
-        if (t <= TimeSpan.Zero) return "0초";
-        if (t.TotalDays >= 1) return $"{(int)t.TotalHours}시간 {t.Minutes}분";
-        if (t.TotalHours >= 1) return $"{(int)t.TotalHours}시간 {t.Minutes}분";
-        return $"{(int)t.TotalMinutes}분";
+        if (t <= TimeSpan.Zero) return AppStrings.Get("Time_ZeroSeconds", "0초");
+        if (t.TotalDays >= 1 || t.TotalHours >= 1)
+            return AppStrings.Format("Time_HoursMinutesFormat", (int)t.TotalHours, t.Minutes);
+        return AppStrings.Format("Time_MinutesFormat", (int)t.TotalMinutes);
     }
 }

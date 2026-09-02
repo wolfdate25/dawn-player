@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using DawnPlayer.App.Helpers;
+using DawnPlayer.App.Localization;
 using DawnPlayer.App.Services;
 using DawnPlayer.Core.Audio;
 using DawnPlayer.Core.Lyrics;
@@ -140,6 +141,7 @@ public sealed partial class LyricsEditorWindow : Window
     public LyricsEditorWindow(Track track)
     {
         InitializeComponent();
+        Title = AppStrings.Get("LyricsEditor_WindowTitle", "가사 편집기 — Dawn Player");
         _track = track;
 
         _stepMs = AppServices.Settings.Lyrics.DefaultOffsetStepMs > 0 ? AppServices.Settings.Lyrics.DefaultOffsetStepMs : 0.5;
@@ -208,11 +210,11 @@ public sealed partial class LyricsEditorWindow : Window
                     Text = l.Text
                 });
             }
-            StatusLabel.Text = $"가사 {doc.Lines.Count}줄 로드됨";
+            StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_LinesLoaded", doc.Lines.Count);
         }
         else
         {
-            StatusLabel.Text = "기존 가사 없음 (신규 작성 가능)";
+            StatusLabel.Text = AppStrings.Get("LyricsEditor_Status_NoExistingLyrics", "기존 가사 없음 (신규 작성 가능)");
         }
 
         SyncToRawText();
@@ -295,7 +297,7 @@ public sealed partial class LyricsEditorWindow : Window
         {
             double delta = val - _totalOffsetMs;
             _totalOffsetMs = val;
-            TotalOffsetSecLabel.Text = $"(= {(_totalOffsetMs / 1000.0):+0.0000;-0.0000;0.0000}초)";
+            TotalOffsetSecLabel.Text = AppStrings.Format("LyricsEditor_TotalOffsetSecondsFormat", $"{(_totalOffsetMs / 1000.0):+0.0000;-0.0000;0.0000}");
             ApplyOffsetDeltaToLines(delta);
         }
     }
@@ -304,7 +306,7 @@ public sealed partial class LyricsEditorWindow : Window
     {
         _updatingFromSync = true;
         TotalOffsetBox.Text = _totalOffsetMs >= 0 ? $"+{_totalOffsetMs:F3}" : $"{_totalOffsetMs:F3}";
-        TotalOffsetSecLabel.Text = $"(= {(_totalOffsetMs / 1000.0):+0.0000;-0.0000;0.0000}초)";
+        TotalOffsetSecLabel.Text = AppStrings.Format("LyricsEditor_TotalOffsetSecondsFormat", $"{(_totalOffsetMs / 1000.0):+0.0000;-0.0000;0.0000}");
         _updatingFromSync = false;
     }
 
@@ -357,7 +359,7 @@ public sealed partial class LyricsEditorWindow : Window
         var newLine = new LrcEditLineVm
         {
             Time = curPos,
-            Text = "새 가사 줄"
+            Text = AppStrings.Get("LyricsEditor_NewLineText", "새 가사 줄")
         };
         _lines.Insert(targetIdx, newLine);
         ReindexLines();
@@ -434,13 +436,13 @@ public sealed partial class LyricsEditorWindow : Window
                     }
                     ReindexLines();
                     SyncToRawText();
-                    StatusLabel.Text = $"클립보드에서 {doc.Lines.Count}줄 가사를 불러왔습니다.";
+                    StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_ClipboardImported", doc.Lines.Count);
                 }
             }
         }
         catch (Exception ex)
         {
-            StatusLabel.Text = $"붙여넣기 오류: {ex.Message}";
+            StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_PasteError", ex.Message);
         }
     }
 
@@ -530,11 +532,11 @@ public sealed partial class LyricsEditorWindow : Window
             LrcParser.SaveToFile(_targetLrcPath, content);
 
             AppServices.RaiseLyricsChanged(_track);
-            StatusLabel.Text = $"성공적으로 저장됨: {DateTime.Now:HH:mm:ss} ({_targetLrcPath})";
+            StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_SaveSuccess", DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture), _targetLrcPath);
         }
         catch (Exception ex)
         {
-            StatusLabel.Text = $"저장 실패: {ex.Message}";
+            StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_SaveFailed", ex.Message);
         }
     }
 

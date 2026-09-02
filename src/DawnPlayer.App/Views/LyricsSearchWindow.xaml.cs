@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using DawnPlayer.App.Localization;
 using DawnPlayer.App.Services;
 using DawnPlayer.Core.Lyrics;
 using DawnPlayer.Core.Lyrics.Online;
@@ -24,7 +25,7 @@ public sealed class LyricsResultItemVm
     public OnlineLyricsResult? Fetched { get; set; }
 
     public string PluginName => Plugin.Name;
-    public string Title => string.IsNullOrWhiteSpace(Result.Title) ? "(제목 없음)" : Result.Title!;
+    public string Title => string.IsNullOrWhiteSpace(Result.Title) ? AppStrings.Get("LyricsSearch_NoTitle", "(제목 없음)") : Result.Title!;
     public string Subtitle
     {
         get
@@ -33,7 +34,7 @@ public sealed class LyricsResultItemVm
             return string.Join(" · ", parts);
         }
     }
-    public string SyncLabel => Result.IsSynced ? "동기" : "비동기";
+    public string SyncLabel => Result.IsSynced ? AppStrings.Get("LyricsSearch_Sync_Synced", "동기") : AppStrings.Get("LyricsSearch_Sync_Unsynced", "비동기");
     public string DurationLabel => Result.DurationMs > 0 ? FormatDuration(Result.DurationMs) : "";
     public string ProviderKey => Plugin.Id;
 
@@ -84,6 +85,7 @@ public sealed partial class LyricsSearchWindow : Window
     public LyricsSearchWindow(Track track)
     {
         InitializeComponent();
+        Title = AppStrings.Get("LyricsSearch_WindowTitle", "온라인 가사 검색 — Dawn Player");
         ResultsList.ItemsSource = _results;
         LoadTrack(track);
     }
@@ -97,15 +99,13 @@ public sealed partial class LyricsSearchWindow : Window
         ArtistBox.Text = track.Artist ?? "";
         AlbumBox.Text = track.Album ?? "";
         _results.Clear();
-        PreviewText.Text = "왼쪽에서 검색 결과를 선택하세요.";
+        PreviewText.Text = AppStrings.Get("LyricsSearch_PreviewPlaceholder", "왼쪽에서 검색 결과를 선택하세요.");
         ApplyButton.IsEnabled = false;
         SaveButton.IsEnabled = false;
 
         if (AppServices.LyricsOnline == null || AppServices.LyricsOnline.Plugins.Count == 0)
         {
-            StatusText.Text = $"설치된 가사 플러그인이 없습니다.{Environment.NewLine}" +
-                $"플러그인 폴더({AppPaths.PluginsDir})에 플러그인별 폴더를 만들어 DLL을 넣고 '다시 스캔'하세요.{Environment.NewLine}" +
-                "개발 방법은 docs/plugin-development.md를 참고하세요.";
+            StatusText.Text = AppStrings.Format("LyricsSearch_NoPluginsFound", AppPaths.PluginsDir);
             SearchButton.IsEnabled = false;
             return;
         }
@@ -132,7 +132,7 @@ public sealed partial class LyricsSearchWindow : Window
 
         if (query.Title == null && query.Artist == null && query.Album == null)
         {
-            StatusText.Text = "제목, 아티스트 또는 앨범 중 하나는 입력해야 합니다.";
+            StatusText.Text = AppStrings.Get("LyricsSearch_SearchQueryEmpty", "제목, 아티스트 또는 앨범 중 하나는 입력해야 합니다.");
             return;
         }
 
@@ -143,7 +143,7 @@ public sealed partial class LyricsSearchWindow : Window
 
         SearchButton.IsEnabled = false;
         _results.Clear();
-        StatusText.Text = "검색 중...";
+        StatusText.Text = AppStrings.Get("LyricsSearch_Searching", "검색 중...");
         var generation = ++_previewGeneration;
 
         try
@@ -161,10 +161,12 @@ public sealed partial class LyricsSearchWindow : Window
 
                 var failed = outcomes.Where(o => o.Error != null).Select(o => $"{o.Plugin.Name}: {o.Error}").ToList();
                 StatusText.Text = _results.Count > 0
-                    ? $"{_results.Count}개 결과" + (failed.Count > 0 ? $" · 실패 {failed.Count}플러그인" : "")
-                    : failed.Count > 0
-                        ? "결과 없음 · " + string.Join(", ", failed)
-                        : "결과 없음. 다른 검색어로 시도해 보세요.";
+                    ? (failed.Count > 0
+                        ? AppStrings.Format("LyricsSearch_ResultsWithFailures", _results.Count, failed.Count)
+                        : AppStrings.Format("LyricsSearch_ResultsCount", _results.Count))
+                    : (failed.Count > 0
+                        ? AppStrings.Format("LyricsSearch_NoResultsWithErrors", string.Join(", ", failed))
+                        : AppStrings.Get("LyricsSearch_NoResults", "결과 없음. 다른 검색어로 시도해 보세요."));
             });
         }
         catch (OperationCanceledException)
@@ -174,7 +176,7 @@ public sealed partial class LyricsSearchWindow : Window
         {
             DispatcherQueue?.TryEnqueue(() =>
             {
-                if (!_closed) StatusText.Text = $"검색 실패: {ex.Message}";
+                if (!_closed) StatusText.Text = AppStrings.Format("LyricsSearch_SearchFailed", ex.Message);
             });
         }
         finally
@@ -202,7 +204,7 @@ public sealed partial class LyricsSearchWindow : Window
         try { previous?.Cancel(); } catch (ObjectDisposedException) { }
         var cts = _previewCts!;
 
-        PreviewText.Text = "불러오는 중...";
+        PreviewText.Text = AppStrings.Get("LyricsSearch_LoadingPreview", "불러오는 중...");
         try
         {
             var fetched = await Task.Run(() => AppServices.LyricsOnline.FetchAsync(vm.Plugin, vm.Result, _track, cts.Token)).ConfigureAwait(false);
@@ -213,7 +215,7 @@ public sealed partial class LyricsSearchWindow : Window
                 if (_closed || !ReferenceEquals(ResultsList.SelectedItem, vm)) return;
                 if (fetched is null)
                 {
-                    PreviewText.Text = "이 결과를 가져올 수 없습니다.";
+                    PreviewText.Text = AppStrings.Get("LyricsSearch_FetchFailedResult", "이 결과를 가져올 수 없습니다.");
                     return;
                 }
                 vm.Fetched = fetched;
@@ -228,7 +230,7 @@ public sealed partial class LyricsSearchWindow : Window
             DispatcherQueue?.TryEnqueue(() =>
             {
                 if (!_closed && ReferenceEquals(ResultsList.SelectedItem, vm))
-                    PreviewText.Text = $"불러오기 실패: {ex.Message}";
+                    PreviewText.Text = AppStrings.Format("LyricsSearch_FetchError", ex.Message);
             });
         }
         finally
@@ -252,11 +254,11 @@ public sealed partial class LyricsSearchWindow : Window
         var fetched = vm.Fetched ?? await FetchSelectedAsync(vm);
         if (fetched == null)
         {
-            StatusText.Text = "가사를 가져올 수 없어 적용하지 못했습니다.";
+            StatusText.Text = AppStrings.Get("LyricsSearch_ApplyFailed_NoLyrics", "가사를 가져올 수 없어 적용하지 못했습니다.");
             return;
         }
         AppServices.LyricsOnline!.ApplyResult(fetched, _track);
-        StatusText.Text = $"'{fetched.PluginName}' 가사를 적용했습니다.";
+        StatusText.Text = AppStrings.Format("LyricsSearch_ApplySuccess", fetched.PluginName);
     }
 
     private async void OnSaveClick(object sender, RoutedEventArgs e)
@@ -265,22 +267,22 @@ public sealed partial class LyricsSearchWindow : Window
         var fetched = vm.Fetched ?? await FetchSelectedAsync(vm);
         if (fetched == null)
         {
-            StatusText.Text = "가사를 가져올 수 없어 저장하지 못했습니다.";
+            StatusText.Text = AppStrings.Get("LyricsSearch_SaveFailed_NoLyrics", "가사를 가져올 수 없어 저장하지 못했습니다.");
             return;
         }
 
         var outcome = AppServices.LyricsOnline!.SaveResult(fetched, _track);
         StatusText.Text = outcome.Result switch
         {
-            LyricsSaveResult.Saved => $"저장했습니다: {outcome.Path}",
-            LyricsSaveResult.SkippedExisting => $"이미 파일이 있어 건너뛰었습니다: {outcome.Path}",
-            _ => outcome.Error ?? "저장에 실패했습니다."
+            LyricsSaveResult.Saved => AppStrings.Format("LyricsSearch_SaveResult_Saved", outcome.Path ?? ""),
+            LyricsSaveResult.SkippedExisting => AppStrings.Format("LyricsSearch_SaveResult_Skipped", outcome.Path ?? ""),
+            _ => outcome.Error ?? AppStrings.Get("LyricsSearch_SaveResult_Failed", "저장에 실패했습니다.")
         };
     }
 
     private async Task<OnlineLyricsResult?> FetchSelectedAsync(LyricsResultItemVm vm)
     {
-        PreviewText.Text = "불러오는 중...";
+        PreviewText.Text = AppStrings.Get("LyricsSearch_LoadingPreview", "불러오는 중...");
         var fetched = await Task.Run(() => AppServices.LyricsOnline!.FetchAsync(vm.Plugin, vm.Result, _track, CancellationToken.None)).ConfigureAwait(false);
         if (fetched != null)
         {
