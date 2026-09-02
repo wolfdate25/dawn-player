@@ -33,16 +33,644 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="App.Title" xml:space="preserve">
-    <value>Dawn Player</value>
-  </data>
-  <data name="MainWindow.Title" xml:space="preserve">
-    <value>Dawn Player</value>
-  </data>
-  <data name="AppBrand.Text" xml:space="preserve">
-    <value>Dawn Player</value>
-  </data>
-  <data name="WelcomeText.Text" xml:space="preserve">
-    <value>ようこそ!</value>
-  </data>
+
+  <!-- Global / App -->
+  <data name="MainWindow.Title" xml:space="preserve"><value>Dawn Player</value></data>
+  <data name="AppBrand.Text" xml:space="preserve"><value>Dawn Player</value></data>
+
+  <!-- Module 1: Main Shell -->
+  <data name="MainWindow_TitleMenuButton.AutomationProperties.Name" xml:space="preserve"><value>メニュー</value></data>
+  <data name="MainWindow_TitleMenuButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>メニュー</value></data>
+  <data name="MainWindow_Menu_Rescan.Text" xml:space="preserve"><value>ライブラリを再スキャン</value></data>
+  <data name="MainWindow_Menu_Settings.Text" xml:space="preserve"><value>設定</value></data>
+  <data name="MainWindow_Menu_Exit.Text" xml:space="preserve"><value>終了</value></data>
+  <data name="MainWindow_TitleBarTrack.Text" xml:space="preserve"><value>再生中の曲はありません</value></data>
+  <data name="MainWindow_Tab_Library.Text" xml:space="preserve"><value>ライブラリ</value></data>
+  <data name="MainWindow_Tab_Playlists.Text" xml:space="preserve"><value>プレイリスト</value></data>
+  <data name="MainWindow_SettingsGearButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>設定</value></data>
+
+  <!-- Module 1: NowPlayingBar -->
+  <data name="NowPlaying_SeekSlider.AutomationProperties.Name" xml:space="preserve"><value>再生位置</value></data>
+  <data name="NowPlaying_AlbumArtButton.AutomationProperties.Name" xml:space="preserve"><value>アルバムアートを拡大</value></data>
+  <data name="NowPlaying_AlbumArtButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>アルバムアートを拡大</value></data>
+  <data name="NowPlaying_TrackTitle_Empty.Text" xml:space="preserve"><value>再生中の曲はありません</value></data>
+  <data name="NowPlaying_ShuffleTip_Tracks" xml:space="preserve"><value>シャッフル: トラック (ランダム再生)</value></data>
+  <data name="NowPlaying_ShuffleTip_Albums" xml:space="preserve"><value>シャッフル: アルバム (アルバムを順に再生し、次のアルバムをランダム選曲)</value></data>
+  <data name="NowPlaying_ShuffleTip_Off" xml:space="preserve"><value>シャッフルオフ (順次再生)</value></data>
+  <data name="Badge_WasapiExclusive" xml:space="preserve"><value>WASAPI 排他</value></data>
+  <data name="Badge_WasapiShared" xml:space="preserve"><value>WASAPI 共有</value></data>
+  <data name="NowPlaying_ShuffleButton.AutomationProperties.Name" xml:space="preserve"><value>シャッフル</value></data>
+  <data name="NowPlaying_ShuffleButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>シャッフル</value></data>
+  <data name="NowPlaying_PreviousButton.AutomationProperties.Name" xml:space="preserve"><value>前の曲</value></data>
+  <data name="NowPlaying_PreviousButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>前の曲</value></data>
+  <data name="NowPlaying_PlayButton.AutomationProperties.Name" xml:space="preserve"><value>再生</value></data>
+  <data name="NowPlaying_PlayButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>再生/一時停止</value></data>
+  <data name="NowPlaying_NextButton.AutomationProperties.Name" xml:space="preserve"><value>次の曲</value></data>
+  <data name="NowPlaying_NextButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>次の曲</value></data>
+  <data name="NowPlaying_StopButton.AutomationProperties.Name" xml:space="preserve"><value>停止</value></data>
+  <data name="NowPlaying_StopButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>停止</value></data>
+  <data name="NowPlaying_RepeatButton.AutomationProperties.Name" xml:space="preserve"><value>リピート</value></data>
+  <data name="NowPlaying_RepeatButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>リピート (オフ / 全曲 / 1曲)</value></data>
+  <data name="NowPlaying_MuteButton.AutomationProperties.Name" xml:space="preserve"><value>ミュート</value></data>
+  <data name="NowPlaying_MuteButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>ミュート</value></data>
+  <data name="NowPlaying_VolumeSlider.AutomationProperties.Name" xml:space="preserve"><value>音量</value></data>
+  <data name="NowPlaying_VolumeSlider.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>音量</value></data>
+  <data name="NowPlaying_QueueButton.AutomationProperties.Name" xml:space="preserve"><value>再生キュー</value></data>
+  <data name="NowPlaying_QueueButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>再生キュー</value></data>
+  <data name="NowPlaying_QueueTitle.Text" xml:space="preserve"><value>再生キュー</value></data>
+  <data name="NowPlaying_QueueSaveButton.Content" xml:space="preserve"><value>プレイリストとして保存</value></data>
+  <data name="NowPlaying_QueueClearButton.Content" xml:space="preserve"><value>クリア</value></data>
+  <data name="NowPlaying_QueueRemoveButton.AutomationProperties.Name" xml:space="preserve"><value>キューから削除</value></data>
+  <data name="NowPlaying_QueueRemoveButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>キューから削除</value></data>
+  <data name="NowPlaying_QueueEmptyText.Text" xml:space="preserve"><value>キューは空です。トラックを右クリックして「キューに追加」を選択してください。</value></data>
+  <data name="NowPlaying_LyricsButton.AutomationProperties.Name" xml:space="preserve"><value>歌詞パネル</value></data>
+  <data name="NowPlaying_LyricsButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>歌詞パネル</value></data>
+  <data name="NowPlaying_SettingsButton.AutomationProperties.Name" xml:space="preserve"><value>設定</value></data>
+  <data name="NowPlaying_SettingsButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>設定</value></data>
+
+  <!-- Module 1: LyricsPane -->
+  <data name="LyricsPane_HeaderTitle.Text" xml:space="preserve"><value>歌詞</value></data>
+  <data name="LyricsPane_FontSmallerButton.AutomationProperties.Name" xml:space="preserve"><value>フォント縮小</value></data>
+  <data name="LyricsPane_FontSmallerButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>フォント縮小</value></data>
+  <data name="LyricsPane_FontBiggerButton.AutomationProperties.Name" xml:space="preserve"><value>フォント拡大</value></data>
+  <data name="LyricsPane_FontBiggerButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>フォント拡大</value></data>
+  <data name="LyricsPane_SearchButton.AutomationProperties.Name" xml:space="preserve"><value>オンライン歌詞検索</value></data>
+  <data name="LyricsPane_SearchButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>オンライン歌詞検索</value></data>
+  <data name="LyricsPane_EditorButton.AutomationProperties.Name" xml:space="preserve"><value>歌詞エディターを開く</value></data>
+  <data name="LyricsPane_EditorButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>歌詞エディターを開く (オフセット/同期/テキスト)</value></data>
+  <data name="LyricsPane_EmptyTitle.Text" xml:space="preserve"><value>歌詞がありません</value></data>
+  <data name="LyricsPane_SourceOnlineFormat" xml:space="preserve"><value>オンライン · {0}</value></data>
+  <data name="LyricsPane_SourceOnlineUnsyncedFormat" xml:space="preserve"><value>オンライン · {0} · 非同期</value></data>
+  <data name="LyricsPane_OffsetZero" xml:space="preserve"><value>オフセット 0.0s</value></data>
+  <data name="LyricsPane_OffsetFormat" xml:space="preserve"><value>オフセット {0}</value></data>
+  <data name="LyricsPane_EmptyDesc.Text" xml:space="preserve"><value>音源ファイルと同じフォルダーに .lrc ファイルを配置するか、[歌詞を作成] をクリックして作成してください。</value></data>
+  <data name="LyricsPane_CreateLyricsButton.Content" xml:space="preserve"><value>新しい歌詞を作成</value></data>
+  <data name="LyricsPane_SearchOnlineButton.Content" xml:space="preserve"><value>オンラインで検索</value></data>
+
+  <!-- Module 2: Music Library Browser -->
+  <data name="Library_TreeHeader.Text" xml:space="preserve"><value>ライブラリツリー</value></data>
+  <data name="Library_TrackCountFormat" xml:space="preserve"><value>{0}曲</value></data>
+  <data name="Library_NoAlbum" xml:space="preserve"><value>(アルバムなし)</value></data>
+  <data name="Library_NoArtist" xml:space="preserve"><value>(アーティストなし)</value></data>
+  <data name="Library_AllNode" xml:space="preserve"><value>すべて</value></data>
+  <data name="Library_TreeMode_ArtistAlbum.Content" xml:space="preserve"><value>アーティスト / アルバム</value></data>
+  <data name="Library_TreeMode_Artist.Content" xml:space="preserve"><value>アーティスト</value></data>
+  <data name="Library_TreeMode_GenreArtist.Content" xml:space="preserve"><value>ジャンル / アーティスト</value></data>
+  <data name="Library_TreeMode_GenreArtistAlbum.Content" xml:space="preserve"><value>ジャンル / アーティスト / アルバム</value></data>
+  <data name="Library_TreeMode_Album.Content" xml:space="preserve"><value>アルバム</value></data>
+  <data name="Library_TreeMode_Genre.Content" xml:space="preserve"><value>ジャンル</value></data>
+  <data name="Library_TreeMode_Folder.Content" xml:space="preserve"><value>フォルダー構造</value></data>
+
+  <data name="Library_TreeMenu_Play.Text" xml:space="preserve"><value>再生 (プレイリスト置換)</value></data>
+  <data name="Library_TreeMenu_AddToPlaylist.Text" xml:space="preserve"><value>現在のプレイリストに追加</value></data>
+  <data name="Library_TreeMenu_SendToPlaylist.Text" xml:space="preserve"><value>特定のプレイリストに追加</value></data>
+  <data name="Library_TreeMenu_Enqueue.Text" xml:space="preserve"><value>キューに追加</value></data>
+
+  <data name="Library_SearchBox.PlaceholderText" xml:space="preserve"><value>検索...</value></data>
+  <data name="Library_ViewGridBtn.AutomationProperties.Name" xml:space="preserve"><value>カバーグリッド表示</value></data>
+  <data name="Library_ViewGridBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>カバーグリッド表示</value></data>
+  <data name="Library_ViewListBtn.AutomationProperties.Name" xml:space="preserve"><value>トラックリスト表示</value></data>
+  <data name="Library_ViewListBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>トラックリスト表示</value></data>
+
+  <data name="Library_Zoom_Button.AutomationProperties.Name" xml:space="preserve"><value>カバーサイズ調整</value></data>
+  <data name="Library_Zoom_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>カバーサイズ調整 (Ctrl+マウスホイール)</value></data>
+  <data name="Library_Zoom_Title.Text" xml:space="preserve"><value>カバーサイズ</value></data>
+  <data name="Library_Zoom_Small.Content" xml:space="preserve"><value>小</value></data>
+  <data name="Library_Zoom_Medium.Content" xml:space="preserve"><value>中</value></data>
+  <data name="Library_Zoom_Large.Content" xml:space="preserve"><value>大</value></data>
+  <data name="Library_Zoom_ExtraLarge.Content" xml:space="preserve"><value>特大</value></data>
+  <data name="Library_RescanButton.AutomationProperties.Name" xml:space="preserve"><value>ライブラリを再スキャン</value></data>
+  <data name="Library_RescanButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>ライブラリを再スキャン</value></data>
+
+  <data name="Library_AlbumMenu_Play.Text" xml:space="preserve"><value>アルバム再生</value></data>
+  <data name="Library_AlbumMenu_AddToPlaylist.Text" xml:space="preserve"><value>現在のプレイリストに追加</value></data>
+  <data name="Library_AlbumMenu_SendToPlaylist.Text" xml:space="preserve"><value>特定のプレイリストに追加</value></data>
+  <data name="Library_AlbumMenu_Enqueue.Text" xml:space="preserve"><value>キューに追加</value></data>
+
+  <data name="Library_Drawer_PlayAlbum.AutomationProperties.Name" xml:space="preserve"><value>アルバム全曲再生</value></data>
+  <data name="Library_Drawer_PlayAlbum.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>アルバム全曲再生</value></data>
+  <data name="Library_Drawer_EnqueueAlbum.AutomationProperties.Name" xml:space="preserve"><value>キューに追加</value></data>
+  <data name="Library_Drawer_EnqueueAlbum.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>キューに追加</value></data>
+  <data name="Library_Drawer_AddToPlaylist.AutomationProperties.Name" xml:space="preserve"><value>現在のプレイリストに追加</value></data>
+  <data name="Library_Drawer_AddToPlaylist.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>現在のプレイリストに追加</value></data>
+  <data name="Library_Drawer_Close.AutomationProperties.Name" xml:space="preserve"><value>閉じる</value></data>
+  <data name="Library_Drawer_Close.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>閉じる (Esc)</value></data>
+
+  <data name="Library_TrackMenu_Play.Text" xml:space="preserve"><value>再生</value></data>
+  <data name="Library_TrackMenu_AddToPlaylist.Text" xml:space="preserve"><value>現在のプレイリストに追加</value></data>
+  <data name="Library_TrackMenu_SendToPlaylist.Text" xml:space="preserve"><value>特定のプレイリストに追加</value></data>
+  <data name="Library_TrackMenu_Enqueue.Text" xml:space="preserve"><value>キューに追加</value></data>
+  <data name="Library_TrackMenu_ShowInExplorer.Text" xml:space="preserve"><value>エクスプローラーで表示</value></data>
+
+  <data name="Library_Header_TrackNo.Text" xml:space="preserve"><value>#</value></data>
+  <data name="Library_Header_Title.Text" xml:space="preserve"><value>タイトル</value></data>
+  <data name="Library_Header_Artist.Text" xml:space="preserve"><value>アーティスト</value></data>
+  <data name="Library_Header_Album.Text" xml:space="preserve"><value>アルバム</value></data>
+  <data name="Library_Header_Duration.Text" xml:space="preserve"><value>長さ</value></data>
+
+  <data name="Library_RightQueue_Title.Text" xml:space="preserve"><value>再生中のトラック...</value></data>
+
+  <!-- Module 3: Playlist Management -->
+  <data name="Playlist_SidebarHeader.Text" xml:space="preserve"><value>プレイリスト</value></data>
+  <data name="Playlist_CreateButton.AutomationProperties.Name" xml:space="preserve"><value>新規プレイリスト作成</value></data>
+  <data name="Playlist_CreateButtonText.Text" xml:space="preserve"><value>新規プレイリスト作成</value></data>
+  <data name="Playlist_SidebarMenu_Import.Text" xml:space="preserve"><value>プレイリストをインポート (M3U8)...</value></data>
+  <data name="Playlist_SidebarMenu_Rename.Text" xml:space="preserve"><value>名前の変更...</value></data>
+  <data name="Playlist_SidebarMenu_Export.Text" xml:space="preserve"><value>名前を付けて保存 (M3U8)...</value></data>
+  <data name="Playlist_SidebarMenu_Clear.Text" xml:space="preserve"><value>プレイリストをクリア</value></data>
+  <data name="Playlist_SidebarMenu_Delete.Text" xml:space="preserve"><value>プレイリストを削除</value></data>
+
+  <data name="Playlist_ToolsButton.AutomationProperties.Name" xml:space="preserve"><value>プレイリストツールと並べ替え</value></data>
+  <data name="Playlist_ToolsButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>プレイリストツールと並べ替え</value></data>
+  <data name="Playlist_ToolsMenu_AddFiles.Text" xml:space="preserve"><value>ファイルを追加...</value></data>
+  <data name="Playlist_ToolsMenu_AddFolder.Text" xml:space="preserve"><value>フォルダーを追加...</value></data>
+  <data name="Playlist_ToolsMenu_Import.Text" xml:space="preserve"><value>プレイリストファイルをインポート (M3U8)...</value></data>
+  <data name="Playlist_ToolsMenu_GroupToggle.Text" xml:space="preserve"><value>アルバム別にグループ化</value></data>
+  <data name="Playlist_ToolsMenu_StopAfterCurrent.Text" xml:space="preserve"><value>現在の曲を再生後に停止</value></data>
+  <data name="Playlist_ToolsMenu_SortSubItem.Text" xml:space="preserve"><value>並べ替え</value></data>
+  <data name="Playlist_Sort_Title.Text" xml:space="preserve"><value>タイトル順</value></data>
+  <data name="Playlist_Sort_Artist.Text" xml:space="preserve"><value>アーティスト順</value></data>
+  <data name="Playlist_Sort_Album.Text" xml:space="preserve"><value>アルバム・トラック順</value></data>
+  <data name="Playlist_Sort_TrackNo.Text" xml:space="preserve"><value>トラック番号順</value></data>
+  <data name="Playlist_Sort_Path.Text" xml:space="preserve"><value>ファイルパス順</value></data>
+  <data name="Playlist_Sort_Random.Text" xml:space="preserve"><value>ランダムシャッフル</value></data>
+  <data name="Playlist_Sort_Reverse.Text" xml:space="preserve"><value>逆順に並べ替え</value></data>
+  <data name="Playlist_ToolsMenu_RemoveDuplicates.Text" xml:space="preserve"><value>重複トラックを削除</value></data>
+  <data name="Playlist_ToolsMenu_RemoveDeadItems.Text" xml:space="preserve"><value>存在しないファイルを整理</value></data>
+  <data name="Playlist_ToolsMenu_Rename.Text" xml:space="preserve"><value>名前の変更...</value></data>
+  <data name="Playlist_ToolsMenu_Export.Text" xml:space="preserve"><value>名前を付けて保存 (M3U8)...</value></data>
+  <data name="Playlist_ToolsMenu_Delete.Text" xml:space="preserve"><value>現在のプレイリストを削除</value></data>
+  <data name="Playlist_ToolsMenu_Clear.Text" xml:space="preserve"><value>プレイリストをクリア</value></data>
+
+  <data name="Playlist_TrackMenu_Play.Text" xml:space="preserve"><value>再生</value></data>
+  <data name="Playlist_TrackMenu_QueueNext.Text" xml:space="preserve"><value>次に再生</value></data>
+  <data name="Playlist_TrackMenu_Queue.Text" xml:space="preserve"><value>キューに追加</value></data>
+  <data name="Playlist_TrackMenu_MoveUp.Text" xml:space="preserve"><value>上に移動 (Alt+↑)</value></data>
+  <data name="Playlist_TrackMenu_MoveDown.Text" xml:space="preserve"><value>下に移動 (Alt+↓)</value></data>
+  <data name="Playlist_TrackMenu_Remove.Text" xml:space="preserve"><value>プレイリストから削除 (Del)</value></data>
+
+  <data name="Playlist_EmptyTitle.Text" xml:space="preserve"><value>プレイリストは空です</value></data>
+  <data name="Playlist_EmptyDesc.Text" xml:space="preserve"><value>音楽ファイルやフォルダーをウィンドウにドラッグ＆ドロップするか、右上のメニューから[ファイルを追加]・[フォルダーを追加]を使用してください。&#x0a;ライブラリからトラックを追加することもできます。</value></data>
+
+  <!-- Module 4: Lyrics Tools & Windows (LyricsEditor) -->
+  <data name="LyricsEditor_Window.Title" xml:space="preserve"><value>歌詞エディター — Dawn Player</value></data>
+  <data name="LyricsEditor_WindowTitle" xml:space="preserve"><value>歌詞エディター — Dawn Player</value></data>
+  <data name="LyricsEditor_TrackHeaderTitle.Text" xml:space="preserve"><value>曲名</value></data>
+  <data name="LyricsEditor_TrackHeaderArtist.Text" xml:space="preserve"><value>— アーティスト</value></data>
+  <data name="LyricsEditor_PlayPauseBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>再生/一時停止</value></data>
+  <data name="LyricsEditor_PlayPauseBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>再生/一時停止 (Space)</value></data>
+  <data name="LyricsEditor_StepDeltaLabel.Text" xml:space="preserve"><value>調整ステップ単位:</value></data>
+  <data name="LyricsEditor_StepPresetsLabel.Text" xml:space="preserve"><value>ステッププリセット:</value></data>
+  <data name="LyricsEditor_TotalOffsetLabel.Text" xml:space="preserve"><value>現在の総オフセット:</value></data>
+  <data name="LyricsEditor_ResetOffsetBtn.Content" xml:space="preserve"><value>0にリセット</value></data>
+  <data name="LyricsEditor_TotalOffsetSecondsFormat" xml:space="preserve"><value>(= {0}秒)</value></data>
+  <data name="LyricsEditor_TabSync.Header" xml:space="preserve"><value>行別シンクエディター</value></data>
+  <data name="LyricsEditor_StampCurrentTimeText.Text" xml:space="preserve"><value>現在時刻スタンプ (F5)</value></data>
+  <data name="LyricsEditor_AddLineText.Text" xml:space="preserve"><value>行追加</value></data>
+  <data name="LyricsEditor_DeleteLineText.Text" xml:space="preserve"><value>行削除</value></data>
+  <data name="LyricsEditor_MoveLineUpBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>選択した行を上へ</value></data>
+  <data name="LyricsEditor_MoveLineUpBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>選択した行を上へ</value></data>
+  <data name="LyricsEditor_MoveLineDownBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>選択した行を下へ</value></data>
+  <data name="LyricsEditor_MoveLineDownBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>選択した行を下へ</value></data>
+  <data name="LyricsEditor_PasteClipboardBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>クリップボードから歌詞テキストを取得</value></data>
+  <data name="LyricsEditor_PasteClipboardBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>クリップボードから歌詞テキストを取得</value></data>
+  <data name="LyricsEditor_PasteClipboardText.Text" xml:space="preserve"><value>クリップボードから貼り付け</value></data>
+  <data name="LyricsEditor_SeekToLineBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>この位置からオーディオを再生</value></data>
+  <data name="LyricsEditor_SeekToLineBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>この位置からオーディオを再生</value></data>
+  <data name="LyricsEditor_TabRaw.Header" xml:space="preserve"><value>全LRCテキスト直接編集</value></data>
+  <data name="LyricsEditor_StatusLabel.Text" xml:space="preserve"><value>準備完了</value></data>
+  <data name="LyricsEditor_CloseBtn.Content" xml:space="preserve"><value>閉じる</value></data>
+  <data name="LyricsEditor_SaveBtn.Content" xml:space="preserve"><value>💾 LRCファイルとして保存</value></data>
+  <data name="LyricsEditor_NewLineText" xml:space="preserve"><value>新しい歌詞行</value></data>
+  <data name="LyricsEditor_Status_LinesLoaded" xml:space="preserve"><value>歌詞 {0}行 読み込み完了</value></data>
+  <data name="LyricsEditor_Status_NoExistingLyrics" xml:space="preserve"><value>既存の歌詞なし (新規作成可能)</value></data>
+  <data name="LyricsEditor_Status_ClipboardImported" xml:space="preserve"><value>クリップボードから {0}行の歌詞を読み込みました。</value></data>
+  <data name="LyricsEditor_Status_PasteError" xml:space="preserve"><value>貼り付けエラー: {0}</value></data>
+  <data name="LyricsEditor_Status_SaveSuccess" xml:space="preserve"><value>正常に保存されました: {0} ({1})</value></data>
+  <data name="LyricsEditor_Status_SaveFailed" xml:space="preserve"><value>保存に失敗しました: {0}</value></data>
+
+  <!-- Module 4: Lyrics Tools & Windows (LyricsSearch) -->
+  <data name="LyricsSearch_Window.Title" xml:space="preserve"><value>オンライン歌詞検索 — Dawn Player</value></data>
+  <data name="LyricsSearch_WindowTitle" xml:space="preserve"><value>オンライン歌詞検索 — Dawn Player</value></data>
+  <data name="LyricsSearch_TrackHeaderTitle.Text" xml:space="preserve"><value>曲名</value></data>
+  <data name="LyricsSearch_TrackHeaderArtist.Text" xml:space="preserve"><value>— アーティスト</value></data>
+  <data name="LyricsSearch_TitleBox.Header" xml:space="preserve"><value>タイトル</value></data>
+  <data name="LyricsSearch_TitleBox.PlaceholderText" xml:space="preserve"><value>タイトル</value></data>
+  <data name="LyricsSearch_ArtistBox.Header" xml:space="preserve"><value>アーティスト</value></data>
+  <data name="LyricsSearch_ArtistBox.PlaceholderText" xml:space="preserve"><value>アーティスト</value></data>
+  <data name="LyricsSearch_AlbumBox.Header" xml:space="preserve"><value>アルバム (タイトル・アーティストなしでアルバム名のみで検索)</value></data>
+  <data name="LyricsSearch_AlbumBox.PlaceholderText" xml:space="preserve"><value>アルバム</value></data>
+  <data name="LyricsSearch_SearchButton.Content" xml:space="preserve"><value>検索</value></data>
+  <data name="LyricsSearch_PreviewHeader.Text" xml:space="preserve"><value>プレビュー (選択すると読み込みます)</value></data>
+  <data name="LyricsSearch_PreviewText.Text" xml:space="preserve"><value>左側から検索結果を選択してください。</value></data>
+  <data name="LyricsSearch_PreviewPlaceholder" xml:space="preserve"><value>左側から検索結果を選択してください。</value></data>
+  <data name="LyricsSearch_ApplyButton.Content" xml:space="preserve"><value>現在の曲に適用</value></data>
+  <data name="LyricsSearch_SaveButton.Content" xml:space="preserve"><value>ファイルに保存</value></data>
+  <data name="LyricsSearch_SaveButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>設定された保存先フォルダーとファイル名テンプレートで保存します</value></data>
+  <data name="LyricsSearch_NoTitle" xml:space="preserve"><value>(タイトルなし)</value></data>
+  <data name="LyricsSearch_Sync_Synced" xml:space="preserve"><value>同期</value></data>
+  <data name="LyricsSearch_Sync_Unsynced" xml:space="preserve"><value>非同期</value></data>
+  <data name="LyricsSearch_NoPluginsFound" xml:space="preserve"><value>インストールされた歌詞プラグインがありません。&#x0a;プラグインフォルダー ({0}) にプラグインごとのフォルダーを作成して DLL を配置し、「再スキャン」してください。&#x0a;開発方法は docs/plugin-development.md を参照してください。</value></data>
+  <data name="LyricsSearch_SearchQueryEmpty" xml:space="preserve"><value>タイトル、アーティスト、アルバムのいずれかを入力してください。</value></data>
+  <data name="LyricsSearch_Searching" xml:space="preserve"><value>検索中...</value></data>
+  <data name="LyricsSearch_ResultsWithFailures" xml:space="preserve"><value>{0}件の結果 · 失敗 {1}プラグイン</value></data>
+  <data name="LyricsSearch_ResultsCount" xml:space="preserve"><value>{0}件の結果</value></data>
+  <data name="LyricsSearch_NoResultsWithErrors" xml:space="preserve"><value>結果なし · {0}</value></data>
+  <data name="LyricsSearch_NoResults" xml:space="preserve"><value>検索結果がありません。別のキーワードをお試しください。</value></data>
+  <data name="LyricsSearch_SearchFailed" xml:space="preserve"><value>検索失敗: {0}</value></data>
+  <data name="LyricsSearch_LoadingPreview" xml:space="preserve"><value>読み込み中...</value></data>
+  <data name="LyricsSearch_FetchFailedResult" xml:space="preserve"><value>この結果を取得できませんでした。</value></data>
+  <data name="LyricsSearch_FetchError" xml:space="preserve"><value>読み込み失敗: {0}</value></data>
+  <data name="LyricsSearch_ApplyFailed_NoLyrics" xml:space="preserve"><value>歌詞を取得できなかったため適用できませんでした。</value></data>
+  <data name="LyricsSearch_ApplySuccess" xml:space="preserve"><value>'{0}' の歌詞を適用しました。</value></data>
+  <data name="LyricsSearch_SaveFailed_NoLyrics" xml:space="preserve"><value>歌詞を取得できなかったため保存できませんでした。</value></data>
+  <data name="LyricsSearch_SaveResult_Saved" xml:space="preserve"><value>保存しました: {0}</value></data>
+  <data name="LyricsSearch_SaveResult_Skipped" xml:space="preserve"><value>ファイルが既に存在するためスキップしました: {0}</value></data>
+  <data name="LyricsSearch_SaveResult_Failed" xml:space="preserve"><value>保存に失敗しました。</value></data>
+
+  <!-- Module 6: Core System, Alerts, Dialogs & Messages -->
+  <!-- Common Dialog & Button Actions -->
+  <data name="Common_OK" xml:space="preserve"><value>OK</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>キャンセル</value></data>
+  <data name="Common_Delete" xml:space="preserve"><value>削除</value></data>
+  <data name="Common_Create" xml:space="preserve"><value>作成</value></data>
+  <data name="Common_Change" xml:space="preserve"><value>変更</value></data>
+  <data name="Common_Reset" xml:space="preserve"><value>初期化</value></data>
+  <data name="Common_Overwrite" xml:space="preserve"><value>上書き</value></data>
+
+  <!-- System & App Error Messages -->
+  <data name="Msg_UnhandledException" xml:space="preserve"><value>予期しないエラーが発生しました: {0}&#x0a;詳細はログを確認してください。</value></data>
+  <data name="Msg_StartupFatalError" xml:space="preserve"><value>Dawn Playerを起動できません。&#x0a;&#x0a;{0}&#x0a;&#x0a;詳細: {1}</value></data>
+  <data name="Msg_DbRecoveryMessage" xml:space="preserve"><value>ライブラリデータベースを開けなかったため、新しく作成しました。設定から再スキャンしてください。</value></data>
+  <data name="Msg_LanguageChangedTitle" xml:space="preserve"><value>言語変更</value></data>
+  <data name="Msg_LanguageChangedMessage" xml:space="preserve"><value>言語変更を適用するにはアプリの再起動が必要です。今すぐ再起動しますか？</value></data>
+  <data name="Msg_LanguageChangedRestart" xml:space="preserve"><value>今すぐ再起動</value></data>
+  <data name="Msg_LanguageChangedLater" xml:space="preserve"><value>後で</value></data>
+  <data name="Msg_LibraryScanFailed" xml:space="preserve"><value>ライブラリスキャン失敗: {0}</value></data>
+
+  <!-- Window & Drag-Drop Messages -->
+  <data name="Msg_DragDrop_AddToPlaylist" xml:space="preserve"><value>プレイリストに追加</value></data>
+  <data name="Msg_PlaylistImported" xml:space="preserve"><value>プレイリスト '{0}' をインポートしました ({1}曲)。</value></data>
+  <data name="Msg_TracksAddedToPlaylist" xml:space="preserve"><value>{0}曲を '{1}' に追加しました。</value></data>
+  <data name="Msg_DropFailed" xml:space="preserve"><value>ドロップ処理に失敗しました: {0}</value></data>
+  <data name="Msg_PreferencesWithChord" xml:space="preserve"><value>環境設定 ({0})</value></data>
+
+  <!-- Dialogs & Settings Notices -->
+  <data name="Msg_PlaylistName" xml:space="preserve"><value>プレイリスト名</value></data>
+  <data name="Msg_RenamePlaylistTitle" xml:space="preserve"><value>プレイリスト名の変更</value></data>
+  <data name="Msg_M3U8FileType" xml:space="preserve"><value>M3U8 プレイリスト</value></data>
+  <data name="Msg_SaveFailed" xml:space="preserve"><value>保存に失敗しました: {0}</value></data>
+  <data name="Msg_ShortcutInvalidTitle" xml:space="preserve"><value>使用できないキー</value></data>
+  <data name="Msg_ShortcutInvalidMessage" xml:space="preserve"><value>このキーの組み合わせはショートカットとして指定できません。</value></data>
+  <data name="Msg_ShortcutConflictTitle" xml:space="preserve"><value>ショートカットの重複</value></data>
+  <data name="Msg_ShortcutConflictMessage" xml:space="preserve"><value>'{0}' は既に '{1}' に割り当てられています。上書きすると元のショートカットは解除されます。</value></data>
+  <data name="Msg_ShortcutResetAllTitle" xml:space="preserve"><value>すべてのショートカットを初期化</value></data>
+  <data name="Msg_ShortcutResetAllMessage" xml:space="preserve"><value>すべてのショートカットを初期値に戻します。カスタム設定は失われます。</value></data>
+  <data name="Msg_ShortcutCaptureTitle" xml:space="preserve"><value>ショートカット割り当て — {0}</value></data>
+  <data name="Msg_ShortcutCaptureHint" xml:space="preserve"><value>Escキーでキャンセルします。Tab、Esc、Backspaceなどの一部のキーはショートカットとして使用できません。</value></data>
+  <data name="Msg_ShortcutCaptureInstruction" xml:space="preserve"><value>新しいキーの組み合わせを押してください。</value></data>
+  <data name="Msg_ShortcutDisallowedKey" xml:space="preserve"><value>このキーはショートカットとして使用できません。別のキーを押してください。</value></data>
+  <data name="Msg_EqNewProfileTitle" xml:space="preserve"><value>新規EQプロファイルの作成</value></data>
+  <data name="Msg_EqProfilePlaceholder" xml:space="preserve"><value>プロファイル名を入力 (例: ボーカルブースト、ヘッドホン)</value></data>
+  <data name="Msg_EqProfileDefaultName" xml:space="preserve"><value>プロファイル {0}</value></data>
+  <data name="Msg_EqRenameProfileTitle" xml:space="preserve"><value>プロファイル名の変更</value></data>
+  <data name="Msg_EqDeleteProfileTitle" xml:space="preserve"><value>プロファイルの削除</value></data>
+  <data name="Msg_EqDeleteProfileMessage" xml:space="preserve"><value>'{0}' プロファイルを削除しますか？&#x0a;このプロファイルに関連付けられたデバイスはデフォルトプロファイルに切り替わります。</value></data>
+
+  <!-- Audio Settings & Time Formats -->
+  <data name="Audio_ExclusiveAllowed" xml:space="preserve"><value>許可</value></data>
+  <data name="Audio_ExclusiveDisabled" xml:space="preserve"><value>無効 (排他不可)</value></data>
+  <data name="Audio_PriorityAllowed" xml:space="preserve"><value>許可 (優先権を自動取得)</value></data>
+  <data name="Audio_PriorityDisabled" xml:space="preserve"><value>無効 (他アプリ実行時に失敗)</value></data>
+  <data name="Audio_ExclusiveStatusFormat" xml:space="preserve"><value>排他制御: {0}  |  優先順位: {1}</value></data>
+  <data name="Audio_ExclusiveDetailsFormat" xml:space="preserve"><value>排他制御の許可: {0}、優先順位の付与: {1}</value></data>
+  <data name="Audio_DeviceStatusUnknown" xml:space="preserve"><value>デバイスの状態を確認できません。</value></data>
+  <data name="Audio_DeviceOpenFailed" xml:space="preserve"><value>デバイスを開けないか、WASAPIエンドポイントが見つかりません。</value></data>
+  <data name="Time_ZeroSeconds" xml:space="preserve"><value>0秒</value></data>
+  <data name="Time_HoursMinutesFormat" xml:space="preserve"><value>{0}時間 {1}分</value></data>
+  <data name="Time_MinutesFormat" xml:space="preserve"><value>{0}分</value></data>
+  <data name="Eq_DefaultProfileName" xml:space="preserve"><value>新規プロファイル</value></data>
+  <data name="Settings_Eq_BandFormat" xml:space="preserve"><value>バンド {0}</value></data>
+
+  <!-- Additional Alerts, Warnings & Toasts -->
+  <data name="Msg_SystemPlaylistRenameNotAllowed" xml:space="preserve"><value>システムプレイリスト (Now Playing) の名前は変更できません。</value></data>
+  <data name="Msg_ClearedNowPlayingQueue" xml:space="preserve"><value>現在の再生キュー (Now Playing) の全曲をクリアしました。</value></data>
+  <data name="Msg_PlaylistClearQueue" xml:space="preserve"><value>キューをクリア</value></data>
+  <data name="Msg_PlaylistClearPlaylist" xml:space="preserve"><value>プレイリストをクリア</value></data>
+  <data name="Msg_ImportFailed" xml:space="preserve"><value>インポート失敗: {0}</value></data>
+  <data name="Msg_RemovedMissingFiles" xml:space="preserve"><value>存在しないファイル {0}曲をプレイリストから削除しました。</value></data>
+  <data name="Msg_NoMissingFiles" xml:space="preserve"><value>削除対象の見つからないファイルはありません。</value></data>
+  <data name="Msg_AddedTracksToCurrentPlaylist" xml:space="preserve"><value>現在のプレイリストに {0}曲を追加しました。</value></data>
+  <data name="Msg_AddedTracksToQueue" xml:space="preserve"><value>キューに {0}曲を追加しました。</value></data>
+  <data name="Msg_AddedTracksToNamedPlaylist" xml:space="preserve"><value>'{0}' に {1}曲を追加しました。</value></data>
+  <data name="Msg_CreateNewPlaylistAndAdd" xml:space="preserve"><value>新規プレイリストを作成して追加...</value></data>
+  <data name="Msg_SavedQueueToPlaylist" xml:space="preserve"><value>キューの {0}曲を '{1}' に保存しました。</value></data>
+  <data name="Msg_DefaultSavedQueueName" xml:space="preserve"><value>保存されたキュー</value></data>
+  <data name="Msg_NoTrackPlayingWarning" xml:space="preserve"><value>現在再生中のトラックはありません。</value></data>
+  <data name="Msg_VolumeDisabledInExclusive" xml:space="preserve"><value>WASAPI排他モードでは音量調節は適用されません</value></data>
+  <data name="Msg_LibraryEmptyStatus" xml:space="preserve"><value>トラックなし — 設定から音楽フォルダーを追加してスキャンしてください。</value></data>
+  <data name="Msg_LibraryStatusBarFormat" xml:space="preserve"><value>{0} • {1}、{2:N0}曲、{3:N0}アルバム</value></data>
+
+  <!-- Module 5: Settings & Preferences -->
+  <!-- Navigation & Header -->
+  <data name="Settings_BackButton.AutomationProperties.Name" xml:space="preserve"><value>戻る</value></data>
+  <data name="Settings_BackButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>戻る</value></data>
+  <data name="Settings_Header_Title.Text" xml:space="preserve"><value>環境設定 (Preferences)</value></data>
+  <data name="Settings_Nav_Audio.Text" xml:space="preserve"><value>オーディオ出力</value></data>
+  <data name="Settings_Nav_Equalizer.Text" xml:space="preserve"><value>イコライザー (EQ)</value></data>
+  <data name="Settings_Nav_Playback.Text" xml:space="preserve"><value>再生＆音量ノーマライズ</value></data>
+  <data name="Settings_Nav_Library.Text" xml:space="preserve"><value>音楽ライブラリ</value></data>
+  <data name="Settings_Nav_Lyrics.Text" xml:space="preserve"><value>歌詞 (Lyrics)</value></data>
+  <data name="Settings_Nav_OnlineLyrics.Text" xml:space="preserve"><value>オンライン歌詞 (Plugins)</value></data>
+  <data name="Settings_Nav_Appearance.Text" xml:space="preserve"><value>外観＆テーマ</value></data>
+  <data name="Settings_Nav_Layout.Text" xml:space="preserve"><value>レイアウト＆表示</value></data>
+  <data name="Settings_Nav_Shortcuts.Text" xml:space="preserve"><value>ショートカット (Shortcuts)</value></data>
+  <data name="Settings_Nav_About.Text" xml:space="preserve"><value>情報 (About)</value></data>
+
+  <!-- Audio Output -->
+  <data name="Settings_Audio_Header.Text" xml:space="preserve"><value>オーディオ出力 (Audio Output)</value></data>
+  <data name="Settings_Audio_Driver_Title.Text" xml:space="preserve"><value>オーディオ出力ドライバー</value></data>
+  <data name="Settings_Audio_Driver_Desc.Text" xml:space="preserve"><value>WASAPI(高音質ビットパーフェクト)、DirectSound、WaveOutから選択</value></data>
+  <data name="Settings_Audio_Driver_Wasapi.Content" xml:space="preserve"><value>WASAPI (推奨)</value></data>
+  <data name="Settings_Audio_Driver_DirectSound.Content" xml:space="preserve"><value>Windows Audio (DirectSound)</value></data>
+  <data name="Settings_Audio_Driver_WaveOut.Content" xml:space="preserve"><value>WaveOut</value></data>
+  <data name="Settings_Audio_Device_Title.Text" xml:space="preserve"><value>出力デバイス (Device)</value></data>
+  <data name="Settings_Audio_RefreshDevices.AutomationProperties.Name" xml:space="preserve"><value>デバイス一覧の更新</value></data>
+  <data name="Settings_Audio_RefreshDevices.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>デバイス一覧の更新</value></data>
+  <data name="Settings_Audio_Exclusive_Title.Text" xml:space="preserve"><value>WASAPI 排他モード (Exclusive)</value></data>
+  <data name="Settings_Audio_Exclusive_Desc.Text" xml:space="preserve"><value>他のアプリの音声を遮断し、ビットパーフェクトで直接出力します。形式が合わない場合は自動的に共有モードへ切り替わります。</value></data>
+  <data name="Settings_Audio_Exclusive_Toggle.OnContent" xml:space="preserve"><value>排他</value></data>
+  <data name="Settings_Audio_Exclusive_Toggle.OffContent" xml:space="preserve"><value>共有</value></data>
+  <data name="Settings_Audio_WinExclusive_Title.Text" xml:space="preserve"><value>Windows 排他制御・優先度設定</value></data>
+  <data name="Settings_Audio_OpenSoundPanel_Button.Content" xml:space="preserve"><value>Windows サウンド コントロール パネルを開く</value></data>
+  <data name="Settings_Audio_BitDepth_Title.Text" xml:space="preserve"><value>排他モードのビット深度</value></data>
+  <data name="Settings_Audio_BitDepth_Desc.Text" xml:space="preserve"><value>元の形式: ファイルのビット深度をそのまま維持 (16/24/32ビット)</value></data>
+  <data name="Settings_Audio_BitDepth_Source.Content" xml:space="preserve"><value>元の形式に従う</value></data>
+  <data name="Settings_Audio_BitDepth_16.Content" xml:space="preserve"><value>16ビット</value></data>
+  <data name="Settings_Audio_BitDepth_24.Content" xml:space="preserve"><value>24ビット</value></data>
+  <data name="Settings_Audio_BitDepth_32.Content" xml:space="preserve"><value>32ビット</value></data>
+  <data name="Settings_Audio_AllowVolume_Title.Text" xml:space="preserve"><value>排他モードでの音量/ReplayGainを許可</value></data>
+  <data name="Settings_Audio_AllowVolume_Desc.Text" xml:space="preserve"><value>オフにするとビットパーフェクトが維持されます (音量100%固定)。</value></data>
+  <data name="Settings_Audio_Latency_Title.Text" xml:space="preserve"><value>出力バッファサイズ (Latency)</value></data>
+  <data name="Settings_Audio_Latency_Desc.Text" xml:space="preserve"><value>低くすると遅延が減少し、高くすると音飛びを防ぎ安定性が向上します。</value></data>
+  <data name="Settings_Audio_Status_Checking" xml:space="preserve"><value>確認中...</value></data>
+  <data name="Settings_Audio_DriverDesc_DirectSound" xml:space="preserve"><value>Windows Audio (DirectSound) デバイス一覧 (Windowsミキサー経由/Bluetooth/ヘッドホン互換)</value></data>
+  <data name="Settings_Audio_DriverDesc_WaveOut" xml:space="preserve"><value>Windows WaveOut 標準デバイス一覧</value></data>
+  <data name="Settings_Audio_DriverDesc_Wasapi" xml:space="preserve"><value>WASAPI エンドポイントデバイス一覧 (ビットパーフェクト対応)</value></data>
+  <data name="Settings_Audio_Status_WasapiOnly" xml:space="preserve"><value>WASAPIドライバーでのみ排他制御設定を確認します。</value></data>
+  <data name="Settings_Audio_Status_ReadError" xml:space="preserve"><value>デバイス一覧の読み込み中にエラーが発生しました。</value></data>
+  <data name="Settings_Audio_Status_Unknown" xml:space="preserve"><value>排他制御の状態を確認できません。</value></data>
+
+  <!-- Equalizer -->
+  <data name="Settings_Eq_Header.Text" xml:space="preserve"><value>パラメトリックイコライザー (Parametric Equalizer)</value></data>
+  <data name="Settings_Eq_Master_Title.Text" xml:space="preserve"><value>イコライザーの有効化 (Master Enable)</value></data>
+  <data name="Settings_Eq_Master_Desc.Text" xml:space="preserve"><value>イコライザー機能を全体でオン/オフにします。オフにすると信号加工なしでビットパーフェクトバイパス再生されます。</value></data>
+  <data name="Settings_Eq_Master_Toggle.OnContent" xml:space="preserve"><value>オン</value></data>
+  <data name="Settings_Eq_Master_Toggle.OffContent" xml:space="preserve"><value>オフ</value></data>
+  <data name="Settings_Eq_Profile_Title.Text" xml:space="preserve"><value>編集するプロファイルを選択</value></data>
+  <data name="Settings_Eq_Profile_Desc.Text" xml:space="preserve"><value>プロファイルパラメーターをリアルタイムで編集し、新規プロファイルの作成や管理を行います。</value></data>
+  <data name="Settings_Eq_NewProfile_Button.Content" xml:space="preserve"><value>新規プロファイル</value></data>
+  <data name="Settings_Eq_NewProfile_Button.AutomationProperties.Name" xml:space="preserve"><value>新規EQプロファイルの追加</value></data>
+  <data name="Settings_Eq_NewProfile_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>新規EQプロファイルの追加</value></data>
+  <data name="Settings_Eq_DuplicateProfile_Button.Content" xml:space="preserve"><value>複製</value></data>
+  <data name="Settings_Eq_DuplicateProfile_Button.AutomationProperties.Name" xml:space="preserve"><value>現在のプロファイルを複製</value></data>
+  <data name="Settings_Eq_DuplicateProfile_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>現在のプロファイルを複製</value></data>
+  <data name="Settings_Eq_RenameProfile_Button.Content" xml:space="preserve"><value>名前変更</value></data>
+  <data name="Settings_Eq_RenameProfile_Button.AutomationProperties.Name" xml:space="preserve"><value>プロファイル名の変更</value></data>
+  <data name="Settings_Eq_RenameProfile_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>プロファイル名の変更</value></data>
+  <data name="Settings_Eq_DeleteProfile_Button.Content" xml:space="preserve"><value>削除</value></data>
+  <data name="Settings_Eq_DeleteProfile_Button.AutomationProperties.Name" xml:space="preserve"><value>現在のプロファイルを削除</value></data>
+  <data name="Settings_Eq_DeleteProfile_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>現在のプロファイルを削除</value></data>
+  <data name="Settings_Eq_Preamp_Title.Text" xml:space="preserve"><value>プリアンプ (Preamp)</value></data>
+  <data name="Settings_Eq_Preamp_Desc.Text" xml:space="preserve"><value>EQブースト時のデジタルクリッピングを防ぐために全体のレベルを調整します (-12.0 ～ +12.0 dB)。</value></data>
+  <data name="Settings_Eq_Visualizer_Title.Text" xml:space="preserve"><value>周波数応答曲線 (Frequency Response)</value></data>
+  <data name="Settings_Eq_Visualizer_Desc.Text" xml:space="preserve"><value>現在編集中のプロファイルの合成周波数伝達特性 (20Hz ～ 20kHz, ±18dB)</value></data>
+  <data name="Settings_Eq_Bands_Title.Text" xml:space="preserve"><value>パラメトリックフィルターバンド</value></data>
+  <data name="Settings_Eq_Bands_Desc.Text" xml:space="preserve"><value>最大20個のフィルターバンドを追加し、周波数(20Hz~20kHz)、ゲイン(±15dB)、Q値(0.1~8.0)を精密に調整します。</value></data>
+  <data name="Settings_Eq_AddBand_Button.Content" xml:space="preserve"><value>+ バンド追加</value></data>
+  <data name="Settings_Eq_Bands_Empty.Text" xml:space="preserve"><value>設定されたフィルターバンドがありません。「+ バンド追加」ボタンを押して新しいバンドを追加してください。</value></data>
+  <data name="Settings_Eq_Band_Peak.Content" xml:space="preserve"><value>ピーク</value></data>
+  <data name="Settings_Eq_Band_LowShelf.Content" xml:space="preserve"><value>ローシェルフ</value></data>
+  <data name="Settings_Eq_Band_HighShelf.Content" xml:space="preserve"><value>ハイシェルフ</value></data>
+  <data name="Settings_Eq_Band_LowPass.Content" xml:space="preserve"><value>ローパス</value></data>
+  <data name="Settings_Eq_Band_HighPass.Content" xml:space="preserve"><value>ハイパス</value></data>
+  <data name="Settings_Eq_DeleteBand_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>バンドの削除</value></data>
+  <data name="Settings_Eq_DeleteBand_Button.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>バンドの削除</value></data>
+  <data name="Settings_Eq_Band_Freq_Label.Text" xml:space="preserve"><value>周波数</value></data>
+  <data name="Settings_Eq_Band_Gain_Label.Text" xml:space="preserve"><value>ゲイン</value></data>
+  <data name="Settings_Eq_Band_Q_Label.Text" xml:space="preserve"><value>Qファクター</value></data>
+  <data name="Settings_Eq_TargetDevice_Title.Text" xml:space="preserve"><value>対象オーディオ出力デバイス</value></data>
+  <data name="Settings_Eq_TargetDevice_Desc.Text" xml:space="preserve"><value>デバイスごとに希望のEQプロファイルを関連付けるか、共通のデフォルトプロファイルに従うように設定します。</value></data>
+  <data name="Settings_Eq_RefreshDevices.AutomationProperties.Name" xml:space="preserve"><value>デバイス一覧の更新</value></data>
+  <data name="Settings_Eq_RefreshDevices.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>デバイス一覧の更新</value></data>
+  <data name="Settings_Eq_BoundProfile_Title.Text" xml:space="preserve"><value>このデバイスに関連付けられたプロファイル</value></data>
+  <data name="Settings_Eq_ExclusiveWarning.Text" xml:space="preserve"><value>WASAPI排他モードでイコライザーが適用されています (音声信号加工のためビットパーフェクト出力ではありません)。</value></data>
+  <data name="Settings_Eq_Device_SystemDefaultSuffix" xml:space="preserve"><value> (システムデフォルト)</value></data>
+  <data name="Settings_Eq_FollowDefaultProfileFormat" xml:space="preserve"><value>デフォルトプロファイルに従う ({0})</value></data>
+  <data name="Settings_Eq_DeviceBoundFormat" xml:space="preserve"><value>このデバイスは「{0}」プロファイルにバインドされています。</value></data>
+  <data name="Settings_Eq_UsingDefaultProfileFormat" xml:space="preserve"><value>デフォルトプロファイル(「{0}」)を使用中です。</value></data>
+  <data name="Settings_Eq_DefaultProfileFallback" xml:space="preserve"><value>デフォルト</value></data>
+  <data name="Settings_Eq_DedicatedProfileFallback" xml:space="preserve"><value>専用</value></data>
+  <data name="Settings_Eq_DefaultProfileNameFormat" xml:space="preserve"><value>プロファイル {0}</value></data>
+  <data name="Settings_Eq_DuplicateProfileFormat" xml:space="preserve"><value>{0} (コピー)</value></data>
+
+  <!-- Playback & Normalizer -->
+  <data name="Settings_Playback_Header.Text" xml:space="preserve"><value>再生＆音量ノーマライズ (Playback &amp; Normalizer)</value></data>
+  <data name="Settings_Playback_Normalizer_Title.Text" xml:space="preserve"><value>音量自動ノーマライズ (Volume Normalizer / AGC)</value></data>
+  <data name="Settings_Playback_Normalizer_Desc.Text" xml:space="preserve"><value>楽曲ごとに異なる録音・マスタリング音量をリアルタイムで一定の目標レベルに自動平準化します。</value></data>
+  <data name="Settings_Playback_Normalizer_Toggle.OnContent" xml:space="preserve"><value>オン</value></data>
+  <data name="Settings_Playback_Normalizer_Toggle.OffContent" xml:space="preserve"><value>オフ</value></data>
+  <data name="Settings_Playback_NormMode_Title.Text" xml:space="preserve"><value>ノーマライズ動作モード</value></data>
+  <data name="Settings_Playback_NormMode_Desc.Text" xml:space="preserve"><value>ハイブリッド(タグ優先＋未タグリアルタイム調整)、リアルタイム(常にリアルタイム調整)、ReplayGain(タグのみ適用)</value></data>
+  <data name="Settings_Playback_NormMode_Hybrid.Content" xml:space="preserve"><value>ハイブリッド</value></data>
+  <data name="Settings_Playback_NormMode_Dynamic.Content" xml:space="preserve"><value>リアルタイム</value></data>
+  <data name="Settings_Playback_NormMode_ReplayGain.Content" xml:space="preserve"><value>ReplayGain</value></data>
+  <data name="Settings_Playback_TargetLevel_Title.Text" xml:space="preserve"><value>目標音量レベル (Target Level)</value></data>
+  <data name="Settings_Playback_TargetLevel_Desc.Text" xml:space="preserve"><value>ノーマライズ基準目標出力レベル (-24.0 ～ -6.0 dBFS, デフォルト -12.0 dBFS)</value></data>
+  <data name="Settings_Playback_MaxBoost_Title.Text" xml:space="preserve"><value>最大増幅限界 (Max Boost Limit)</value></data>
+  <data name="Settings_Playback_MaxBoost_Desc.Text" xml:space="preserve"><value>静かな楽曲やイントロ/アウトロ区間での過度なノイズ増幅を防止します (0.0 ～ +18.0 dB)</value></data>
+  <data name="Settings_Playback_Speed_Title.Text" xml:space="preserve"><value>応答速度 (Response Speed)</value></data>
+  <data name="Settings_Playback_Speed_Desc.Text" xml:space="preserve"><value>音量変化に対するゲイン調整の追従速度 (高速 200ms, 標準 600ms, 滑らか 1500ms)</value></data>
+  <data name="Settings_Playback_Speed_Fast.Content" xml:space="preserve"><value>高速</value></data>
+  <data name="Settings_Playback_Speed_Balanced.Content" xml:space="preserve"><value>標準</value></data>
+  <data name="Settings_Playback_Speed_Smooth.Content" xml:space="preserve"><value>滑らか</value></data>
+  <data name="Settings_Playback_ReplayGain_Title.Text" xml:space="preserve"><value>ReplayGain モード</value></data>
+  <data name="Settings_Playback_ReplayGain_Desc.Text" xml:space="preserve"><value>音源タグに記録されたトラックまたはアルバムゲインを基準に音量を合わせます。</value></data>
+  <data name="Settings_Playback_ReplayGain_Off.Content" xml:space="preserve"><value>オフ</value></data>
+  <data name="Settings_Playback_ReplayGain_Track.Content" xml:space="preserve"><value>トラック</value></data>
+  <data name="Settings_Playback_ReplayGain_Album.Content" xml:space="preserve"><value>アルバム</value></data>
+  <data name="Settings_Playback_RgPreamp_Title.Text" xml:space="preserve"><value>ReplayGain プリアンプ (Preamp)</value></data>
+  <data name="Settings_Playback_RgPreamp_Desc.Text" xml:space="preserve"><value>-12.0 ～ +12.0 dB の範囲で基準音量を微調整します。</value></data>
+  <data name="Settings_Playback_PreventClipping_Title.Text" xml:space="preserve"><value>クリッピング防止 (Prevent Clipping)</value></data>
+  <data name="Settings_Playback_PreventClipping_Desc.Text" xml:space="preserve"><value>増幅時にピーク値を超える歪みを防ぐため、自動的にゲインを減衰させます。</value></data>
+
+  <!-- Library -->
+  <data name="Settings_Library_Header.Text" xml:space="preserve"><value>音楽ライブラリ (Music Library)</value></data>
+  <data name="Settings_Library_Folders_Title.Text" xml:space="preserve"><value>監視フォルダー一覧</value></data>
+  <data name="Settings_Library_Folders_Desc.Text" xml:space="preserve"><value>ライブラリにインデックスを作成するローカルおよびネットワーク音楽フォルダーを指定します。</value></data>
+  <data name="Settings_Library_AddFolder_Button.Content" xml:space="preserve"><value>フォルダー追加</value></data>
+  <data name="Settings_Library_RemoveFolder_Button.Content" xml:space="preserve"><value>削除</value></data>
+  <data name="Settings_Library_ScanNow_Button.Content" xml:space="preserve"><value>今すぐスキャン</value></data>
+  <data name="Settings_Library_StartupScan_Title.Text" xml:space="preserve"><value>起動時に自動スキャン</value></data>
+  <data name="Settings_Library_StartupScan_Desc.Text" xml:space="preserve"><value>Dawn Playerの起動時に監視フォルダー内の新規/変更された音源を自動的にインデックスします。</value></data>
+
+  <!-- Lyrics & Typography -->
+  <data name="Settings_Lyrics_Header.Text" xml:space="preserve"><value>歌詞＆タイポグラフィ (Lyrics &amp; Typography)</value></data>
+  <data name="Settings_Lyrics_Font_Title.Text" xml:space="preserve"><value>歌詞フォント (Font Family)</value></data>
+  <data name="Settings_Lyrics_Font_Desc.Text" xml:space="preserve"><value>歌詞パネルおよびエディターに適用するフォントファミリ</value></data>
+  <data name="Settings_Lyrics_Font_Custom.Content" xml:space="preserve"><value>カスタム直接入力...</value></data>
+  <data name="Settings_Lyrics_CustomFont_Box.PlaceholderText" xml:space="preserve"><value>フォント名 (例: Pretendard, Meiryo, Arial)</value></data>
+  <data name="Settings_Lyrics_FontSize_Title.Text" xml:space="preserve"><value>基本歌詞フォントサイズ</value></data>
+  <data name="Settings_Lyrics_FontSize_Desc.Text" xml:space="preserve"><value>通常歌詞行の基本フォントサイズ (10 ～ 24px)</value></data>
+  <data name="Settings_Lyrics_ActiveFontSize_Title.Text" xml:space="preserve"><value>再生中の強調歌詞サイズ</value></data>
+  <data name="Settings_Lyrics_ActiveFontSize_Desc.Text" xml:space="preserve"><value>現在再生中の強調表示行のフォントサイズ (12 ～ 32px)</value></data>
+  <data name="Settings_Lyrics_CharSpacing_Title.Text" xml:space="preserve"><value>文字間隔 (Character Spacing)</value></data>
+  <data name="Settings_Lyrics_CharSpacing_Desc.Text" xml:space="preserve"><value>文字と文字の間隔 (-50 狭い ～ +200 広い)</value></data>
+  <data name="Settings_Lyrics_LineHeight_Title.Text" xml:space="preserve"><value>行の高さ (Line Height)</value></data>
+  <data name="Settings_Lyrics_LineHeight_Desc.Text" xml:space="preserve"><value>歌詞の行の高さおよび垂直間隔 (18 ～ 48px)</value></data>
+  <data name="Settings_Lyrics_Alignment_Title.Text" xml:space="preserve"><value>歌詞の配置方法</value></data>
+  <data name="Settings_Lyrics_Alignment_Desc.Text" xml:space="preserve"><value>歌詞テキストの水平配置</value></data>
+  <data name="Settings_Lyrics_Align_Center.Content" xml:space="preserve"><value>中央揃え (Center)</value></data>
+  <data name="Settings_Lyrics_Align_Left.Content" xml:space="preserve"><value>左揃え (Left)</value></data>
+  <data name="Settings_Lyrics_Align_Right.Content" xml:space="preserve"><value>右揃え (Right)</value></data>
+  <data name="Settings_Lyrics_FocusDimming_Title.Text" xml:space="preserve"><value>歌詞フォーカス演出 (Focus Dimming)</value></data>
+  <data name="Settings_Lyrics_FocusDimming_Desc.Text" xml:space="preserve"><value>現在再生中の行を強調し、前後の行を薄く(不透明度40%)減光表示します。</value></data>
+  <data name="Settings_Lyrics_Embedded_Title.Text" xml:space="preserve"><value>音源内蔵歌詞(Embedded Lyrics)の自動読み込み</value></data>
+  <data name="Settings_Lyrics_Embedded_Desc.Text" xml:space="preserve"><value>外部.lrcファイルがない場合、MP3(ID3v2)、FLAC、M4Aタグに保存された歌詞を自動的に読み込みます。</value></data>
+  <data name="Settings_Lyrics_Preview_Header.Text" xml:space="preserve"><value>リアルタイム歌詞プレビュー (Live Preview)</value></data>
+  <data name="Settings_Lyrics_Preview_Line1.Text" xml:space="preserve"><value>暗い夜空を彩る星の光のように</value></data>
+  <data name="Settings_Lyrics_Preview_Line2.Text" xml:space="preserve"><value>夜明けを告げる音楽が流れています</value></data>
+  <data name="Settings_Lyrics_Preview_Line3.Text" xml:space="preserve"><value>心の奥深くまで響き渡る旋律</value></data>
+  <data name="Settings_Lyrics_LrcPattern_Title.Text" xml:space="preserve"><value>.lrc ファイル検索パターン</value></data>
+  <data name="Settings_Lyrics_LrcPattern_Desc.Text" xml:space="preserve"><value>ローカル歌詞(.lrc)ファイルを検索するファイル名パターンを1行に1つずつ指定します。上から順に検索されます。</value></data>
+  <data name="Settings_Lyrics_LrcPattern_Tokens.Text" xml:space="preserve"><value>置換トークン: %filename%, %artist%, %title%, %album%</value></data>
+  <data name="Settings_Lyrics_ResetLrc_Button.AutomationProperties.Name" xml:space="preserve"><value>デフォルトの検索パターンに復元</value></data>
+  <data name="Settings_Lyrics_ResetLrc_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>デフォルトの検索パターンに復元</value></data>
+  <data name="Settings_Lyrics_ResetLrc_Text.Text" xml:space="preserve"><value>デフォルトに戻す</value></data>
+
+  <!-- Online Lyrics -->
+  <data name="Settings_OnlineLyrics_Header.Text" xml:space="preserve"><value>オンライン歌詞 (Online Lyrics)</value></data>
+  <data name="Settings_OnlineLyrics_Enable_Title.Text" xml:space="preserve"><value>オンライン歌詞を使用</value></data>
+  <data name="Settings_OnlineLyrics_Enable_Desc.Text" xml:space="preserve"><value>オフライン歌詞(.lrc・内蔵)がない場合にプラグインで検索します</value></data>
+  <data name="Settings_OnlineLyrics_Enable_Toggle.OnContent" xml:space="preserve"><value>有効</value></data>
+  <data name="Settings_OnlineLyrics_Enable_Toggle.OffContent" xml:space="preserve"><value>無効</value></data>
+  <data name="Settings_OnlineLyrics_AutoFetch_Title.Text" xml:space="preserve"><value>再生時に自動検索</value></data>
+  <data name="Settings_OnlineLyrics_AutoFetch_Desc.Text" xml:space="preserve"><value>トラック切り替え時にプラグインの優先順位に従って歌詞を自動検索・表示します</value></data>
+  <data name="Settings_OnlineLyrics_AutoFetch_Toggle.OnContent" xml:space="preserve"><value>オン</value></data>
+  <data name="Settings_OnlineLyrics_AutoFetch_Toggle.OffContent" xml:space="preserve"><value>オフ</value></data>
+  <data name="Settings_OnlineLyrics_PreferSynced_Title.Text" xml:space="preserve"><value>同期歌詞を優先</value></data>
+  <data name="Settings_OnlineLyrics_PreferSynced_Desc.Text" xml:space="preserve"><value>時間同期(LRC)歌詞と通常歌詞の両方がある場合、同期歌詞を優先選択</value></data>
+  <data name="Settings_OnlineLyrics_PreferSynced_Toggle.OnContent" xml:space="preserve"><value>優先</value></data>
+  <data name="Settings_OnlineLyrics_PreferSynced_Toggle.OffContent" xml:space="preserve"><value>区別なし</value></data>
+  <data name="Settings_OnlineLyrics_Plugins_Title.Text" xml:space="preserve"><value>歌詞プラグイン</value></data>
+  <data name="Settings_OnlineLyrics_Rescan_Button.AutomationProperties.Name" xml:space="preserve"><value>プラグインフォルダーを再スキャン</value></data>
+  <data name="Settings_OnlineLyrics_Rescan_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>プラグインフォルダーを再スキャン</value></data>
+  <data name="Settings_OnlineLyrics_Rescan_Text.Text" xml:space="preserve"><value>再スキャン</value></data>
+  <data name="Settings_OnlineLyrics_OpenFolder_Button.AutomationProperties.Name" xml:space="preserve"><value>プラグインフォルダーをエクスプローラーで開く</value></data>
+  <data name="Settings_OnlineLyrics_OpenFolder_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>プラグインフォルダーをエクスプローラーで開く</value></data>
+  <data name="Settings_OnlineLyrics_OpenFolder_Text.Text" xml:space="preserve"><value>フォルダーを開く</value></data>
+  <data name="Settings_OnlineLyrics_Plugin_Notice.Text" xml:space="preserve"><value>プラグインごとのサブフォルダーにDLLを配置すると自動認識されます。リストの順序が検索の優先順位です。</value></data>
+  <data name="Settings_OnlineLyrics_Plugin_Empty.Text" xml:space="preserve"><value>インストールされたプラグインがありません。フォルダーにプラグインを入れて「再スキャン」を押してください。開発方法は docs/plugin-development.md を参照してください。</value></data>
+  <data name="Settings_OnlineLyrics_MoveUp.AutomationProperties.Name" xml:space="preserve"><value>優先度を上げる</value></data>
+  <data name="Settings_OnlineLyrics_MoveUp.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>優先度を上げる</value></data>
+  <data name="Settings_OnlineLyrics_MoveDown.AutomationProperties.Name" xml:space="preserve"><value>優先度を下げる</value></data>
+  <data name="Settings_OnlineLyrics_MoveDown.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>優先度を下げる</value></data>
+  <data name="Settings_OnlineLyrics_Plugin_Toggle.OnContent" xml:space="preserve"><value>有効</value></data>
+  <data name="Settings_OnlineLyrics_Plugin_Toggle.OffContent" xml:space="preserve"><value>無効</value></data>
+  <data name="Settings_OnlineLyrics_AutoSave_Title.Text" xml:space="preserve"><value>歌詞の自動保存</value></data>
+  <data name="Settings_OnlineLyrics_AutoSave_Desc.Text" xml:space="preserve"><value>オンラインから取得した歌詞を以下の場所とテンプレートで自動保存します</value></data>
+  <data name="Settings_OnlineLyrics_AutoSave_Toggle.OnContent" xml:space="preserve"><value>保存</value></data>
+  <data name="Settings_OnlineLyrics_AutoSave_Toggle.OffContent" xml:space="preserve"><value>保存しない</value></data>
+  <data name="Settings_OnlineLyrics_SaveLoc_Title.Text" xml:space="preserve"><value>保存場所</value></data>
+  <data name="Settings_OnlineLyrics_SaveLoc_Desc.Text" xml:space="preserve"><value>オンライン歌詞をファイルとして保存する基準フォルダー</value></data>
+  <data name="Settings_OnlineLyrics_SaveLoc_TrackFolder.Content" xml:space="preserve"><value>音源と同じフォルダー</value></data>
+  <data name="Settings_OnlineLyrics_SaveLoc_CustomFolder.Content" xml:space="preserve"><value>指定フォルダー</value></data>
+  <data name="Settings_OnlineLyrics_PickFolder_Button.Content" xml:space="preserve"><value>フォルダーの選択...</value></data>
+  <data name="Settings_OnlineLyrics_Template_Title.Text" xml:space="preserve"><value>ファイル名テンプレート</value></data>
+  <data name="Settings_OnlineLyrics_Template_Desc.Text" xml:space="preserve"><value>変数: %filename% %title% %artist% %albumartist% %album% %year% %trackno% — サブフォルダーのパスを含むことも可能 (例: %album%\%title%.lrc)</value></data>
+  <data name="Settings_OnlineLyrics_Overwrite_Title.Text" xml:space="preserve"><value>既存ファイルの上書き</value></data>
+  <data name="Settings_OnlineLyrics_Overwrite_Desc.Text" xml:space="preserve"><value>オフの場合、既存の.lrcファイルはそのまま保持されます</value></data>
+  <data name="Settings_OnlineLyrics_Overwrite_Toggle.OnContent" xml:space="preserve"><value>上書き</value></data>
+  <data name="Settings_OnlineLyrics_Overwrite_Toggle.OffContent" xml:space="preserve"><value>スキップ</value></data>
+  <data name="Settings_OnlineLyrics_SourcePluginFolder" xml:space="preserve"><value>プラグインフォルダー</value></data>
+  <data name="Settings_OnlineLyrics_SourceBuiltin" xml:space="preserve"><value>直接登録</value></data>
+  <data name="Settings_OnlineLyrics_CustomFolderNotSet" xml:space="preserve"><value>(未指定 — 音源フォルダーに保存)</value></data>
+
+  <!-- Appearance & Theme -->
+  <data name="Settings_Appearance_Header.Text" xml:space="preserve"><value>外観＆テーマ (Theme &amp; Appearance)</value></data>
+  <data name="Settings_Appearance_Lang_Title.Text" xml:space="preserve"><value>言語 (Language)</value></data>
+  <data name="Settings_Appearance_Lang_Desc.Text" xml:space="preserve"><value>アプリの表示言語。システムデフォルトはWindowsの表示言語に従います。</value></data>
+  <data name="Settings_Appearance_Lang_System.Content" xml:space="preserve"><value>システムデフォルト (System)</value></data>
+  <data name="Settings_Appearance_Lang_Korean.Content" xml:space="preserve"><value>韓国語 (Korean)</value></data>
+  <data name="Settings_Appearance_Lang_English.Content" xml:space="preserve"><value>英語 (US)</value></data>
+  <data name="Settings_Appearance_Lang_Japanese.Content" xml:space="preserve"><value>日本語 (Japanese)</value></data>
+  <data name="Settings_Appearance_Theme_Title.Text" xml:space="preserve"><value>テーマモード</value></data>
+  <data name="Settings_Appearance_Theme_Desc.Text" xml:space="preserve"><value>ライト / ダーク / OLED Pure Black / システム設定に従う</value></data>
+  <data name="Settings_Appearance_Theme_System.Content" xml:space="preserve"><value>システムに従う</value></data>
+  <data name="Settings_Appearance_Theme_Light.Content" xml:space="preserve"><value>ライト (Eole Warm Slate)</value></data>
+  <data name="Settings_Appearance_Theme_Dark.Content" xml:space="preserve"><value>ダーク (Eole Slate)</value></data>
+  <data name="Settings_Appearance_Theme_Oled.Content" xml:space="preserve"><value>OLED ブラック (Pure Black)</value></data>
+  <data name="Settings_Appearance_Backdrop_Title.Text" xml:space="preserve"><value>ウィンドウ背景マテリアル (Backdrop)</value></data>
+  <data name="Settings_Appearance_Backdrop_Desc.Text" xml:space="preserve"><value>Windows 11 Fluent 半透明または Eole アルバムアートブラー壁紙</value></data>
+  <data name="Settings_Appearance_Backdrop_Mica.Content" xml:space="preserve"><value>Mica (Windows 11 標準)</value></data>
+  <data name="Settings_Appearance_Backdrop_MicaAlt.Content" xml:space="preserve"><value>Mica Alt</value></data>
+  <data name="Settings_Appearance_Backdrop_Acrylic.Content" xml:space="preserve"><value>Acrylic</value></data>
+  <data name="Settings_Appearance_Backdrop_Solid.Content" xml:space="preserve"><value>単色 (Solid)</value></data>
+  <data name="Settings_Appearance_Backdrop_AlbumBlur.Content" xml:space="preserve"><value>アルバムアートブラー (Eole Wallpaper)</value></data>
+  <data name="Settings_Appearance_DynamicAccent_Title.Text" xml:space="preserve"><value>アルバムアート動的テーマ (Dynamic Theme)</value></data>
+  <data name="Settings_Appearance_DynamicAccent_Desc.Text" xml:space="preserve"><value>再生中の音楽のアルバムジャケット色をアクセントおよびハイライトに自動適用します。</value></data>
+  <data name="Settings_Appearance_Accent_Title.Text" xml:space="preserve"><value>アクセントカラー プリセット</value></data>
+  <data name="Settings_Appearance_Accent_Desc.Text" xml:space="preserve"><value>プレイヤーの主要ボタン、インジケーター、強調表示色</value></data>
+  <data name="Settings_Appearance_Accent_EoleAmber.Content" xml:space="preserve"><value>Eole Amber (デフォルト)</value></data>
+  <data name="Settings_Appearance_Accent_Custom.Content" xml:space="preserve"><value>カスタム (Custom)...</value></data>
+  <data name="Settings_Appearance_CustomAccent_Title.Text" xml:space="preserve"><value>カスタム アクセントカラー</value></data>
+  <data name="Settings_Appearance_CustomAccent_Desc.Text" xml:space="preserve"><value>希望の16進数HEXカラーコード(#RRGGBB)を直接指定します。</value></data>
+  <data name="Settings_Appearance_PickColor_Button.Content" xml:space="preserve"><value>色の選択</value></data>
+
+  <!-- Layout & Sizing -->
+  <data name="Settings_Layout_Header.Text" xml:space="preserve"><value>レイアウト＆表示 (Layout &amp; Sizing)</value></data>
+  <data name="Settings_Layout_CoverSize_Title.Text" xml:space="preserve"><value>アルバムジャケット基本サイズ</value></data>
+  <data name="Settings_Layout_CoverSize_Desc.Text" xml:space="preserve"><value>ライブラリのジャケットグリッドの基本タイルサイズ</value></data>
+  <data name="Settings_Layout_Reset_Title.Text" xml:space="preserve"><value>サイドバーレイアウトの初期化</value></data>
+  <data name="Settings_Layout_Reset_Desc.Text" xml:space="preserve"><value>左右のサイドバーおよび歌詞パネルの幅をデフォルト値に復元</value></data>
+  <data name="Settings_Layout_Reset_Button.Content" xml:space="preserve"><value>レイアウトの初期化</value></data>
+
+  <!-- Shortcuts -->
+  <data name="Settings_Shortcuts_Header.Text" xml:space="preserve"><value>ショートカット (Keyboard Shortcuts)</value></data>
+  <data name="Settings_Shortcuts_Desc.Text" xml:space="preserve"><value>キー項目を押して新しい組み合わせを入力してください。テキスト入力中は再生ショートカットは動作しません。</value></data>
+  <data name="Settings_Shortcuts_Rebind.AutomationProperties.Name" xml:space="preserve"><value>クリックして新しいショートカットを設定</value></data>
+  <data name="Settings_Shortcuts_Rebind.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>クリックして新しいショートカットを設定</value></data>
+  <data name="Settings_Shortcuts_Reset_Button.Content" xml:space="preserve"><value>デフォルト</value></data>
+  <data name="Settings_Shortcuts_Clear_Button.Content" xml:space="preserve"><value>クリア</value></data>
+  <data name="Settings_Shortcuts_ResetAll_Button.Content" xml:space="preserve"><value>すべてのショートカットをデフォルトに戻す</value></data>
+  <data name="Settings_Shortcuts_Unassigned" xml:space="preserve"><value>なし</value></data>
+  <data name="Settings_Shortcuts_Cat_Playback" xml:space="preserve"><value>再生コントロール</value></data>
+  <data name="Settings_Shortcuts_Cat_Seek" xml:space="preserve"><value>シーク</value></data>
+  <data name="Settings_Shortcuts_Cat_Volume" xml:space="preserve"><value>音量</value></data>
+  <data name="Settings_Shortcuts_Cat_Navigation" xml:space="preserve"><value>ナビゲーション＆ウィンドウ</value></data>
+  <data name="Shortcut_Command_PlayPause" xml:space="preserve"><value>再生 / 一時停止</value></data>
+  <data name="Shortcut_Command_Stop" xml:space="preserve"><value>停止</value></data>
+  <data name="Shortcut_Command_Next" xml:space="preserve"><value>次のトラック</value></data>
+  <data name="Shortcut_Command_Previous" xml:space="preserve"><value>前のトラック</value></data>
+  <data name="Shortcut_Command_ShuffleCycle" xml:space="preserve"><value>シャッフル切り替え (オフ → トラック → アルバム)</value></data>
+  <data name="Shortcut_Command_RepeatCycle" xml:space="preserve"><value>リピート切り替え (オフ → 全曲 → 1曲)</value></data>
+  <data name="Shortcut_Command_StopAfterCurrentToggle" xml:space="preserve"><value>現在の曲の再生後に停止を切り替え</value></data>
+  <data name="Shortcut_Command_SeekForward" xml:space="preserve"><value>5秒進む</value></data>
+  <data name="Shortcut_Command_SeekBackward" xml:space="preserve"><value>5秒戻る</value></data>
+  <data name="Shortcut_Command_SeekToStart" xml:space="preserve"><value>現在の曲の先頭へ</value></data>
+  <data name="Shortcut_Command_VolumeUp" xml:space="preserve"><value>音量を上げる</value></data>
+  <data name="Shortcut_Command_VolumeDown" xml:space="preserve"><value>音量を下げる</value></data>
+  <data name="Shortcut_Command_MuteToggle" xml:space="preserve"><value>ミュート切り替え</value></data>
+  <data name="Shortcut_Command_ToggleLyrics" xml:space="preserve"><value>歌詞パネルの開閉</value></data>
+  <data name="Shortcut_Command_FocusSearch" xml:space="preserve"><value>ライブラリ検索へフォーカス</value></data>
+  <data name="Shortcut_Command_OpenPreferences" xml:space="preserve"><value>環境設定を開く</value></data>
+
+  <!-- About -->
+  <data name="Settings_About_Header.Text" xml:space="preserve"><value>情報 (About Dawn Player)</value></data>
+  <data name="Settings_About_VersionFormat" xml:space="preserve"><value>バージョン {0} (x64) · foobar2000 &amp; Eole にインスパイアされたネイティブプレーヤー</value></data>
+  <data name="Settings_About_AudioEngine.Text" xml:space="preserve"><value>オーディオエンジン: NAudio 2.3 · NAudio.Vorbis (NVorbis) · Windows Media Foundation (WASAPI Exclusive Bit-Perfect)</value></data>
+  <data name="Settings_About_Metadata.Text" xml:space="preserve"><value>タグ＆メタデータ: TagLib# (ID3v2, Vorbis Comment, MP4, APE)</value></data>
+  <data name="Settings_About_Database.Text" xml:space="preserve"><value>データベース: Microsoft.Data.Sqlite (SQLite)</value></data>
+
+  <!-- Common Dialogs -->
 </root>

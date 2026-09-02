@@ -25,8 +25,9 @@
     </Content>
   </ItemGroup>
 
-  <!-- Localization/Strings*.resx are picked up as EmbeddedResource by the SDK's default items;
-       satellites (.ko-KR, .en-US, ...) chain off the neutral Strings.resx via LogicalName. -->
+  <!-- Strings/<culture>/Resources.resw files are compiled into the app's resources.pri by the
+       WinUI build targets (PRIResource default globs). DefaultLanguage marks ko-KR as the
+       fallback language for the MRT Core candidate chain. -->
 
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.4.0" />

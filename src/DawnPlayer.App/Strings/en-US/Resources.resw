@@ -33,16 +33,644 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="App.Title" xml:space="preserve">
-    <value>Dawn Player</value>
-  </data>
-  <data name="MainWindow.Title" xml:space="preserve">
-    <value>Dawn Player</value>
-  </data>
-  <data name="AppBrand.Text" xml:space="preserve">
-    <value>Dawn Player</value>
-  </data>
-  <data name="WelcomeText.Text" xml:space="preserve">
-    <value>Welcome!</value>
-  </data>
+
+  <!-- Global / App -->
+  <data name="MainWindow.Title" xml:space="preserve"><value>Dawn Player</value></data>
+  <data name="AppBrand.Text" xml:space="preserve"><value>Dawn Player</value></data>
+
+  <!-- Module 1: Main Shell -->
+  <data name="MainWindow_TitleMenuButton.AutomationProperties.Name" xml:space="preserve"><value>Menu</value></data>
+  <data name="MainWindow_TitleMenuButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Menu</value></data>
+  <data name="MainWindow_Menu_Rescan.Text" xml:space="preserve"><value>Rescan Library</value></data>
+  <data name="MainWindow_Menu_Settings.Text" xml:space="preserve"><value>Preferences</value></data>
+  <data name="MainWindow_Menu_Exit.Text" xml:space="preserve"><value>Exit</value></data>
+  <data name="MainWindow_TitleBarTrack.Text" xml:space="preserve"><value>No sound — Nothing played</value></data>
+  <data name="MainWindow_Tab_Library.Text" xml:space="preserve"><value>Library</value></data>
+  <data name="MainWindow_Tab_Playlists.Text" xml:space="preserve"><value>Playlists</value></data>
+  <data name="MainWindow_SettingsGearButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Preferences</value></data>
+
+  <!-- Module 1: NowPlayingBar -->
+  <data name="NowPlaying_SeekSlider.AutomationProperties.Name" xml:space="preserve"><value>Seek position</value></data>
+  <data name="NowPlaying_AlbumArtButton.AutomationProperties.Name" xml:space="preserve"><value>Expand album cover</value></data>
+  <data name="NowPlaying_AlbumArtButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Expand album cover</value></data>
+  <data name="NowPlaying_TrackTitle_Empty.Text" xml:space="preserve"><value>No track playing</value></data>
+  <data name="NowPlaying_ShuffleTip_Tracks" xml:space="preserve"><value>Shuffle: Tracks (play random tracks)</value></data>
+  <data name="NowPlaying_ShuffleTip_Albums" xml:space="preserve"><value>Shuffle: Albums (album in order, then a random next album)</value></data>
+  <data name="NowPlaying_ShuffleTip_Off" xml:space="preserve"><value>Shuffle off (sequential playback)</value></data>
+  <data name="Badge_WasapiExclusive" xml:space="preserve"><value>WASAPI Exclusive</value></data>
+  <data name="Badge_WasapiShared" xml:space="preserve"><value>WASAPI Shared</value></data>
+  <data name="NowPlaying_ShuffleButton.AutomationProperties.Name" xml:space="preserve"><value>Shuffle</value></data>
+  <data name="NowPlaying_ShuffleButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Shuffle</value></data>
+  <data name="NowPlaying_PreviousButton.AutomationProperties.Name" xml:space="preserve"><value>Previous track</value></data>
+  <data name="NowPlaying_PreviousButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Previous track</value></data>
+  <data name="NowPlaying_PlayButton.AutomationProperties.Name" xml:space="preserve"><value>Play</value></data>
+  <data name="NowPlaying_PlayButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Play/Pause</value></data>
+  <data name="NowPlaying_NextButton.AutomationProperties.Name" xml:space="preserve"><value>Next track</value></data>
+  <data name="NowPlaying_NextButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Next track</value></data>
+  <data name="NowPlaying_StopButton.AutomationProperties.Name" xml:space="preserve"><value>Stop</value></data>
+  <data name="NowPlaying_StopButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Stop</value></data>
+  <data name="NowPlaying_RepeatButton.AutomationProperties.Name" xml:space="preserve"><value>Repeat</value></data>
+  <data name="NowPlaying_RepeatButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Repeat (Off / All / One)</value></data>
+  <data name="NowPlaying_MuteButton.AutomationProperties.Name" xml:space="preserve"><value>Mute</value></data>
+  <data name="NowPlaying_MuteButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Mute</value></data>
+  <data name="NowPlaying_VolumeSlider.AutomationProperties.Name" xml:space="preserve"><value>Volume</value></data>
+  <data name="NowPlaying_VolumeSlider.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Volume</value></data>
+  <data name="NowPlaying_QueueButton.AutomationProperties.Name" xml:space="preserve"><value>Playback Queue</value></data>
+  <data name="NowPlaying_QueueButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Playback Queue</value></data>
+  <data name="NowPlaying_QueueTitle.Text" xml:space="preserve"><value>Playback Queue</value></data>
+  <data name="NowPlaying_QueueSaveButton.Content" xml:space="preserve"><value>Save as playlist</value></data>
+  <data name="NowPlaying_QueueClearButton.Content" xml:space="preserve"><value>Clear</value></data>
+  <data name="NowPlaying_QueueRemoveButton.AutomationProperties.Name" xml:space="preserve"><value>Remove from queue</value></data>
+  <data name="NowPlaying_QueueRemoveButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Remove from queue</value></data>
+  <data name="NowPlaying_QueueEmptyText.Text" xml:space="preserve"><value>The queue is empty. Right-click a track and select 'Add to queue'.</value></data>
+  <data name="NowPlaying_LyricsButton.AutomationProperties.Name" xml:space="preserve"><value>Lyrics pane</value></data>
+  <data name="NowPlaying_LyricsButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Lyrics pane</value></data>
+  <data name="NowPlaying_SettingsButton.AutomationProperties.Name" xml:space="preserve"><value>Preferences</value></data>
+  <data name="NowPlaying_SettingsButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Preferences</value></data>
+
+  <!-- Module 1: LyricsPane -->
+  <data name="LyricsPane_HeaderTitle.Text" xml:space="preserve"><value>Lyrics</value></data>
+  <data name="LyricsPane_FontSmallerButton.AutomationProperties.Name" xml:space="preserve"><value>Decrease font size</value></data>
+  <data name="LyricsPane_FontSmallerButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Decrease font size</value></data>
+  <data name="LyricsPane_FontBiggerButton.AutomationProperties.Name" xml:space="preserve"><value>Increase font size</value></data>
+  <data name="LyricsPane_FontBiggerButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Increase font size</value></data>
+  <data name="LyricsPane_SearchButton.AutomationProperties.Name" xml:space="preserve"><value>Search lyrics online</value></data>
+  <data name="LyricsPane_SearchButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Search lyrics online</value></data>
+  <data name="LyricsPane_EditorButton.AutomationProperties.Name" xml:space="preserve"><value>Open lyrics editor</value></data>
+  <data name="LyricsPane_EditorButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Open lyrics editor (offset/sync/text)</value></data>
+  <data name="LyricsPane_EmptyTitle.Text" xml:space="preserve"><value>No lyrics available</value></data>
+  <data name="LyricsPane_SourceOnlineFormat" xml:space="preserve"><value>Online · {0}</value></data>
+  <data name="LyricsPane_SourceOnlineUnsyncedFormat" xml:space="preserve"><value>Online · {0} · unsynced</value></data>
+  <data name="LyricsPane_OffsetZero" xml:space="preserve"><value>Offset 0.0s</value></data>
+  <data name="LyricsPane_OffsetFormat" xml:space="preserve"><value>Offset {0}</value></data>
+  <data name="LyricsPane_EmptyDesc.Text" xml:space="preserve"><value>Place a .lrc file in the same folder as the audio file or click [Edit lyrics] to create one.</value></data>
+  <data name="LyricsPane_CreateLyricsButton.Content" xml:space="preserve"><value>Create new lyrics</value></data>
+  <data name="LyricsPane_SearchOnlineButton.Content" xml:space="preserve"><value>Search online</value></data>
+
+  <!-- Module 2: Music Library Browser -->
+  <data name="Library_TreeHeader.Text" xml:space="preserve"><value>Library Tree</value></data>
+  <data name="Library_TrackCountFormat" xml:space="preserve"><value>{0} songs</value></data>
+  <data name="Library_NoAlbum" xml:space="preserve"><value>(no album)</value></data>
+  <data name="Library_NoArtist" xml:space="preserve"><value>(no artist)</value></data>
+  <data name="Library_AllNode" xml:space="preserve"><value>All</value></data>
+  <data name="Library_TreeMode_ArtistAlbum.Content" xml:space="preserve"><value>Artist / Album</value></data>
+  <data name="Library_TreeMode_Artist.Content" xml:space="preserve"><value>Artist</value></data>
+  <data name="Library_TreeMode_GenreArtist.Content" xml:space="preserve"><value>Genre / Artist</value></data>
+  <data name="Library_TreeMode_GenreArtistAlbum.Content" xml:space="preserve"><value>Genre / Artist / Album</value></data>
+  <data name="Library_TreeMode_Album.Content" xml:space="preserve"><value>Album</value></data>
+  <data name="Library_TreeMode_Genre.Content" xml:space="preserve"><value>Genre</value></data>
+  <data name="Library_TreeMode_Folder.Content" xml:space="preserve"><value>Folder Structure</value></data>
+
+  <data name="Library_TreeMenu_Play.Text" xml:space="preserve"><value>Play (Replace playlist)</value></data>
+  <data name="Library_TreeMenu_AddToPlaylist.Text" xml:space="preserve"><value>Add to current playlist</value></data>
+  <data name="Library_TreeMenu_SendToPlaylist.Text" xml:space="preserve"><value>Add to playlist</value></data>
+  <data name="Library_TreeMenu_Enqueue.Text" xml:space="preserve"><value>Add to queue</value></data>
+
+  <data name="Library_SearchBox.PlaceholderText" xml:space="preserve"><value>Search...</value></data>
+  <data name="Library_ViewGridBtn.AutomationProperties.Name" xml:space="preserve"><value>Cover grid view</value></data>
+  <data name="Library_ViewGridBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Cover grid view</value></data>
+  <data name="Library_ViewListBtn.AutomationProperties.Name" xml:space="preserve"><value>Track list view</value></data>
+  <data name="Library_ViewListBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Track list view</value></data>
+
+  <data name="Library_Zoom_Button.AutomationProperties.Name" xml:space="preserve"><value>Adjust cover size</value></data>
+  <data name="Library_Zoom_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Adjust cover size (Ctrl+Mouse Wheel)</value></data>
+  <data name="Library_Zoom_Title.Text" xml:space="preserve"><value>Cover Size</value></data>
+  <data name="Library_Zoom_Small.Content" xml:space="preserve"><value>S</value></data>
+  <data name="Library_Zoom_Medium.Content" xml:space="preserve"><value>M</value></data>
+  <data name="Library_Zoom_Large.Content" xml:space="preserve"><value>L</value></data>
+  <data name="Library_Zoom_ExtraLarge.Content" xml:space="preserve"><value>XL</value></data>
+  <data name="Library_RescanButton.AutomationProperties.Name" xml:space="preserve"><value>Rescan Library</value></data>
+  <data name="Library_RescanButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Rescan Library</value></data>
+
+  <data name="Library_AlbumMenu_Play.Text" xml:space="preserve"><value>Play album</value></data>
+  <data name="Library_AlbumMenu_AddToPlaylist.Text" xml:space="preserve"><value>Add to current playlist</value></data>
+  <data name="Library_AlbumMenu_SendToPlaylist.Text" xml:space="preserve"><value>Add to playlist</value></data>
+  <data name="Library_AlbumMenu_Enqueue.Text" xml:space="preserve"><value>Add to queue</value></data>
+
+  <data name="Library_Drawer_PlayAlbum.AutomationProperties.Name" xml:space="preserve"><value>Play album</value></data>
+  <data name="Library_Drawer_PlayAlbum.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Play album</value></data>
+  <data name="Library_Drawer_EnqueueAlbum.AutomationProperties.Name" xml:space="preserve"><value>Add to queue</value></data>
+  <data name="Library_Drawer_EnqueueAlbum.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Add to queue</value></data>
+  <data name="Library_Drawer_AddToPlaylist.AutomationProperties.Name" xml:space="preserve"><value>Add to playlist</value></data>
+  <data name="Library_Drawer_AddToPlaylist.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Add to playlist</value></data>
+  <data name="Library_Drawer_Close.AutomationProperties.Name" xml:space="preserve"><value>Close</value></data>
+  <data name="Library_Drawer_Close.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Close (Esc)</value></data>
+
+  <data name="Library_TrackMenu_Play.Text" xml:space="preserve"><value>Play</value></data>
+  <data name="Library_TrackMenu_AddToPlaylist.Text" xml:space="preserve"><value>Add to current playlist</value></data>
+  <data name="Library_TrackMenu_SendToPlaylist.Text" xml:space="preserve"><value>Add to playlist</value></data>
+  <data name="Library_TrackMenu_Enqueue.Text" xml:space="preserve"><value>Add to queue</value></data>
+  <data name="Library_TrackMenu_ShowInExplorer.Text" xml:space="preserve"><value>Show in File Explorer</value></data>
+
+  <data name="Library_Header_TrackNo.Text" xml:space="preserve"><value>#</value></data>
+  <data name="Library_Header_Title.Text" xml:space="preserve"><value>Title</value></data>
+  <data name="Library_Header_Artist.Text" xml:space="preserve"><value>Artist</value></data>
+  <data name="Library_Header_Album.Text" xml:space="preserve"><value>Album</value></data>
+  <data name="Library_Header_Duration.Text" xml:space="preserve"><value>Duration</value></data>
+
+  <data name="Library_RightQueue_Title.Text" xml:space="preserve"><value>Playing tracks...</value></data>
+
+  <!-- Module 3: Playlist Management -->
+  <data name="Playlist_SidebarHeader.Text" xml:space="preserve"><value>Playlists</value></data>
+  <data name="Playlist_CreateButton.AutomationProperties.Name" xml:space="preserve"><value>Create Playlist</value></data>
+  <data name="Playlist_CreateButtonText.Text" xml:space="preserve"><value>Create Playlist</value></data>
+  <data name="Playlist_SidebarMenu_Import.Text" xml:space="preserve"><value>Import Playlist (M3U8)...</value></data>
+  <data name="Playlist_SidebarMenu_Rename.Text" xml:space="preserve"><value>Rename...</value></data>
+  <data name="Playlist_SidebarMenu_Export.Text" xml:space="preserve"><value>Export Playlist (M3U8)...</value></data>
+  <data name="Playlist_SidebarMenu_Clear.Text" xml:space="preserve"><value>Clear Playlist</value></data>
+  <data name="Playlist_SidebarMenu_Delete.Text" xml:space="preserve"><value>Delete Playlist</value></data>
+
+  <data name="Playlist_ToolsButton.AutomationProperties.Name" xml:space="preserve"><value>Playlist tools and sorting</value></data>
+  <data name="Playlist_ToolsButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Playlist tools and sorting</value></data>
+  <data name="Playlist_ToolsMenu_AddFiles.Text" xml:space="preserve"><value>Add Files...</value></data>
+  <data name="Playlist_ToolsMenu_AddFolder.Text" xml:space="preserve"><value>Add Folder...</value></data>
+  <data name="Playlist_ToolsMenu_Import.Text" xml:space="preserve"><value>Import Playlist File (M3U8)...</value></data>
+  <data name="Playlist_ToolsMenu_GroupToggle.Text" xml:space="preserve"><value>Group by Album</value></data>
+  <data name="Playlist_ToolsMenu_StopAfterCurrent.Text" xml:space="preserve"><value>Stop after current track</value></data>
+  <data name="Playlist_ToolsMenu_SortSubItem.Text" xml:space="preserve"><value>Sort</value></data>
+  <data name="Playlist_Sort_Title.Text" xml:space="preserve"><value>By Title</value></data>
+  <data name="Playlist_Sort_Artist.Text" xml:space="preserve"><value>By Artist</value></data>
+  <data name="Playlist_Sort_Album.Text" xml:space="preserve"><value>By Album &amp; Track</value></data>
+  <data name="Playlist_Sort_TrackNo.Text" xml:space="preserve"><value>By Track No</value></data>
+  <data name="Playlist_Sort_Path.Text" xml:space="preserve"><value>By File Path</value></data>
+  <data name="Playlist_Sort_Random.Text" xml:space="preserve"><value>Random Shuffle</value></data>
+  <data name="Playlist_Sort_Reverse.Text" xml:space="preserve"><value>Reverse Order</value></data>
+  <data name="Playlist_ToolsMenu_RemoveDuplicates.Text" xml:space="preserve"><value>Remove Duplicates</value></data>
+  <data name="Playlist_ToolsMenu_RemoveDeadItems.Text" xml:space="preserve"><value>Remove Missing Files</value></data>
+  <data name="Playlist_ToolsMenu_Rename.Text" xml:space="preserve"><value>Rename...</value></data>
+  <data name="Playlist_ToolsMenu_Export.Text" xml:space="preserve"><value>Export Playlist (M3U8)...</value></data>
+  <data name="Playlist_ToolsMenu_Delete.Text" xml:space="preserve"><value>Delete Current Playlist</value></data>
+  <data name="Playlist_ToolsMenu_Clear.Text" xml:space="preserve"><value>Clear Playlist</value></data>
+
+  <data name="Playlist_TrackMenu_Play.Text" xml:space="preserve"><value>Play</value></data>
+  <data name="Playlist_TrackMenu_QueueNext.Text" xml:space="preserve"><value>Play Next</value></data>
+  <data name="Playlist_TrackMenu_Queue.Text" xml:space="preserve"><value>Add to Queue</value></data>
+  <data name="Playlist_TrackMenu_MoveUp.Text" xml:space="preserve"><value>Move Up (Alt+↑)</value></data>
+  <data name="Playlist_TrackMenu_MoveDown.Text" xml:space="preserve"><value>Move Down (Alt+↓)</value></data>
+  <data name="Playlist_TrackMenu_Remove.Text" xml:space="preserve"><value>Remove from Playlist (Del)</value></data>
+
+  <data name="Playlist_EmptyTitle.Text" xml:space="preserve"><value>Playlist is empty</value></data>
+  <data name="Playlist_EmptyDesc.Text" xml:space="preserve"><value>Drag and drop music files or folders into the window, or use [Add Files]·[Add Folder] from the top right menu.&#x0a;You can also add tracks from the Library.</value></data>
+
+  <!-- Module 4: Lyrics Tools & Windows (LyricsEditor) -->
+  <data name="LyricsEditor_Window.Title" xml:space="preserve"><value>Lyrics Editor — Dawn Player</value></data>
+  <data name="LyricsEditor_WindowTitle" xml:space="preserve"><value>Lyrics Editor — Dawn Player</value></data>
+  <data name="LyricsEditor_TrackHeaderTitle.Text" xml:space="preserve"><value>Track Title</value></data>
+  <data name="LyricsEditor_TrackHeaderArtist.Text" xml:space="preserve"><value>— Artist</value></data>
+  <data name="LyricsEditor_PlayPauseBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Play/Pause</value></data>
+  <data name="LyricsEditor_PlayPauseBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Play/Pause (Space)</value></data>
+  <data name="LyricsEditor_StepDeltaLabel.Text" xml:space="preserve"><value>Step Delta:</value></data>
+  <data name="LyricsEditor_StepPresetsLabel.Text" xml:space="preserve"><value>Step Presets:</value></data>
+  <data name="LyricsEditor_TotalOffsetLabel.Text" xml:space="preserve"><value>Total Offset:</value></data>
+  <data name="LyricsEditor_ResetOffsetBtn.Content" xml:space="preserve"><value>Reset to 0</value></data>
+  <data name="LyricsEditor_TotalOffsetSecondsFormat" xml:space="preserve"><value>(= {0}s)</value></data>
+  <data name="LyricsEditor_TabSync.Header" xml:space="preserve"><value>Line-by-Line Sync Editor</value></data>
+  <data name="LyricsEditor_StampCurrentTimeText.Text" xml:space="preserve"><value>Stamp Current Time (F5)</value></data>
+  <data name="LyricsEditor_AddLineText.Text" xml:space="preserve"><value>Add Line</value></data>
+  <data name="LyricsEditor_DeleteLineText.Text" xml:space="preserve"><value>Delete Line</value></data>
+  <data name="LyricsEditor_MoveLineUpBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Move selected line up</value></data>
+  <data name="LyricsEditor_MoveLineUpBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Move selected line up</value></data>
+  <data name="LyricsEditor_MoveLineDownBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Move selected line down</value></data>
+  <data name="LyricsEditor_MoveLineDownBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Move selected line down</value></data>
+  <data name="LyricsEditor_PasteClipboardBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Import lyrics from clipboard</value></data>
+  <data name="LyricsEditor_PasteClipboardBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Import lyrics from clipboard</value></data>
+  <data name="LyricsEditor_PasteClipboardText.Text" xml:space="preserve"><value>Paste from Clipboard</value></data>
+  <data name="LyricsEditor_SeekToLineBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Play audio from this position</value></data>
+  <data name="LyricsEditor_SeekToLineBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Play audio from this position</value></data>
+  <data name="LyricsEditor_TabRaw.Header" xml:space="preserve"><value>Edit Full LRC Text Directly</value></data>
+  <data name="LyricsEditor_StatusLabel.Text" xml:space="preserve"><value>Ready</value></data>
+  <data name="LyricsEditor_CloseBtn.Content" xml:space="preserve"><value>Close</value></data>
+  <data name="LyricsEditor_SaveBtn.Content" xml:space="preserve"><value>💾 Save as LRC File</value></data>
+  <data name="LyricsEditor_NewLineText" xml:space="preserve"><value>New lyric line</value></data>
+  <data name="LyricsEditor_Status_LinesLoaded" xml:space="preserve"><value>{0} lines of lyrics loaded</value></data>
+  <data name="LyricsEditor_Status_NoExistingLyrics" xml:space="preserve"><value>No existing lyrics (Ready to create new)</value></data>
+  <data name="LyricsEditor_Status_ClipboardImported" xml:space="preserve"><value>Loaded {0} lines of lyrics from clipboard.</value></data>
+  <data name="LyricsEditor_Status_PasteError" xml:space="preserve"><value>Paste error: {0}</value></data>
+  <data name="LyricsEditor_Status_SaveSuccess" xml:space="preserve"><value>Successfully saved: {0} ({1})</value></data>
+  <data name="LyricsEditor_Status_SaveFailed" xml:space="preserve"><value>Failed to save: {0}</value></data>
+
+  <!-- Module 4: Lyrics Tools & Windows (LyricsSearch) -->
+  <data name="LyricsSearch_Window.Title" xml:space="preserve"><value>Search Lyrics Online — Dawn Player</value></data>
+  <data name="LyricsSearch_WindowTitle" xml:space="preserve"><value>Search Lyrics Online — Dawn Player</value></data>
+  <data name="LyricsSearch_TrackHeaderTitle.Text" xml:space="preserve"><value>Track Title</value></data>
+  <data name="LyricsSearch_TrackHeaderArtist.Text" xml:space="preserve"><value>— Artist</value></data>
+  <data name="LyricsSearch_TitleBox.Header" xml:space="preserve"><value>Title</value></data>
+  <data name="LyricsSearch_TitleBox.PlaceholderText" xml:space="preserve"><value>Title</value></data>
+  <data name="LyricsSearch_ArtistBox.Header" xml:space="preserve"><value>Artist</value></data>
+  <data name="LyricsSearch_ArtistBox.PlaceholderText" xml:space="preserve"><value>Artist</value></data>
+  <data name="LyricsSearch_AlbumBox.Header" xml:space="preserve"><value>Album (Search by album alone without title/artist)</value></data>
+  <data name="LyricsSearch_AlbumBox.PlaceholderText" xml:space="preserve"><value>Album</value></data>
+  <data name="LyricsSearch_SearchButton.Content" xml:space="preserve"><value>Search</value></data>
+  <data name="LyricsSearch_PreviewHeader.Text" xml:space="preserve"><value>Preview (Select to load)</value></data>
+  <data name="LyricsSearch_PreviewText.Text" xml:space="preserve"><value>Select a search result from the left.</value></data>
+  <data name="LyricsSearch_PreviewPlaceholder" xml:space="preserve"><value>Select a search result from the left.</value></data>
+  <data name="LyricsSearch_ApplyButton.Content" xml:space="preserve"><value>Apply to Current Track</value></data>
+  <data name="LyricsSearch_SaveButton.Content" xml:space="preserve"><value>Save to File</value></data>
+  <data name="LyricsSearch_SaveButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Save to configured destination folder using file naming template</value></data>
+  <data name="LyricsSearch_NoTitle" xml:space="preserve"><value>(Untitled)</value></data>
+  <data name="LyricsSearch_Sync_Synced" xml:space="preserve"><value>Synced</value></data>
+  <data name="LyricsSearch_Sync_Unsynced" xml:space="preserve"><value>Unsynced</value></data>
+  <data name="LyricsSearch_NoPluginsFound" xml:space="preserve"><value>No lyrics plugins installed.&#x0a;Create a subfolder per plugin in the plugins directory ({0}), place DLL files there, and click 'Rescan'.&#x0a;See docs/plugin-development.md for plugin development instructions.</value></data>
+  <data name="LyricsSearch_SearchQueryEmpty" xml:space="preserve"><value>Please enter at least one of Title, Artist, or Album.</value></data>
+  <data name="LyricsSearch_Searching" xml:space="preserve"><value>Searching...</value></data>
+  <data name="LyricsSearch_ResultsWithFailures" xml:space="preserve"><value>{0} results · {1} plugins failed</value></data>
+  <data name="LyricsSearch_ResultsCount" xml:space="preserve"><value>{0} results</value></data>
+  <data name="LyricsSearch_NoResultsWithErrors" xml:space="preserve"><value>No results · {0}</value></data>
+  <data name="LyricsSearch_NoResults" xml:space="preserve"><value>No results found. Try a different search term.</value></data>
+  <data name="LyricsSearch_SearchFailed" xml:space="preserve"><value>Search failed: {0}</value></data>
+  <data name="LyricsSearch_LoadingPreview" xml:space="preserve"><value>Loading...</value></data>
+  <data name="LyricsSearch_FetchFailedResult" xml:space="preserve"><value>Could not fetch this result.</value></data>
+  <data name="LyricsSearch_FetchError" xml:space="preserve"><value>Fetch failed: {0}</value></data>
+  <data name="LyricsSearch_ApplyFailed_NoLyrics" xml:space="preserve"><value>Could not apply lyrics because they could not be fetched.</value></data>
+  <data name="LyricsSearch_ApplySuccess" xml:space="preserve"><value>Applied '{0}' lyrics.</value></data>
+  <data name="LyricsSearch_SaveFailed_NoLyrics" xml:space="preserve"><value>Could not save lyrics because they could not be fetched.</value></data>
+  <data name="LyricsSearch_SaveResult_Saved" xml:space="preserve"><value>Saved: {0}</value></data>
+  <data name="LyricsSearch_SaveResult_Skipped" xml:space="preserve"><value>Skipped because file already exists: {0}</value></data>
+  <data name="LyricsSearch_SaveResult_Failed" xml:space="preserve"><value>Failed to save.</value></data>
+
+  <!-- Module 6: Core System, Alerts, Dialogs & Messages -->
+  <!-- Common Dialog & Button Actions -->
+  <data name="Common_OK" xml:space="preserve"><value>OK</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Common_Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Common_Create" xml:space="preserve"><value>Create</value></data>
+  <data name="Common_Change" xml:space="preserve"><value>Change</value></data>
+  <data name="Common_Reset" xml:space="preserve"><value>Reset</value></data>
+  <data name="Common_Overwrite" xml:space="preserve"><value>Overwrite</value></data>
+
+  <!-- System & App Error Messages -->
+  <data name="Msg_UnhandledException" xml:space="preserve"><value>An unexpected error occurred: {0}&#x0a;Please check the log for details.</value></data>
+  <data name="Msg_StartupFatalError" xml:space="preserve"><value>Unable to start Dawn Player.&#x0a;&#x0a;{0}&#x0a;&#x0a;Details: {1}</value></data>
+  <data name="Msg_DbRecoveryMessage" xml:space="preserve"><value>Could not open the library database, so a new one was created. Please rescan in Settings.</value></data>
+  <data name="Msg_LanguageChangedTitle" xml:space="preserve"><value>Language Changed</value></data>
+  <data name="Msg_LanguageChangedMessage" xml:space="preserve"><value>The app must restart to apply the language change. Restart now?</value></data>
+  <data name="Msg_LanguageChangedRestart" xml:space="preserve"><value>Restart Now</value></data>
+  <data name="Msg_LanguageChangedLater" xml:space="preserve"><value>Later</value></data>
+  <data name="Msg_LibraryScanFailed" xml:space="preserve"><value>Library scan failed: {0}</value></data>
+
+  <!-- Window & Drag-Drop Messages -->
+  <data name="Msg_DragDrop_AddToPlaylist" xml:space="preserve"><value>Add to playlist</value></data>
+  <data name="Msg_PlaylistImported" xml:space="preserve"><value>Imported playlist '{0}' ({1} tracks).</value></data>
+  <data name="Msg_TracksAddedToPlaylist" xml:space="preserve"><value>Added {0} tracks to '{1}'.</value></data>
+  <data name="Msg_DropFailed" xml:space="preserve"><value>Drop operation failed: {0}</value></data>
+  <data name="Msg_PreferencesWithChord" xml:space="preserve"><value>Preferences ({0})</value></data>
+
+  <!-- Dialogs & Settings Notices -->
+  <data name="Msg_PlaylistName" xml:space="preserve"><value>Playlist Name</value></data>
+  <data name="Msg_RenamePlaylistTitle" xml:space="preserve"><value>Rename Playlist</value></data>
+  <data name="Msg_M3U8FileType" xml:space="preserve"><value>M3U8 Playlist</value></data>
+  <data name="Msg_SaveFailed" xml:space="preserve"><value>Save failed: {0}</value></data>
+  <data name="Msg_ShortcutInvalidTitle" xml:space="preserve"><value>Invalid Key</value></data>
+  <data name="Msg_ShortcutInvalidMessage" xml:space="preserve"><value>This key combination cannot be used as a shortcut.</value></data>
+  <data name="Msg_ShortcutConflictTitle" xml:space="preserve"><value>Shortcut Conflict</value></data>
+  <data name="Msg_ShortcutConflictMessage" xml:space="preserve"><value>'{0}' is already assigned to '{1}'. Overwriting will unassign it from that command.</value></data>
+  <data name="Msg_ShortcutResetAllTitle" xml:space="preserve"><value>Reset All Shortcuts</value></data>
+  <data name="Msg_ShortcutResetAllMessage" xml:space="preserve"><value>All shortcuts will be reset to defaults. Custom key assignments will be lost.</value></data>
+  <data name="Msg_ShortcutCaptureTitle" xml:space="preserve"><value>Assign Shortcut — {0}</value></data>
+  <data name="Msg_ShortcutCaptureHint" xml:space="preserve"><value>Press Esc to cancel. Certain keys like Tab, Esc, and Backspace cannot be used as shortcuts.</value></data>
+  <data name="Msg_ShortcutCaptureInstruction" xml:space="preserve"><value>Press the new key combination.</value></data>
+  <data name="Msg_ShortcutDisallowedKey" xml:space="preserve"><value>This key cannot be used as a shortcut. Please press a different key.</value></data>
+  <data name="Msg_EqNewProfileTitle" xml:space="preserve"><value>New EQ Profile</value></data>
+  <data name="Msg_EqProfilePlaceholder" xml:space="preserve"><value>Enter profile name (e.g. Vocal Boost, Headphones)</value></data>
+  <data name="Msg_EqProfileDefaultName" xml:space="preserve"><value>Profile {0}</value></data>
+  <data name="Msg_EqRenameProfileTitle" xml:space="preserve"><value>Rename Profile</value></data>
+  <data name="Msg_EqDeleteProfileTitle" xml:space="preserve"><value>Delete Profile</value></data>
+  <data name="Msg_EqDeleteProfileMessage" xml:space="preserve"><value>Are you sure you want to delete the '{0}' profile?&#x0a;Devices bound to this profile will switch to the default profile.</value></data>
+
+  <!-- Audio Settings & Time Formats -->
+  <data name="Audio_ExclusiveAllowed" xml:space="preserve"><value>Allowed</value></data>
+  <data name="Audio_ExclusiveDisabled" xml:space="preserve"><value>Disabled (Exclusive unavailable)</value></data>
+  <data name="Audio_PriorityAllowed" xml:space="preserve"><value>Allowed (Auto-acquire priority)</value></data>
+  <data name="Audio_PriorityDisabled" xml:space="preserve"><value>Disabled (Fails if other apps run)</value></data>
+  <data name="Audio_ExclusiveStatusFormat" xml:space="preserve"><value>Exclusive Mode: {0}  |  Priority: {1}</value></data>
+  <data name="Audio_ExclusiveDetailsFormat" xml:space="preserve"><value>Allow Exclusive: {0}, Priority: {1}</value></data>
+  <data name="Audio_DeviceStatusUnknown" xml:space="preserve"><value>Cannot check device status.</value></data>
+  <data name="Audio_DeviceOpenFailed" xml:space="preserve"><value>Cannot open device or WASAPI endpoint not found.</value></data>
+  <data name="Time_ZeroSeconds" xml:space="preserve"><value>0s</value></data>
+  <data name="Time_HoursMinutesFormat" xml:space="preserve"><value>{0}h {1}m</value></data>
+  <data name="Time_MinutesFormat" xml:space="preserve"><value>{0}m</value></data>
+  <data name="Eq_DefaultProfileName" xml:space="preserve"><value>New Profile</value></data>
+  <data name="Settings_Eq_BandFormat" xml:space="preserve"><value>Band {0}</value></data>
+
+  <!-- Additional Alerts, Warnings & Toasts -->
+  <data name="Msg_SystemPlaylistRenameNotAllowed" xml:space="preserve"><value>The system playlist (Now Playing) cannot be renamed.</value></data>
+  <data name="Msg_ClearedNowPlayingQueue" xml:space="preserve"><value>Cleared all tracks from the playback queue (Now Playing).</value></data>
+  <data name="Msg_PlaylistClearQueue" xml:space="preserve"><value>Clear Queue</value></data>
+  <data name="Msg_PlaylistClearPlaylist" xml:space="preserve"><value>Clear Playlist</value></data>
+  <data name="Msg_ImportFailed" xml:space="preserve"><value>Import failed: {0}</value></data>
+  <data name="Msg_RemovedMissingFiles" xml:space="preserve"><value>Removed {0} missing tracks from the playlist.</value></data>
+  <data name="Msg_NoMissingFiles" xml:space="preserve"><value>No missing files to remove.</value></data>
+  <data name="Msg_AddedTracksToCurrentPlaylist" xml:space="preserve"><value>Added {0} tracks to current playlist.</value></data>
+  <data name="Msg_AddedTracksToQueue" xml:space="preserve"><value>Added {0} tracks to queue.</value></data>
+  <data name="Msg_AddedTracksToNamedPlaylist" xml:space="preserve"><value>Added {1} tracks to '{0}'.</value></data>
+  <data name="Msg_CreateNewPlaylistAndAdd" xml:space="preserve"><value>Create New Playlist &amp; Add...</value></data>
+  <data name="Msg_SavedQueueToPlaylist" xml:space="preserve"><value>Saved queue ({0} tracks) to '{1}'.</value></data>
+  <data name="Msg_DefaultSavedQueueName" xml:space="preserve"><value>Saved Queue</value></data>
+  <data name="Msg_NoTrackPlayingWarning" xml:space="preserve"><value>No track currently playing.</value></data>
+  <data name="Msg_VolumeDisabledInExclusive" xml:space="preserve"><value>Volume control is disabled in WASAPI Exclusive mode</value></data>
+  <data name="Msg_LibraryEmptyStatus" xml:space="preserve"><value>No tracks — Add a music folder in Settings and scan.</value></data>
+  <data name="Msg_LibraryStatusBarFormat" xml:space="preserve"><value>{0} • {1}, {2:N0} tracks, {3:N0} albums</value></data>
+
+  <!-- Module 5: Settings & Preferences -->
+  <!-- Navigation & Header -->
+  <data name="Settings_BackButton.AutomationProperties.Name" xml:space="preserve"><value>Back</value></data>
+  <data name="Settings_BackButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Back</value></data>
+  <data name="Settings_Header_Title.Text" xml:space="preserve"><value>Preferences</value></data>
+  <data name="Settings_Nav_Audio.Text" xml:space="preserve"><value>Audio Output</value></data>
+  <data name="Settings_Nav_Equalizer.Text" xml:space="preserve"><value>Equalizer (EQ)</value></data>
+  <data name="Settings_Nav_Playback.Text" xml:space="preserve"><value>Playback &amp; Normalizer</value></data>
+  <data name="Settings_Nav_Library.Text" xml:space="preserve"><value>Music Library</value></data>
+  <data name="Settings_Nav_Lyrics.Text" xml:space="preserve"><value>Lyrics &amp; Typography</value></data>
+  <data name="Settings_Nav_OnlineLyrics.Text" xml:space="preserve"><value>Online Lyrics (Plugins)</value></data>
+  <data name="Settings_Nav_Appearance.Text" xml:space="preserve"><value>Appearance &amp; Theme</value></data>
+  <data name="Settings_Nav_Layout.Text" xml:space="preserve"><value>Layout &amp; Display</value></data>
+  <data name="Settings_Nav_Shortcuts.Text" xml:space="preserve"><value>Shortcuts</value></data>
+  <data name="Settings_Nav_About.Text" xml:space="preserve"><value>About</value></data>
+
+  <!-- Audio Output -->
+  <data name="Settings_Audio_Header.Text" xml:space="preserve"><value>Audio Output</value></data>
+  <data name="Settings_Audio_Driver_Title.Text" xml:space="preserve"><value>Audio Output Driver</value></data>
+  <data name="Settings_Audio_Driver_Desc.Text" xml:space="preserve"><value>Choose between WASAPI (bit-perfect), DirectSound, or WaveOut</value></data>
+  <data name="Settings_Audio_Driver_Wasapi.Content" xml:space="preserve"><value>WASAPI (Recommended)</value></data>
+  <data name="Settings_Audio_Driver_DirectSound.Content" xml:space="preserve"><value>Windows Audio (DirectSound)</value></data>
+  <data name="Settings_Audio_Driver_WaveOut.Content" xml:space="preserve"><value>WaveOut</value></data>
+  <data name="Settings_Audio_Device_Title.Text" xml:space="preserve"><value>Output Device</value></data>
+  <data name="Settings_Audio_RefreshDevices.AutomationProperties.Name" xml:space="preserve"><value>Refresh device list</value></data>
+  <data name="Settings_Audio_RefreshDevices.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Refresh device list</value></data>
+  <data name="Settings_Audio_Exclusive_Title.Text" xml:space="preserve"><value>WASAPI Exclusive Mode</value></data>
+  <data name="Settings_Audio_Exclusive_Desc.Text" xml:space="preserve"><value>Blocks audio from other apps and outputs bit-perfect stream. Automatically falls back to shared mode if format is unsupported.</value></data>
+  <data name="Settings_Audio_Exclusive_Toggle.OnContent" xml:space="preserve"><value>Exclusive</value></data>
+  <data name="Settings_Audio_Exclusive_Toggle.OffContent" xml:space="preserve"><value>Shared</value></data>
+  <data name="Settings_Audio_WinExclusive_Title.Text" xml:space="preserve"><value>Windows Exclusive Control / Priority Settings</value></data>
+  <data name="Settings_Audio_OpenSoundPanel_Button.Content" xml:space="preserve"><value>Open Windows Sound Control Panel</value></data>
+  <data name="Settings_Audio_BitDepth_Title.Text" xml:space="preserve"><value>Exclusive Mode Bit Depth</value></data>
+  <data name="Settings_Audio_BitDepth_Desc.Text" xml:space="preserve"><value>Source: Match file bit depth (16/24/32-bit)</value></data>
+  <data name="Settings_Audio_BitDepth_Source.Content" xml:space="preserve"><value>Follow Source</value></data>
+  <data name="Settings_Audio_BitDepth_16.Content" xml:space="preserve"><value>16-bit</value></data>
+  <data name="Settings_Audio_BitDepth_24.Content" xml:space="preserve"><value>24-bit</value></data>
+  <data name="Settings_Audio_BitDepth_32.Content" xml:space="preserve"><value>32-bit</value></data>
+  <data name="Settings_Audio_AllowVolume_Title.Text" xml:space="preserve"><value>Allow Volume / ReplayGain in Exclusive Mode</value></data>
+  <data name="Settings_Audio_AllowVolume_Desc.Text" xml:space="preserve"><value>Disabling maintains strict bit-perfect playback (fixed at 100% volume).</value></data>
+  <data name="Settings_Audio_Latency_Title.Text" xml:space="preserve"><value>Output Buffer Latency</value></data>
+  <data name="Settings_Audio_Latency_Desc.Text" xml:space="preserve"><value>Lower values reduce latency, while higher values prevent audio stuttering and improve stability.</value></data>
+  <data name="Settings_Audio_Status_Checking" xml:space="preserve"><value>Checking...</value></data>
+  <data name="Settings_Audio_DriverDesc_DirectSound" xml:space="preserve"><value>Windows Audio (DirectSound) devices (via Windows Mixer / Bluetooth / Headphone compatible)</value></data>
+  <data name="Settings_Audio_DriverDesc_WaveOut" xml:space="preserve"><value>Windows WaveOut legacy devices</value></data>
+  <data name="Settings_Audio_DriverDesc_Wasapi" xml:space="preserve"><value>WASAPI endpoint devices (Bit-Perfect supported)</value></data>
+  <data name="Settings_Audio_Status_WasapiOnly" xml:space="preserve"><value>Exclusive control status is only checked for WASAPI driver.</value></data>
+  <data name="Settings_Audio_Status_ReadError" xml:space="preserve"><value>Error reading device list.</value></data>
+  <data name="Settings_Audio_Status_Unknown" xml:space="preserve"><value>Unable to verify exclusive mode status.</value></data>
+
+  <!-- Equalizer -->
+  <data name="Settings_Eq_Header.Text" xml:space="preserve"><value>Parametric Equalizer</value></data>
+  <data name="Settings_Eq_Master_Title.Text" xml:space="preserve"><value>Enable Equalizer (Master Enable)</value></data>
+  <data name="Settings_Eq_Master_Desc.Text" xml:space="preserve"><value>Toggle equalizer processing globally. When disabled, audio bypasses DSP for bit-perfect output on all devices.</value></data>
+  <data name="Settings_Eq_Master_Toggle.OnContent" xml:space="preserve"><value>On</value></data>
+  <data name="Settings_Eq_Master_Toggle.OffContent" xml:space="preserve"><value>Off</value></data>
+  <data name="Settings_Eq_Profile_Title.Text" xml:space="preserve"><value>Select Profile to Edit</value></data>
+  <data name="Settings_Eq_Profile_Desc.Text" xml:space="preserve"><value>Edit profile parameters in real time, create new profiles, or manage existing ones.</value></data>
+  <data name="Settings_Eq_NewProfile_Button.Content" xml:space="preserve"><value>New Profile</value></data>
+  <data name="Settings_Eq_NewProfile_Button.AutomationProperties.Name" xml:space="preserve"><value>Add new EQ profile</value></data>
+  <data name="Settings_Eq_NewProfile_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Add new EQ profile</value></data>
+  <data name="Settings_Eq_DuplicateProfile_Button.Content" xml:space="preserve"><value>Duplicate</value></data>
+  <data name="Settings_Eq_DuplicateProfile_Button.AutomationProperties.Name" xml:space="preserve"><value>Duplicate current profile</value></data>
+  <data name="Settings_Eq_DuplicateProfile_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Duplicate current profile</value></data>
+  <data name="Settings_Eq_RenameProfile_Button.Content" xml:space="preserve"><value>Rename</value></data>
+  <data name="Settings_Eq_RenameProfile_Button.AutomationProperties.Name" xml:space="preserve"><value>Rename profile</value></data>
+  <data name="Settings_Eq_RenameProfile_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Rename profile</value></data>
+  <data name="Settings_Eq_DeleteProfile_Button.Content" xml:space="preserve"><value>Delete</value></data>
+  <data name="Settings_Eq_DeleteProfile_Button.AutomationProperties.Name" xml:space="preserve"><value>Delete current profile</value></data>
+  <data name="Settings_Eq_DeleteProfile_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Delete current profile</value></data>
+  <data name="Settings_Eq_Preamp_Title.Text" xml:space="preserve"><value>Preamp</value></data>
+  <data name="Settings_Eq_Preamp_Desc.Text" xml:space="preserve"><value>Adjust overall level to prevent digital clipping when boosting EQ bands (-12.0 to +12.0 dB).</value></data>
+  <data name="Settings_Eq_Visualizer_Title.Text" xml:space="preserve"><value>Frequency Response Curve</value></data>
+  <data name="Settings_Eq_Visualizer_Desc.Text" xml:space="preserve"><value>Combined frequency transfer characteristics of current profile (20Hz to 20kHz, ±18dB)</value></data>
+  <data name="Settings_Eq_Bands_Title.Text" xml:space="preserve"><value>Parametric Filter Bands</value></data>
+  <data name="Settings_Eq_Bands_Desc.Text" xml:space="preserve"><value>Add up to 20 filter bands to precisely adjust Frequency (20Hz-20kHz), Gain (±15dB), and Q factor (0.1-8.0).</value></data>
+  <data name="Settings_Eq_AddBand_Button.Content" xml:space="preserve"><value>+ Add Band</value></data>
+  <data name="Settings_Eq_Bands_Empty.Text" xml:space="preserve"><value>No filter bands configured. Click '+ Add Band' to add one.</value></data>
+  <data name="Settings_Eq_Band_Peak.Content" xml:space="preserve"><value>Peaking</value></data>
+  <data name="Settings_Eq_Band_LowShelf.Content" xml:space="preserve"><value>Low Shelf</value></data>
+  <data name="Settings_Eq_Band_HighShelf.Content" xml:space="preserve"><value>High Shelf</value></data>
+  <data name="Settings_Eq_Band_LowPass.Content" xml:space="preserve"><value>Low Pass</value></data>
+  <data name="Settings_Eq_Band_HighPass.Content" xml:space="preserve"><value>High Pass</value></data>
+  <data name="Settings_Eq_DeleteBand_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Delete band</value></data>
+  <data name="Settings_Eq_DeleteBand_Button.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Delete band</value></data>
+  <data name="Settings_Eq_Band_Freq_Label.Text" xml:space="preserve"><value>Frequency</value></data>
+  <data name="Settings_Eq_Band_Gain_Label.Text" xml:space="preserve"><value>Gain</value></data>
+  <data name="Settings_Eq_Band_Q_Label.Text" xml:space="preserve"><value>Q Factor</value></data>
+  <data name="Settings_Eq_TargetDevice_Title.Text" xml:space="preserve"><value>Target Audio Output Device</value></data>
+  <data name="Settings_Eq_TargetDevice_Desc.Text" xml:space="preserve"><value>Assign specific EQ profiles to devices or configure them to follow the default profile.</value></data>
+  <data name="Settings_Eq_RefreshDevices.AutomationProperties.Name" xml:space="preserve"><value>Refresh device list</value></data>
+  <data name="Settings_Eq_RefreshDevices.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Refresh device list</value></data>
+  <data name="Settings_Eq_BoundProfile_Title.Text" xml:space="preserve"><value>Profile Bound to Device</value></data>
+  <data name="Settings_Eq_ExclusiveWarning.Text" xml:space="preserve"><value>Equalizer is active in WASAPI Exclusive mode (Output is not bit-perfect due to DSP processing).</value></data>
+  <data name="Settings_Eq_Device_SystemDefaultSuffix" xml:space="preserve"><value> (System Default)</value></data>
+  <data name="Settings_Eq_FollowDefaultProfileFormat" xml:space="preserve"><value>Follow Default Profile ({0})</value></data>
+  <data name="Settings_Eq_DeviceBoundFormat" xml:space="preserve"><value>This device is bound to the '{0}' profile.</value></data>
+  <data name="Settings_Eq_UsingDefaultProfileFormat" xml:space="preserve"><value>Using default profile ('{0}').</value></data>
+  <data name="Settings_Eq_DefaultProfileFallback" xml:space="preserve"><value>Default</value></data>
+  <data name="Settings_Eq_DedicatedProfileFallback" xml:space="preserve"><value>Dedicated</value></data>
+  <data name="Settings_Eq_DefaultProfileNameFormat" xml:space="preserve"><value>Profile {0}</value></data>
+  <data name="Settings_Eq_DuplicateProfileFormat" xml:space="preserve"><value>{0} (Copy)</value></data>
+
+  <!-- Playback & Normalizer -->
+  <data name="Settings_Playback_Header.Text" xml:space="preserve"><value>Playback &amp; Volume Normalizer</value></data>
+  <data name="Settings_Playback_Normalizer_Title.Text" xml:space="preserve"><value>Automatic Volume Normalizer (AGC)</value></data>
+  <data name="Settings_Playback_Normalizer_Desc.Text" xml:space="preserve"><value>Automatically levels varying recording/mastering volumes across tracks to a consistent target level in real time.</value></data>
+  <data name="Settings_Playback_Normalizer_Toggle.OnContent" xml:space="preserve"><value>On</value></data>
+  <data name="Settings_Playback_Normalizer_Toggle.OffContent" xml:space="preserve"><value>Off</value></data>
+  <data name="Settings_Playback_NormMode_Title.Text" xml:space="preserve"><value>Normalization Mode</value></data>
+  <data name="Settings_Playback_NormMode_Desc.Text" xml:space="preserve"><value>Hybrid (Tag first + Real-time fallback), Real-time (Always dynamic), ReplayGain (Tag only)</value></data>
+  <data name="Settings_Playback_NormMode_Hybrid.Content" xml:space="preserve"><value>Hybrid</value></data>
+  <data name="Settings_Playback_NormMode_Dynamic.Content" xml:space="preserve"><value>Real-time (Dynamic)</value></data>
+  <data name="Settings_Playback_NormMode_ReplayGain.Content" xml:space="preserve"><value>ReplayGain</value></data>
+  <data name="Settings_Playback_TargetLevel_Title.Text" xml:space="preserve"><value>Target Volume Level</value></data>
+  <data name="Settings_Playback_TargetLevel_Desc.Text" xml:space="preserve"><value>Normalization target output level (-24.0 to -6.0 dBFS, default -12.0 dBFS)</value></data>
+  <data name="Settings_Playback_MaxBoost_Title.Text" xml:space="preserve"><value>Max Boost Limit</value></data>
+  <data name="Settings_Playback_MaxBoost_Desc.Text" xml:space="preserve"><value>Prevents excessive noise amplification during quiet tracks or intro/outro passages (0.0 to +18.0 dB)</value></data>
+  <data name="Settings_Playback_Speed_Title.Text" xml:space="preserve"><value>Response Speed</value></data>
+  <data name="Settings_Playback_Speed_Desc.Text" xml:space="preserve"><value>Gain adjustment smoothing rate (Fast 200ms, Balanced 600ms, Smooth 1500ms)</value></data>
+  <data name="Settings_Playback_Speed_Fast.Content" xml:space="preserve"><value>Fast</value></data>
+  <data name="Settings_Playback_Speed_Balanced.Content" xml:space="preserve"><value>Balanced</value></data>
+  <data name="Settings_Playback_Speed_Smooth.Content" xml:space="preserve"><value>Smooth</value></data>
+  <data name="Settings_Playback_ReplayGain_Title.Text" xml:space="preserve"><value>ReplayGain Mode</value></data>
+  <data name="Settings_Playback_ReplayGain_Desc.Text" xml:space="preserve"><value>Adjusts volume based on track or album gain metadata in tags.</value></data>
+  <data name="Settings_Playback_ReplayGain_Off.Content" xml:space="preserve"><value>Off</value></data>
+  <data name="Settings_Playback_ReplayGain_Track.Content" xml:space="preserve"><value>Track</value></data>
+  <data name="Settings_Playback_ReplayGain_Album.Content" xml:space="preserve"><value>Album</value></data>
+  <data name="Settings_Playback_RgPreamp_Title.Text" xml:space="preserve"><value>ReplayGain Preamp</value></data>
+  <data name="Settings_Playback_RgPreamp_Desc.Text" xml:space="preserve"><value>Fine-tunes baseline volume within -12.0 to +12.0 dB.</value></data>
+  <data name="Settings_Playback_PreventClipping_Title.Text" xml:space="preserve"><value>Prevent Clipping</value></data>
+  <data name="Settings_Playback_PreventClipping_Desc.Text" xml:space="preserve"><value>Automatically attenuates gain to prevent digital distortion exceeding peak levels during amplification.</value></data>
+
+  <!-- Library -->
+  <data name="Settings_Library_Header.Text" xml:space="preserve"><value>Music Library</value></data>
+  <data name="Settings_Library_Folders_Title.Text" xml:space="preserve"><value>Monitored Folders</value></data>
+  <data name="Settings_Library_Folders_Desc.Text" xml:space="preserve"><value>Specify local and network music folders to index into your library.</value></data>
+  <data name="Settings_Library_AddFolder_Button.Content" xml:space="preserve"><value>Add Folder</value></data>
+  <data name="Settings_Library_RemoveFolder_Button.Content" xml:space="preserve"><value>Remove</value></data>
+  <data name="Settings_Library_ScanNow_Button.Content" xml:space="preserve"><value>Scan Now</value></data>
+  <data name="Settings_Library_StartupScan_Title.Text" xml:space="preserve"><value>Scan on Startup</value></data>
+  <data name="Settings_Library_StartupScan_Desc.Text" xml:space="preserve"><value>Automatically indexes new or modified tracks in monitored folders when Dawn Player launches.</value></data>
+
+  <!-- Lyrics & Typography -->
+  <data name="Settings_Lyrics_Header.Text" xml:space="preserve"><value>Lyrics &amp; Typography</value></data>
+  <data name="Settings_Lyrics_Font_Title.Text" xml:space="preserve"><value>Lyrics Font Family</value></data>
+  <data name="Settings_Lyrics_Font_Desc.Text" xml:space="preserve"><value>Font family applied to the lyrics panel and editor</value></data>
+  <data name="Settings_Lyrics_Font_Custom.Content" xml:space="preserve"><value>Custom Font Input...</value></data>
+  <data name="Settings_Lyrics_CustomFont_Box.PlaceholderText" xml:space="preserve"><value>Font family name (e.g. Pretendard, Arial)</value></data>
+  <data name="Settings_Lyrics_FontSize_Title.Text" xml:space="preserve"><value>Base Lyrics Font Size</value></data>
+  <data name="Settings_Lyrics_FontSize_Desc.Text" xml:space="preserve"><value>Default font size for standard lyrics lines (10 to 24px)</value></data>
+  <data name="Settings_Lyrics_ActiveFontSize_Title.Text" xml:space="preserve"><value>Active Lyrics Font Size</value></data>
+  <data name="Settings_Lyrics_ActiveFontSize_Desc.Text" xml:space="preserve"><value>Font size for currently playing active lyrics line (12 to 32px)</value></data>
+  <data name="Settings_Lyrics_CharSpacing_Title.Text" xml:space="preserve"><value>Character Spacing</value></data>
+  <data name="Settings_Lyrics_CharSpacing_Desc.Text" xml:space="preserve"><value>Spacing between characters (-50 tight to +200 wide)</value></data>
+  <data name="Settings_Lyrics_LineHeight_Title.Text" xml:space="preserve"><value>Line Height</value></data>
+  <data name="Settings_Lyrics_LineHeight_Desc.Text" xml:space="preserve"><value>Vertical line height and row spacing (18 to 48px)</value></data>
+  <data name="Settings_Lyrics_Alignment_Title.Text" xml:space="preserve"><value>Text Alignment</value></data>
+  <data name="Settings_Lyrics_Alignment_Desc.Text" xml:space="preserve"><value>Horizontal text alignment for lyrics</value></data>
+  <data name="Settings_Lyrics_Align_Center.Content" xml:space="preserve"><value>Center</value></data>
+  <data name="Settings_Lyrics_Align_Left.Content" xml:space="preserve"><value>Left</value></data>
+  <data name="Settings_Lyrics_Align_Right.Content" xml:space="preserve"><value>Right</value></data>
+  <data name="Settings_Lyrics_FocusDimming_Title.Text" xml:space="preserve"><value>Focus Dimming Effect</value></data>
+  <data name="Settings_Lyrics_FocusDimming_Desc.Text" xml:space="preserve"><value>Highlights active lyrics line while gently dimming previous/next lines (40% opacity).</value></data>
+  <data name="Settings_Lyrics_Embedded_Title.Text" xml:space="preserve"><value>Read Embedded Lyrics</value></data>
+  <data name="Settings_Lyrics_Embedded_Desc.Text" xml:space="preserve"><value>Automatically reads lyrics stored in MP3(ID3v2), FLAC, and M4A tags when no external .lrc file exists.</value></data>
+  <data name="Settings_Lyrics_Preview_Header.Text" xml:space="preserve"><value>Live Preview</value></data>
+  <data name="Settings_Lyrics_Preview_Line1.Text" xml:space="preserve"><value>Like starlight adorning the dark night sky</value></data>
+  <data name="Settings_Lyrics_Preview_Line2.Text" xml:space="preserve"><value>Music awakening the dawn is playing</value></data>
+  <data name="Settings_Lyrics_Preview_Line3.Text" xml:space="preserve"><value>A melody echoing deep within the soul</value></data>
+  <data name="Settings_Lyrics_LrcPattern_Title.Text" xml:space="preserve"><value>.lrc File Search Patterns</value></data>
+  <data name="Settings_Lyrics_LrcPattern_Desc.Text" xml:space="preserve"><value>Specify filename patterns (one per line) to locate local .lrc files. Searched from top to bottom.</value></data>
+  <data name="Settings_Lyrics_LrcPattern_Tokens.Text" xml:space="preserve"><value>Replacement tokens: %filename%, %artist%, %title%, %album%</value></data>
+  <data name="Settings_Lyrics_ResetLrc_Button.AutomationProperties.Name" xml:space="preserve"><value>Reset to default patterns</value></data>
+  <data name="Settings_Lyrics_ResetLrc_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Reset to default patterns</value></data>
+  <data name="Settings_Lyrics_ResetLrc_Text.Text" xml:space="preserve"><value>Reset Defaults</value></data>
+
+  <!-- Online Lyrics -->
+  <data name="Settings_OnlineLyrics_Header.Text" xml:space="preserve"><value>Online Lyrics</value></data>
+  <data name="Settings_OnlineLyrics_Enable_Title.Text" xml:space="preserve"><value>Enable Online Lyrics</value></data>
+  <data name="Settings_OnlineLyrics_Enable_Desc.Text" xml:space="preserve"><value>Search via plugins when offline lyrics (.lrc / embedded) are missing</value></data>
+  <data name="Settings_OnlineLyrics_Enable_Toggle.OnContent" xml:space="preserve"><value>Enabled</value></data>
+  <data name="Settings_OnlineLyrics_Enable_Toggle.OffContent" xml:space="preserve"><value>Disabled</value></data>
+  <data name="Settings_OnlineLyrics_AutoFetch_Title.Text" xml:space="preserve"><value>Auto-fetch on Playback</value></data>
+  <data name="Settings_OnlineLyrics_AutoFetch_Desc.Text" xml:space="preserve"><value>Automatically searches and displays lyrics according to plugin priority when track changes</value></data>
+  <data name="Settings_OnlineLyrics_AutoFetch_Toggle.OnContent" xml:space="preserve"><value>On</value></data>
+  <data name="Settings_OnlineLyrics_AutoFetch_Toggle.OffContent" xml:space="preserve"><value>Off</value></data>
+  <data name="Settings_OnlineLyrics_PreferSynced_Title.Text" xml:space="preserve"><value>Prefer Synced Lyrics</value></data>
+  <data name="Settings_OnlineLyrics_PreferSynced_Desc.Text" xml:space="preserve"><value>Prioritizes time-synced (LRC) lyrics when both synced and plain lyrics are found</value></data>
+  <data name="Settings_OnlineLyrics_PreferSynced_Toggle.OnContent" xml:space="preserve"><value>Prefer</value></data>
+  <data name="Settings_OnlineLyrics_PreferSynced_Toggle.OffContent" xml:space="preserve"><value>No preference</value></data>
+  <data name="Settings_OnlineLyrics_Plugins_Title.Text" xml:space="preserve"><value>Lyrics Plugins</value></data>
+  <data name="Settings_OnlineLyrics_Rescan_Button.AutomationProperties.Name" xml:space="preserve"><value>Rescan plugin folder</value></data>
+  <data name="Settings_OnlineLyrics_Rescan_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Rescan plugin folder</value></data>
+  <data name="Settings_OnlineLyrics_Rescan_Text.Text" xml:space="preserve"><value>Rescan</value></data>
+  <data name="Settings_OnlineLyrics_OpenFolder_Button.AutomationProperties.Name" xml:space="preserve"><value>Open plugin folder in Explorer</value></data>
+  <data name="Settings_OnlineLyrics_OpenFolder_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Open plugin folder in Explorer</value></data>
+  <data name="Settings_OnlineLyrics_OpenFolder_Text.Text" xml:space="preserve"><value>Open Folder</value></data>
+  <data name="Settings_OnlineLyrics_Plugin_Notice.Text" xml:space="preserve"><value>Place DLLs in plugin subfolders for automatic detection. List order determines search priority.</value></data>
+  <data name="Settings_OnlineLyrics_Plugin_Empty.Text" xml:space="preserve"><value>No plugins installed. Place plugins in the folder and click 'Rescan'. See docs/plugin-development.md for development details.</value></data>
+  <data name="Settings_OnlineLyrics_MoveUp.AutomationProperties.Name" xml:space="preserve"><value>Increase priority</value></data>
+  <data name="Settings_OnlineLyrics_MoveUp.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Increase priority</value></data>
+  <data name="Settings_OnlineLyrics_MoveDown.AutomationProperties.Name" xml:space="preserve"><value>Decrease priority</value></data>
+  <data name="Settings_OnlineLyrics_MoveDown.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Decrease priority</value></data>
+  <data name="Settings_OnlineLyrics_Plugin_Toggle.OnContent" xml:space="preserve"><value>Enabled</value></data>
+  <data name="Settings_OnlineLyrics_Plugin_Toggle.OffContent" xml:space="preserve"><value>Disabled</value></data>
+  <data name="Settings_OnlineLyrics_AutoSave_Title.Text" xml:space="preserve"><value>Auto-save Lyrics</value></data>
+  <data name="Settings_OnlineLyrics_AutoSave_Desc.Text" xml:space="preserve"><value>Automatically save fetched online lyrics to the location and template below</value></data>
+  <data name="Settings_OnlineLyrics_AutoSave_Toggle.OnContent" xml:space="preserve"><value>Save</value></data>
+  <data name="Settings_OnlineLyrics_AutoSave_Toggle.OffContent" xml:space="preserve"><value>Do Not Save</value></data>
+  <data name="Settings_OnlineLyrics_SaveLoc_Title.Text" xml:space="preserve"><value>Save Location</value></data>
+  <data name="Settings_OnlineLyrics_SaveLoc_Desc.Text" xml:space="preserve"><value>Base directory for saving online lyrics files</value></data>
+  <data name="Settings_OnlineLyrics_SaveLoc_TrackFolder.Content" xml:space="preserve"><value>Same folder as track</value></data>
+  <data name="Settings_OnlineLyrics_SaveLoc_CustomFolder.Content" xml:space="preserve"><value>Custom folder</value></data>
+  <data name="Settings_OnlineLyrics_PickFolder_Button.Content" xml:space="preserve"><value>Choose folder...</value></data>
+  <data name="Settings_OnlineLyrics_Template_Title.Text" xml:space="preserve"><value>Filename Template</value></data>
+  <data name="Settings_OnlineLyrics_Template_Desc.Text" xml:space="preserve"><value>Variables: %filename% %title% %artist% %albumartist% %album% %year% %trackno% — Subfolder paths supported (e.g. %album%\%title%.lrc)</value></data>
+  <data name="Settings_OnlineLyrics_Overwrite_Title.Text" xml:space="preserve"><value>Overwrite Existing Files</value></data>
+  <data name="Settings_OnlineLyrics_Overwrite_Desc.Text" xml:space="preserve"><value>When disabled, existing .lrc files are preserved without modification</value></data>
+  <data name="Settings_OnlineLyrics_Overwrite_Toggle.OnContent" xml:space="preserve"><value>Overwrite</value></data>
+  <data name="Settings_OnlineLyrics_Overwrite_Toggle.OffContent" xml:space="preserve"><value>Skip</value></data>
+  <data name="Settings_OnlineLyrics_SourcePluginFolder" xml:space="preserve"><value>Plugin folder</value></data>
+  <data name="Settings_OnlineLyrics_SourceBuiltin" xml:space="preserve"><value>Built-in / Registered</value></data>
+  <data name="Settings_OnlineLyrics_CustomFolderNotSet" xml:space="preserve"><value>(Not configured — Saves to audio folder)</value></data>
+
+  <!-- Appearance & Theme -->
+  <data name="Settings_Appearance_Header.Text" xml:space="preserve"><value>Appearance &amp; Theme</value></data>
+  <data name="Settings_Appearance_Lang_Title.Text" xml:space="preserve"><value>Language</value></data>
+  <data name="Settings_Appearance_Lang_Desc.Text" xml:space="preserve"><value>App display language. System default follows Windows display language.</value></data>
+  <data name="Settings_Appearance_Lang_System.Content" xml:space="preserve"><value>System Default</value></data>
+  <data name="Settings_Appearance_Lang_Korean.Content" xml:space="preserve"><value>한국어 (Korean)</value></data>
+  <data name="Settings_Appearance_Lang_English.Content" xml:space="preserve"><value>English (US)</value></data>
+  <data name="Settings_Appearance_Lang_Japanese.Content" xml:space="preserve"><value>日本語 (Japanese)</value></data>
+  <data name="Settings_Appearance_Theme_Title.Text" xml:space="preserve"><value>Theme Mode</value></data>
+  <data name="Settings_Appearance_Theme_Desc.Text" xml:space="preserve"><value>Light / Dark / OLED Pure Black / Follow System</value></data>
+  <data name="Settings_Appearance_Theme_System.Content" xml:space="preserve"><value>Follow System</value></data>
+  <data name="Settings_Appearance_Theme_Light.Content" xml:space="preserve"><value>Light (Eole Warm Slate)</value></data>
+  <data name="Settings_Appearance_Theme_Dark.Content" xml:space="preserve"><value>Dark (Eole Slate)</value></data>
+  <data name="Settings_Appearance_Theme_Oled.Content" xml:space="preserve"><value>OLED Black (Pure Black)</value></data>
+  <data name="Settings_Appearance_Backdrop_Title.Text" xml:space="preserve"><value>Window Backdrop Material</value></data>
+  <data name="Settings_Appearance_Backdrop_Desc.Text" xml:space="preserve"><value>Windows 11 Fluent translucency or Eole album art blurred wallpaper</value></data>
+  <data name="Settings_Appearance_Backdrop_Mica.Content" xml:space="preserve"><value>Mica (Windows 11 Standard)</value></data>
+  <data name="Settings_Appearance_Backdrop_MicaAlt.Content" xml:space="preserve"><value>Mica Alt</value></data>
+  <data name="Settings_Appearance_Backdrop_Acrylic.Content" xml:space="preserve"><value>Acrylic</value></data>
+  <data name="Settings_Appearance_Backdrop_Solid.Content" xml:space="preserve"><value>Solid Color</value></data>
+  <data name="Settings_Appearance_Backdrop_AlbumBlur.Content" xml:space="preserve"><value>Album Art Blur (Eole Wallpaper)</value></data>
+  <data name="Settings_Appearance_DynamicAccent_Title.Text" xml:space="preserve"><value>Dynamic Album Art Accent</value></data>
+  <data name="Settings_Appearance_DynamicAccent_Desc.Text" xml:space="preserve"><value>Automatically applies accents and highlights extracted from currently playing album art.</value></data>
+  <data name="Settings_Appearance_Accent_Title.Text" xml:space="preserve"><value>Accent Color Presets</value></data>
+  <data name="Settings_Appearance_Accent_Desc.Text" xml:space="preserve"><value>Player key buttons, indicators, and highlight colors</value></data>
+  <data name="Settings_Appearance_Accent_EoleAmber.Content" xml:space="preserve"><value>Eole Amber (Default)</value></data>
+  <data name="Settings_Appearance_Accent_Custom.Content" xml:space="preserve"><value>Custom...</value></data>
+  <data name="Settings_Appearance_CustomAccent_Title.Text" xml:space="preserve"><value>Custom Accent Color</value></data>
+  <data name="Settings_Appearance_CustomAccent_Desc.Text" xml:space="preserve"><value>Specify custom hexadecimal color code (#RRGGBB).</value></data>
+  <data name="Settings_Appearance_PickColor_Button.Content" xml:space="preserve"><value>Pick Color</value></data>
+
+  <!-- Layout & Sizing -->
+  <data name="Settings_Layout_Header.Text" xml:space="preserve"><value>Layout &amp; Sizing</value></data>
+  <data name="Settings_Layout_CoverSize_Title.Text" xml:space="preserve"><value>Default Album Cover Size</value></data>
+  <data name="Settings_Layout_CoverSize_Desc.Text" xml:space="preserve"><value>Default tile size for library cover grid</value></data>
+  <data name="Settings_Layout_Reset_Title.Text" xml:space="preserve"><value>Reset Sidebar Layout</value></data>
+  <data name="Settings_Layout_Reset_Desc.Text" xml:space="preserve"><value>Reset left/right sidebars and lyrics panel widths to default values</value></data>
+  <data name="Settings_Layout_Reset_Button.Content" xml:space="preserve"><value>Reset Layout</value></data>
+
+  <!-- Shortcuts -->
+  <data name="Settings_Shortcuts_Header.Text" xml:space="preserve"><value>Keyboard Shortcuts</value></data>
+  <data name="Settings_Shortcuts_Desc.Text" xml:space="preserve"><value>Click a key item to record a new key combination. Playback shortcuts are ignored while typing in text inputs.</value></data>
+  <data name="Settings_Shortcuts_Rebind.AutomationProperties.Name" xml:space="preserve"><value>Click to assign new shortcut</value></data>
+  <data name="Settings_Shortcuts_Rebind.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Click to assign new shortcut</value></data>
+  <data name="Settings_Shortcuts_Reset_Button.Content" xml:space="preserve"><value>Default</value></data>
+  <data name="Settings_Shortcuts_Clear_Button.Content" xml:space="preserve"><value>Clear</value></data>
+  <data name="Settings_Shortcuts_ResetAll_Button.Content" xml:space="preserve"><value>Reset All Shortcuts to Defaults</value></data>
+  <data name="Settings_Shortcuts_Unassigned" xml:space="preserve"><value>None</value></data>
+  <data name="Settings_Shortcuts_Cat_Playback" xml:space="preserve"><value>Playback Control</value></data>
+  <data name="Settings_Shortcuts_Cat_Seek" xml:space="preserve"><value>Seek</value></data>
+  <data name="Settings_Shortcuts_Cat_Volume" xml:space="preserve"><value>Volume</value></data>
+  <data name="Settings_Shortcuts_Cat_Navigation" xml:space="preserve"><value>Navigation &amp; Window</value></data>
+  <data name="Shortcut_Command_PlayPause" xml:space="preserve"><value>Play / Pause</value></data>
+  <data name="Shortcut_Command_Stop" xml:space="preserve"><value>Stop</value></data>
+  <data name="Shortcut_Command_Next" xml:space="preserve"><value>Next Track</value></data>
+  <data name="Shortcut_Command_Previous" xml:space="preserve"><value>Previous Track</value></data>
+  <data name="Shortcut_Command_ShuffleCycle" xml:space="preserve"><value>Shuffle Cycle (Off → Track → Album)</value></data>
+  <data name="Shortcut_Command_RepeatCycle" xml:space="preserve"><value>Repeat Cycle (Off → All → One)</value></data>
+  <data name="Shortcut_Command_StopAfterCurrentToggle" xml:space="preserve"><value>Toggle Stop After Current Track</value></data>
+  <data name="Shortcut_Command_SeekForward" xml:space="preserve"><value>Seek 5s Forward</value></data>
+  <data name="Shortcut_Command_SeekBackward" xml:space="preserve"><value>Seek 5s Backward</value></data>
+  <data name="Shortcut_Command_SeekToStart" xml:space="preserve"><value>Seek to Beginning of Track</value></data>
+  <data name="Shortcut_Command_VolumeUp" xml:space="preserve"><value>Volume Up</value></data>
+  <data name="Shortcut_Command_VolumeDown" xml:space="preserve"><value>Volume Down</value></data>
+  <data name="Shortcut_Command_MuteToggle" xml:space="preserve"><value>Toggle Mute</value></data>
+  <data name="Shortcut_Command_ToggleLyrics" xml:space="preserve"><value>Toggle Lyrics Panel</value></data>
+  <data name="Shortcut_Command_FocusSearch" xml:space="preserve"><value>Focus Library Search</value></data>
+  <data name="Shortcut_Command_OpenPreferences" xml:space="preserve"><value>Open Preferences</value></data>
+
+  <!-- About -->
+  <data name="Settings_About_Header.Text" xml:space="preserve"><value>About Dawn Player</value></data>
+  <data name="Settings_About_VersionFormat" xml:space="preserve"><value>Version {0} (x64) · Native player inspired by foobar2000 &amp; Eole</value></data>
+  <data name="Settings_About_AudioEngine.Text" xml:space="preserve"><value>Audio Engine: NAudio 2.3 · NAudio.Vorbis (NVorbis) · Windows Media Foundation (WASAPI Exclusive Bit-Perfect)</value></data>
+  <data name="Settings_About_Metadata.Text" xml:space="preserve"><value>Tagging &amp; Metadata: TagLib# (ID3v2, Vorbis Comment, MP4, APE)</value></data>
+  <data name="Settings_About_Database.Text" xml:space="preserve"><value>Database: Microsoft.Data.Sqlite (SQLite)</value></data>
+
+  <!-- Common Dialogs -->
 </root>

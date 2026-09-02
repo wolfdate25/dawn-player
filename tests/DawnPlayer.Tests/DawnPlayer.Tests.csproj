@@ -31,6 +31,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\..\src\DawnPlayer.App\Localization\ILocalizationService.cs" Link="Localization\ILocalizationService.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Localization\LocalizationServiceBase.cs" Link="Localization\LocalizationServiceBase.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Localization\AppStrings.cs" Link="Localization\AppStrings.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Services\IAudioSettingsService.cs" Link="Services\IAudioSettingsService.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Services\AudioSettingsService.cs" Link="Services\AudioSettingsService.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Services\ILyricsOnlineService.cs" Link="Services\ILyricsOnlineService.cs" />

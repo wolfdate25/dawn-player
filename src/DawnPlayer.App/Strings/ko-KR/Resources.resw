@@ -33,16 +33,644 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <data name="App.Title" xml:space="preserve">
-    <value>Dawn Player</value>
-  </data>
-  <data name="MainWindow.Title" xml:space="preserve">
-    <value>Dawn Player</value>
-  </data>
-  <data name="AppBrand.Text" xml:space="preserve">
-    <value>Dawn Player</value>
-  </data>
-  <data name="WelcomeText.Text" xml:space="preserve">
-    <value>환영합니다!</value>
-  </data>
+
+  <!-- Global / App -->
+  <data name="MainWindow.Title" xml:space="preserve"><value>Dawn Player</value></data>
+  <data name="AppBrand.Text" xml:space="preserve"><value>Dawn Player</value></data>
+
+  <!-- Module 1: Main Shell -->
+  <data name="MainWindow_TitleMenuButton.AutomationProperties.Name" xml:space="preserve"><value>메뉴</value></data>
+  <data name="MainWindow_TitleMenuButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>메뉴</value></data>
+  <data name="MainWindow_Menu_Rescan.Text" xml:space="preserve"><value>라이브러리 새로고침</value></data>
+  <data name="MainWindow_Menu_Settings.Text" xml:space="preserve"><value>환경설정 (Preferences)</value></data>
+  <data name="MainWindow_Menu_Exit.Text" xml:space="preserve"><value>종료</value></data>
+  <data name="MainWindow_TitleBarTrack.Text" xml:space="preserve"><value>재생 중인 곡 없음</value></data>
+  <data name="MainWindow_Tab_Library.Text" xml:space="preserve"><value>라이브러리</value></data>
+  <data name="MainWindow_Tab_Playlists.Text" xml:space="preserve"><value>재생목록</value></data>
+  <data name="MainWindow_SettingsGearButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>환경설정</value></data>
+
+  <!-- Module 1: NowPlayingBar -->
+  <data name="NowPlaying_SeekSlider.AutomationProperties.Name" xml:space="preserve"><value>재생 위치</value></data>
+  <data name="NowPlaying_AlbumArtButton.AutomationProperties.Name" xml:space="preserve"><value>앨범 커버 크게 보기</value></data>
+  <data name="NowPlaying_AlbumArtButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>앨범 커버 크게 보기</value></data>
+  <data name="NowPlaying_TrackTitle_Empty.Text" xml:space="preserve"><value>재생 중인 트랙 없음</value></data>
+  <data name="NowPlaying_ShuffleTip_Tracks" xml:space="preserve"><value>셔플: 트랙 (무작위 곡 재생)</value></data>
+  <data name="NowPlaying_ShuffleTip_Albums" xml:space="preserve"><value>셔플: 앨범 (앨범 순차 재생 후 다음 앨범 셔플)</value></data>
+  <data name="NowPlaying_ShuffleTip_Off" xml:space="preserve"><value>셔플 끄기 (순차 재생)</value></data>
+  <data name="Badge_WasapiExclusive" xml:space="preserve"><value>WASAPI 배타</value></data>
+  <data name="Badge_WasapiShared" xml:space="preserve"><value>WASAPI 공유</value></data>
+  <data name="NowPlaying_ShuffleButton.AutomationProperties.Name" xml:space="preserve"><value>무작위 재생</value></data>
+  <data name="NowPlaying_ShuffleButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>무작위 재생</value></data>
+  <data name="NowPlaying_PreviousButton.AutomationProperties.Name" xml:space="preserve"><value>이전 트랙</value></data>
+  <data name="NowPlaying_PreviousButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>이전 트랙</value></data>
+  <data name="NowPlaying_PlayButton.AutomationProperties.Name" xml:space="preserve"><value>재생</value></data>
+  <data name="NowPlaying_PlayButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>재생/일시정지</value></data>
+  <data name="NowPlaying_NextButton.AutomationProperties.Name" xml:space="preserve"><value>다음 트랙</value></data>
+  <data name="NowPlaying_NextButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>다음 트랙</value></data>
+  <data name="NowPlaying_StopButton.AutomationProperties.Name" xml:space="preserve"><value>정지</value></data>
+  <data name="NowPlaying_StopButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>정지</value></data>
+  <data name="NowPlaying_RepeatButton.AutomationProperties.Name" xml:space="preserve"><value>반복</value></data>
+  <data name="NowPlaying_RepeatButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>반복 (끔 / 전체 / 한 곡)</value></data>
+  <data name="NowPlaying_MuteButton.AutomationProperties.Name" xml:space="preserve"><value>음소거</value></data>
+  <data name="NowPlaying_MuteButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>음소거</value></data>
+  <data name="NowPlaying_VolumeSlider.AutomationProperties.Name" xml:space="preserve"><value>볼륨</value></data>
+  <data name="NowPlaying_VolumeSlider.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>볼륨</value></data>
+  <data name="NowPlaying_QueueButton.AutomationProperties.Name" xml:space="preserve"><value>재생 대기열</value></data>
+  <data name="NowPlaying_QueueButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>재생 대기열</value></data>
+  <data name="NowPlaying_QueueTitle.Text" xml:space="preserve"><value>재생 대기열</value></data>
+  <data name="NowPlaying_QueueSaveButton.Content" xml:space="preserve"><value>재생목록으로 저장</value></data>
+  <data name="NowPlaying_QueueClearButton.Content" xml:space="preserve"><value>비우기</value></data>
+  <data name="NowPlaying_QueueRemoveButton.AutomationProperties.Name" xml:space="preserve"><value>대기열에서 제거</value></data>
+  <data name="NowPlaying_QueueRemoveButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>대기열에서 제거</value></data>
+  <data name="NowPlaying_QueueEmptyText.Text" xml:space="preserve"><value>대기열이 비어 있습니다. 트랙에서 마우스 오른쪽 버튼으로 '대기열에 추가'를 선택하세요.</value></data>
+  <data name="NowPlaying_LyricsButton.AutomationProperties.Name" xml:space="preserve"><value>가사 패널</value></data>
+  <data name="NowPlaying_LyricsButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>가사 패널</value></data>
+  <data name="NowPlaying_SettingsButton.AutomationProperties.Name" xml:space="preserve"><value>환경설정</value></data>
+  <data name="NowPlaying_SettingsButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>환경설정</value></data>
+
+  <!-- Module 1: LyricsPane -->
+  <data name="LyricsPane_HeaderTitle.Text" xml:space="preserve"><value>가사</value></data>
+  <data name="LyricsPane_FontSmallerButton.AutomationProperties.Name" xml:space="preserve"><value>글꼴 축소</value></data>
+  <data name="LyricsPane_FontSmallerButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>글꼴 축소</value></data>
+  <data name="LyricsPane_FontBiggerButton.AutomationProperties.Name" xml:space="preserve"><value>글꼴 확대</value></data>
+  <data name="LyricsPane_FontBiggerButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>글꼴 확대</value></data>
+  <data name="LyricsPane_SearchButton.AutomationProperties.Name" xml:space="preserve"><value>온라인 가사 검색</value></data>
+  <data name="LyricsPane_SearchButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>온라인 가사 검색</value></data>
+  <data name="LyricsPane_EditorButton.AutomationProperties.Name" xml:space="preserve"><value>가사 편집기 열기</value></data>
+  <data name="LyricsPane_EditorButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>가사 편집기 열기 (초정밀 오프셋/싱크/텍스트)</value></data>
+  <data name="LyricsPane_EmptyTitle.Text" xml:space="preserve"><value>가사 없음</value></data>
+  <data name="LyricsPane_SourceOnlineFormat" xml:space="preserve"><value>온라인 · {0}</value></data>
+  <data name="LyricsPane_SourceOnlineUnsyncedFormat" xml:space="preserve"><value>온라인 · {0} · 비동기</value></data>
+  <data name="LyricsPane_OffsetZero" xml:space="preserve"><value>오프셋 0.0s</value></data>
+  <data name="LyricsPane_OffsetFormat" xml:space="preserve"><value>오프셋 {0}</value></data>
+  <data name="LyricsPane_EmptyDesc.Text" xml:space="preserve"><value>음원 파일과 같은 폴더에 .lrc 파일을 두거나 [가사 편집]을 눌러 새 가사를 작성하세요.</value></data>
+  <data name="LyricsPane_CreateLyricsButton.Content" xml:space="preserve"><value>새 가사 작성하기</value></data>
+  <data name="LyricsPane_SearchOnlineButton.Content" xml:space="preserve"><value>온라인에서 찾기</value></data>
+
+  <!-- Module 2: Music Library Browser -->
+  <data name="Library_TreeHeader.Text" xml:space="preserve"><value>라이브러리 트리</value></data>
+  <data name="Library_TrackCountFormat" xml:space="preserve"><value>{0}곡</value></data>
+  <data name="Library_NoAlbum" xml:space="preserve"><value>(앨범 없음)</value></data>
+  <data name="Library_NoArtist" xml:space="preserve"><value>(아티스트 없음)</value></data>
+  <data name="Library_AllNode" xml:space="preserve"><value>전체</value></data>
+  <data name="Library_TreeMode_ArtistAlbum.Content" xml:space="preserve"><value>아티스트 / 앨범</value></data>
+  <data name="Library_TreeMode_Artist.Content" xml:space="preserve"><value>아티스트</value></data>
+  <data name="Library_TreeMode_GenreArtist.Content" xml:space="preserve"><value>장르 / 아티스트</value></data>
+  <data name="Library_TreeMode_GenreArtistAlbum.Content" xml:space="preserve"><value>장르 / 아티스트 / 앨범</value></data>
+  <data name="Library_TreeMode_Album.Content" xml:space="preserve"><value>앨범</value></data>
+  <data name="Library_TreeMode_Genre.Content" xml:space="preserve"><value>장르</value></data>
+  <data name="Library_TreeMode_Folder.Content" xml:space="preserve"><value>폴더 구조</value></data>
+
+  <data name="Library_TreeMenu_Play.Text" xml:space="preserve"><value>재생 (플레이리스트 대체)</value></data>
+  <data name="Library_TreeMenu_AddToPlaylist.Text" xml:space="preserve"><value>현재 재생목록에 추가</value></data>
+  <data name="Library_TreeMenu_SendToPlaylist.Text" xml:space="preserve"><value>특정 재생목록에 추가</value></data>
+  <data name="Library_TreeMenu_Enqueue.Text" xml:space="preserve"><value>대기열에 추가</value></data>
+
+  <data name="Library_SearchBox.PlaceholderText" xml:space="preserve"><value>검색...</value></data>
+  <data name="Library_ViewGridBtn.AutomationProperties.Name" xml:space="preserve"><value>커버 그리드 뷰</value></data>
+  <data name="Library_ViewGridBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>커버 그리드 뷰</value></data>
+  <data name="Library_ViewListBtn.AutomationProperties.Name" xml:space="preserve"><value>목록 테이블 뷰</value></data>
+  <data name="Library_ViewListBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>목록 테이블 뷰</value></data>
+
+  <data name="Library_Zoom_Button.AutomationProperties.Name" xml:space="preserve"><value>커버 크기 조절</value></data>
+  <data name="Library_Zoom_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>커버 크기 조절 (Ctrl+마우스 휠)</value></data>
+  <data name="Library_Zoom_Title.Text" xml:space="preserve"><value>커버 크기</value></data>
+  <data name="Library_Zoom_Small.Content" xml:space="preserve"><value>소</value></data>
+  <data name="Library_Zoom_Medium.Content" xml:space="preserve"><value>중</value></data>
+  <data name="Library_Zoom_Large.Content" xml:space="preserve"><value>대</value></data>
+  <data name="Library_Zoom_ExtraLarge.Content" xml:space="preserve"><value>특대</value></data>
+  <data name="Library_RescanButton.AutomationProperties.Name" xml:space="preserve"><value>라이브러리 새로고침</value></data>
+  <data name="Library_RescanButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>라이브러리 새로고침</value></data>
+
+  <data name="Library_AlbumMenu_Play.Text" xml:space="preserve"><value>앨범 재생</value></data>
+  <data name="Library_AlbumMenu_AddToPlaylist.Text" xml:space="preserve"><value>현재 재생목록에 추가</value></data>
+  <data name="Library_AlbumMenu_SendToPlaylist.Text" xml:space="preserve"><value>특정 재생목록에 추가</value></data>
+  <data name="Library_AlbumMenu_Enqueue.Text" xml:space="preserve"><value>대기열에 추가</value></data>
+
+  <data name="Library_Drawer_PlayAlbum.AutomationProperties.Name" xml:space="preserve"><value>앨범 전체 재생</value></data>
+  <data name="Library_Drawer_PlayAlbum.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>앨범 전체 재생</value></data>
+  <data name="Library_Drawer_EnqueueAlbum.AutomationProperties.Name" xml:space="preserve"><value>대기열에 추가</value></data>
+  <data name="Library_Drawer_EnqueueAlbum.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>대기열에 추가</value></data>
+  <data name="Library_Drawer_AddToPlaylist.AutomationProperties.Name" xml:space="preserve"><value>현재 재생목록에 추가</value></data>
+  <data name="Library_Drawer_AddToPlaylist.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>현재 재생목록에 추가</value></data>
+  <data name="Library_Drawer_Close.AutomationProperties.Name" xml:space="preserve"><value>닫기</value></data>
+  <data name="Library_Drawer_Close.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>닫기 (Esc)</value></data>
+
+  <data name="Library_TrackMenu_Play.Text" xml:space="preserve"><value>재생</value></data>
+  <data name="Library_TrackMenu_AddToPlaylist.Text" xml:space="preserve"><value>현재 재생목록에 추가</value></data>
+  <data name="Library_TrackMenu_SendToPlaylist.Text" xml:space="preserve"><value>특정 재생목록에 추가</value></data>
+  <data name="Library_TrackMenu_Enqueue.Text" xml:space="preserve"><value>대기열에 추가</value></data>
+  <data name="Library_TrackMenu_ShowInExplorer.Text" xml:space="preserve"><value>탐색기에서 보기</value></data>
+
+  <data name="Library_Header_TrackNo.Text" xml:space="preserve"><value>#</value></data>
+  <data name="Library_Header_Title.Text" xml:space="preserve"><value>제목</value></data>
+  <data name="Library_Header_Artist.Text" xml:space="preserve"><value>아티스트</value></data>
+  <data name="Library_Header_Album.Text" xml:space="preserve"><value>앨범</value></data>
+  <data name="Library_Header_Duration.Text" xml:space="preserve"><value>길이</value></data>
+
+  <data name="Library_RightQueue_Title.Text" xml:space="preserve"><value>재생 중인 트랙...</value></data>
+
+  <!-- Module 3: Playlist Management -->
+  <data name="Playlist_SidebarHeader.Text" xml:space="preserve"><value>재생목록</value></data>
+  <data name="Playlist_CreateButton.AutomationProperties.Name" xml:space="preserve"><value>새 재생목록 만들기</value></data>
+  <data name="Playlist_CreateButtonText.Text" xml:space="preserve"><value>새 재생목록 만들기</value></data>
+  <data name="Playlist_SidebarMenu_Import.Text" xml:space="preserve"><value>재생목록 가져오기 (M3U8)...</value></data>
+  <data name="Playlist_SidebarMenu_Rename.Text" xml:space="preserve"><value>이름 변경...</value></data>
+  <data name="Playlist_SidebarMenu_Export.Text" xml:space="preserve"><value>다른 이름으로 저장 (M3U8)...</value></data>
+  <data name="Playlist_SidebarMenu_Clear.Text" xml:space="preserve"><value>재생목록 비우기</value></data>
+  <data name="Playlist_SidebarMenu_Delete.Text" xml:space="preserve"><value>재생목록 삭제</value></data>
+
+  <data name="Playlist_ToolsButton.AutomationProperties.Name" xml:space="preserve"><value>재생목록 도구 및 정렬</value></data>
+  <data name="Playlist_ToolsButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>재생목록 도구 및 정렬</value></data>
+  <data name="Playlist_ToolsMenu_AddFiles.Text" xml:space="preserve"><value>파일 추가...</value></data>
+  <data name="Playlist_ToolsMenu_AddFolder.Text" xml:space="preserve"><value>폴더 추가...</value></data>
+  <data name="Playlist_ToolsMenu_Import.Text" xml:space="preserve"><value>재생목록 파일 가져오기 (M3U8)...</value></data>
+  <data name="Playlist_ToolsMenu_GroupToggle.Text" xml:space="preserve"><value>앨범별 그룹화 표시</value></data>
+  <data name="Playlist_ToolsMenu_StopAfterCurrent.Text" xml:space="preserve"><value>현재 곡 재생 후 정지 (Stop After Current)</value></data>
+  <data name="Playlist_ToolsMenu_SortSubItem.Text" xml:space="preserve"><value>정렬 (Sort)</value></data>
+  <data name="Playlist_Sort_Title.Text" xml:space="preserve"><value>제목 순</value></data>
+  <data name="Playlist_Sort_Artist.Text" xml:space="preserve"><value>아티스트 순</value></data>
+  <data name="Playlist_Sort_Album.Text" xml:space="preserve"><value>앨범 · 트랙 순서</value></data>
+  <data name="Playlist_Sort_TrackNo.Text" xml:space="preserve"><value>트랙 번호 순</value></data>
+  <data name="Playlist_Sort_Path.Text" xml:space="preserve"><value>파일 경로 순</value></data>
+  <data name="Playlist_Sort_Random.Text" xml:space="preserve"><value>무작위 셔플 (Random)</value></data>
+  <data name="Playlist_Sort_Reverse.Text" xml:space="preserve"><value>역순으로 뒤집기 (Reverse)</value></data>
+  <data name="Playlist_ToolsMenu_RemoveDuplicates.Text" xml:space="preserve"><value>중복 트랙 제거</value></data>
+  <data name="Playlist_ToolsMenu_RemoveDeadItems.Text" xml:space="preserve"><value>존재하지 않는 파일 정리</value></data>
+  <data name="Playlist_ToolsMenu_Rename.Text" xml:space="preserve"><value>이름 변경...</value></data>
+  <data name="Playlist_ToolsMenu_Export.Text" xml:space="preserve"><value>다른 이름으로 저장 (M3U8)...</value></data>
+  <data name="Playlist_ToolsMenu_Delete.Text" xml:space="preserve"><value>현재 재생목록 삭제</value></data>
+  <data name="Playlist_ToolsMenu_Clear.Text" xml:space="preserve"><value>재생목록 비우기</value></data>
+
+  <data name="Playlist_TrackMenu_Play.Text" xml:space="preserve"><value>재생</value></data>
+  <data name="Playlist_TrackMenu_QueueNext.Text" xml:space="preserve"><value>다음에 재생 (대기열 선두)</value></data>
+  <data name="Playlist_TrackMenu_Queue.Text" xml:space="preserve"><value>대기열에 추가</value></data>
+  <data name="Playlist_TrackMenu_MoveUp.Text" xml:space="preserve"><value>위로 이동 (Alt+↑)</value></data>
+  <data name="Playlist_TrackMenu_MoveDown.Text" xml:space="preserve"><value>아래로 이동 (Alt+↓)</value></data>
+  <data name="Playlist_TrackMenu_Remove.Text" xml:space="preserve"><value>재생목록에서 제거 (Del)</value></data>
+
+  <data name="Playlist_EmptyTitle.Text" xml:space="preserve"><value>재생목록이 비어 있습니다</value></data>
+  <data name="Playlist_EmptyDesc.Text" xml:space="preserve"><value>음악 파일이나 폴더를 창으로 끌어다 놓거나 우측 상단 메뉴의 [파일 추가]·[폴더 추가]를 사용하세요.&#x0a;라이브러리에서 원하는 트랙을 선택해 추가할 수도 있습니다.</value></data>
+
+  <!-- Module 4: Lyrics Tools & Windows (LyricsEditor) -->
+  <data name="LyricsEditor_Window.Title" xml:space="preserve"><value>가사 편집기 — Dawn Player</value></data>
+  <data name="LyricsEditor_WindowTitle" xml:space="preserve"><value>가사 편집기 — Dawn Player</value></data>
+  <data name="LyricsEditor_TrackHeaderTitle.Text" xml:space="preserve"><value>곡 제목</value></data>
+  <data name="LyricsEditor_TrackHeaderArtist.Text" xml:space="preserve"><value>— 아티스트</value></data>
+  <data name="LyricsEditor_PlayPauseBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>재생/일시정지</value></data>
+  <data name="LyricsEditor_PlayPauseBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>재생/일시정지 (Space)</value></data>
+  <data name="LyricsEditor_StepDeltaLabel.Text" xml:space="preserve"><value>조절 스텝 단위:</value></data>
+  <data name="LyricsEditor_StepPresetsLabel.Text" xml:space="preserve"><value>스텝 프리셋:</value></data>
+  <data name="LyricsEditor_TotalOffsetLabel.Text" xml:space="preserve"><value>현재 총 오프셋:</value></data>
+  <data name="LyricsEditor_ResetOffsetBtn.Content" xml:space="preserve"><value>0 초기화</value></data>
+  <data name="LyricsEditor_TotalOffsetSecondsFormat" xml:space="preserve"><value>(= {0}초)</value></data>
+  <data name="LyricsEditor_TabSync.Header" xml:space="preserve"><value>라인별 싱크 에디터</value></data>
+  <data name="LyricsEditor_StampCurrentTimeText.Text" xml:space="preserve"><value>현재 시간 스탬프 (F5)</value></data>
+  <data name="LyricsEditor_AddLineText.Text" xml:space="preserve"><value>줄 추가</value></data>
+  <data name="LyricsEditor_DeleteLineText.Text" xml:space="preserve"><value>줄 삭제</value></data>
+  <data name="LyricsEditor_MoveLineUpBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>선택 줄 위로</value></data>
+  <data name="LyricsEditor_MoveLineUpBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>선택 줄 위로</value></data>
+  <data name="LyricsEditor_MoveLineDownBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>선택 줄 아래로</value></data>
+  <data name="LyricsEditor_MoveLineDownBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>선택 줄 아래로</value></data>
+  <data name="LyricsEditor_PasteClipboardBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>클립보드에서 가사 텍스트 가져오기</value></data>
+  <data name="LyricsEditor_PasteClipboardBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>클립보드에서 가사 텍스트 가져오기</value></data>
+  <data name="LyricsEditor_PasteClipboardText.Text" xml:space="preserve"><value>클립보드 붙여넣기</value></data>
+  <data name="LyricsEditor_SeekToLineBtn.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>이 위치로 오디오 재생</value></data>
+  <data name="LyricsEditor_SeekToLineBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>이 위치로 오디오 재생</value></data>
+  <data name="LyricsEditor_TabRaw.Header" xml:space="preserve"><value>전체 LRC 텍스트 직접 편집</value></data>
+  <data name="LyricsEditor_StatusLabel.Text" xml:space="preserve"><value>준비됨</value></data>
+  <data name="LyricsEditor_CloseBtn.Content" xml:space="preserve"><value>닫기</value></data>
+  <data name="LyricsEditor_SaveBtn.Content" xml:space="preserve"><value>💾 LRC 파일로 저장</value></data>
+  <data name="LyricsEditor_NewLineText" xml:space="preserve"><value>새 가사 줄</value></data>
+  <data name="LyricsEditor_Status_LinesLoaded" xml:space="preserve"><value>가사 {0}줄 로드됨</value></data>
+  <data name="LyricsEditor_Status_NoExistingLyrics" xml:space="preserve"><value>기존 가사 없음 (신규 작성 가능)</value></data>
+  <data name="LyricsEditor_Status_ClipboardImported" xml:space="preserve"><value>클립보드에서 {0}줄 가사를 불러왔습니다.</value></data>
+  <data name="LyricsEditor_Status_PasteError" xml:space="preserve"><value>붙여넣기 오류: {0}</value></data>
+  <data name="LyricsEditor_Status_SaveSuccess" xml:space="preserve"><value>성공적으로 저장됨: {0} ({1})</value></data>
+  <data name="LyricsEditor_Status_SaveFailed" xml:space="preserve"><value>저장 실패: {0}</value></data>
+
+  <!-- Module 4: Lyrics Tools & Windows (LyricsSearch) -->
+  <data name="LyricsSearch_Window.Title" xml:space="preserve"><value>온라인 가사 검색 — Dawn Player</value></data>
+  <data name="LyricsSearch_WindowTitle" xml:space="preserve"><value>온라인 가사 검색 — Dawn Player</value></data>
+  <data name="LyricsSearch_TrackHeaderTitle.Text" xml:space="preserve"><value>곡 제목</value></data>
+  <data name="LyricsSearch_TrackHeaderArtist.Text" xml:space="preserve"><value>— 아티스트</value></data>
+  <data name="LyricsSearch_TitleBox.Header" xml:space="preserve"><value>제목</value></data>
+  <data name="LyricsSearch_TitleBox.PlaceholderText" xml:space="preserve"><value>제목</value></data>
+  <data name="LyricsSearch_ArtistBox.Header" xml:space="preserve"><value>아티스트</value></data>
+  <data name="LyricsSearch_ArtistBox.PlaceholderText" xml:space="preserve"><value>아티스트</value></data>
+  <data name="LyricsSearch_AlbumBox.Header" xml:space="preserve"><value>앨범 (제목·아티스트 없이 앨범명만으로 검색)</value></data>
+  <data name="LyricsSearch_AlbumBox.PlaceholderText" xml:space="preserve"><value>앨범</value></data>
+  <data name="LyricsSearch_SearchButton.Content" xml:space="preserve"><value>검색</value></data>
+  <data name="LyricsSearch_PreviewHeader.Text" xml:space="preserve"><value>미리보기 (선택하면 불러옵니다)</value></data>
+  <data name="LyricsSearch_PreviewText.Text" xml:space="preserve"><value>왼쪽에서 검색 결과를 선택하세요.</value></data>
+  <data name="LyricsSearch_PreviewPlaceholder" xml:space="preserve"><value>왼쪽에서 검색 결과를 선택하세요.</value></data>
+  <data name="LyricsSearch_ApplyButton.Content" xml:space="preserve"><value>현재 곡에 적용</value></data>
+  <data name="LyricsSearch_SaveButton.Content" xml:space="preserve"><value>파일로 저장</value></data>
+  <data name="LyricsSearch_SaveButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>설정된 저장 위치와 파일명 템플릿으로 저장합니다</value></data>
+  <data name="LyricsSearch_NoTitle" xml:space="preserve"><value>(제목 없음)</value></data>
+  <data name="LyricsSearch_Sync_Synced" xml:space="preserve"><value>동기</value></data>
+  <data name="LyricsSearch_Sync_Unsynced" xml:space="preserve"><value>비동기</value></data>
+  <data name="LyricsSearch_NoPluginsFound" xml:space="preserve"><value>설치된 가사 플러그인이 없습니다.&#x0a;플러그인 폴더({0})에 플러그인별 폴더를 만들어 DLL을 넣고 '다시 스캔'하세요.&#x0a;개발 방법은 docs/plugin-development.md를 참고하세요.</value></data>
+  <data name="LyricsSearch_SearchQueryEmpty" xml:space="preserve"><value>제목, 아티스트 또는 앨범 중 하나는 입력해야 합니다.</value></data>
+  <data name="LyricsSearch_Searching" xml:space="preserve"><value>검색 중...</value></data>
+  <data name="LyricsSearch_ResultsWithFailures" xml:space="preserve"><value>{0}개 결과 · 실패 {1}개 플러그인</value></data>
+  <data name="LyricsSearch_ResultsCount" xml:space="preserve"><value>{0}개 결과</value></data>
+  <data name="LyricsSearch_NoResultsWithErrors" xml:space="preserve"><value>결과 없음 · {0}</value></data>
+  <data name="LyricsSearch_NoResults" xml:space="preserve"><value>결과 없음. 다른 검색어로 시도해 보세요.</value></data>
+  <data name="LyricsSearch_SearchFailed" xml:space="preserve"><value>검색 실패: {0}</value></data>
+  <data name="LyricsSearch_LoadingPreview" xml:space="preserve"><value>불러오는 중...</value></data>
+  <data name="LyricsSearch_FetchFailedResult" xml:space="preserve"><value>이 결과를 가져올 수 없습니다.</value></data>
+  <data name="LyricsSearch_FetchError" xml:space="preserve"><value>불러오기 실패: {0}</value></data>
+  <data name="LyricsSearch_ApplyFailed_NoLyrics" xml:space="preserve"><value>가사를 가져올 수 없어 적용하지 못했습니다.</value></data>
+  <data name="LyricsSearch_ApplySuccess" xml:space="preserve"><value>'{0}' 가사를 적용했습니다.</value></data>
+  <data name="LyricsSearch_SaveFailed_NoLyrics" xml:space="preserve"><value>가사를 가져올 수 없어 저장하지 못했습니다.</value></data>
+  <data name="LyricsSearch_SaveResult_Saved" xml:space="preserve"><value>저장했습니다: {0}</value></data>
+  <data name="LyricsSearch_SaveResult_Skipped" xml:space="preserve"><value>이미 파일이 있어 건너뛰었습니다: {0}</value></data>
+  <data name="LyricsSearch_SaveResult_Failed" xml:space="preserve"><value>저장에 실패했습니다.</value></data>
+
+  <!-- Module 6: Core System, Alerts, Dialogs & Messages -->
+  <!-- Common Dialog & Button Actions -->
+  <data name="Common_OK" xml:space="preserve"><value>확인</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>취소</value></data>
+  <data name="Common_Delete" xml:space="preserve"><value>삭제</value></data>
+  <data name="Common_Create" xml:space="preserve"><value>생성</value></data>
+  <data name="Common_Change" xml:space="preserve"><value>변경</value></data>
+  <data name="Common_Reset" xml:space="preserve"><value>되돌리기</value></data>
+  <data name="Common_Overwrite" xml:space="preserve"><value>덮어쓰기</value></data>
+
+  <!-- System & App Error Messages -->
+  <data name="Msg_UnhandledException" xml:space="preserve"><value>예기치 않은 오류가 발생했습니다: {0}&#x0a;자세한 내용은 로그를 확인하세요.</value></data>
+  <data name="Msg_StartupFatalError" xml:space="preserve"><value>Dawn Player를 시작할 수 없습니다.&#x0a;&#x0a;{0}&#x0a;&#x0a;자세한 내용: {1}</value></data>
+  <data name="Msg_DbRecoveryMessage" xml:space="preserve"><value>라이브러리 데이터베이스를 열 수 없어 새로 만들었습니다. 설정에서 다시 스캔해 주세요.</value></data>
+  <data name="Msg_LanguageChangedTitle" xml:space="preserve"><value>언어 변경</value></data>
+  <data name="Msg_LanguageChangedMessage" xml:space="preserve"><value>언어 변경을 적용하려면 앱을 다시 시작해야 합니다. 지금 다시 시작할까요?</value></data>
+  <data name="Msg_LanguageChangedRestart" xml:space="preserve"><value>지금 다시 시작</value></data>
+  <data name="Msg_LanguageChangedLater" xml:space="preserve"><value>나중에</value></data>
+  <data name="Msg_LibraryScanFailed" xml:space="preserve"><value>라이브러리 스캔 실패: {0}</value></data>
+
+  <!-- Window & Drag-Drop Messages -->
+  <data name="Msg_DragDrop_AddToPlaylist" xml:space="preserve"><value>재생목록에 추가</value></data>
+  <data name="Msg_PlaylistImported" xml:space="preserve"><value>'{0}' 재생목록을 가져왔습니다 ({1}곡).</value></data>
+  <data name="Msg_TracksAddedToPlaylist" xml:space="preserve"><value>{0}개 트랙을 '{1}'에 추가했습니다.</value></data>
+  <data name="Msg_DropFailed" xml:space="preserve"><value>드롭 처리 실패: {0}</value></data>
+  <data name="Msg_PreferencesWithChord" xml:space="preserve"><value>환경설정 ({0})</value></data>
+
+  <!-- Dialogs & Settings Notices -->
+  <data name="Msg_PlaylistName" xml:space="preserve"><value>재생목록 이름</value></data>
+  <data name="Msg_RenamePlaylistTitle" xml:space="preserve"><value>재생목록 이름 변경</value></data>
+  <data name="Msg_M3U8FileType" xml:space="preserve"><value>M3U8 재생목록</value></data>
+  <data name="Msg_SaveFailed" xml:space="preserve"><value>저장 실패: {0}</value></data>
+  <data name="Msg_ShortcutInvalidTitle" xml:space="preserve"><value>사용할 수 없는 키</value></data>
+  <data name="Msg_ShortcutInvalidMessage" xml:space="preserve"><value>이 키 조합은 단축키로 지정할 수 없습니다.</value></data>
+  <data name="Msg_ShortcutConflictTitle" xml:space="preserve"><value>단축키 충돌</value></data>
+  <data name="Msg_ShortcutConflictMessage" xml:space="preserve"><value>'{0}' 은(는) 이미 '{1}'에 할당되어 있습니다. 덮어쓰면 해당 명령의 단축키가 해제됩니다.</value></data>
+  <data name="Msg_ShortcutResetAllTitle" xml:space="preserve"><value>모든 단축키 초기화</value></data>
+  <data name="Msg_ShortcutResetAllMessage" xml:space="preserve"><value>모든 단축키를 기본값으로 되돌립니다. 직접 지정한 조합은 사라집니다.</value></data>
+  <data name="Msg_ShortcutCaptureTitle" xml:space="preserve"><value>단축키 지정 — {0}</value></data>
+  <data name="Msg_ShortcutCaptureHint" xml:space="preserve"><value>Esc를 누르면 취소됩니다. Tab, Esc, Backspace 등 일부 키는 단축키로 쓸 수 없습니다.</value></data>
+  <data name="Msg_ShortcutCaptureInstruction" xml:space="preserve"><value>새 키 조합을 누르세요.</value></data>
+  <data name="Msg_ShortcutDisallowedKey" xml:space="preserve"><value>이 키는 단축키로 사용할 수 없습니다. 다른 키를 눌러 주세요.</value></data>
+  <data name="Msg_EqNewProfileTitle" xml:space="preserve"><value>새 EQ 프로필 생성</value></data>
+  <data name="Msg_EqProfilePlaceholder" xml:space="preserve"><value>프로필 이름 입력 (예: 보컬 부스트, 헤드폰)</value></data>
+  <data name="Msg_EqProfileDefaultName" xml:space="preserve"><value>프로필 {0}</value></data>
+  <data name="Msg_EqRenameProfileTitle" xml:space="preserve"><value>프로필 이름 변경</value></data>
+  <data name="Msg_EqDeleteProfileTitle" xml:space="preserve"><value>프로필 삭제</value></data>
+  <data name="Msg_EqDeleteProfileMessage" xml:space="preserve"><value>'{0}' 프로필을 삭제하시겠습니까?&#x0a;이 프로필에 연결된 장치는 기본 프로필로 전환됩니다.</value></data>
+
+  <!-- Audio Settings & Time Formats -->
+  <data name="Audio_ExclusiveAllowed" xml:space="preserve"><value>허용됨</value></data>
+  <data name="Audio_ExclusiveDisabled" xml:space="preserve"><value>꺼짐 (배타 불가)</value></data>
+  <data name="Audio_PriorityAllowed" xml:space="preserve"><value>허용됨 (우선권 자동 획득)</value></data>
+  <data name="Audio_PriorityDisabled" xml:space="preserve"><value>꺼짐 (다른 앱 실행 시 실패)</value></data>
+  <data name="Audio_ExclusiveStatusFormat" xml:space="preserve"><value>독점 제어: {0}  |  우선 순위: {1}</value></data>
+  <data name="Audio_ExclusiveDetailsFormat" xml:space="preserve"><value>독점 제어 허용: {0}, 우선 순위 부여: {1}</value></data>
+  <data name="Audio_DeviceStatusUnknown" xml:space="preserve"><value>장치 상태를 확인할 수 없습니다.</value></data>
+  <data name="Audio_DeviceOpenFailed" xml:space="preserve"><value>장치를 열 수 없거나 WASAPI 엔드포인트를 찾을 수 없습니다.</value></data>
+  <data name="Time_ZeroSeconds" xml:space="preserve"><value>0초</value></data>
+  <data name="Time_HoursMinutesFormat" xml:space="preserve"><value>{0}시간 {1}분</value></data>
+  <data name="Time_MinutesFormat" xml:space="preserve"><value>{0}분</value></data>
+  <data name="Eq_DefaultProfileName" xml:space="preserve"><value>새 프로필</value></data>
+  <data name="Settings_Eq_BandFormat" xml:space="preserve"><value>밴드 {0}</value></data>
+
+  <!-- Additional Alerts, Warnings & Toasts -->
+  <data name="Msg_SystemPlaylistRenameNotAllowed" xml:space="preserve"><value>시스템 재생목록(Now Playing)의 이름은 변경할 수 없습니다.</value></data>
+  <data name="Msg_ClearedNowPlayingQueue" xml:space="preserve"><value>현재 재생 대기열(Now Playing)의 모든 곡을 비웠습니다.</value></data>
+  <data name="Msg_PlaylistClearQueue" xml:space="preserve"><value>대기열 비우기</value></data>
+  <data name="Msg_PlaylistClearPlaylist" xml:space="preserve"><value>재생목록 비우기</value></data>
+  <data name="Msg_ImportFailed" xml:space="preserve"><value>가져오기 실패: {0}</value></data>
+  <data name="Msg_RemovedMissingFiles" xml:space="preserve"><value>존재하지 않는 파일 {0}곡을 재생목록에서 제거했습니다.</value></data>
+  <data name="Msg_NoMissingFiles" xml:space="preserve"><value>제거할 누락된 파일이 없습니다.</value></data>
+  <data name="Msg_AddedTracksToCurrentPlaylist" xml:space="preserve"><value>현재 재생목록에 {0}곡을 추가했습니다.</value></data>
+  <data name="Msg_AddedTracksToQueue" xml:space="preserve"><value>대기열에 {0}곡을 추가했습니다.</value></data>
+  <data name="Msg_AddedTracksToNamedPlaylist" xml:space="preserve"><value>'{0}'에 {1}곡을 추가했습니다.</value></data>
+  <data name="Msg_CreateNewPlaylistAndAdd" xml:space="preserve"><value>새 재생목록 생성 후 추가...</value></data>
+  <data name="Msg_SavedQueueToPlaylist" xml:space="preserve"><value>대기열 {0}곡을 '{1}'에 저장했습니다.</value></data>
+  <data name="Msg_DefaultSavedQueueName" xml:space="preserve"><value>대기열 저장</value></data>
+  <data name="Msg_NoTrackPlayingWarning" xml:space="preserve"><value>현재 재생 중인 트랙이 없습니다.</value></data>
+  <data name="Msg_VolumeDisabledInExclusive" xml:space="preserve"><value>WASAPI 배타 모드에서는 볼륨 조절이 적용되지 않습니다</value></data>
+  <data name="Msg_LibraryEmptyStatus" xml:space="preserve"><value>트랙 없음 — 설정에서 음악 폴더를 추가하고 스캔하세요.</value></data>
+  <data name="Msg_LibraryStatusBarFormat" xml:space="preserve"><value>{0} • {1}, {2:N0}곡, {3:N0}개 앨범</value></data>
+
+  <!-- Module 5: Settings & Preferences -->
+  <!-- Navigation & Header -->
+  <data name="Settings_BackButton.AutomationProperties.Name" xml:space="preserve"><value>돌아가기</value></data>
+  <data name="Settings_BackButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>돌아가기</value></data>
+  <data name="Settings_Header_Title.Text" xml:space="preserve"><value>환경설정 (Preferences)</value></data>
+  <data name="Settings_Nav_Audio.Text" xml:space="preserve"><value>오디오 출력</value></data>
+  <data name="Settings_Nav_Equalizer.Text" xml:space="preserve"><value>이퀄라이저 (EQ)</value></data>
+  <data name="Settings_Nav_Playback.Text" xml:space="preserve"><value>재생 &amp; 음량 정규화</value></data>
+  <data name="Settings_Nav_Library.Text" xml:space="preserve"><value>음악 라이브러리</value></data>
+  <data name="Settings_Nav_Lyrics.Text" xml:space="preserve"><value>가사 (Lyrics)</value></data>
+  <data name="Settings_Nav_OnlineLyrics.Text" xml:space="preserve"><value>온라인 가사 (Plugins)</value></data>
+  <data name="Settings_Nav_Appearance.Text" xml:space="preserve"><value>외관 &amp; 테마</value></data>
+  <data name="Settings_Nav_Layout.Text" xml:space="preserve"><value>레이아웃 &amp; 디스플레이</value></data>
+  <data name="Settings_Nav_Shortcuts.Text" xml:space="preserve"><value>단축키 (Shortcuts)</value></data>
+  <data name="Settings_Nav_About.Text" xml:space="preserve"><value>정보 (About)</value></data>
+
+  <!-- Audio Output -->
+  <data name="Settings_Audio_Header.Text" xml:space="preserve"><value>오디오 출력 (Audio Output)</value></data>
+  <data name="Settings_Audio_Driver_Title.Text" xml:space="preserve"><value>오디오 출력 드라이버</value></data>
+  <data name="Settings_Audio_Driver_Desc.Text" xml:space="preserve"><value>WASAPI(고음질 비트 퍼펙트), DirectSound, WaveOut 중 선택</value></data>
+  <data name="Settings_Audio_Driver_Wasapi.Content" xml:space="preserve"><value>WASAPI (권장)</value></data>
+  <data name="Settings_Audio_Driver_DirectSound.Content" xml:space="preserve"><value>Windows Audio (DirectSound)</value></data>
+  <data name="Settings_Audio_Driver_WaveOut.Content" xml:space="preserve"><value>WaveOut</value></data>
+  <data name="Settings_Audio_Device_Title.Text" xml:space="preserve"><value>출력 장치 (Device)</value></data>
+  <data name="Settings_Audio_RefreshDevices.AutomationProperties.Name" xml:space="preserve"><value>장치 목록 새로고침</value></data>
+  <data name="Settings_Audio_RefreshDevices.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>장치 목록 새로고침</value></data>
+  <data name="Settings_Audio_Exclusive_Title.Text" xml:space="preserve"><value>WASAPI 배타 모드 (Exclusive)</value></data>
+  <data name="Settings_Audio_Exclusive_Desc.Text" xml:space="preserve"><value>다른 프로그램 소리를 차단하고 비트 퍼펙트로 직접 출력합니다. 형식이 맞지 않으면 자동으로 공유 모드로 대체됩니다.</value></data>
+  <data name="Settings_Audio_Exclusive_Toggle.OnContent" xml:space="preserve"><value>배타</value></data>
+  <data name="Settings_Audio_Exclusive_Toggle.OffContent" xml:space="preserve"><value>공유</value></data>
+  <data name="Settings_Audio_WinExclusive_Title.Text" xml:space="preserve"><value>Windows 독점 제어 / 우선순위 설정</value></data>
+  <data name="Settings_Audio_OpenSoundPanel_Button.Content" xml:space="preserve"><value>Windows 소리 제어판 열기</value></data>
+  <data name="Settings_Audio_BitDepth_Title.Text" xml:space="preserve"><value>배타 모드 비트 깊이</value></data>
+  <data name="Settings_Audio_BitDepth_Desc.Text" xml:space="preserve"><value>원본: 파일의 비트 심도 그대로 (16/24/32 비트)</value></data>
+  <data name="Settings_Audio_BitDepth_Source.Content" xml:space="preserve"><value>원본 따르기</value></data>
+  <data name="Settings_Audio_BitDepth_16.Content" xml:space="preserve"><value>16비트</value></data>
+  <data name="Settings_Audio_BitDepth_24.Content" xml:space="preserve"><value>24비트</value></data>
+  <data name="Settings_Audio_BitDepth_32.Content" xml:space="preserve"><value>32비트</value></data>
+  <data name="Settings_Audio_AllowVolume_Title.Text" xml:space="preserve"><value>배타 모드에서 볼륨/리플레이게인 허용</value></data>
+  <data name="Settings_Audio_AllowVolume_Desc.Text" xml:space="preserve"><value>끄면 비트 퍼펙트가 유지됩니다 (볼륨 100% 고정).</value></data>
+  <data name="Settings_Audio_Latency_Title.Text" xml:space="preserve"><value>출력 버퍼 크기 (Latency)</value></data>
+  <data name="Settings_Audio_Latency_Desc.Text" xml:space="preserve"><value>낮으면 지연이 줄고, 높으면 오디오 버벅임 방지 및 안정성이 향상됩니다.</value></data>
+  <data name="Settings_Audio_Status_Checking" xml:space="preserve"><value>확인 중...</value></data>
+  <data name="Settings_Audio_DriverDesc_DirectSound" xml:space="preserve"><value>Windows Audio (DirectSound) 장치 목록 (윈도우 믹서 경유/블루투스/헤드폰 호환)</value></data>
+  <data name="Settings_Audio_DriverDesc_WaveOut" xml:space="preserve"><value>Windows WaveOut 표준 장치 목록</value></data>
+  <data name="Settings_Audio_DriverDesc_Wasapi" xml:space="preserve"><value>WASAPI 엔드포인트 장치 목록 (비트 퍼펙트 지원)</value></data>
+  <data name="Settings_Audio_Status_WasapiOnly" xml:space="preserve"><value>WASAPI 드라이버에서만 독점 제어 설정을 확인합니다.</value></data>
+  <data name="Settings_Audio_Status_ReadError" xml:space="preserve"><value>장치 목록을 읽는 중 오류가 발생했습니다.</value></data>
+  <data name="Settings_Audio_Status_Unknown" xml:space="preserve"><value>독점 제어 상태를 확인할 수 없습니다.</value></data>
+
+  <!-- Equalizer -->
+  <data name="Settings_Eq_Header.Text" xml:space="preserve"><value>파라메트릭 이퀄라이저 (Parametric Equalizer)</value></data>
+  <data name="Settings_Eq_Master_Title.Text" xml:space="preserve"><value>이퀄라이저 활성화 (Master Enable)</value></data>
+  <data name="Settings_Eq_Master_Desc.Text" xml:space="preserve"><value>이퀄라이저 기능을 전역으로 켜거나 끕니다. 끄면 모든 장치에서 신호 가공 없이 비트 퍼펙트 바이패스로 재생됩니다.</value></data>
+  <data name="Settings_Eq_Master_Toggle.OnContent" xml:space="preserve"><value>켬</value></data>
+  <data name="Settings_Eq_Master_Toggle.OffContent" xml:space="preserve"><value>끔</value></data>
+  <data name="Settings_Eq_Profile_Title.Text" xml:space="preserve"><value>편집할 프로필 선택</value></data>
+  <data name="Settings_Eq_Profile_Desc.Text" xml:space="preserve"><value>프로필 파라미터를 실시간 편집하고 새 프로필을 생성하거나 관리합니다.</value></data>
+  <data name="Settings_Eq_NewProfile_Button.Content" xml:space="preserve"><value>새 프로필</value></data>
+  <data name="Settings_Eq_NewProfile_Button.AutomationProperties.Name" xml:space="preserve"><value>새 EQ 프로필 추가</value></data>
+  <data name="Settings_Eq_NewProfile_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>새 EQ 프로필 추가</value></data>
+  <data name="Settings_Eq_DuplicateProfile_Button.Content" xml:space="preserve"><value>복제</value></data>
+  <data name="Settings_Eq_DuplicateProfile_Button.AutomationProperties.Name" xml:space="preserve"><value>현재 프로필 복제</value></data>
+  <data name="Settings_Eq_DuplicateProfile_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>현재 프로필 복제</value></data>
+  <data name="Settings_Eq_RenameProfile_Button.Content" xml:space="preserve"><value>이름 변경</value></data>
+  <data name="Settings_Eq_RenameProfile_Button.AutomationProperties.Name" xml:space="preserve"><value>프로필 이름 변경</value></data>
+  <data name="Settings_Eq_RenameProfile_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>프로필 이름 변경</value></data>
+  <data name="Settings_Eq_DeleteProfile_Button.Content" xml:space="preserve"><value>삭제</value></data>
+  <data name="Settings_Eq_DeleteProfile_Button.AutomationProperties.Name" xml:space="preserve"><value>현재 프로필 삭제</value></data>
+  <data name="Settings_Eq_DeleteProfile_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>현재 프로필 삭제</value></data>
+  <data name="Settings_Eq_Preamp_Title.Text" xml:space="preserve"><value>프리앰프 (Preamp)</value></data>
+  <data name="Settings_Eq_Preamp_Desc.Text" xml:space="preserve"><value>EQ 부스트 시 디지털 클리핑을 방지하기 위해 전체 레벨을 조절합니다 (-12.0 ~ +12.0 dB).</value></data>
+  <data name="Settings_Eq_Visualizer_Title.Text" xml:space="preserve"><value>주파수 응답 곡선 (Frequency Response)</value></data>
+  <data name="Settings_Eq_Visualizer_Desc.Text" xml:space="preserve"><value>현재 편집 중인 프로필의 합성 주파수 전달 특성 (20Hz ~ 20kHz, ±18dB)</value></data>
+  <data name="Settings_Eq_Bands_Title.Text" xml:space="preserve"><value>파라메트릭 필터 밴드</value></data>
+  <data name="Settings_Eq_Bands_Desc.Text" xml:space="preserve"><value>최대 20개의 필터 밴드를 추가하여 주파수(20Hz~20kHz), 게인(±15dB), Q(0.1~8.0)를 정밀하게 조정합니다.</value></data>
+  <data name="Settings_Eq_AddBand_Button.Content" xml:space="preserve"><value>+ 밴드 추가</value></data>
+  <data name="Settings_Eq_Bands_Empty.Text" xml:space="preserve"><value>설정된 필터 밴드가 없습니다. '+ 밴드 추가' 버튼을 눌러 새 밴드를 구성하세요.</value></data>
+  <data name="Settings_Eq_Band_Peak.Content" xml:space="preserve"><value>피크</value></data>
+  <data name="Settings_Eq_Band_LowShelf.Content" xml:space="preserve"><value>저음 쉘프</value></data>
+  <data name="Settings_Eq_Band_HighShelf.Content" xml:space="preserve"><value>고음 쉘프</value></data>
+  <data name="Settings_Eq_Band_LowPass.Content" xml:space="preserve"><value>로우 패스</value></data>
+  <data name="Settings_Eq_Band_HighPass.Content" xml:space="preserve"><value>하이 패스</value></data>
+  <data name="Settings_Eq_DeleteBand_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>밴드 삭제</value></data>
+  <data name="Settings_Eq_DeleteBand_Button.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>밴드 삭제</value></data>
+  <data name="Settings_Eq_Band_Freq_Label.Text" xml:space="preserve"><value>주파수</value></data>
+  <data name="Settings_Eq_Band_Gain_Label.Text" xml:space="preserve"><value>게인</value></data>
+  <data name="Settings_Eq_Band_Q_Label.Text" xml:space="preserve"><value>Q 팩터</value></data>
+  <data name="Settings_Eq_TargetDevice_Title.Text" xml:space="preserve"><value>대상 오디오 출력 장치</value></data>
+  <data name="Settings_Eq_TargetDevice_Desc.Text" xml:space="preserve"><value>장치별로 원하는 EQ 프로필을 연결하거나 공통 기본 프로필을 따르도록 설정합니다.</value></data>
+  <data name="Settings_Eq_RefreshDevices.AutomationProperties.Name" xml:space="preserve"><value>장치 목록 새로고침</value></data>
+  <data name="Settings_Eq_RefreshDevices.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>장치 목록 새로고침</value></data>
+  <data name="Settings_Eq_BoundProfile_Title.Text" xml:space="preserve"><value>이 장치에 연결된 프로필</value></data>
+  <data name="Settings_Eq_ExclusiveWarning.Text" xml:space="preserve"><value>WASAPI 배타 모드에서 이퀄라이저가 적용 중입니다 (오디오 신호 가공으로 인해 비트 퍼펙트 출력이 아닙니다).</value></data>
+  <data name="Settings_Eq_Device_SystemDefaultSuffix" xml:space="preserve"><value> (시스템 기본)</value></data>
+  <data name="Settings_Eq_FollowDefaultProfileFormat" xml:space="preserve"><value>기본 프로필 따르기 ({0})</value></data>
+  <data name="Settings_Eq_DeviceBoundFormat" xml:space="preserve"><value>이 장치는 '{0}' 프로필에 바인딩되어 있습니다.</value></data>
+  <data name="Settings_Eq_UsingDefaultProfileFormat" xml:space="preserve"><value>기본 프로필('{0}')을 사용 중입니다.</value></data>
+  <data name="Settings_Eq_DefaultProfileFallback" xml:space="preserve"><value>기본</value></data>
+  <data name="Settings_Eq_DedicatedProfileFallback" xml:space="preserve"><value>전용</value></data>
+  <data name="Settings_Eq_DefaultProfileNameFormat" xml:space="preserve"><value>프로필 {0}</value></data>
+  <data name="Settings_Eq_DuplicateProfileFormat" xml:space="preserve"><value>{0} (복사본)</value></data>
+
+  <!-- Playback & Normalizer -->
+  <data name="Settings_Playback_Header.Text" xml:space="preserve"><value>재생 &amp; 음량 정규화 (Playback &amp; Normalizer)</value></data>
+  <data name="Settings_Playback_Normalizer_Title.Text" xml:space="preserve"><value>음량 자동 정규화 (Volume Normalizer / AGC)</value></data>
+  <data name="Settings_Playback_Normalizer_Desc.Text" xml:space="preserve"><value>곡마다 제각각인 녹음/마스터링 음량을 일정한 목표 레벨로 실시간 자동 평준화합니다.</value></data>
+  <data name="Settings_Playback_Normalizer_Toggle.OnContent" xml:space="preserve"><value>켬</value></data>
+  <data name="Settings_Playback_Normalizer_Toggle.OffContent" xml:space="preserve"><value>끔</value></data>
+  <data name="Settings_Playback_NormMode_Title.Text" xml:space="preserve"><value>정규화 동작 모드</value></data>
+  <data name="Settings_Playback_NormMode_Desc.Text" xml:space="preserve"><value>하이브리드(태그 우선 + 미태그 실시간 조절), 실시간(항상 실시간 조절), ReplayGain(태그만 적용)</value></data>
+  <data name="Settings_Playback_NormMode_Hybrid.Content" xml:space="preserve"><value>하이브리드</value></data>
+  <data name="Settings_Playback_NormMode_Dynamic.Content" xml:space="preserve"><value>실시간</value></data>
+  <data name="Settings_Playback_NormMode_ReplayGain.Content" xml:space="preserve"><value>ReplayGain</value></data>
+  <data name="Settings_Playback_TargetLevel_Title.Text" xml:space="preserve"><value>목표 음량 레벨 (Target Level)</value></data>
+  <data name="Settings_Playback_TargetLevel_Desc.Text" xml:space="preserve"><value>정규화 기준 목표 출력 크기 (-24.0 ~ -6.0 dBFS, 기본값 -12.0 dBFS)</value></data>
+  <data name="Settings_Playback_MaxBoost_Title.Text" xml:space="preserve"><value>최대 증폭 한계 (Max Boost Limit)</value></data>
+  <data name="Settings_Playback_MaxBoost_Desc.Text" xml:space="preserve"><value>조용한 곡이나 인트로/아웃트로 구간에서 과도한 노이즈 증폭을 방지합니다 (0.0 ~ +18.0 dB)</value></data>
+  <data name="Settings_Playback_Speed_Title.Text" xml:space="preserve"><value>반응 속도 (Response Speed)</value></data>
+  <data name="Settings_Playback_Speed_Desc.Text" xml:space="preserve"><value>음량 변화에 대한 게인 조절 완화 속도 (빠름 200ms, 표준 600ms, 부드러움 1500ms)</value></data>
+  <data name="Settings_Playback_Speed_Fast.Content" xml:space="preserve"><value>빠름</value></data>
+  <data name="Settings_Playback_Speed_Balanced.Content" xml:space="preserve"><value>표준</value></data>
+  <data name="Settings_Playback_Speed_Smooth.Content" xml:space="preserve"><value>부드러움</value></data>
+  <data name="Settings_Playback_ReplayGain_Title.Text" xml:space="preserve"><value>ReplayGain 모드</value></data>
+  <data name="Settings_Playback_ReplayGain_Desc.Text" xml:space="preserve"><value>음원 태그에 기록된 트랙 또는 앨범 게인을 기준으로 음량을 맞춥니다.</value></data>
+  <data name="Settings_Playback_ReplayGain_Off.Content" xml:space="preserve"><value>끔</value></data>
+  <data name="Settings_Playback_ReplayGain_Track.Content" xml:space="preserve"><value>트랙</value></data>
+  <data name="Settings_Playback_ReplayGain_Album.Content" xml:space="preserve"><value>앨범</value></data>
+  <data name="Settings_Playback_RgPreamp_Title.Text" xml:space="preserve"><value>ReplayGain 사전 증폭 (Preamp)</value></data>
+  <data name="Settings_Playback_RgPreamp_Desc.Text" xml:space="preserve"><value>-12.0 ~ +12.0 dB 범위로 기준 음량을 미세 조절합니다.</value></data>
+  <data name="Settings_Playback_PreventClipping_Title.Text" xml:space="preserve"><value>클리핑 방지 (Prevent Clipping)</value></data>
+  <data name="Settings_Playback_PreventClipping_Desc.Text" xml:space="preserve"><value>증폭 시 피크 값을 넘는 왜곡을 방지하기 위해 자동으로 게인을 감쇄합니다.</value></data>
+
+  <!-- Library -->
+  <data name="Settings_Library_Header.Text" xml:space="preserve"><value>음악 라이브러리 (Music Library)</value></data>
+  <data name="Settings_Library_Folders_Title.Text" xml:space="preserve"><value>감시 폴더 목록</value></data>
+  <data name="Settings_Library_Folders_Desc.Text" xml:space="preserve"><value>라이브러리에 색인할 로컬 및 네트워크 음악 폴더를 지정합니다.</value></data>
+  <data name="Settings_Library_AddFolder_Button.Content" xml:space="preserve"><value>폴더 추가</value></data>
+  <data name="Settings_Library_RemoveFolder_Button.Content" xml:space="preserve"><value>제거</value></data>
+  <data name="Settings_Library_ScanNow_Button.Content" xml:space="preserve"><value>지금 스캔</value></data>
+  <data name="Settings_Library_StartupScan_Title.Text" xml:space="preserve"><value>시작할 때 자동 스캔</value></data>
+  <data name="Settings_Library_StartupScan_Desc.Text" xml:space="preserve"><value>Dawn Player를 실행할 때 감시 폴더의 신규/수정된 음원을 자동으로 색인합니다.</value></data>
+
+  <!-- Lyrics & Typography -->
+  <data name="Settings_Lyrics_Header.Text" xml:space="preserve"><value>가사 &amp; 타이포그래피 (Lyrics &amp; Typography)</value></data>
+  <data name="Settings_Lyrics_Font_Title.Text" xml:space="preserve"><value>가사 글꼴 (Font Family)</value></data>
+  <data name="Settings_Lyrics_Font_Desc.Text" xml:space="preserve"><value>가사 패널 및 에디터에 적용할 폰트 패밀리</value></data>
+  <data name="Settings_Lyrics_Font_Custom.Content" xml:space="preserve"><value>사용자 직접 입력...</value></data>
+  <data name="Settings_Lyrics_CustomFont_Box.PlaceholderText" xml:space="preserve"><value>글꼴 이름 (예: Pretendard, Arial)</value></data>
+  <data name="Settings_Lyrics_FontSize_Title.Text" xml:space="preserve"><value>기본 가사 글꼴 크기</value></data>
+  <data name="Settings_Lyrics_FontSize_Desc.Text" xml:space="preserve"><value>일반 가사 라인의 기본 글꼴 크기 (10 ~ 24px)</value></data>
+  <data name="Settings_Lyrics_ActiveFontSize_Title.Text" xml:space="preserve"><value>재생 중 활성 가사 크기</value></data>
+  <data name="Settings_Lyrics_ActiveFontSize_Desc.Text" xml:space="preserve"><value>현재 재생 중인 강조 가사 라인의 글꼴 크기 (12 ~ 32px)</value></data>
+  <data name="Settings_Lyrics_CharSpacing_Title.Text" xml:space="preserve"><value>가사 자간 (Character Spacing)</value></data>
+  <data name="Settings_Lyrics_CharSpacing_Desc.Text" xml:space="preserve"><value>글자 사이의 간격 (-50 좁게 ~ +200 넓게)</value></data>
+  <data name="Settings_Lyrics_LineHeight_Title.Text" xml:space="preserve"><value>가사 행간 (Line Height)</value></data>
+  <data name="Settings_Lyrics_LineHeight_Desc.Text" xml:space="preserve"><value>가사 줄 높이 및 세로 간격 (18 ~ 48px)</value></data>
+  <data name="Settings_Lyrics_Alignment_Title.Text" xml:space="preserve"><value>가사 정렬 방식</value></data>
+  <data name="Settings_Lyrics_Alignment_Desc.Text" xml:space="preserve"><value>가사 텍스트의 가로 배치 정렬</value></data>
+  <data name="Settings_Lyrics_Align_Center.Content" xml:space="preserve"><value>가운데 정렬 (Center)</value></data>
+  <data name="Settings_Lyrics_Align_Left.Content" xml:space="preserve"><value>왼쪽 정렬 (Left)</value></data>
+  <data name="Settings_Lyrics_Align_Right.Content" xml:space="preserve"><value>오른쪽 정렬 (Right)</value></data>
+  <data name="Settings_Lyrics_FocusDimming_Title.Text" xml:space="preserve"><value>가사 포커스 연출 (Focus Dimming)</value></data>
+  <data name="Settings_Lyrics_FocusDimming_Desc.Text" xml:space="preserve"><value>현재 재생 중인 가사 줄을 강조하고 이전/다음 줄을 부드럽게 감광(40% 투명도)합니다.</value></data>
+  <data name="Settings_Lyrics_Embedded_Title.Text" xml:space="preserve"><value>음원 파일 내장 가사(Embedded Lyrics) 자동 읽기</value></data>
+  <data name="Settings_Lyrics_Embedded_Desc.Text" xml:space="preserve"><value>외부 .lrc 파일이 없을 때 MP3(ID3v2), FLAC, M4A 태그에 저장된 가사를 자동으로 읽어옵니다.</value></data>
+  <data name="Settings_Lyrics_Preview_Header.Text" xml:space="preserve"><value>실시간 가사 미리보기 (Live Preview)</value></data>
+  <data name="Settings_Lyrics_Preview_Line1.Text" xml:space="preserve"><value>어두운 밤하늘을 수놓은 별빛처럼</value></data>
+  <data name="Settings_Lyrics_Preview_Line2.Text" xml:space="preserve"><value>새벽을 깨우는 음악이 흐르고 있어요</value></data>
+  <data name="Settings_Lyrics_Preview_Line3.Text" xml:space="preserve"><value>마음 깊은 곳까지 울려 퍼지는 선율</value></data>
+  <data name="Settings_Lyrics_LrcPattern_Title.Text" xml:space="preserve"><value>.lrc 파일 검색 패턴</value></data>
+  <data name="Settings_Lyrics_LrcPattern_Desc.Text" xml:space="preserve"><value>로컬 가사(.lrc) 파일을 탐색할 때 사용할 파일명 패턴을 한 줄에 하나씩 지정합니다. 위에서부터 순서대로 탐색합니다.</value></data>
+  <data name="Settings_Lyrics_LrcPattern_Tokens.Text" xml:space="preserve"><value>치환 토큰: %filename%, %artist%, %title%, %album%</value></data>
+  <data name="Settings_Lyrics_ResetLrc_Button.AutomationProperties.Name" xml:space="preserve"><value>기본 검색 패턴으로 복원</value></data>
+  <data name="Settings_Lyrics_ResetLrc_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>기본 검색 패턴으로 복원</value></data>
+  <data name="Settings_Lyrics_ResetLrc_Text.Text" xml:space="preserve"><value>기본값 복원</value></data>
+
+  <!-- Online Lyrics -->
+  <data name="Settings_OnlineLyrics_Header.Text" xml:space="preserve"><value>온라인 가사 (Online Lyrics)</value></data>
+  <data name="Settings_OnlineLyrics_Enable_Title.Text" xml:space="preserve"><value>온라인 가사 사용</value></data>
+  <data name="Settings_OnlineLyrics_Enable_Desc.Text" xml:space="preserve"><value>오프라인 가사(.lrc · 임베디드)가 없을 때 플러그인으로 검색합니다</value></data>
+  <data name="Settings_OnlineLyrics_Enable_Toggle.OnContent" xml:space="preserve"><value>사용</value></data>
+  <data name="Settings_OnlineLyrics_Enable_Toggle.OffContent" xml:space="preserve"><value>사용 안 함</value></data>
+  <data name="Settings_OnlineLyrics_AutoFetch_Title.Text" xml:space="preserve"><value>재생 시 자동 검색</value></data>
+  <data name="Settings_OnlineLyrics_AutoFetch_Desc.Text" xml:space="preserve"><value>트랙이 바뀔 때 플러그인 우선순위대로 자동으로 가사를 찾아 표시합니다</value></data>
+  <data name="Settings_OnlineLyrics_AutoFetch_Toggle.OnContent" xml:space="preserve"><value>켬</value></data>
+  <data name="Settings_OnlineLyrics_AutoFetch_Toggle.OffContent" xml:space="preserve"><value>끔</value></data>
+  <data name="Settings_OnlineLyrics_PreferSynced_Title.Text" xml:space="preserve"><value>동기 가사 우선</value></data>
+  <data name="Settings_OnlineLyrics_PreferSynced_Desc.Text" xml:space="preserve"><value>시간 동기(LRC) 가사와 일반 가사가 함께 있을 때 동기 가사를 우선 선택</value></data>
+  <data name="Settings_OnlineLyrics_PreferSynced_Toggle.OnContent" xml:space="preserve"><value>우선</value></data>
+  <data name="Settings_OnlineLyrics_PreferSynced_Toggle.OffContent" xml:space="preserve"><value>구분 없음</value></data>
+  <data name="Settings_OnlineLyrics_Plugins_Title.Text" xml:space="preserve"><value>가사 플러그인</value></data>
+  <data name="Settings_OnlineLyrics_Rescan_Button.AutomationProperties.Name" xml:space="preserve"><value>플러그인 폴더를 다시 스캔합니다</value></data>
+  <data name="Settings_OnlineLyrics_Rescan_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>플러그인 폴더를 다시 스캔합니다</value></data>
+  <data name="Settings_OnlineLyrics_Rescan_Text.Text" xml:space="preserve"><value>다시 스캔</value></data>
+  <data name="Settings_OnlineLyrics_OpenFolder_Button.AutomationProperties.Name" xml:space="preserve"><value>플러그인 폴더를 탐색기에서 엽니다</value></data>
+  <data name="Settings_OnlineLyrics_OpenFolder_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>플러그인 폴더를 탐색기에서 엽니다</value></data>
+  <data name="Settings_OnlineLyrics_OpenFolder_Text.Text" xml:space="preserve"><value>폴더 열기</value></data>
+  <data name="Settings_OnlineLyrics_Plugin_Notice.Text" xml:space="preserve"><value>플러그인별 하위 폴더에 DLL을 넣으면 자동으로 인식됩니다. 목록 순서가 검색 우선순위입니다.</value></data>
+  <data name="Settings_OnlineLyrics_Plugin_Empty.Text" xml:space="preserve"><value>설치된 플러그인이 없습니다. 폴더에 플러그인을 넣고 '다시 스캔'을 누르세요. 개발 방법은 docs/plugin-development.md를 참고하세요.</value></data>
+  <data name="Settings_OnlineLyrics_MoveUp.AutomationProperties.Name" xml:space="preserve"><value>우선순위 올리기</value></data>
+  <data name="Settings_OnlineLyrics_MoveUp.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>우선순위 올리기</value></data>
+  <data name="Settings_OnlineLyrics_MoveDown.AutomationProperties.Name" xml:space="preserve"><value>우선순위 내리기</value></data>
+  <data name="Settings_OnlineLyrics_MoveDown.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>우선순위 내리기</value></data>
+  <data name="Settings_OnlineLyrics_Plugin_Toggle.OnContent" xml:space="preserve"><value>사용</value></data>
+  <data name="Settings_OnlineLyrics_Plugin_Toggle.OffContent" xml:space="preserve"><value>사용 안 함</value></data>
+  <data name="Settings_OnlineLyrics_AutoSave_Title.Text" xml:space="preserve"><value>가사 자동 저장</value></data>
+  <data name="Settings_OnlineLyrics_AutoSave_Desc.Text" xml:space="preserve"><value>온라인에서 가져온 가사를 아래 위치와 템플릿으로 자동 저장합니다</value></data>
+  <data name="Settings_OnlineLyrics_AutoSave_Toggle.OnContent" xml:space="preserve"><value>저장</value></data>
+  <data name="Settings_OnlineLyrics_AutoSave_Toggle.OffContent" xml:space="preserve"><value>저장 안 함</value></data>
+  <data name="Settings_OnlineLyrics_SaveLoc_Title.Text" xml:space="preserve"><value>저장 위치</value></data>
+  <data name="Settings_OnlineLyrics_SaveLoc_Desc.Text" xml:space="preserve"><value>온라인 가사를 파일로 저장하는 기준 폴더</value></data>
+  <data name="Settings_OnlineLyrics_SaveLoc_TrackFolder.Content" xml:space="preserve"><value>음원과 같은 폴더</value></data>
+  <data name="Settings_OnlineLyrics_SaveLoc_CustomFolder.Content" xml:space="preserve"><value>지정 폴더</value></data>
+  <data name="Settings_OnlineLyrics_PickFolder_Button.Content" xml:space="preserve"><value>폴더 선택...</value></data>
+  <data name="Settings_OnlineLyrics_Template_Title.Text" xml:space="preserve"><value>파일명 템플릿</value></data>
+  <data name="Settings_OnlineLyrics_Template_Desc.Text" xml:space="preserve"><value>변수: %filename% %title% %artist% %albumartist% %album% %year% %trackno% — 하위 폴더 경로 포함 가능 (예: %album%\%title%.lrc)</value></data>
+  <data name="Settings_OnlineLyrics_Overwrite_Title.Text" xml:space="preserve"><value>기존 파일 덮어쓰기</value></data>
+  <data name="Settings_OnlineLyrics_Overwrite_Desc.Text" xml:space="preserve"><value>끔이면 이미 있는 .lrc 파일은 그대로 둡니다</value></data>
+  <data name="Settings_OnlineLyrics_Overwrite_Toggle.OnContent" xml:space="preserve"><value>덮어씀</value></data>
+  <data name="Settings_OnlineLyrics_Overwrite_Toggle.OffContent" xml:space="preserve"><value>건너뜀</value></data>
+  <data name="Settings_OnlineLyrics_SourcePluginFolder" xml:space="preserve"><value>플러그인 폴더</value></data>
+  <data name="Settings_OnlineLyrics_SourceBuiltin" xml:space="preserve"><value>직접 등록</value></data>
+  <data name="Settings_OnlineLyrics_CustomFolderNotSet" xml:space="preserve"><value>(지정 안 됨 — 음원 폴더에 저장)</value></data>
+
+  <!-- Appearance & Theme -->
+  <data name="Settings_Appearance_Header.Text" xml:space="preserve"><value>외관 &amp; 테마 (Theme &amp; Appearance)</value></data>
+  <data name="Settings_Appearance_Lang_Title.Text" xml:space="preserve"><value>언어 (Language)</value></data>
+  <data name="Settings_Appearance_Lang_Desc.Text" xml:space="preserve"><value>앱 표시 언어. 시스템 기본은 Windows 표시 언어를 따릅니다.</value></data>
+  <data name="Settings_Appearance_Lang_System.Content" xml:space="preserve"><value>시스템 기본 (System)</value></data>
+  <data name="Settings_Appearance_Lang_Korean.Content" xml:space="preserve"><value>한국어 (Korean)</value></data>
+  <data name="Settings_Appearance_Lang_English.Content" xml:space="preserve"><value>English (US)</value></data>
+  <data name="Settings_Appearance_Lang_Japanese.Content" xml:space="preserve"><value>日本語 (Japanese)</value></data>
+  <data name="Settings_Appearance_Theme_Title.Text" xml:space="preserve"><value>테마 모드</value></data>
+  <data name="Settings_Appearance_Theme_Desc.Text" xml:space="preserve"><value>라이트 / 다크 / OLED Pure Black / 시스템 기본 설정</value></data>
+  <data name="Settings_Appearance_Theme_System.Content" xml:space="preserve"><value>시스템 따르기</value></data>
+  <data name="Settings_Appearance_Theme_Light.Content" xml:space="preserve"><value>밝게 (Eole Warm Slate)</value></data>
+  <data name="Settings_Appearance_Theme_Dark.Content" xml:space="preserve"><value>어둡게 (Eole Slate)</value></data>
+  <data name="Settings_Appearance_Theme_Oled.Content" xml:space="preserve"><value>OLED 블랙 (Pure Black)</value></data>
+  <data name="Settings_Appearance_Backdrop_Title.Text" xml:space="preserve"><value>창 배경 소재 (Backdrop)</value></data>
+  <data name="Settings_Appearance_Backdrop_Desc.Text" xml:space="preserve"><value>Windows 11 Fluent 반투명 또는 Eole 앨범 아트 블러 벽지</value></data>
+  <data name="Settings_Appearance_Backdrop_Mica.Content" xml:space="preserve"><value>Mica (Windows 11 표준)</value></data>
+  <data name="Settings_Appearance_Backdrop_MicaAlt.Content" xml:space="preserve"><value>Mica Alt</value></data>
+  <data name="Settings_Appearance_Backdrop_Acrylic.Content" xml:space="preserve"><value>Acrylic</value></data>
+  <data name="Settings_Appearance_Backdrop_Solid.Content" xml:space="preserve"><value>단색 (Solid)</value></data>
+  <data name="Settings_Appearance_Backdrop_AlbumBlur.Content" xml:space="preserve"><value>앨범 아트 블러 (Eole Wallpaper)</value></data>
+  <data name="Settings_Appearance_DynamicAccent_Title.Text" xml:space="preserve"><value>앨범 아트 동적 테마 (Dynamic Theme)</value></data>
+  <data name="Settings_Appearance_DynamicAccent_Desc.Text" xml:space="preserve"><value>재생 중인 음악의 앨범 커버 색상을 액센트 및 하이라이트에 자동 적용합니다.</value></data>
+  <data name="Settings_Appearance_Accent_Title.Text" xml:space="preserve"><value>액센트 컬러 프리셋</value></data>
+  <data name="Settings_Appearance_Accent_Desc.Text" xml:space="preserve"><value>플레이어 주요 버튼, 인디케이터 및 강조 색상</value></data>
+  <data name="Settings_Appearance_Accent_EoleAmber.Content" xml:space="preserve"><value>Eole Amber (기본)</value></data>
+  <data name="Settings_Appearance_Accent_Custom.Content" xml:space="preserve"><value>사용자 지정 (Custom)...</value></data>
+  <data name="Settings_Appearance_CustomAccent_Title.Text" xml:space="preserve"><value>사용자 지정 액센트 컬러</value></data>
+  <data name="Settings_Appearance_CustomAccent_Desc.Text" xml:space="preserve"><value>원하는 16진수 HEX 색상 코드(#RRGGBB)를 직접 지정합니다.</value></data>
+  <data name="Settings_Appearance_PickColor_Button.Content" xml:space="preserve"><value>색상 선택</value></data>
+
+  <!-- Layout & Sizing -->
+  <data name="Settings_Layout_Header.Text" xml:space="preserve"><value>레이아웃 &amp; 디스플레이 (Layout &amp; Sizing)</value></data>
+  <data name="Settings_Layout_CoverSize_Title.Text" xml:space="preserve"><value>앨범 커버 기본 크기</value></data>
+  <data name="Settings_Layout_CoverSize_Desc.Text" xml:space="preserve"><value>라이브러리 커버 그리드의 기본 타일 크기</value></data>
+  <data name="Settings_Layout_Reset_Title.Text" xml:space="preserve"><value>사이드바 레이아웃 초기화</value></data>
+  <data name="Settings_Layout_Reset_Desc.Text" xml:space="preserve"><value>좌/우측 사이드바 및 가사 패널 너비를 기본값으로 복원</value></data>
+  <data name="Settings_Layout_Reset_Button.Content" xml:space="preserve"><value>레이아웃 초기화</value></data>
+
+  <!-- Shortcuts -->
+  <data name="Settings_Shortcuts_Header.Text" xml:space="preserve"><value>단축키 (Keyboard Shortcuts)</value></data>
+  <data name="Settings_Shortcuts_Desc.Text" xml:space="preserve"><value>키 항목을 눌러 새 조합을 입력하세요. 텍스트 입력 중에는 재생 단축키가 동작하지 않습니다.</value></data>
+  <data name="Settings_Shortcuts_Rebind.AutomationProperties.Name" xml:space="preserve"><value>눌러서 새 단축키 지정</value></data>
+  <data name="Settings_Shortcuts_Rebind.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>눌러서 새 단축키 지정</value></data>
+  <data name="Settings_Shortcuts_Reset_Button.Content" xml:space="preserve"><value>기본값</value></data>
+  <data name="Settings_Shortcuts_Clear_Button.Content" xml:space="preserve"><value>지우기</value></data>
+  <data name="Settings_Shortcuts_ResetAll_Button.Content" xml:space="preserve"><value>모든 단축키 기본값으로 되돌리기</value></data>
+  <data name="Settings_Shortcuts_Unassigned" xml:space="preserve"><value>없음</value></data>
+  <data name="Settings_Shortcuts_Cat_Playback" xml:space="preserve"><value>재생 제어</value></data>
+  <data name="Settings_Shortcuts_Cat_Seek" xml:space="preserve"><value>탐색</value></data>
+  <data name="Settings_Shortcuts_Cat_Volume" xml:space="preserve"><value>볼륨</value></data>
+  <data name="Settings_Shortcuts_Cat_Navigation" xml:space="preserve"><value>네비게이션 &amp; 창</value></data>
+  <data name="Shortcut_Command_PlayPause" xml:space="preserve"><value>재생 / 일시정지</value></data>
+  <data name="Shortcut_Command_Stop" xml:space="preserve"><value>정지</value></data>
+  <data name="Shortcut_Command_Next" xml:space="preserve"><value>다음 트랙</value></data>
+  <data name="Shortcut_Command_Previous" xml:space="preserve"><value>이전 트랙</value></data>
+  <data name="Shortcut_Command_ShuffleCycle" xml:space="preserve"><value>셔플 순환 (끔 → 트랙 → 앨범)</value></data>
+  <data name="Shortcut_Command_RepeatCycle" xml:space="preserve"><value>반복 순환 (끔 → 전체 → 한 곡)</value></data>
+  <data name="Shortcut_Command_StopAfterCurrentToggle" xml:space="preserve"><value>현재 곡 재생 후 정지 전환</value></data>
+  <data name="Shortcut_Command_SeekForward" xml:space="preserve"><value>5초 앞으로</value></data>
+  <data name="Shortcut_Command_SeekBackward" xml:space="preserve"><value>5초 뒤로</value></data>
+  <data name="Shortcut_Command_SeekToStart" xml:space="preserve"><value>현재 곡 처음으로</value></data>
+  <data name="Shortcut_Command_VolumeUp" xml:space="preserve"><value>볼륨 올리기</value></data>
+  <data name="Shortcut_Command_VolumeDown" xml:space="preserve"><value>볼륨 내리기</value></data>
+  <data name="Shortcut_Command_MuteToggle" xml:space="preserve"><value>음소거 전환</value></data>
+  <data name="Shortcut_Command_ToggleLyrics" xml:space="preserve"><value>가사 창 열기 / 닫기</value></data>
+  <data name="Shortcut_Command_FocusSearch" xml:space="preserve"><value>라이브러리 검색으로 이동</value></data>
+  <data name="Shortcut_Command_OpenPreferences" xml:space="preserve"><value>환경설정 열기</value></data>
+
+  <!-- About -->
+  <data name="Settings_About_Header.Text" xml:space="preserve"><value>정보 (About Dawn Player)</value></data>
+  <data name="Settings_About_VersionFormat" xml:space="preserve"><value>버전 {0} (x64) · foobar2000 &amp; Eole 영감 네이티브 플레이어</value></data>
+  <data name="Settings_About_AudioEngine.Text" xml:space="preserve"><value>오디오 엔진: NAudio 2.3 · NAudio.Vorbis (NVorbis) · Windows Media Foundation (WASAPI Exclusive Bit-Perfect)</value></data>
+  <data name="Settings_About_Metadata.Text" xml:space="preserve"><value>태그 및 메타데이터: TagLib# (ID3v2, Vorbis Comment, MP4, APE)</value></data>
+  <data name="Settings_About_Database.Text" xml:space="preserve"><value>데이터베이스: Microsoft.Data.Sqlite (SQLite)</value></data>
+
+  <!-- Common Dialogs -->
 </root>
