@@ -45,6 +45,24 @@ public static class AppServices
     private static CancellationTokenSource? _scanCts;
     private static Task? _scanTask;
 
+    /// <summary>
+    /// Loads settings and applies the saved UI language. Must run before any XAML is loaded:
+    /// PrimaryLanguageOverride only affects resources resolved after it is set, so calling this
+    /// from the App constructor (before <c>InitializeComponent</c>) is what makes x:Uid strings
+    /// honor the user's language on the very first frame. Unpackaged apps must re-apply the
+    /// override every launch because it is not persisted.
+    /// </summary>
+    public static void ApplyStartupLanguage()
+    {
+        if (Settings == null)
+        {
+            Settings = SettingsStore.Load();
+        }
+
+        AppStrings.Instance = new MrtLocalizationService();
+        AppStrings.ApplyLanguage(Bcp47(Settings.Ui.Language));
+    }
+
     public static void Initialize(Window window)
     {
         Ui = window.DispatcherQueue;
@@ -52,11 +70,14 @@ public static class AppServices
         PlaylistItem.UiDispatcher = RunOnUi;
         Controls.PlaybackUiHelper.Logger = App.Log;
 
-        Settings = SettingsStore.Load();
-        // Apply the user's language before any UI/services build so the first frame already
-        // uses the right resource set. The window-level x:Uid bindings pick this up via
-        // the ResourceLoader the next time the visual tree is realized.
-        AppStrings.ApplyLanguage(Bcp47(Settings.Ui.Language));
+        if (Settings == null)
+        {
+            Settings = SettingsStore.Load();
+            AppStrings.ApplyLanguage(Bcp47(Settings.Ui.Language));
+        }
+        // Core cannot reach the app's resource pipeline; hand it localized formatters instead.
+        AlbumGroup.SongCountFormatter =
+            count => AppStrings.Format("Library_TrackCountFormat", "{0}곡", count);
         Library = OpenLibraryResilient(out var dbRecoveryMessage);
         Playlists = new PlaylistManager(Library)
         {
@@ -128,7 +149,7 @@ public static class AppServices
 
         var fresh = new MusicLibrary();
         fresh.LoadFromDb();
-        recoveryMessage = "라이브러리 데이터베이스를 열 수 없어 새로 만들었습니다. 설정에서 다시 스캔해 주세요.";
+        recoveryMessage = AppStrings.Get("Msg_DbRecoveryMessage", "라이브러리 데이터베이스를 열 수 없어 새로 만들었습니다. 설정에서 다시 스캔해 주세요.");
         return fresh;
     }
 
@@ -153,10 +174,10 @@ public static class AppServices
     public static void RaiseWarning(string message) => RunOnUi(() => WarningRaised?.Invoke(message));
 
     /// <summary>
-    /// Updates the user's language preference, applies it to the resource pipeline, and
-    /// raises <see cref="LanguageChanged"/>. The window owner is responsible for reloading
-    /// its visual tree so already-rendered x:Uid bindings pick up the new strings — the
-    /// x:Uid -> property mapping only runs at XAML load time.
+    /// Updates the user's language preference, applies it to the resource pipeline, and raises
+    /// <see cref="LanguageChanged"/> on the UI thread. Strings fetched through <see cref="AppStrings"/>
+    /// switch immediately, but already-loaded x:Uid content does not re-resolve, so the handler
+    /// of <see cref="LanguageChanged"/> offers an app restart.
     /// </summary>
     public static void ChangeLanguage(UiLanguage language)
     {
@@ -165,6 +186,30 @@ public static class AppServices
         AppStrings.ApplyLanguage(Bcp47(language));
         SettingsWriter.Schedule(Settings);
         RunOnUi(() => LanguageChanged?.Invoke(language));
+    }
+
+    /// <summary>
+    /// Saves settings synchronously, starts a new process, and closes the main window through
+    /// the normal shutdown path (session save, placement save). Used after a language switch,
+    /// where the debounced <see cref="SettingsWriter.Schedule"/> write could otherwise be lost.
+    /// </summary>
+    public static void RestartApp()
+    {
+        SettingsWriter.FlushNow(Settings);
+        var exe = Environment.ProcessPath;
+        if (!string.IsNullOrEmpty(exe))
+        {
+            try
+            {
+                _ = System.Diagnostics.Process.Start(
+                    new System.Diagnostics.ProcessStartInfo(exe) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                App.Log($"[restart] failed to launch new process: {ex}");
+            }
+        }
+        App.MainWin?.Close();
     }
 
     /// <summary>Starts a library scan (cancels any running one).</summary>
@@ -184,7 +229,7 @@ public static class AppServices
         {
             try { await Library.ScanAsync(Settings, ct); }
             catch (OperationCanceledException) { }
-            catch (Exception ex) { RunOnUi(() => WarningRaised?.Invoke($"라이브러리 스캔 실패: {ex.Message}")); }
+            catch (Exception ex) { RunOnUi(() => WarningRaised?.Invoke(AppStrings.Format("Msg_LibraryScanFailed", ex.Message))); }
             finally
             {
                 Interlocked.CompareExchange(ref _scanCts, null, cts);

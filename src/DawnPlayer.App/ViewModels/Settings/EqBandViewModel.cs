@@ -1,5 +1,6 @@
 using System;
 using DawnPlayer.App.Calculators;
+using DawnPlayer.App.Localization;
 using DawnPlayer.Core.Persistence;
 
 namespace DawnPlayer.App.ViewModels.Settings;
@@ -36,7 +37,7 @@ public sealed class EqBandViewModel : ViewModelBase
         }
     }
 
-    public string DisplayNumber => $"밴드 {_index + 1}";
+    public string DisplayNumber => AppStrings.Format("Settings_Eq_BandFormat", "밴드 {0}", _index + 1);
 
     public string ColorHex => EqVisualizerCalculator.GetBandColorHex(_index);
 

@@ -17,13 +17,56 @@ public sealed class AppearanceSettingsViewModel : ViewModelBase
 
     private readonly IAppearanceSettingsService _appearanceSettingsService;
     private readonly AppSettings _settings;
+    private readonly Action<UiLanguage>? _onLanguageChanged;
 
     public AppearanceSettingsViewModel(
         IAppearanceSettingsService appearanceSettingsService,
-        AppSettings settings)
+        AppSettings settings,
+        Action<UiLanguage>? onLanguageChanged = null)
     {
         _appearanceSettingsService = appearanceSettingsService ?? throw new ArgumentNullException(nameof(appearanceSettingsService));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+        _onLanguageChanged = onLanguageChanged;
+    }
+
+    public UiLanguage Language
+    {
+        get => _settings.Ui.Language;
+        set
+        {
+            if (_settings.Ui.Language != value)
+            {
+                _settings.Ui.Language = value;
+                _onLanguageChanged?.Invoke(value);
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(LanguageIndex));
+            }
+        }
+    }
+
+    public int LanguageIndex
+    {
+        get => _settings.Ui.Language switch
+        {
+            UiLanguage.KoKR => 1,
+            UiLanguage.EnUS => 2,
+            UiLanguage.JaJP => 3,
+            _ => 0
+        };
+        set
+        {
+            var language = value switch
+            {
+                1 => UiLanguage.KoKR,
+                2 => UiLanguage.EnUS,
+                3 => UiLanguage.JaJP,
+                _ => UiLanguage.System
+            };
+            if (_settings.Ui.Language != language)
+            {
+                Language = language;
+            }
+        }
     }
 
     public ThemeMode Theme

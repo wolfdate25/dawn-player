@@ -57,11 +57,11 @@
         <Grid Grid.Row="0" Margin="24,12,24,10" Padding="0,0,0,10"
               BorderBrush="{ThemeResource SeparatorSubtleBrush}" BorderThickness="0,0,0,1">
             <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                <Button Style="{StaticResource TitleMenuButtonStyle}" Click="OnBackClick" ToolTipService.ToolTip="돌아가기"
+                <Button x:Uid="Settings_BackButton" Style="{StaticResource TitleMenuButtonStyle}" Click="OnBackClick" ToolTipService.ToolTip="돌아가기"
                         Width="32" Height="32" Padding="0">
                     <FontIcon Glyph="&#xE72B;" FontSize="13"/>
                 </Button>
-                <TextBlock Text="환경설정 (Preferences)" FontSize="17" FontWeight="SemiBold"
+                <TextBlock x:Uid="Settings_Header_Title" Text="환경설정 (Preferences)" FontSize="17" FontWeight="SemiBold"
                            Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
             </StackPanel>
         </Grid>
@@ -87,7 +87,7 @@
                     <ListViewItem Tag="Audio">
                         <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                             <FontIcon Glyph="&#xE767;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
-                            <TextBlock Text="오디오 출력" FontSize="13" FontWeight="SemiBold"/>
+                            <TextBlock x:Uid="Settings_Nav_Audio" Text="오디오 출력" FontSize="13" FontWeight="SemiBold"/>
                         </StackPanel>
                     </ListViewItem>
 
@@ -95,7 +95,7 @@
                     <ListViewItem Tag="Equalizer">
                         <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                             <FontIcon Glyph="&#xE9E9;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
-                            <TextBlock Text="이퀄라이저 (EQ)" FontSize="13" FontWeight="SemiBold"/>
+                            <TextBlock x:Uid="Settings_Nav_Equalizer" Text="이퀄라이저 (EQ)" FontSize="13" FontWeight="SemiBold"/>
                         </StackPanel>
                     </ListViewItem>
 
@@ -103,7 +103,7 @@
                     <ListViewItem Tag="Playback">
                         <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                             <FontIcon Glyph="&#xE93C;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
-                            <TextBlock Text="재생 &amp; 음량 정규화" FontSize="13" FontWeight="SemiBold"/>
+                            <TextBlock x:Uid="Settings_Nav_Playback" Text="재생 &amp; 음량 정규화" FontSize="13" FontWeight="SemiBold"/>
                         </StackPanel>
                     </ListViewItem>
 
@@ -111,7 +111,7 @@
                     <ListViewItem Tag="Library">
                         <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                             <FontIcon Glyph="&#xE8F1;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
-                            <TextBlock Text="음악 라이브러리" FontSize="13" FontWeight="SemiBold"/>
+                            <TextBlock x:Uid="Settings_Nav_Library" Text="음악 라이브러리" FontSize="13" FontWeight="SemiBold"/>
                         </StackPanel>
                     </ListViewItem>
 
@@ -119,7 +119,7 @@
                     <ListViewItem Tag="Lyrics">
                         <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                             <FontIcon Glyph="&#xEC4F;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
-                            <TextBlock Text="가사 (Lyrics)" FontSize="13" FontWeight="SemiBold"/>
+                            <TextBlock x:Uid="Settings_Nav_Lyrics" Text="가사 (Lyrics)" FontSize="13" FontWeight="SemiBold"/>
                         </StackPanel>
                     </ListViewItem>
 
@@ -127,7 +127,7 @@
                     <ListViewItem Tag="OnlineLyrics">
                         <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                             <FontIcon Glyph="&#xE721;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
-                            <TextBlock Text="온라인 가사 (Plugins)" FontSize="13" FontWeight="SemiBold"/>
+                            <TextBlock x:Uid="Settings_Nav_OnlineLyrics" Text="온라인 가사 (Plugins)" FontSize="13" FontWeight="SemiBold"/>
                         </StackPanel>
                     </ListViewItem>
 
@@ -135,7 +135,7 @@
                     <ListViewItem Tag="Appearance">
                         <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                             <FontIcon Glyph="&#xE790;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
-                            <TextBlock Text="외관 &amp; 테마" FontSize="13" FontWeight="SemiBold"/>
+                            <TextBlock x:Uid="Settings_Nav_Appearance" Text="외관 &amp; 테마" FontSize="13" FontWeight="SemiBold"/>
                         </StackPanel>
                     </ListViewItem>
 
@@ -143,7 +143,7 @@
                     <ListViewItem Tag="Layout">
                         <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                             <FontIcon Glyph="&#xE740;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
-                            <TextBlock Text="레이아웃 &amp; 디스플레이" FontSize="13" FontWeight="SemiBold"/>
+                            <TextBlock x:Uid="Settings_Nav_Layout" Text="레이아웃 &amp; 디스플레이" FontSize="13" FontWeight="SemiBold"/>
                         </StackPanel>
                     </ListViewItem>
 
@@ -151,7 +151,7 @@
                     <ListViewItem Tag="Shortcuts">
                         <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                             <FontIcon Glyph="&#xE765;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
-                            <TextBlock Text="단축키 (Shortcuts)" FontSize="13" FontWeight="SemiBold"/>
+                            <TextBlock x:Uid="Settings_Nav_Shortcuts" Text="단축키 (Shortcuts)" FontSize="13" FontWeight="SemiBold"/>
                         </StackPanel>
                     </ListViewItem>
 
@@ -159,7 +159,7 @@
                     <ListViewItem Tag="About">
                         <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                             <FontIcon Glyph="&#xE946;" FontSize="15" Foreground="{ThemeResource TextSecondaryBrush}"/>
-                            <TextBlock Text="정보 (About)" FontSize="13" FontWeight="SemiBold"/>
+                            <TextBlock x:Uid="Settings_Nav_About" Text="정보 (About)" FontSize="13" FontWeight="SemiBold"/>
                         </StackPanel>
                     </ListViewItem>
                 </ListView>
@@ -174,7 +174,7 @@
 
                     <!-- ==================== 1. AUDIO OUTPUT SECTION ==================== -->
                     <StackPanel x:Name="Section_Audio" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsAudioCategorySelected), Mode=OneWay}" Spacing="0">
-                        <TextBlock Text="오디오 출력 (Audio Output)" Style="{StaticResource CategoryHeader}"/>
+                        <TextBlock x:Uid="Settings_Audio_Header" Text="오디오 출력 (Audio Output)" Style="{StaticResource CategoryHeader}"/>
 
                         <!-- Driver Type & Devices Card -->
                         <Border Style="{StaticResource SectionCard}">
@@ -185,14 +185,14 @@
                                         <ColumnDefinition Width="320"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="오디오 출력 드라이버" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="WASAPI(고음질 비트 퍼펙트), DirectSound, WaveOut 중 선택" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Audio_Driver_Title" Text="오디오 출력 드라이버" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Audio_Driver_Desc" Text="WASAPI(고음질 비트 퍼펙트), DirectSound, WaveOut 중 선택" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <ComboBox Grid.Column="1" Width="200" HorizontalAlignment="Right"
                                               SelectedIndex="{x:Bind ViewModel.Audio.DriverTypeIndex, Mode=TwoWay}">
-                                        <ComboBoxItem Content="WASAPI (권장)"/>
-                                        <ComboBoxItem Content="Windows Audio (DirectSound)"/>
-                                        <ComboBoxItem Content="WaveOut"/>
+                                        <ComboBoxItem x:Uid="Settings_Audio_Driver_Wasapi" Content="WASAPI (권장)"/>
+                                        <ComboBoxItem x:Uid="Settings_Audio_Driver_DirectSound" Content="Windows Audio (DirectSound)"/>
+                                        <ComboBoxItem x:Uid="Settings_Audio_Driver_WaveOut" Content="WaveOut"/>
                                     </ComboBox>
                                 </Grid>
 
@@ -204,14 +204,14 @@
                                         <ColumnDefinition Width="320"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="출력 장치 (Device)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Audio_Device_Title" Text="출력 장치 (Device)" Style="{StaticResource SettingTitle}"/>
                                         <TextBlock Text="{x:Bind ViewModel.Audio.DriverDescriptionText, Mode=OneWay}" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <ComboBox Width="220" DisplayMemberPath="Name"
                                                   ItemsSource="{x:Bind ViewModel.Audio.Devices, Mode=OneWay}"
                                                   SelectedItem="{x:Bind ViewModel.Audio.SelectedDevice, Mode=TwoWay}"/>
-                                        <Button Content="&#xE72C;" FontFamily="Segoe Fluent Icons" FontSize="13"
+                                        <Button x:Uid="Settings_Audio_RefreshDevices" Content="&#xE72C;" FontFamily="Segoe Fluent Icons" FontSize="13"
                                                 Click="OnRefreshDevices" ToolTipService.ToolTip="장치 목록 새로고침"/>
                                     </StackPanel>
                                 </Grid>
@@ -228,11 +228,11 @@
                                         <ColumnDefinition Width="320"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="WASAPI 배타 모드 (Exclusive)" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="다른 프로그램 소리를 차단하고 비트 퍼펙트로 직접 출력합니다. 형식이 맞지 않으면 자동으로 공유 모드로 대체됩니다."
+                                        <TextBlock x:Uid="Settings_Audio_Exclusive_Title" Text="WASAPI 배타 모드 (Exclusive)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Audio_Exclusive_Desc" Text="다른 프로그램 소리를 차단하고 비트 퍼펙트로 직접 출력합니다. 형식이 맞지 않으면 자동으로 공유 모드로 대체됩니다."
                                                    Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
-                                    <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
+                                    <ToggleSwitch x:Uid="Settings_Audio_Exclusive_Toggle" Grid.Column="1" HorizontalAlignment="Right"
                                                   OnContent="배타" OffContent="공유"
                                                   IsOn="{x:Bind ViewModel.Audio.UseExclusiveMode, Mode=TwoWay}"/>
                                 </Grid>
@@ -247,11 +247,11 @@
                                         <ColumnDefinition Width="320"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="Windows 독점 제어 / 우선순위 설정" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Audio_WinExclusive_Title" Text="Windows 독점 제어 / 우선순위 설정" Style="{StaticResource SettingTitle}"/>
                                         <TextBlock Text="{x:Bind ViewModel.Audio.WindowsExclusiveStatusText, Mode=OneWay}"
                                                    Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
-                                    <Button Content="Windows 소리 제어판 열기" Grid.Column="1" HorizontalAlignment="Right"
+                                    <Button x:Uid="Settings_Audio_OpenSoundPanel_Button" Content="Windows 소리 제어판 열기" Grid.Column="1" HorizontalAlignment="Right"
                                             Click="OnOpenSoundControlPanel"/>
                                 </Grid>
 
@@ -265,15 +265,15 @@
                                         <ColumnDefinition Width="320"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="배타 모드 비트 깊이" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="원본: 파일의 비트 심도 그대로 (16/24/32 비트)" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Audio_BitDepth_Title" Text="배타 모드 비트 깊이" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Audio_BitDepth_Desc" Text="원본: 파일의 비트 심도 그대로 (16/24/32 비트)" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <ComboBox Grid.Column="1" Width="180" HorizontalAlignment="Right"
                                               SelectedIndex="{x:Bind ViewModel.Audio.ExclusiveBitDepthIndex, Mode=TwoWay}">
-                                        <ComboBoxItem Content="원본 따르기"/>
-                                        <ComboBoxItem Content="16비트"/>
-                                        <ComboBoxItem Content="24비트"/>
-                                        <ComboBoxItem Content="32비트"/>
+                                        <ComboBoxItem x:Uid="Settings_Audio_BitDepth_Source" Content="원본 따르기"/>
+                                        <ComboBoxItem x:Uid="Settings_Audio_BitDepth_16" Content="16비트"/>
+                                        <ComboBoxItem x:Uid="Settings_Audio_BitDepth_24" Content="24비트"/>
+                                        <ComboBoxItem x:Uid="Settings_Audio_BitDepth_32" Content="32비트"/>
                                     </ComboBox>
                                 </Grid>
 
@@ -287,8 +287,8 @@
                                         <ColumnDefinition Width="320"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="배타 모드에서 볼륨/리플레이게인 허용" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="끄면 비트 퍼펙트가 유지됩니다 (볼륨 100% 고정)." Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Audio_AllowVolume_Title" Text="배타 모드에서 볼륨/리플레이게인 허용" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Audio_AllowVolume_Desc" Text="끄면 비트 퍼펙트가 유지됩니다 (볼륨 100% 고정)." Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
                                                   IsOn="{x:Bind ViewModel.Audio.AllowVolumeInExclusive, Mode=TwoWay}"/>
@@ -304,8 +304,8 @@
                                     <ColumnDefinition Width="320"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                    <TextBlock Text="출력 버퍼 크기 (Latency)" Style="{StaticResource SettingTitle}"/>
-                                    <TextBlock Text="낮으면 지연이 줄고, 높으면 오디오 버벅임 방지 및 안정성이 향상됩니다." Style="{StaticResource SettingDesc}"/>
+                                    <TextBlock x:Uid="Settings_Audio_Latency_Title" Text="출력 버퍼 크기 (Latency)" Style="{StaticResource SettingTitle}"/>
+                                    <TextBlock x:Uid="Settings_Audio_Latency_Desc" Text="낮으면 지연이 줄고, 높으면 오디오 버벅임 방지 및 안정성이 향상됩니다." Style="{StaticResource SettingDesc}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" VerticalAlignment="Center">
                                     <Slider Width="200" Minimum="30" Maximum="500" StepFrequency="10"
@@ -319,7 +319,7 @@
 
                     <!-- ==================== 2. EQUALIZER SECTION ==================== -->
                     <StackPanel x:Name="Section_Equalizer" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsEqualizerCategorySelected), Mode=OneWay}" Spacing="0">
-                        <TextBlock Text="파라메트릭 이퀄라이저 (Parametric Equalizer)" Style="{StaticResource CategoryHeader}"/>
+                        <TextBlock x:Uid="Settings_Eq_Header" Text="파라메트릭 이퀄라이저 (Parametric Equalizer)" Style="{StaticResource CategoryHeader}"/>
 
                         <!-- 1. Master Equalizer Toggle Card -->
                         <Border Style="{StaticResource SectionCard}">
@@ -329,10 +329,10 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                    <TextBlock Text="이퀄라이저 활성화 (Master Enable)" Style="{StaticResource SettingTitle}"/>
-                                    <TextBlock Text="이퀄라이저 기능을 전역으로 켜거나 끕니다. 끄면 모든 장치에서 신호 가공 없이 비트 퍼펙트 바이패스로 재생됩니다." Style="{StaticResource SettingDesc}"/>
+                                    <TextBlock x:Uid="Settings_Eq_Master_Title" Text="이퀄라이저 활성화 (Master Enable)" Style="{StaticResource SettingTitle}"/>
+                                    <TextBlock x:Uid="Settings_Eq_Master_Desc" Text="이퀄라이저 기능을 전역으로 켜거나 끕니다. 끄면 모든 장치에서 신호 가공 없이 비트 퍼펙트 바이패스로 재생됩니다." Style="{StaticResource SettingDesc}"/>
                                 </StackPanel>
-                                <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
+                                <ToggleSwitch x:Uid="Settings_Eq_Master_Toggle" Grid.Column="1" HorizontalAlignment="Right"
                                               IsOn="{x:Bind ViewModel.Equalizer.IsMasterEnabled, Mode=TwoWay}" OnContent="켬" OffContent="끔"/>
                             </Grid>
                         </Border>
@@ -346,17 +346,17 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="편집할 프로필 선택" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="프로필 파라미터를 실시간 편집하고 새 프로필을 생성하거나 관리합니다." Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Eq_Profile_Title" Text="편집할 프로필 선택" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Eq_Profile_Desc" Text="프로필 파라미터를 실시간 편집하고 새 프로필을 생성하거나 관리합니다." Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <ComboBox Width="180" DisplayMemberPath="Name"
                                                   ItemsSource="{x:Bind ViewModel.Equalizer.Profiles, Mode=OneWay}"
                                                   SelectedItem="{x:Bind ViewModel.Equalizer.SelectedProfile, Mode=TwoWay}"/>
-                                        <Button Content="새 프로필" Click="OnEqNewProfileClick" ToolTipService.ToolTip="새 EQ 프로필 추가"/>
-                                        <Button Content="복제" Click="OnEqDuplicateProfileClick" ToolTipService.ToolTip="현재 프로필 복제"/>
-                                        <Button Content="이름 변경" Click="OnEqRenameProfileClick" ToolTipService.ToolTip="프로필 이름 변경"/>
-                                        <Button Content="삭제" Click="OnEqDeleteProfileClick"
+                                        <Button x:Uid="Settings_Eq_NewProfile_Button" Content="새 프로필" Click="OnEqNewProfileClick" ToolTipService.ToolTip="새 EQ 프로필 추가"/>
+                                        <Button x:Uid="Settings_Eq_DuplicateProfile_Button" Content="복제" Click="OnEqDuplicateProfileClick" ToolTipService.ToolTip="현재 프로필 복제"/>
+                                        <Button x:Uid="Settings_Eq_RenameProfile_Button" Content="이름 변경" Click="OnEqRenameProfileClick" ToolTipService.ToolTip="프로필 이름 변경"/>
+                                        <Button x:Uid="Settings_Eq_DeleteProfile_Button" Content="삭제" Click="OnEqDeleteProfileClick"
                                                 IsEnabled="{x:Bind ViewModel.Equalizer.CanDeleteProfile, Mode=OneWay}" ToolTipService.ToolTip="현재 프로필 삭제"/>
                                     </StackPanel>
                                 </Grid>
@@ -369,8 +369,8 @@
                                         <ColumnDefinition Width="380"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="프리앰프 (Preamp)" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="EQ 부스트 시 디지털 클리핑을 방지하기 위해 전체 레벨을 조절합니다 (-12.0 ~ +12.0 dB)." Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Eq_Preamp_Title" Text="프리앰프 (Preamp)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Eq_Preamp_Desc" Text="EQ 부스트 시 디지털 클리핑을 방지하기 위해 전체 레벨을 조절합니다 (-12.0 ~ +12.0 dB)." Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <Grid Grid.Column="1" VerticalAlignment="Center" ColumnSpacing="6">
                                         <Grid.ColumnDefinitions>
@@ -402,8 +402,8 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="주파수 응답 곡선 (Frequency Response)" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="현재 편집 중인 프로필의 합성 주파수 전달 특성 (20Hz ~ 20kHz, ±18dB)" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Eq_Visualizer_Title" Text="주파수 응답 곡선 (Frequency Response)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Eq_Visualizer_Desc" Text="현재 편집 중인 프로필의 합성 주파수 전달 특성 (20Hz ~ 20kHz, ±18dB)" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.Equalizer.ProfileName, Mode=OneWay}" FontSize="12"
                                                FontWeight="SemiBold" Foreground="{ThemeResource DawnAccentBrush}" VerticalAlignment="Center"/>
@@ -428,18 +428,18 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                            <TextBlock Text="파라메트릭 필터 밴드" Style="{StaticResource SettingTitle}"/>
+                                            <TextBlock x:Uid="Settings_Eq_Bands_Title" Text="파라메트릭 필터 밴드" Style="{StaticResource SettingTitle}"/>
                                             <TextBlock Text="{x:Bind ViewModel.Equalizer.BandCountText, Mode=OneWay}" FontSize="12"
                                                        Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>
                                         </StackPanel>
-                                        <TextBlock Text="최대 20개의 필터 밴드를 추가하여 주파수(20Hz~20kHz), 게인(±15dB), Q(0.1~8.0)를 정밀하게 조정합니다." Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Eq_Bands_Desc" Text="최대 20개의 필터 밴드를 추가하여 주파수(20Hz~20kHz), 게인(±15dB), Q(0.1~8.0)를 정밀하게 조정합니다." Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
-                                    <Button Grid.Column="1" Content="+ 밴드 추가"
+                                    <Button x:Uid="Settings_Eq_AddBand_Button" Grid.Column="1" Content="+ 밴드 추가"
                                             IsEnabled="{x:Bind ViewModel.Equalizer.CanAddBand, Mode=OneWay}"
                                             Click="OnEqAddBandClick" Style="{StaticResource AccentButtonStyle}"/>
                                 </Grid>
 
-                                <TextBlock Text="설정된 필터 밴드가 없습니다. '+ 밴드 추가' 버튼을 눌러 새 밴드를 구성하세요."
+                                <TextBlock x:Uid="Settings_Eq_Bands_Empty" Text="설정된 필터 밴드가 없습니다. '+ 밴드 추가' 버튼을 눌러 새 밴드를 구성하세요."
                                            FontSize="12" Foreground="{ThemeResource TextTertiaryBrush}" Margin="0,4,0,4"
                                            Visibility="{x:Bind BooleanToVisibility(ViewModel.Equalizer.HasEmptyBands), Mode=OneWay}"/>
 
@@ -466,13 +466,13 @@
                                                         </Border>
                                                         <ComboBox Grid.Column="1" Width="120" Margin="0,0,8,0" VerticalAlignment="Center"
                                                                   SelectedIndex="{x:Bind TypeIndex, Mode=TwoWay}">
-                                                            <ComboBoxItem Content="피크"/>
-                                                            <ComboBoxItem Content="저음 쉘프"/>
-                                                            <ComboBoxItem Content="고음 쉘프"/>
-                                                            <ComboBoxItem Content="로우 패스"/>
-                                                            <ComboBoxItem Content="하이 패스"/>
+                                                            <ComboBoxItem x:Uid="Settings_Eq_Band_Peak" Content="피크"/>
+                                                            <ComboBoxItem x:Uid="Settings_Eq_Band_LowShelf" Content="저음 쉘프"/>
+                                                            <ComboBoxItem x:Uid="Settings_Eq_Band_HighShelf" Content="고음 쉘프"/>
+                                                            <ComboBoxItem x:Uid="Settings_Eq_Band_LowPass" Content="로우 패스"/>
+                                                            <ComboBoxItem x:Uid="Settings_Eq_Band_HighPass" Content="하이 패스"/>
                                                         </ComboBox>
-                                                        <Button Grid.Column="2" Padding="6,4" VerticalAlignment="Center"
+                                                        <Button x:Uid="Settings_Eq_DeleteBand_Button" Grid.Column="2" Padding="6,4" VerticalAlignment="Center"
                                                                 Click="OnDeleteBandClick" ToolTipService.ToolTip="밴드 삭제">
                                                             <FontIcon Glyph="&#xE74D;" FontSize="12"/>
                                                         </Button>
@@ -495,7 +495,7 @@
                                                         </Grid.RowDefinitions>
 
                                                         <!-- Row 0: Frequency -->
-                                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="주파수" FontSize="12" VerticalAlignment="Center"/>
+                                                        <TextBlock x:Uid="Settings_Eq_Band_Freq_Label" Grid.Row="0" Grid.Column="0" Text="주파수" FontSize="12" VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Row="0" Grid.Column="1" Text="20 Hz" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                                         <Slider Grid.Row="0" Grid.Column="2" Minimum="20" Maximum="20000" StepFrequency="1"
@@ -507,7 +507,7 @@
                                                                    FontSize="12" HorizontalContentAlignment="Right" VerticalAlignment="Center"/>
 
                                                         <!-- Row 1: Gain -->
-                                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="게인" FontSize="12" VerticalAlignment="Center"/>
+                                                        <TextBlock x:Uid="Settings_Eq_Band_Gain_Label" Grid.Row="1" Grid.Column="0" Text="게인" FontSize="12" VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Row="1" Grid.Column="1" Text="-15 dB" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                                         <Slider Grid.Row="1" Grid.Column="2" Minimum="-15" Maximum="15" StepFrequency="0.1"
@@ -521,7 +521,7 @@
                                                                    FontSize="12" HorizontalContentAlignment="Right" VerticalAlignment="Center"/>
 
                                                         <!-- Row 2: Q Factor -->
-                                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Q 팩터" FontSize="12" VerticalAlignment="Center"/>
+                                                        <TextBlock x:Uid="Settings_Eq_Band_Q_Label" Grid.Row="2" Grid.Column="0" Text="Q 팩터" FontSize="12" VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Row="2" Grid.Column="1" Text="0.10" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                                         <Slider Grid.Row="2" Grid.Column="2" Minimum="0.1" Maximum="8.0" StepFrequency="0.05"
@@ -549,14 +549,14 @@
                                         <ColumnDefinition Width="320"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="대상 오디오 출력 장치" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="장치별로 원하는 EQ 프로필을 연결하거나 공통 기본 프로필을 따르도록 설정합니다." Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Eq_TargetDevice_Title" Text="대상 오디오 출력 장치" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Eq_TargetDevice_Desc" Text="장치별로 원하는 EQ 프로필을 연결하거나 공통 기본 프로필을 따르도록 설정합니다." Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <ComboBox Width="220" DisplayMemberPath="Name"
                                                   ItemsSource="{x:Bind ViewModel.Equalizer.Devices, Mode=OneWay}"
                                                   SelectedItem="{x:Bind ViewModel.Equalizer.SelectedDevice, Mode=TwoWay}"/>
-                                        <Button Content="&#xE72C;" FontFamily="Segoe Fluent Icons" FontSize="13"
+                                        <Button x:Uid="Settings_Eq_RefreshDevices" Content="&#xE72C;" FontFamily="Segoe Fluent Icons" FontSize="13"
                                                 Click="OnRefreshEqDevices" ToolTipService.ToolTip="장치 목록 새로고침"/>
                                     </StackPanel>
                                 </Grid>
@@ -569,7 +569,7 @@
                                         <ColumnDefinition Width="320"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="이 장치에 연결된 프로필" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Eq_BoundProfile_Title" Text="이 장치에 연결된 프로필" Style="{StaticResource SettingTitle}"/>
                                         <TextBlock Text="{x:Bind ViewModel.Equalizer.BindingDescriptionText, Mode=OneWay}" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <ComboBox Grid.Column="1" Width="260" HorizontalAlignment="Right"
@@ -585,7 +585,7 @@
                                         Visibility="{x:Bind BooleanToVisibility(ViewModel.Equalizer.IsExclusiveWarningVisible), Mode=OneWay}">
                                     <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                                         <FontIcon Glyph="&#xE7BA;" FontSize="15" Foreground="{ThemeResource SystemFillColorCautionBrush}" VerticalAlignment="Center"/>
-                                        <TextBlock Text="WASAPI 배타 모드에서 이퀄라이저가 적용 중입니다 (오디오 신호 가공으로 인해 비트 퍼펙트 출력이 아닙니다)."
+                                        <TextBlock x:Uid="Settings_Eq_ExclusiveWarning" Text="WASAPI 배타 모드에서 이퀄라이저가 적용 중입니다 (오디오 신호 가공으로 인해 비트 퍼펙트 출력이 아닙니다)."
                                                    FontSize="12" Foreground="{ThemeResource TextPrimaryBrush}" TextWrapping="Wrap" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
@@ -595,7 +595,7 @@
 
                     <!-- ==================== 3. PLAYBACK & NORMALIZER SECTION ==================== -->
                     <StackPanel x:Name="Section_Playback" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsPlaybackCategorySelected), Mode=OneWay}" Spacing="0">
-                        <TextBlock Text="재생 &amp; 음량 정규화 (Playback &amp; Normalizer)" Style="{StaticResource CategoryHeader}"/>
+                        <TextBlock x:Uid="Settings_Playback_Header" Text="재생 &amp; 음량 정규화 (Playback &amp; Normalizer)" Style="{StaticResource CategoryHeader}"/>
 
                         <!-- 1. Hybrid Dynamic Normalizer Card -->
                         <Border Style="{StaticResource SectionCard}">
@@ -607,10 +607,10 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="음량 자동 정규화 (Volume Normalizer / AGC)" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="곡마다 제각각인 녹음/마스터링 음량을 일정한 목표 레벨로 실시간 자동 평준화합니다." Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Playback_Normalizer_Title" Text="음량 자동 정규화 (Volume Normalizer / AGC)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Playback_Normalizer_Desc" Text="곡마다 제각각인 녹음/마스터링 음량을 일정한 목표 레벨로 실시간 자동 평준화합니다." Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
-                                    <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
+                                    <ToggleSwitch x:Uid="Settings_Playback_Normalizer_Toggle" Grid.Column="1" HorizontalAlignment="Right"
                                                   IsOn="{x:Bind ViewModel.Playback.NormalizerEnabled, Mode=TwoWay}" OnContent="켬" OffContent="끔"/>
                                 </Grid>
 
@@ -623,14 +623,14 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="정규화 동작 모드" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="하이브리드(태그 우선 + 미태그 실시간 조절), 실시간(항상 실시간 조절), ReplayGain(태그만 적용)" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Playback_NormMode_Title" Text="정규화 동작 모드" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Playback_NormMode_Desc" Text="하이브리드(태그 우선 + 미태그 실시간 조절), 실시간(항상 실시간 조절), ReplayGain(태그만 적용)" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <ComboBox Grid.Column="1" Width="150" HorizontalAlignment="Right"
                                               SelectedIndex="{x:Bind ViewModel.Playback.NormalizerModeIndex, Mode=TwoWay}">
-                                        <ComboBoxItem Content="하이브리드"/>
-                                        <ComboBoxItem Content="실시간"/>
-                                        <ComboBoxItem Content="ReplayGain"/>
+                                        <ComboBoxItem x:Uid="Settings_Playback_NormMode_Hybrid" Content="하이브리드"/>
+                                        <ComboBoxItem x:Uid="Settings_Playback_NormMode_Dynamic" Content="실시간"/>
+                                        <ComboBoxItem x:Uid="Settings_Playback_NormMode_ReplayGain" Content="ReplayGain"/>
                                     </ComboBox>
                                 </Grid>
 
@@ -643,8 +643,8 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="목표 음량 레벨 (Target Level)" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="정규화 기준 목표 출력 크기 (-24.0 ~ -6.0 dBFS, 기본값 -12.0 dBFS)" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Playback_TargetLevel_Title" Text="목표 음량 레벨 (Target Level)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Playback_TargetLevel_Desc" Text="정규화 기준 목표 출력 크기 (-24.0 ~ -6.0 dBFS, 기본값 -12.0 dBFS)" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <Grid Grid.Column="1" HorizontalAlignment="Right" Width="300" ColumnSpacing="6">
                                         <Grid.ColumnDefinitions>
@@ -674,8 +674,8 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="최대 증폭 한계 (Max Boost Limit)" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="조용한 곡이나 인트로/아웃트로 구간에서 과도한 노이즈 증폭을 방지합니다 (0.0 ~ +18.0 dB)" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Playback_MaxBoost_Title" Text="최대 증폭 한계 (Max Boost Limit)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Playback_MaxBoost_Desc" Text="조용한 곡이나 인트로/아웃트로 구간에서 과도한 노이즈 증폭을 방지합니다 (0.0 ~ +18.0 dB)" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <Grid Grid.Column="1" HorizontalAlignment="Right" Width="300" ColumnSpacing="6">
                                         <Grid.ColumnDefinitions>
@@ -705,14 +705,14 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="반응 속도 (Response Speed)" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="음량 변화에 대한 게인 조절 완화 속도 (빠름 200ms, 표준 600ms, 부드러움 1500ms)" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Playback_Speed_Title" Text="반응 속도 (Response Speed)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Playback_Speed_Desc" Text="음량 변화에 대한 게인 조절 완화 속도 (빠름 200ms, 표준 600ms, 부드러움 1500ms)" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <ComboBox Grid.Column="1" Width="130" HorizontalAlignment="Right"
                                               SelectedIndex="{x:Bind ViewModel.Playback.NormalizerSpeedIndex, Mode=TwoWay}">
-                                        <ComboBoxItem Content="빠름"/>
-                                        <ComboBoxItem Content="표준"/>
-                                        <ComboBoxItem Content="부드러움"/>
+                                        <ComboBoxItem x:Uid="Settings_Playback_Speed_Fast" Content="빠름"/>
+                                        <ComboBoxItem x:Uid="Settings_Playback_Speed_Balanced" Content="표준"/>
+                                        <ComboBoxItem x:Uid="Settings_Playback_Speed_Smooth" Content="부드러움"/>
                                     </ComboBox>
                                 </Grid>
                             </StackPanel>
@@ -727,14 +727,14 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="ReplayGain 모드" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="음원 태그에 기록된 트랙 또는 앨범 게인을 기준으로 음량을 맞춥니다." Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Playback_ReplayGain_Title" Text="ReplayGain 모드" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Playback_ReplayGain_Desc" Text="음원 태그에 기록된 트랙 또는 앨범 게인을 기준으로 음량을 맞춥니다." Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <ComboBox Grid.Column="1" Width="130" HorizontalAlignment="Right"
                                               SelectedIndex="{x:Bind ViewModel.Playback.ReplayGainModeIndex, Mode=TwoWay}">
-                                        <ComboBoxItem Content="끔"/>
-                                        <ComboBoxItem Content="트랙"/>
-                                        <ComboBoxItem Content="앨범"/>
+                                        <ComboBoxItem x:Uid="Settings_Playback_ReplayGain_Off" Content="끔"/>
+                                        <ComboBoxItem x:Uid="Settings_Playback_ReplayGain_Track" Content="트랙"/>
+                                        <ComboBoxItem x:Uid="Settings_Playback_ReplayGain_Album" Content="앨범"/>
                                     </ComboBox>
                                 </Grid>
 
@@ -746,8 +746,8 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="ReplayGain 사전 증폭 (Preamp)" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="-12.0 ~ +12.0 dB 범위로 기준 음량을 미세 조절합니다." Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Playback_RgPreamp_Title" Text="ReplayGain 사전 증폭 (Preamp)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Playback_RgPreamp_Desc" Text="-12.0 ~ +12.0 dB 범위로 기준 음량을 미세 조절합니다." Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <Grid Grid.Column="1" HorizontalAlignment="Right" Width="300" ColumnSpacing="6">
                                         <Grid.ColumnDefinitions>
@@ -776,8 +776,8 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="클리핑 방지 (Prevent Clipping)" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="증폭 시 피크 값을 넘는 왜곡을 방지하기 위해 자동으로 게인을 감쇄합니다." Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Playback_PreventClipping_Title" Text="클리핑 방지 (Prevent Clipping)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Playback_PreventClipping_Desc" Text="증폭 시 피크 값을 넘는 왜곡을 방지하기 위해 자동으로 게인을 감쇄합니다." Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
                                                   IsOn="{x:Bind ViewModel.Playback.ReplayGainPreventClipping, Mode=TwoWay}"/>
@@ -788,7 +788,7 @@
 
                     <!-- ==================== 4. MUSIC LIBRARY SECTION ==================== -->
                     <StackPanel x:Name="Section_Library" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsLibraryCategorySelected), Mode=OneWay}" Spacing="0">
-                        <TextBlock Text="음악 라이브러리 (Music Library)" Style="{StaticResource CategoryHeader}"/>
+                        <TextBlock x:Uid="Settings_Library_Header" Text="음악 라이브러리 (Music Library)" Style="{StaticResource CategoryHeader}"/>
 
                         <!-- Monitored Folders Card -->
                         <Border Style="{StaticResource SectionCard}">
@@ -799,13 +799,13 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="감시 폴더 목록" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="라이브러리에 색인할 로컬 및 네트워크 음악 폴더를 지정합니다." Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Library_Folders_Title" Text="감시 폴더 목록" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Library_Folders_Desc" Text="라이브러리에 색인할 로컬 및 네트워크 음악 폴더를 지정합니다." Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                        <Button Content="폴더 추가" FontSize="12" Click="OnAddFolder"/>
-                                        <Button Content="제거" FontSize="12" Click="OnRemoveFolder"/>
-                                        <Button Content="지금 스캔" FontSize="12" Click="OnScanNow"/>
+                                        <Button x:Uid="Settings_Library_AddFolder_Button" Content="폴더 추가" FontSize="12" Click="OnAddFolder"/>
+                                        <Button x:Uid="Settings_Library_RemoveFolder_Button" Content="제거" FontSize="12" Click="OnRemoveFolder"/>
+                                        <Button x:Uid="Settings_Library_ScanNow_Button" Content="지금 스캔" FontSize="12" Click="OnScanNow"/>
                                     </StackPanel>
                                 </Grid>
 
@@ -828,8 +828,8 @@
                                         <ColumnDefinition Width="320"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="시작할 때 자동 스캔" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="Dawn Player를 실행할 때 감시 폴더의 신규/수정된 음원을 자동으로 색인합니다." Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Library_StartupScan_Title" Text="시작할 때 자동 스캔" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Library_StartupScan_Desc" Text="Dawn Player를 실행할 때 감시 폴더의 신규/수정된 음원을 자동으로 색인합니다." Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
                                                   IsOn="{x:Bind ViewModel.Library.ScanOnStartup, Mode=TwoWay}"/>
@@ -840,7 +840,7 @@
 
                     <!-- ==================== 5. LYRICS & TYPOGRAPHY SECTION ==================== -->
                     <StackPanel x:Name="Section_Lyrics" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsLyricsCategorySelected), Mode=OneWay}" Spacing="0">
-                        <TextBlock Text="가사 &amp; 타이포그래피 (Lyrics &amp; Typography)" Style="{StaticResource CategoryHeader}"/>
+                        <TextBlock x:Uid="Settings_Lyrics_Header" Text="가사 &amp; 타이포그래피 (Lyrics &amp; Typography)" Style="{StaticResource CategoryHeader}"/>
 
                         <!-- Typography Card -->
                         <Border Style="{StaticResource SectionCard}">
@@ -852,8 +852,8 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="가사 글꼴 (Font Family)" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="가사 패널 및 에디터에 적용할 폰트 패밀리" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_Font_Title" Text="가사 글꼴 (Font Family)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_Font_Desc" Text="가사 패널 및 에디터에 적용할 폰트 패밀리" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Spacing="6" HorizontalAlignment="Right">
                                         <ComboBox Width="240" SelectedIndex="{x:Bind ViewModel.Lyrics.FontFamilyIndex, Mode=TwoWay}">
@@ -861,9 +861,9 @@
                                             <ComboBoxItem Content="Pretendard (프리텐다드)"/>
                                             <ComboBoxItem Content="맑은 고딕 (Malgun Gothic)"/>
                                             <ComboBoxItem Content="나눔고딕 (NanumGothic)"/>
-                                            <ComboBoxItem Content="사용자 직접 입력..."/>
+                                            <ComboBoxItem x:Uid="Settings_Lyrics_Font_Custom" Content="사용자 직접 입력..."/>
                                         </ComboBox>
-                                        <TextBox Width="240" PlaceholderText="글꼴 이름 (예: Pretendard, Arial)"
+                                        <TextBox x:Uid="Settings_Lyrics_CustomFont_Box" Width="240" PlaceholderText="글꼴 이름 (예: Pretendard, Arial)"
                                                  Text="{x:Bind ViewModel.Lyrics.CustomFontFamily, Mode=TwoWay}"
                                                  Visibility="{x:Bind BooleanToVisibility(ViewModel.Lyrics.IsCustomFontVisible), Mode=OneWay}"/>
                                     </StackPanel>
@@ -878,8 +878,8 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="기본 가사 글꼴 크기" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="일반 가사 라인의 기본 글꼴 크기 (10 ~ 24px)" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_FontSize_Title" Text="기본 가사 글꼴 크기" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_FontSize_Desc" Text="일반 가사 라인의 기본 글꼴 크기 (10 ~ 24px)" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <Slider Width="180" Minimum="10" Maximum="24" StepFrequency="0.5"
@@ -896,8 +896,8 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="재생 중 활성 가사 크기" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="현재 재생 중인 강조 가사 라인의 글꼴 크기 (12 ~ 32px)" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_ActiveFontSize_Title" Text="재생 중 활성 가사 크기" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_ActiveFontSize_Desc" Text="현재 재생 중인 강조 가사 라인의 글꼴 크기 (12 ~ 32px)" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <Slider Width="180" Minimum="12" Maximum="32" StepFrequency="0.5"
@@ -915,8 +915,8 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="가사 자간 (Character Spacing)" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="글자 사이의 간격 (-50 좁게 ~ +200 넓게)" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_CharSpacing_Title" Text="가사 자간 (Character Spacing)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_CharSpacing_Desc" Text="글자 사이의 간격 (-50 좁게 ~ +200 넓게)" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <Slider Width="180" Minimum="-50" Maximum="200" StepFrequency="5"
@@ -933,8 +933,8 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="가사 행간 (Line Height)" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="가사 줄 높이 및 세로 간격 (18 ~ 48px)" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_LineHeight_Title" Text="가사 행간 (Line Height)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_LineHeight_Desc" Text="가사 줄 높이 및 세로 간격 (18 ~ 48px)" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <Slider Width="180" Minimum="18" Maximum="48" StepFrequency="1"
@@ -952,14 +952,14 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="가사 정렬 방식" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="가사 텍스트의 가로 배치 정렬" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_Alignment_Title" Text="가사 정렬 방식" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_Alignment_Desc" Text="가사 텍스트의 가로 배치 정렬" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <ComboBox Grid.Column="1" Width="180" HorizontalAlignment="Right"
                                               SelectedIndex="{x:Bind ViewModel.Lyrics.AlignmentIndex, Mode=TwoWay}">
-                                        <ComboBoxItem Content="가운데 정렬 (Center)"/>
-                                        <ComboBoxItem Content="왼쪽 정렬 (Left)"/>
-                                        <ComboBoxItem Content="오른쪽 정렬 (Right)"/>
+                                        <ComboBoxItem x:Uid="Settings_Lyrics_Align_Center" Content="가운데 정렬 (Center)"/>
+                                        <ComboBoxItem x:Uid="Settings_Lyrics_Align_Left" Content="왼쪽 정렬 (Left)"/>
+                                        <ComboBoxItem x:Uid="Settings_Lyrics_Align_Right" Content="오른쪽 정렬 (Right)"/>
                                     </ComboBox>
                                 </Grid>
 
@@ -971,8 +971,8 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="가사 포커스 연출 (Focus Dimming)" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="현재 재생 중인 가사 줄을 강조하고 이전/다음 줄을 부드럽게 감광(40% 투명도)합니다." Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_FocusDimming_Title" Text="가사 포커스 연출 (Focus Dimming)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_FocusDimming_Desc" Text="현재 재생 중인 가사 줄을 강조하고 이전/다음 줄을 부드럽게 감광(40% 투명도)합니다." Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
                                                   IsOn="{x:Bind ViewModel.Lyrics.EnableFocusEffect, Mode=TwoWay}"/>
@@ -986,8 +986,8 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="음원 파일 내장 가사(Embedded Lyrics) 자동 읽기" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="외부 .lrc 파일이 없을 때 MP3(ID3v2), FLAC, M4A 태그에 저장된 가사를 자동으로 읽어옵니다." Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_Embedded_Title" Text="음원 파일 내장 가사(Embedded Lyrics) 자동 읽기" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_Embedded_Desc" Text="외부 .lrc 파일이 없을 때 MP3(ID3v2), FLAC, M4A 태그에 저장된 가사를 자동으로 읽어옵니다." Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
                                                   IsOn="{x:Bind ViewModel.Lyrics.ReadEmbeddedLyrics, Mode=TwoWay}"/>
@@ -998,16 +998,16 @@
                         <!-- Live Lyrics Preview Card -->
                         <Border Style="{StaticResource SectionCard}">
                             <StackPanel Spacing="8">
-                                <TextBlock Text="실시간 가사 미리보기 (Live Preview)" FontSize="12.5" FontWeight="SemiBold"
+                                <TextBlock x:Uid="Settings_Lyrics_Preview_Header" Text="실시간 가사 미리보기 (Live Preview)" FontSize="12.5" FontWeight="SemiBold"
                                            Foreground="{ThemeResource TextTertiaryBrush}"/>
                                 <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" CornerRadius="6" Padding="14,16"
                                         BorderBrush="{ThemeResource BorderSubtleBrush}" BorderThickness="1">
                                     <StackPanel x:Name="LyricsPreviewContainer" Spacing="0">
-                                        <TextBlock x:Name="PreviewLine1" Text="어두운 밤하늘을 수놓은 별빛처럼"
+                                        <TextBlock x:Name="PreviewLine1" x:Uid="Settings_Lyrics_Preview_Line1" Text="어두운 밤하늘을 수놓은 별빛처럼"
                                                    Foreground="{ThemeResource TextPrimaryBrush}" TextWrapping="Wrap"/>
-                                        <TextBlock x:Name="PreviewLine2" Text="새벽을 깨우는 음악이 흐르고 있어요"
+                                        <TextBlock x:Name="PreviewLine2" x:Uid="Settings_Lyrics_Preview_Line2" Text="새벽을 깨우는 음악이 흐르고 있어요"
                                                    Foreground="{ThemeResource DawnAccentBrush}" FontWeight="SemiBold" TextWrapping="Wrap"/>
-                                        <TextBlock x:Name="PreviewLine3" Text="마음 깊은 곳까지 울려 퍼지는 선율"
+                                        <TextBlock x:Name="PreviewLine3" x:Uid="Settings_Lyrics_Preview_Line3" Text="마음 깊은 곳까지 울려 퍼지는 선율"
                                                    Foreground="{ThemeResource TextPrimaryBrush}" TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </Border>
@@ -1022,15 +1022,15 @@
                                     <ColumnDefinition Width="340"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Spacing="6" VerticalAlignment="Top">
-                                    <TextBlock Text=".lrc 파일 검색 패턴" Style="{StaticResource SettingTitle}"/>
-                                    <TextBlock Text="로컬 가사(.lrc) 파일을 탐색할 때 사용할 파일명 패턴을 한 줄에 하나씩 지정합니다. 위에서부터 순서대로 탐색합니다."
+                                    <TextBlock x:Uid="Settings_Lyrics_LrcPattern_Title" Text=".lrc 파일 검색 패턴" Style="{StaticResource SettingTitle}"/>
+                                    <TextBlock x:Uid="Settings_Lyrics_LrcPattern_Desc" Text="로컬 가사(.lrc) 파일을 탐색할 때 사용할 파일명 패턴을 한 줄에 하나씩 지정합니다. 위에서부터 순서대로 탐색합니다."
                                                Style="{StaticResource SettingDesc}"/>
 
                                     <!-- Token Guide Card -->
                                     <Border Background="{ThemeResource PanelSubtleBrush}" BorderBrush="{ThemeResource BorderSubtleBrush}"
                                             BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,4,0,0">
                                         <StackPanel Spacing="4">
-                                            <TextBlock Text="치환 토큰: %filename%, %artist%, %title%, %album%" FontSize="11" FontWeight="SemiBold"
+                                            <TextBlock x:Uid="Settings_Lyrics_LrcPattern_Tokens" Text="치환 토큰: %filename%, %artist%, %title%, %album%" FontSize="11" FontWeight="SemiBold"
                                                        Foreground="{ThemeResource TextSecondaryBrush}"/>
                                         </StackPanel>
                                     </Border>
@@ -1041,10 +1041,10 @@
                                              FontSize="12" FontFamily="Consolas, Cascadia Code, monospace"
                                              Text="{x:Bind ViewModel.Lyrics.LrcPatternsText, Mode=TwoWay}"
                                              LostFocus="OnLrcPatternsLostFocus"/>
-                                    <Button HorizontalAlignment="Right" Click="OnResetLrcPatterns" ToolTipService.ToolTip="기본 검색 패턴으로 복원">
+                                    <Button x:Uid="Settings_Lyrics_ResetLrc_Button" HorizontalAlignment="Right" Click="OnResetLrcPatterns" ToolTipService.ToolTip="기본 검색 패턴으로 복원">
                                         <StackPanel Orientation="Horizontal" Spacing="6">
                                             <FontIcon Glyph="&#xE777;" FontSize="11"/>
-                                            <TextBlock Text="기본값 복원" FontSize="12"/>
+                                            <TextBlock x:Uid="Settings_Lyrics_ResetLrc_Text" Text="기본값 복원" FontSize="12"/>
                                         </StackPanel>
                                     </Button>
                                 </StackPanel>
@@ -1054,7 +1054,7 @@
 
                     <!-- ==================== 6. ONLINE LYRICS (PLUGINS) SECTION ==================== -->
                     <StackPanel x:Name="Section_OnlineLyrics" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsOnlineLyricsCategorySelected), Mode=OneWay}" Spacing="0">
-                        <TextBlock Text="온라인 가사 (Online Lyrics)" Style="{StaticResource CategoryHeader}"/>
+                        <TextBlock x:Uid="Settings_OnlineLyrics_Header" Text="온라인 가사 (Online Lyrics)" Style="{StaticResource CategoryHeader}"/>
 
                         <!-- Lookup Card -->
                         <Border Style="{StaticResource SectionCard}">
@@ -1065,11 +1065,11 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="온라인 가사 사용" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="오프라인 가사(.lrc · 임베디드)가 없을 때 플러그인으로 검색합니다" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_OnlineLyrics_Enable_Title" Text="온라인 가사 사용" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_OnlineLyrics_Enable_Desc" Text="오프라인 가사(.lrc · 임베디드)가 없을 때 플러그인으로 검색합니다" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                        <ToggleSwitch IsOn="{x:Bind ViewModel.OnlineLyrics.EnableOnline, Mode=TwoWay}" OnContent="사용" OffContent="사용 안 함"/>
+                                        <ToggleSwitch x:Uid="Settings_OnlineLyrics_Enable_Toggle" IsOn="{x:Bind ViewModel.OnlineLyrics.EnableOnline, Mode=TwoWay}" OnContent="사용" OffContent="사용 안 함"/>
                                     </StackPanel>
                                 </Grid>
 
@@ -1081,11 +1081,11 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="재생 시 자동 검색" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="트랙이 바뀔 때 플러그인 우선순위대로 자동으로 가사를 찾아 표시합니다" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_OnlineLyrics_AutoFetch_Title" Text="재생 시 자동 검색" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_OnlineLyrics_AutoFetch_Desc" Text="트랙이 바뀔 때 플러그인 우선순위대로 자동으로 가사를 찾아 표시합니다" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                        <ToggleSwitch IsOn="{x:Bind ViewModel.OnlineLyrics.AutoFetchOnPlay, Mode=TwoWay}" OnContent="켬" OffContent="끔"/>
+                                        <ToggleSwitch x:Uid="Settings_OnlineLyrics_AutoFetch_Toggle" IsOn="{x:Bind ViewModel.OnlineLyrics.AutoFetchOnPlay, Mode=TwoWay}" OnContent="켬" OffContent="끔"/>
                                     </StackPanel>
                                 </Grid>
 
@@ -1097,11 +1097,11 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="동기 가사 우선" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="시간 동기(LRC) 가사와 일반 가사가 함께 있을 때 동기 가사를 우선 선택" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_OnlineLyrics_PreferSynced_Title" Text="동기 가사 우선" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_OnlineLyrics_PreferSynced_Desc" Text="시간 동기(LRC) 가사와 일반 가사가 함께 있을 때 동기 가사를 우선 선택" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                        <ToggleSwitch IsOn="{x:Bind ViewModel.OnlineLyrics.PreferSynced, Mode=TwoWay}" OnContent="우선" OffContent="구분 없음"/>
+                                        <ToggleSwitch x:Uid="Settings_OnlineLyrics_PreferSynced_Toggle" IsOn="{x:Bind ViewModel.OnlineLyrics.PreferSynced, Mode=TwoWay}" OnContent="우선" OffContent="구분 없음"/>
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
@@ -1112,30 +1112,30 @@
                             <StackPanel Spacing="10">
                                 <Grid>
                                     <StackPanel Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="가사 플러그인" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_OnlineLyrics_Plugins_Title" Text="가사 플러그인" Style="{StaticResource SettingTitle}"/>
                                         <TextBlock Style="{StaticResource SettingDesc}" TextWrapping="Wrap"
                                                    Text="{x:Bind ViewModel.OnlineLyrics.PluginsFolder, Mode=OneWay}"/>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                        <Button Click="OnRescanPluginsClick" ToolTipService.ToolTip="플러그인 폴더를 다시 스캔합니다">
+                                        <Button x:Uid="Settings_OnlineLyrics_Rescan_Button" Click="OnRescanPluginsClick" ToolTipService.ToolTip="플러그인 폴더를 다시 스캔합니다">
                                             <StackPanel Orientation="Horizontal" Spacing="6">
                                                 <FontIcon Glyph="&#xE72C;" FontSize="11"/>
-                                                <TextBlock Text="다시 스캔" FontSize="12"/>
+                                                <TextBlock x:Uid="Settings_OnlineLyrics_Rescan_Text" Text="다시 스캔" FontSize="12"/>
                                             </StackPanel>
                                         </Button>
-                                        <Button Click="OnOpenPluginsFolderClick" ToolTipService.ToolTip="플러그인 폴더를 탐색기에서 엽니다">
+                                        <Button x:Uid="Settings_OnlineLyrics_OpenFolder_Button" Click="OnOpenPluginsFolderClick" ToolTipService.ToolTip="플러그인 폴더를 탐색기에서 엽니다">
                                             <StackPanel Orientation="Horizontal" Spacing="6">
                                                 <FontIcon Glyph="&#xE838;" FontSize="11"/>
-                                                <TextBlock Text="폴더 열기" FontSize="12"/>
+                                                <TextBlock x:Uid="Settings_OnlineLyrics_OpenFolder_Text" Text="폴더 열기" FontSize="12"/>
                                             </StackPanel>
                                         </Button>
                                     </StackPanel>
                                 </Grid>
 
-                                <TextBlock Text="플러그인별 하위 폴더에 DLL을 넣으면 자동으로 인식됩니다. 목록 순서가 검색 우선순위입니다."
+                                <TextBlock x:Uid="Settings_OnlineLyrics_Plugin_Notice" Text="플러그인별 하위 폴더에 DLL을 넣으면 자동으로 인식됩니다. 목록 순서가 검색 우선순위입니다."
                                            FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}" TextWrapping="Wrap"/>
 
-                                <TextBlock Text="설치된 플러그인이 없습니다. 폴더에 플러그인을 넣고 '다시 스캔'을 누르세요. 개발 방법은 docs/plugin-development.md를 참고하세요."
+                                <TextBlock x:Uid="Settings_OnlineLyrics_Plugin_Empty" Text="설치된 플러그인이 없습니다. 폴더에 플러그인을 넣고 '다시 스캔'을 누르세요. 개발 방법은 docs/plugin-development.md를 참고하세요."
                                            FontSize="12" Foreground="{ThemeResource TextSecondaryBrush}" TextWrapping="Wrap"
                                            Visibility="{x:Bind BooleanToVisibilityNot(ViewModel.OnlineLyrics.HasPlugins), Mode=OneWay}"/>
 
@@ -1157,11 +1157,11 @@
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
                                                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
-                                                    <Button Style="{StaticResource TransportButton}" Width="24" Height="24" Padding="0"
+                                                    <Button x:Uid="Settings_OnlineLyrics_MoveUp" Style="{StaticResource TransportButton}" Width="24" Height="24" Padding="0"
                                                             Click="OnPluginMoveUpClick" Tag="{x:Bind}" AutomationProperties.Name="우선순위 올리기" ToolTipService.ToolTip="우선순위 올리기">
                                                         <FontIcon Glyph="&#xE74A;" FontSize="10"/>
                                                     </Button>
-                                                    <Button Style="{StaticResource TransportButton}" Width="24" Height="24" Padding="0"
+                                                    <Button x:Uid="Settings_OnlineLyrics_MoveDown" Style="{StaticResource TransportButton}" Width="24" Height="24" Padding="0"
                                                             Click="OnPluginMoveDownClick" Tag="{x:Bind}" AutomationProperties.Name="우선순위 내리기" ToolTipService.ToolTip="우선순위 내리기">
                                                         <FontIcon Glyph="&#xE74B;" FontSize="10"/>
                                                     </Button>
@@ -1172,7 +1172,7 @@
                                                         <Run Text="{x:Bind Author}"/> · <Run Text="{x:Bind SourceLabel}"/>
                                                     </TextBlock>
                                                 </StackPanel>
-                                                <ToggleSwitch Grid.Column="2" IsOn="{x:Bind IsEnabled, Mode=TwoWay}" OnContent="사용" OffContent="사용 안 함"
+                                                <ToggleSwitch x:Uid="Settings_OnlineLyrics_Plugin_Toggle" Grid.Column="2" IsOn="{x:Bind IsEnabled, Mode=TwoWay}" OnContent="사용" OffContent="사용 안 함"
                                                               Toggled="OnPluginToggled" Tag="{x:Bind}" VerticalAlignment="Center"/>
                                             </Grid>
                                         </DataTemplate>
@@ -1193,11 +1193,11 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="가사 자동 저장" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="온라인에서 가져온 가사를 아래 위치와 템플릿으로 자동 저장합니다" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_OnlineLyrics_AutoSave_Title" Text="가사 자동 저장" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_OnlineLyrics_AutoSave_Desc" Text="온라인에서 가져온 가사를 아래 위치와 템플릿으로 자동 저장합니다" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                        <ToggleSwitch IsOn="{x:Bind ViewModel.OnlineLyrics.AutoSave, Mode=TwoWay}" OnContent="저장" OffContent="저장 안 함"/>
+                                        <ToggleSwitch x:Uid="Settings_OnlineLyrics_AutoSave_Toggle" IsOn="{x:Bind ViewModel.OnlineLyrics.AutoSave, Mode=TwoWay}" OnContent="저장" OffContent="저장 안 함"/>
                                     </StackPanel>
                                 </Grid>
 
@@ -1209,19 +1209,19 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="저장 위치" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="온라인 가사를 파일로 저장하는 기준 폴더" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_OnlineLyrics_SaveLoc_Title" Text="저장 위치" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_OnlineLyrics_SaveLoc_Desc" Text="온라인 가사를 파일로 저장하는 기준 폴더" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <ComboBox Width="240" SelectedIndex="{x:Bind ViewModel.OnlineLyrics.SaveLocationIndex, Mode=TwoWay}">
-                                            <ComboBoxItem Content="음원과 같은 폴더"/>
-                                            <ComboBoxItem Content="지정 폴더"/>
+                                            <ComboBoxItem x:Uid="Settings_OnlineLyrics_SaveLoc_TrackFolder" Content="음원과 같은 폴더"/>
+                                            <ComboBoxItem x:Uid="Settings_OnlineLyrics_SaveLoc_CustomFolder" Content="지정 폴더"/>
                                         </ComboBox>
                                         <StackPanel Orientation="Horizontal" Spacing="6"
                                                     Visibility="{x:Bind BooleanToVisibility(ViewModel.OnlineLyrics.IsCustomFolderSelected), Mode=OneWay}">
                                             <TextBlock Text="{x:Bind ViewModel.OnlineLyrics.CustomSaveFolderLabel, Mode=OneWay}" FontSize="11.5"
                                                        Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center" MaxWidth="140" TextTrimming="CharacterEllipsis"/>
-                                            <Button Content="폴더 선택..." FontSize="11.5" Click="OnPickLyricsSaveFolderClick"/>
+                                            <Button x:Uid="Settings_OnlineLyrics_PickFolder_Button" Content="폴더 선택..." FontSize="11.5" Click="OnPickLyricsSaveFolderClick"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Grid>
@@ -1234,8 +1234,8 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="파일명 템플릿" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="변수: %filename% %title% %artist% %albumartist% %album% %year% %trackno% — 하위 폴더 경로 포함 가능 (예: %album%\%title%.lrc)" Style="{StaticResource SettingDesc}" TextWrapping="Wrap"/>
+                                        <TextBlock x:Uid="Settings_OnlineLyrics_Template_Title" Text="파일명 템플릿" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_OnlineLyrics_Template_Desc" Text="변수: %filename% %title% %artist% %albumartist% %album% %year% %trackno% — 하위 폴더 경로 포함 가능 (예: %album%\%title%.lrc)" Style="{StaticResource SettingDesc}" TextWrapping="Wrap"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <TextBox Width="240" FontFamily="Consolas" FontSize="12"
@@ -1251,11 +1251,11 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="기존 파일 덮어쓰기" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="끔이면 이미 있는 .lrc 파일은 그대로 둡니다" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_OnlineLyrics_Overwrite_Title" Text="기존 파일 덮어쓰기" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_OnlineLyrics_Overwrite_Desc" Text="끔이면 이미 있는 .lrc 파일은 그대로 둡니다" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                        <ToggleSwitch IsOn="{x:Bind ViewModel.OnlineLyrics.OverwriteExisting, Mode=TwoWay}" OnContent="덮어씀" OffContent="건너뜀"/>
+                                        <ToggleSwitch x:Uid="Settings_OnlineLyrics_Overwrite_Toggle" IsOn="{x:Bind ViewModel.OnlineLyrics.OverwriteExisting, Mode=TwoWay}" OnContent="덮어씀" OffContent="건너뜀"/>
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
@@ -1264,7 +1264,28 @@
 
                     <!-- ==================== 7. APPEARANCE & THEME SECTION ==================== -->
                     <StackPanel x:Name="Section_Appearance" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsAppearanceCategorySelected), Mode=OneWay}" Spacing="0">
-                        <TextBlock Text="외관 &amp; 테마 (Theme &amp; Appearance)" Style="{StaticResource CategoryHeader}"/>
+                        <TextBlock x:Uid="Settings_Appearance_Header" Text="외관 &amp; 테마 (Theme &amp; Appearance)" Style="{StaticResource CategoryHeader}"/>
+
+                        <!-- Language Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <Grid Style="{StaticResource RowGrid}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="320"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                    <TextBlock x:Uid="Settings_Appearance_Lang_Title" Text="언어 (Language)" Style="{StaticResource SettingTitle}"/>
+                                    <TextBlock x:Uid="Settings_Appearance_Lang_Desc" Text="앱 표시 언어. 시스템 기본은 Windows 표시 언어를 따릅니다." Style="{StaticResource SettingDesc}"/>
+                                </StackPanel>
+                                <ComboBox Grid.Column="1" Width="200" HorizontalAlignment="Right"
+                                          SelectedIndex="{x:Bind ViewModel.Appearance.LanguageIndex, Mode=TwoWay}">
+                                    <ComboBoxItem x:Uid="Settings_Appearance_Lang_System" Content="시스템 기본 (System)"/>
+                                    <ComboBoxItem x:Uid="Settings_Appearance_Lang_Korean" Content="한국어 (Korean)"/>
+                                    <ComboBoxItem x:Uid="Settings_Appearance_Lang_English" Content="English (US)"/>
+                                    <ComboBoxItem x:Uid="Settings_Appearance_Lang_Japanese" Content="日本語 (Japanese)"/>
+                                </ComboBox>
+                            </Grid>
+                        </Border>
 
                         <!-- Theme & Backdrop Card -->
                         <Border Style="{StaticResource SectionCard}">
@@ -1275,15 +1296,15 @@
                                         <ColumnDefinition Width="320"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="테마 모드" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="라이트 / 다크 / OLED Pure Black / 시스템 기본 설정" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Appearance_Theme_Title" Text="테마 모드" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Appearance_Theme_Desc" Text="라이트 / 다크 / OLED Pure Black / 시스템 기본 설정" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <ComboBox Grid.Column="1" Width="200" HorizontalAlignment="Right"
                                               SelectedIndex="{x:Bind ViewModel.Appearance.ThemeIndex, Mode=TwoWay}">
-                                        <ComboBoxItem Content="시스템 따르기"/>
-                                        <ComboBoxItem Content="밝게 (Eole Warm Slate)"/>
-                                        <ComboBoxItem Content="어둡게 (Eole Slate)"/>
-                                        <ComboBoxItem Content="OLED 블랙 (Pure Black)"/>
+                                        <ComboBoxItem x:Uid="Settings_Appearance_Theme_System" Content="시스템 따르기"/>
+                                        <ComboBoxItem x:Uid="Settings_Appearance_Theme_Light" Content="밝게 (Eole Warm Slate)"/>
+                                        <ComboBoxItem x:Uid="Settings_Appearance_Theme_Dark" Content="어둡게 (Eole Slate)"/>
+                                        <ComboBoxItem x:Uid="Settings_Appearance_Theme_Oled" Content="OLED 블랙 (Pure Black)"/>
                                     </ComboBox>
                                 </Grid>
 
@@ -1295,16 +1316,16 @@
                                         <ColumnDefinition Width="320"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="창 배경 소재 (Backdrop)" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="Windows 11 Fluent 반투명 또는 Eole 앨범 아트 블러 벽지" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Appearance_Backdrop_Title" Text="창 배경 소재 (Backdrop)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Appearance_Backdrop_Desc" Text="Windows 11 Fluent 반투명 또는 Eole 앨범 아트 블러 벽지" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <ComboBox Grid.Column="1" Width="200" HorizontalAlignment="Right"
                                               SelectedIndex="{x:Bind ViewModel.Appearance.BackdropIndex, Mode=TwoWay}">
-                                        <ComboBoxItem Content="Mica (Windows 11 표준)"/>
-                                        <ComboBoxItem Content="Mica Alt"/>
-                                        <ComboBoxItem Content="Acrylic"/>
-                                        <ComboBoxItem Content="단색 (Solid)"/>
-                                        <ComboBoxItem Content="앨범 아트 블러 (Eole Wallpaper)"/>
+                                        <ComboBoxItem x:Uid="Settings_Appearance_Backdrop_Mica" Content="Mica (Windows 11 표준)"/>
+                                        <ComboBoxItem x:Uid="Settings_Appearance_Backdrop_MicaAlt" Content="Mica Alt"/>
+                                        <ComboBoxItem x:Uid="Settings_Appearance_Backdrop_Acrylic" Content="Acrylic"/>
+                                        <ComboBoxItem x:Uid="Settings_Appearance_Backdrop_Solid" Content="단색 (Solid)"/>
+                                        <ComboBoxItem x:Uid="Settings_Appearance_Backdrop_AlbumBlur" Content="앨범 아트 블러 (Eole Wallpaper)"/>
                                     </ComboBox>
                                 </Grid>
                             </StackPanel>
@@ -1319,8 +1340,8 @@
                                         <ColumnDefinition Width="320"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="앨범 아트 동적 테마 (Dynamic Theme)" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="재생 중인 음악의 앨범 커버 색상을 액센트 및 하이라이트에 자동 적용합니다." Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Appearance_DynamicAccent_Title" Text="앨범 아트 동적 테마 (Dynamic Theme)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Appearance_DynamicAccent_Desc" Text="재생 중인 음악의 앨범 커버 색상을 액센트 및 하이라이트에 자동 적용합니다." Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
                                                   IsOn="{x:Bind ViewModel.Appearance.AutoAlbumArtAccent, Mode=TwoWay}"/>
@@ -1334,12 +1355,12 @@
                                         <ColumnDefinition Width="320"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="액센트 컬러 프리셋" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="플레이어 주요 버튼, 인디케이터 및 강조 색상" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Appearance_Accent_Title" Text="액센트 컬러 프리셋" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Appearance_Accent_Desc" Text="플레이어 주요 버튼, 인디케이터 및 강조 색상" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <ComboBox Grid.Column="1" Width="200" HorizontalAlignment="Right"
                                               SelectedIndex="{x:Bind ViewModel.Appearance.AccentIndex, Mode=TwoWay}">
-                                        <ComboBoxItem Content="Eole Amber (기본)"/>
+                                        <ComboBoxItem x:Uid="Settings_Appearance_Accent_EoleAmber" Content="Eole Amber (기본)"/>
                                         <ComboBoxItem Content="Electric Gold"/>
                                         <ComboBoxItem Content="Forest Emerald"/>
                                         <ComboBoxItem Content="Cyan Sapphire"/>
@@ -1350,7 +1371,7 @@
                                         <ComboBoxItem Content="Catppuccin Mocha"/>
                                         <ComboBoxItem Content="Rose Pine"/>
                                         <ComboBoxItem Content="Sunset Violet"/>
-                                        <ComboBoxItem Content="사용자 지정 (Custom)..."/>
+                                        <ComboBoxItem x:Uid="Settings_Appearance_Accent_Custom" Content="사용자 지정 (Custom)..."/>
                                     </ComboBox>
                                 </Grid>
 
@@ -1361,15 +1382,15 @@
                                         <ColumnDefinition Width="320"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="사용자 지정 액센트 컬러" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="원하는 16진수 HEX 색상 코드(#RRGGBB)를 직접 지정합니다." Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Appearance_CustomAccent_Title" Text="사용자 지정 액센트 컬러" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Appearance_CustomAccent_Desc" Text="원하는 16진수 HEX 색상 코드(#RRGGBB)를 직접 지정합니다." Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <Border x:Name="CustomColorPreview" Width="28" Height="28" CornerRadius="14"
                                                 BorderBrush="{ThemeResource BorderSubtleBrush}" BorderThickness="1"
                                                 Background="{ThemeResource DawnAccentBrush}"/>
                                         <TextBox Width="100" Text="{x:Bind ViewModel.Appearance.CustomAccentHex, Mode=TwoWay}"/>
-                                        <Button Content="색상 선택" FontSize="12">
+                                        <Button x:Uid="Settings_Appearance_PickColor_Button" Content="색상 선택" FontSize="12">
                                             <Button.Flyout>
                                                 <Flyout>
                                                     <ColorPicker IsAlphaEnabled="False"
@@ -1385,7 +1406,7 @@
 
                     <!-- ==================== 7. LAYOUT & SIZING SECTION ==================== -->
                     <StackPanel x:Name="Section_Layout" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsLayoutCategorySelected), Mode=OneWay}" Spacing="0">
-                        <TextBlock Text="레이아웃 &amp; 디스플레이 (Layout &amp; Sizing)" Style="{StaticResource CategoryHeader}"/>
+                        <TextBlock x:Uid="Settings_Layout_Header" Text="레이아웃 &amp; 디스플레이 (Layout &amp; Sizing)" Style="{StaticResource CategoryHeader}"/>
 
                         <Border Style="{StaticResource SectionCard}">
                             <StackPanel Spacing="10">
@@ -1395,8 +1416,8 @@
                                         <ColumnDefinition Width="320"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="앨범 커버 기본 크기" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="라이브러리 커버 그리드의 기본 타일 크기" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Layout_CoverSize_Title" Text="앨범 커버 기본 크기" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Layout_CoverSize_Desc" Text="라이브러리 커버 그리드의 기본 타일 크기" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <Slider Width="180" Minimum="80" Maximum="260" StepFrequency="4"
@@ -1413,10 +1434,10 @@
                                         <ColumnDefinition Width="320"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="사이드바 레이아웃 초기화" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock Text="좌/우측 사이드바 및 가사 패널 너비를 기본값으로 복원" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Layout_Reset_Title" Text="사이드바 레이아웃 초기화" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Layout_Reset_Desc" Text="좌/우측 사이드바 및 가사 패널 너비를 기본값으로 복원" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
-                                    <Button Content="레이아웃 초기화" Grid.Column="1" HorizontalAlignment="Right" Click="OnResetLayoutClick"/>
+                                    <Button x:Uid="Settings_Layout_Reset_Button" Content="레이아웃 초기화" Grid.Column="1" HorizontalAlignment="Right" Click="OnResetLayoutClick"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
@@ -1424,11 +1445,11 @@
 
                     <!-- ==================== 8. KEYBOARD SHORTCUTS SECTION ==================== -->
                     <StackPanel x:Name="Section_Shortcuts" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsShortcutsCategorySelected), Mode=OneWay}" Spacing="0">
-                        <TextBlock Text="단축키 (Keyboard Shortcuts)" Style="{StaticResource CategoryHeader}"/>
+                        <TextBlock x:Uid="Settings_Shortcuts_Header" Text="단축키 (Keyboard Shortcuts)" Style="{StaticResource CategoryHeader}"/>
 
                         <Border Style="{StaticResource SectionCard}">
                             <StackPanel Spacing="10">
-                                <TextBlock Text="키 항목을 눌러 새 조합을 입력하세요. 텍스트 입력 중에는 재생 단축키가 동작하지 않습니다." Style="{StaticResource SettingDesc}"/>
+                                <TextBlock x:Uid="Settings_Shortcuts_Desc" Text="키 항목을 눌러 새 조합을 입력하세요. 텍스트 입력 중에는 재생 단축키가 동작하지 않습니다." Style="{StaticResource SettingDesc}"/>
 
                                 <ItemsControl ItemsSource="{x:Bind ViewModel.Shortcuts.Groups}">
                                     <ItemsControl.ItemTemplate>
@@ -1450,16 +1471,16 @@
                                                                 <TextBlock Grid.Column="0" Text="{x:Bind DisplayName}"
                                                                            Style="{StaticResource SettingTitle}" VerticalAlignment="Center"
                                                                            TextTrimming="CharacterEllipsis"/>
-                                                                <Button Grid.Column="1" HorizontalAlignment="Stretch"
+                                                                <Button x:Uid="Settings_Shortcuts_Rebind" Grid.Column="1" HorizontalAlignment="Stretch"
                                                                         Content="{x:Bind ChordText, Mode=OneWay}"
                                                                         Tag="{x:Bind}"
                                                                         Click="OnShortcutRebindClick"
                                                                         ToolTipService.ToolTip="눌러서 새 단축키 지정"/>
-                                                                <Button Grid.Column="2" Content="기본값"
+                                                                <Button x:Uid="Settings_Shortcuts_Reset_Button" Grid.Column="2" Content="기본값"
                                                                         Tag="{x:Bind}"
                                                                         IsEnabled="{x:Bind CanReset, Mode=OneWay}"
                                                                         Click="OnShortcutResetClick"/>
-                                                                <Button Grid.Column="3" Content="지우기"
+                                                                <Button x:Uid="Settings_Shortcuts_Clear_Button" Grid.Column="3" Content="지우기"
                                                                         Tag="{x:Bind}"
                                                                         IsEnabled="{x:Bind CanClear, Mode=OneWay}"
                                                                         Click="OnShortcutClearClick"/>
@@ -1474,14 +1495,14 @@
 
                                 <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
 
-                                <Button Content="모든 단축키 기본값으로 되돌리기" HorizontalAlignment="Right" Click="OnShortcutResetAllClick"/>
+                                <Button x:Uid="Settings_Shortcuts_ResetAll_Button" Content="모든 단축키 기본값으로 되돌리기" HorizontalAlignment="Right" Click="OnShortcutResetAllClick"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
 
                     <!-- ==================== 9. ABOUT SECTION ==================== -->
                     <StackPanel x:Name="Section_About" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsAboutCategorySelected), Mode=OneWay}" Spacing="0">
-                        <TextBlock Text="정보 (About Dawn Player)" Style="{StaticResource CategoryHeader}"/>
+                        <TextBlock x:Uid="Settings_About_Header" Text="정보 (About Dawn Player)" Style="{StaticResource CategoryHeader}"/>
 
                         <Border Style="{StaticResource SectionCard}">
                             <StackPanel Spacing="14">
@@ -1498,11 +1519,11 @@
                                 <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
 
                                 <StackPanel Spacing="6">
-                                    <TextBlock Text="오디오 엔진: NAudio 2.3 · NAudio.Vorbis (NVorbis) · Windows Media Foundation (WASAPI Exclusive Bit-Perfect)"
+                                    <TextBlock x:Uid="Settings_About_AudioEngine" Text="오디오 엔진: NAudio 2.3 · NAudio.Vorbis (NVorbis) · Windows Media Foundation (WASAPI Exclusive Bit-Perfect)"
                                                FontSize="12" Foreground="{ThemeResource TextSecondaryBrush}"/>
-                                    <TextBlock Text="태그 및 메타데이터: TagLib# (ID3v2, Vorbis Comment, MP4, APE)"
+                                    <TextBlock x:Uid="Settings_About_Metadata" Text="태그 및 메타데이터: TagLib# (ID3v2, Vorbis Comment, MP4, APE)"
                                                FontSize="12" Foreground="{ThemeResource TextSecondaryBrush}"/>
-                                    <TextBlock Text="데이터베이스: Microsoft.Data.Sqlite (SQLite)"
+                                    <TextBlock x:Uid="Settings_About_Database" Text="데이터베이스: Microsoft.Data.Sqlite (SQLite)"
                                                FontSize="12" Foreground="{ThemeResource TextSecondaryBrush}"/>
                                 </StackPanel>
                             </StackPanel>

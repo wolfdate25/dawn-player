@@ -1,4 +1,5 @@
 using DawnPlayer.App.Helpers;
+using DawnPlayer.App.Localization;
 using DawnPlayer.App.Services;
 using DawnPlayer.App.Views;
 using DawnPlayer.Core.Library;
@@ -36,10 +37,11 @@ public sealed partial class MainWindow : Window
         AppServices.CurrentTrackChanged += OnCurrentTrackChanged;
         AppServices.WarningRaised += ShowWarning;
         AppServices.OutputSessionChanged += OnOutputSession;
+        AppServices.LanguageChanged += OnLanguageChanged;
 
         // Without this the window reports the WinUI default ("WinUI Desktop") to the taskbar,
         // Alt+Tab and screen readers.
-        Title = "Dawn Player";
+        Title = AppStrings.Get("MainWindow.Title", "Dawn Player");
 
         var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "app.ico");
         if (System.IO.File.Exists(iconPath))
@@ -319,7 +321,9 @@ public sealed partial class MainWindow : Window
 
     private void OnCurrentTrackChanged(PlaylistItem? item)
     {
-        TitleBarTrack.Text = item == null ? "No sound — Nothing played" : $"{item.Track.Artist} — {item.Track.Title}";
+        TitleBarTrack.Text = item == null
+            ? AppStrings.Get("MainWindow_TitleBarTrack.Text", "No sound — Nothing played")
+            : $"{item.Track.Artist} — {item.Track.Title}";
         if (item != null) AppServices.Smtc.UpdateTimeline(TimeSpan.Zero, item.Track.Duration);
 
         UpdateThemeAndWallpaperForTrack(item?.Track);
@@ -334,6 +338,28 @@ public sealed partial class MainWindow : Window
         NotifyBar.Message = message;
         NotifyBar.Severity = InfoBarSeverity.Warning;
         NotifyBar.IsOpen = true;
+    }
+
+    // ---------------- language switch ----------------
+
+    // x:Uid bindings only resolve at XAML load time, so a live language switch would leave the
+    // visible tree half old, half new. Offering a restart keeps every surface consistent; the
+    // new language is already persisted and applied for strings fetched from here on.
+    private async void OnLanguageChanged(Core.Persistence.UiLanguage language)
+    {
+        var dialog = new ContentDialog
+        {
+            Title = AppStrings.Get("Msg_LanguageChangedTitle", "언어 변경"),
+            Content = AppStrings.Get("Msg_LanguageChangedMessage", "언어 변경을 적용하려면 앱을 다시 시작해야 합니다. 지금 다시 시작할까요?"),
+            PrimaryButtonText = AppStrings.Get("Msg_LanguageChangedRestart", "지금 다시 시작"),
+            CloseButtonText = AppStrings.Get("Msg_LanguageChangedLater", "나중에"),
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = Content.XamlRoot
+        };
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        {
+            Services.AppServices.RestartApp();
+        }
     }
 
     // ---------------- lyrics toggle ----------------
@@ -396,8 +422,9 @@ public sealed partial class MainWindow : Window
 
         if (SettingsGearButton != null)
         {
+            var baseText = AppStrings.Get("MainWindow_SettingsGearButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip", "환경설정");
             ToolTipService.SetToolTip(SettingsGearButton,
-                text == null ? "환경설정" : $"환경설정 ({text})");
+                text == null ? baseText : AppStrings.Format("Msg_PreferencesWithChord", text));
         }
 
         PlayerBar?.RefreshShortcutHints();
@@ -408,7 +435,7 @@ public sealed partial class MainWindow : Window
     private void OnRootDragOver(object sender, DragEventArgs e)
     {
         e.AcceptedOperation = DataPackageOperation.Copy;
-        e.DragUIOverride.Caption = "재생목록에 추가";
+        e.DragUIOverride.Caption = AppStrings.Get("Msg_DragDrop_AddToPlaylist", "재생목록에 추가");
         e.DragUIOverride.IsCaptionVisible = true;
         e.DragUIOverride.IsContentVisible = false;
     }
@@ -432,7 +459,7 @@ public sealed partial class MainWindow : Window
                     var imported = await AppServices.Playlists.ImportPlaylistAsync(plFile);
                     if (imported != null)
                     {
-                        NotifyBar.Message = $"'{imported.Name}' 재생목록을 가져왔습니다 ({imported.Items.Count}곡).";
+                        NotifyBar.Message = AppStrings.Format("Msg_PlaylistImported", imported.Name, imported.Items.Count);
                         NotifyBar.Severity = InfoBarSeverity.Informational;
                         NotifyBar.IsOpen = true;
                     }
@@ -442,14 +469,14 @@ public sealed partial class MainWindow : Window
             if (audioPaths.Count > 0)
             {
                 var added = await AppServices.Playlists.AddPathsAsync(AppServices.Playlists.Current, audioPaths);
-                NotifyBar.Message = $"{added.Count}개 트랙을 '{AppServices.Playlists.Current.Name}'에 추가했습니다.";
+                NotifyBar.Message = AppStrings.Format("Msg_TracksAddedToPlaylist", added.Count, AppServices.Playlists.Current.Name);
                 NotifyBar.Severity = InfoBarSeverity.Informational;
                 NotifyBar.IsOpen = true;
             }
         }
         catch (Exception ex)
         {
-            ShowWarning($"드롭 처리 실패: {ex.Message}");
+            ShowWarning(AppStrings.Format("Msg_DropFailed", ex.Message));
         }
     }
 }

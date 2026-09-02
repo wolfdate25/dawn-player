@@ -55,6 +55,13 @@ public sealed class AlbumGroup : IReadOnlyList<PlaylistItem>
     public string DurationFormatted => FormatEoleDuration(Duration);
     public string YearFormatted => Year > 0 ? Year.ToString(CultureInfo.InvariantCulture) : "";
 
+    /// <summary>
+    /// Formats the track count shown in <see cref="Info"/>. Core cannot reach the app's
+    /// resources, so the app swaps this for a localized formatter at startup; the Korean
+    /// default keeps Core usable (and testable) on its own.
+    /// </summary>
+    public static Func<int, string> SongCountFormatter { get; set; } = static count => $"{count}곡";
+
     public string Info
     {
         get
@@ -62,7 +69,7 @@ public sealed class AlbumGroup : IReadOnlyList<PlaylistItem>
             var parts = new List<string>(4);
             if (!string.IsNullOrEmpty(Artist)) parts.Add(Artist);
             if (Year > 0) parts.Add(Year.ToString(CultureInfo.InvariantCulture));
-            parts.Add($"{Count}곡");
+            parts.Add(SongCountFormatter(Count));
             parts.Add(FormatEoleDuration(Duration));
             return string.Join("  •  ", parts);
         }

@@ -1,3 +1,4 @@
+using DawnPlayer.App.Localization;
 using DawnPlayer.App.Shortcuts;
 
 namespace DawnPlayer.App.ViewModels.Settings;
@@ -18,7 +19,7 @@ public sealed class ShortcutBindingViewModel : ViewModelBase
 
     public ShortcutCommand Command => Info.Command;
 
-    public string DisplayName => Info.DisplayName;
+    public string DisplayName => Info.LocalizedName;
 
     /// <summary>The current chord as a label, or <see cref="UnassignedLabel"/>.</summary>
     public string ChordText
@@ -53,7 +54,7 @@ public sealed class ShortcutBindingViewModel : ViewModelBase
     public void Refresh(ShortcutMap map)
     {
         var chord = map.GetChord(Command);
-        ChordText = chord?.ToDisplayString() ?? UnassignedLabel;
+        ChordText = chord?.ToDisplayString() ?? AppStrings.Get("Settings_Shortcuts_Unassigned", UnassignedLabel);
         IsUnassigned = chord == null;
         IsDefault = map.IsDefault(Command);
     }

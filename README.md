@@ -45,6 +45,8 @@ foobar2000의 기능성과 [Eole 테마](https://github.com/Ottodix/Eole-foobar-
 
 ### UI (Eole 스타일 × WinUI 3 네이처럴)
 - 다크 퍼스트 팔레트 + Mica 배경, 앰버 액센트, 밝은 테마 전환
+- 다국어 UI — 한국어 / English / 日本어. 환경설정 → 외관 & 테마에서 언어를 선택(시스템 기본 따르기 지원)하면
+  재시작 후 전체 UI가 해당 언어로 표시됩니다 (`Strings/<culture>/Resources.resw` + MRT Core)
 - 앨범 단위 그룹 헤더(아트 + 메타)가 있는 재생목록 — eole의 시그니처 레이아웃
 - 하단 플레이어 바: 앨범아트, 시크, 트랜스포트, 볼륨, 대기열 배지, 가사 토글
 - SMTC 연동 — 미디어 키 / OS 미디어 오버레이 / 볼륨 팝업 제어

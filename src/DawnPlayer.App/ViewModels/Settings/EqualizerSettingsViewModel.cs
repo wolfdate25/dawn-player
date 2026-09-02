@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using DawnPlayer.App.Calculators;
+using DawnPlayer.App.Localization;
 using DawnPlayer.App.Services;
 using DawnPlayer.Core.Audio;
 using DawnPlayer.Core.Persistence;
@@ -261,7 +262,7 @@ public sealed class EqualizerSettingsViewModel : ViewModelBase
             var items = new List<EqDeviceComboItem>(outputDevices.Count);
             foreach (var d in outputDevices)
             {
-                string suffix = d.IsDefault ? " (시스템 기본)" : "";
+                string suffix = d.IsDefault ? AppStrings.Get("Settings_Eq_Device_SystemDefaultSuffix", " (시스템 기본)") : "";
                 items.Add(new EqDeviceComboItem(d.Id, $"{d.Name}{suffix}"));
             }
             Devices = items;
@@ -288,9 +289,10 @@ public sealed class EqualizerSettingsViewModel : ViewModelBase
         var defaultId = _eqSettingsService.GetDefaultProfileId();
         var defaultProfile = profileList.FirstOrDefault(p => p.Id == defaultId);
 
+        string defaultProfileName = defaultProfile?.Name ?? AppStrings.Get("Settings_Eq_DefaultProfileFallback", "기본");
         var list = new List<EqProfileBindingComboItem>
         {
-            new(null, $"기본 프로필 따르기 ({defaultProfile?.Name ?? "기본"})", true)
+            new(null, AppStrings.Format("Settings_Eq_FollowDefaultProfileFormat", "기본 프로필 따르기 ({0})", defaultProfileName), true)
         };
 
         foreach (var p in profileList)
@@ -306,12 +308,13 @@ public sealed class EqualizerSettingsViewModel : ViewModelBase
             var match = list.FirstOrDefault(i => !i.IsFollowDefault && i.ProfileId == boundProfileId);
             _selectedBindingOption = match ?? list[0];
             var boundProf = profileList.FirstOrDefault(p => p.Id == boundProfileId);
-            BindingDescriptionText = $"이 장치는 '{boundProf?.Name ?? "전용"}' 프로필에 바인딩되어 있습니다.";
+            string boundProfName = boundProf?.Name ?? AppStrings.Get("Settings_Eq_DedicatedProfileFallback", "전용");
+            BindingDescriptionText = AppStrings.Format("Settings_Eq_DeviceBoundFormat", "이 장치는 '{0}' 프로필에 바인딩되어 있습니다.", boundProfName);
         }
         else
         {
             _selectedBindingOption = list[0];
-            BindingDescriptionText = $"기본 프로필('{defaultProfile?.Name ?? "기본"}')을 사용 중입니다.";
+            BindingDescriptionText = AppStrings.Format("Settings_Eq_UsingDefaultProfileFormat", "기본 프로필('{0}')을 사용 중입니다.", defaultProfileName);
         }
 
         OnPropertyChanged(nameof(SelectedBindingOption));
@@ -327,11 +330,12 @@ public sealed class EqualizerSettingsViewModel : ViewModelBase
         if (item.IsFollowDefault)
         {
             var defaultProfile = _eqSettingsService.GetProfileById(_eqSettingsService.GetDefaultProfileId());
-            BindingDescriptionText = $"기본 프로필('{defaultProfile?.Name ?? "기본"}')을 사용 중입니다.";
+            string defaultProfileName = defaultProfile?.Name ?? AppStrings.Get("Settings_Eq_DefaultProfileFallback", "기본");
+            BindingDescriptionText = AppStrings.Format("Settings_Eq_UsingDefaultProfileFormat", "기본 프로필('{0}')을 사용 중입니다.", defaultProfileName);
         }
         else
         {
-            BindingDescriptionText = $"이 장치는 '{item.Name}' 프로필에 바인딩되었습니다.";
+            BindingDescriptionText = AppStrings.Format("Settings_Eq_DeviceBoundFormat", "이 장치는 '{0}' 프로필에 바인딩되었습니다.", item.Name);
             var prof = _eqSettingsService.GetProfileById(item.ProfileId!);
             if (prof != null)
             {
@@ -363,7 +367,7 @@ public sealed class EqualizerSettingsViewModel : ViewModelBase
 
     public EqProfile CreateProfile(string name)
     {
-        string trimmed = string.IsNullOrWhiteSpace(name) ? $"프로필 {_profiles.Count + 1}" : name.Trim();
+        string trimmed = string.IsNullOrWhiteSpace(name) ? AppStrings.Format("Settings_Eq_DefaultProfileNameFormat", "프로필 {0}", _profiles.Count + 1) : name.Trim();
         var created = _eqSettingsService.CreateProfile(trimmed);
         RefreshProfiles(created.Id);
         RefreshDeviceBindingOptions();
@@ -373,7 +377,7 @@ public sealed class EqualizerSettingsViewModel : ViewModelBase
     public EqProfile? DuplicateProfile()
     {
         if (_selectedProfile == null) return null;
-        var dup = _eqSettingsService.CreateProfile($"{_selectedProfile.Name} (복사본)", _selectedProfile);
+        var dup = _eqSettingsService.CreateProfile(AppStrings.Format("Settings_Eq_DuplicateProfileFormat", "{0} (복사본)", _selectedProfile.Name), _selectedProfile);
         RefreshProfiles(dup.Id);
         RefreshDeviceBindingOptions();
         return dup;

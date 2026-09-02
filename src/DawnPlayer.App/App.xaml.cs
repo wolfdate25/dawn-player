@@ -1,3 +1,4 @@
+using DawnPlayer.App.Localization;
 using DawnPlayer.Core.Util;
 using Microsoft.UI.Xaml;
 
@@ -9,6 +10,9 @@ public partial class App : Application
 
     public App()
     {
+        // Language first: PrimaryLanguageOverride must be set before any resource is resolved,
+        // including this.InitializeComponent(), or the first frame renders in the wrong language.
+        Services.AppServices.ApplyStartupLanguage();
         InitializeComponent();
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
@@ -28,7 +32,7 @@ public partial class App : Application
             try
             {
                 Services.AppServices.RaiseWarning(
-                    $"예기치 않은 오류가 발생했습니다: {e.Exception?.Message}\n자세한 내용은 로그를 확인하세요.");
+                    AppStrings.Format("Msg_UnhandledException", e.Exception?.Message ?? string.Empty));
             }
             catch { }
         };
@@ -63,10 +67,8 @@ public partial class App : Application
             Log($"[FATAL OnLaunched] {ex}");
             try
             {
-                var nl = Environment.NewLine;
-                _ = MessageBox(IntPtr.Zero,
-                    $"Dawn Player를 시작할 수 없습니다.{nl}{nl}{ex.Message}{nl}{nl}자세한 내용: {AppPaths.LogFile}",
-                    "Dawn Player", 0x00000010 /* MB_ICONERROR */);
+                var msg = AppStrings.Format("Msg_StartupFatalError", ex.Message, AppPaths.LogFile);
+                _ = MessageBox(IntPtr.Zero, msg, "Dawn Player", 0x00000010 /* MB_ICONERROR */);
             }
             catch { }
             Environment.Exit(1);

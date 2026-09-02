@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DawnPlayer.App.Localization;
 using DawnPlayer.App.Services;
 using DawnPlayer.Core.Audio;
 using DawnPlayer.Core.Persistence;
@@ -19,7 +20,7 @@ public sealed class AudioSettingsViewModel : ViewModelBase
 
     private IReadOnlyList<OutputDeviceInfo> _devices = Array.Empty<OutputDeviceInfo>();
     private OutputDeviceInfo? _selectedDevice;
-    private string _windowsExclusiveStatusText = "확인 중...";
+    private string _windowsExclusiveStatusText = AppStrings.Get("Settings_Audio_Status_Checking", "확인 중...");
     private bool _isRefreshing;
 
     public AudioSettingsViewModel(
@@ -68,9 +69,9 @@ public sealed class AudioSettingsViewModel : ViewModelBase
 
     public string DriverDescriptionText => DriverType switch
     {
-        AudioDriverType.DirectSound => "Windows Audio (DirectSound) 장치 목록 (윈도우 믹서 경유/블루투스/헤드폰 호환)",
-        AudioDriverType.WaveOut => "Windows WaveOut 표준 장치 목록",
-        _ => "WASAPI 엔드포인트 장치 목록 (비트 퍼펙트 지원)"
+        AudioDriverType.DirectSound => AppStrings.Get("Settings_Audio_DriverDesc_DirectSound", "Windows Audio (DirectSound) 장치 목록 (윈도우 믹서 경유/블루투스/헤드폰 호환)"),
+        AudioDriverType.WaveOut => AppStrings.Get("Settings_Audio_DriverDesc_WaveOut", "Windows WaveOut 표준 장치 목록"),
+        _ => AppStrings.Get("Settings_Audio_DriverDesc_Wasapi", "WASAPI 엔드포인트 장치 목록 (비트 퍼펙트 지원)")
     };
 
     public IReadOnlyList<OutputDeviceInfo> Devices
@@ -188,7 +189,7 @@ public sealed class AudioSettingsViewModel : ViewModelBase
             }
             else
             {
-                WindowsExclusiveStatusText = "WASAPI 드라이버에서만 독점 제어 설정을 확인합니다.";
+                WindowsExclusiveStatusText = AppStrings.Get("Settings_Audio_Status_WasapiOnly", "WASAPI 드라이버에서만 독점 제어 설정을 확인합니다.");
             }
         }
         catch
@@ -196,7 +197,7 @@ public sealed class AudioSettingsViewModel : ViewModelBase
             Devices = Array.Empty<OutputDeviceInfo>();
             _selectedDevice = null;
             OnPropertyChanged(nameof(SelectedDevice));
-            WindowsExclusiveStatusText = "장치 목록을 읽는 중 오류가 발생했습니다.";
+            WindowsExclusiveStatusText = AppStrings.Get("Settings_Audio_Status_ReadError", "장치 목록을 읽는 중 오류가 발생했습니다.");
         }
         finally
         {
@@ -213,7 +214,7 @@ public sealed class AudioSettingsViewModel : ViewModelBase
         }
         catch
         {
-            WindowsExclusiveStatusText = "독점 제어 상태를 확인할 수 없습니다.";
+            WindowsExclusiveStatusText = AppStrings.Get("Settings_Audio_Status_Unknown", "독점 제어 상태를 확인할 수 없습니다.");
         }
     }
 

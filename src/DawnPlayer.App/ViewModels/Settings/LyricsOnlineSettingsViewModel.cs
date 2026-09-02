@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using DawnPlayer.App.Localization;
 using DawnPlayer.App.Services;
 using DawnPlayer.Core.Lyrics.Online;
 using DawnPlayer.Core.Persistence;
@@ -16,7 +17,9 @@ public sealed class LyricsPluginItemVm : ViewModelBase
     public bool IsExternal { get; init; }
 
     public string Header => $"{Name} v{Version}";
-    public string SourceLabel => IsExternal ? "플러그인 폴더" : "직접 등록";
+    public string SourceLabel => IsExternal
+        ? AppStrings.Get("Settings_OnlineLyrics_SourcePluginFolder", "플러그인 폴더")
+        : AppStrings.Get("Settings_OnlineLyrics_SourceBuiltin", "직접 등록");
 
     private bool _isEnabled = true;
     public bool IsEnabled
@@ -101,7 +104,7 @@ public sealed class LyricsOnlineSettingsViewModel : ViewModelBase
     public bool IsCustomFolderSelected => SaveLocationIndex == 1;
 
     public string CustomSaveFolderLabel => string.IsNullOrWhiteSpace(_settings.LyricsOnline.CustomSaveFolder)
-        ? "(지정 안 됨 — 음원 폴더에 저장)"
+        ? AppStrings.Get("Settings_OnlineLyrics_CustomFolderNotSet", "(지정 안 됨 — 음원 폴더에 저장)")
         : _settings.LyricsOnline.CustomSaveFolder!;
 
     public void SetCustomSaveFolder(string path)

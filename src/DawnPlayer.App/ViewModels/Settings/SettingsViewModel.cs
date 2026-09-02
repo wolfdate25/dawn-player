@@ -40,7 +40,8 @@ public sealed class SettingsViewModel : ViewModelBase
         Func<bool>? isExclusiveSessionGetter = null,
         IShortcutBindingStore? shortcutStore = null,
         Action<string>? logger = null,
-        ILyricsOnlineService? lyricsOnlineService = null)
+        ILyricsOnlineService? lyricsOnlineService = null,
+        Action<UiLanguage>? languageChangedNotifier = null)
     {
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _audioSettingsService = audioSettingsService ?? throw new ArgumentNullException(nameof(audioSettingsService));
@@ -69,7 +70,10 @@ public sealed class SettingsViewModel : ViewModelBase
 
         OnlineLyrics = new LyricsOnlineSettingsViewModel(_settings, lyricsOnlineService, lyricsChangedNotifier, settingsSaver);
 
-        Appearance = new AppearanceSettingsViewModel(_appearanceSettingsService, _settings);
+        Appearance = new AppearanceSettingsViewModel(
+            _appearanceSettingsService,
+            _settings,
+            onLanguageChanged: languageChangedNotifier);
 
         Layout = new LayoutSettingsViewModel(_appearanceSettingsService, _settings);
 

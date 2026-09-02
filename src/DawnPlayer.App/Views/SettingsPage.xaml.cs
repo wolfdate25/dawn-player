@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using DawnPlayer.App.Calculators;
+using DawnPlayer.App.Localization;
 using DawnPlayer.App.Services;
 using DawnPlayer.App.Shortcuts;
 using DawnPlayer.App.ViewModels.Settings;
@@ -40,7 +41,8 @@ public sealed partial class SettingsPage : Page
                  AppServices.Playback.CurrentSessionInfo?.Exclusive == true),
             shortcutStore: AppServices.Shortcuts,
             logger: App.Log,
-            lyricsOnlineService: AppServices.LyricsOnline);
+            lyricsOnlineService: AppServices.LyricsOnline,
+            languageChangedNotifier: AppServices.ChangeLanguage);
 
         InitializeComponent();
 
@@ -49,7 +51,7 @@ public sealed partial class SettingsPage : Page
         var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
         if (version != null && AboutVersionText != null)
         {
-            AboutVersionText.Text = $"버전 {version.ToString(3)} (x64) · foobar2000 & Eole 영감 네이티브 플레이어";
+            AboutVersionText.Text = AppStrings.Format("Settings_About_VersionFormat", version.ToString(3));
         }
 
         Loaded += OnPageLoaded;
@@ -205,18 +207,20 @@ public sealed partial class SettingsPage : Page
                 return;
 
             case ShortcutAssignResult.InvalidChord:
-                await ShowShortcutNoticeAsync("사용할 수 없는 키", "이 키 조합은 단축키로 지정할 수 없습니다.");
+                await ShowShortcutNoticeAsync(
+                    AppStrings.Get("Msg_ShortcutInvalidTitle", "사용할 수 없는 키"),
+                    AppStrings.Get("Msg_ShortcutInvalidMessage", "이 키 조합은 단축키로 지정할 수 없습니다."));
                 return;
 
             case ShortcutAssignResult.Conflict:
                 var overwrite = new ContentDialog
                 {
-                    Title = "단축키 충돌",
-                    Content = string.Format(CultureInfo.InvariantCulture, "'{0}' 은(는) 이미 '{1}'에 할당되어 있습니다. 덮어쓰면 해당 명령의 단축키가 해제됩니다.",
+                    Title = AppStrings.Get("Msg_ShortcutConflictTitle", "단축키 충돌"),
+                    Content = AppStrings.Format("Msg_ShortcutConflictMessage",
                         chord.ToDisplayString(),
                         ShortcutSettingsViewModel.GetCommandDisplayName(conflicting)),
-                    PrimaryButtonText = "덮어쓰기",
-                    CloseButtonText = "취소",
+                    PrimaryButtonText = AppStrings.Get("Common_Overwrite", "덮어쓰기"),
+                    CloseButtonText = AppStrings.Get("Common_Cancel", "취소"),
                     DefaultButton = ContentDialogButton.Close,
                     XamlRoot = XamlRoot
                 };
@@ -249,10 +253,10 @@ public sealed partial class SettingsPage : Page
     {
         var confirm = new ContentDialog
         {
-            Title = "모든 단축키 초기화",
-            Content = "모든 단축키를 기본값으로 되돌립니다. 직접 지정한 조합은 사라집니다.",
-            PrimaryButtonText = "되돌리기",
-            CloseButtonText = "취소",
+            Title = AppStrings.Get("Msg_ShortcutResetAllTitle", "모든 단축키 초기화"),
+            Content = AppStrings.Get("Msg_ShortcutResetAllMessage", "모든 단축키를 기본값으로 되돌립니다. 직접 지정한 조합은 사라집니다."),
+            PrimaryButtonText = AppStrings.Get("Common_Reset", "되돌리기"),
+            CloseButtonText = AppStrings.Get("Common_Cancel", "취소"),
             DefaultButton = ContentDialogButton.Close,
             XamlRoot = XamlRoot
         };
@@ -268,7 +272,7 @@ public sealed partial class SettingsPage : Page
         {
             Title = title,
             Content = body,
-            CloseButtonText = "확인",
+            CloseButtonText = AppStrings.Get("Common_OK", "확인"),
             XamlRoot = XamlRoot
         }.ShowAsync().AsTask();
 
@@ -279,17 +283,17 @@ public sealed partial class SettingsPage : Page
     {
         var dialog = new ContentDialog
         {
-            Title = "새 EQ 프로필 생성",
-            PrimaryButtonText = "생성",
-            CloseButtonText = "취소",
+            Title = AppStrings.Get("Msg_EqNewProfileTitle", "새 EQ 프로필 생성"),
+            PrimaryButtonText = AppStrings.Get("Common_Create", "생성"),
+            CloseButtonText = AppStrings.Get("Common_Cancel", "취소"),
             DefaultButton = ContentDialogButton.Primary,
             XamlRoot = this.XamlRoot
         };
 
         var input = new TextBox
         {
-            PlaceholderText = "프로필 이름 입력 (예: 보컬 부스트, 헤드폰)",
-            Text = $"프로필 {ViewModel.Equalizer.Profiles.Count + 1}"
+            PlaceholderText = AppStrings.Get("Msg_EqProfilePlaceholder", "프로필 이름 입력 (예: 보컬 부스트, 헤드폰)"),
+            Text = AppStrings.Format("Msg_EqProfileDefaultName", ViewModel.Equalizer.Profiles.Count + 1)
         };
         dialog.Content = input;
 
@@ -309,9 +313,9 @@ public sealed partial class SettingsPage : Page
 
         var dialog = new ContentDialog
         {
-            Title = "프로필 이름 변경",
-            PrimaryButtonText = "변경",
-            CloseButtonText = "취소",
+            Title = AppStrings.Get("Msg_EqRenameProfileTitle", "프로필 이름 변경"),
+            PrimaryButtonText = AppStrings.Get("Common_Change", "변경"),
+            CloseButtonText = AppStrings.Get("Common_Cancel", "취소"),
             DefaultButton = ContentDialogButton.Primary,
             XamlRoot = this.XamlRoot
         };
@@ -332,10 +336,10 @@ public sealed partial class SettingsPage : Page
 
         var dialog = new ContentDialog
         {
-            Title = "프로필 삭제",
-            Content = $"'{ViewModel.Equalizer.ProfileName}' 프로필을 삭제하시겠습니까?\n이 프로필에 연결된 장치는 기본 프로필로 전환됩니다.",
-            PrimaryButtonText = "삭제",
-            CloseButtonText = "취소",
+            Title = AppStrings.Get("Msg_EqDeleteProfileTitle", "프로필 삭제"),
+            Content = AppStrings.Format("Msg_EqDeleteProfileMessage", ViewModel.Equalizer.ProfileName),
+            PrimaryButtonText = AppStrings.Get("Common_Delete", "삭제"),
+            CloseButtonText = AppStrings.Get("Common_Cancel", "취소"),
             DefaultButton = ContentDialogButton.Close,
             XamlRoot = this.XamlRoot
         };
