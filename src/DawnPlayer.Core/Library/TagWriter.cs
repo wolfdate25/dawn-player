@@ -82,11 +82,20 @@ public static class TagWriter
     }
 
     /// <summary>
-    /// Writes ReplayGain 2.0 values (track always, album when provided) through the same atomic
+    /// Writes ReplayGain values (track always, album when provided) through the same atomic
     /// path. Formatting matches what the reader accepts ("+1.23 dB", "0.987123").
     /// </summary>
     public static bool TrySetReplayGain(string path, double trackGainDb, double trackPeak,
         double? albumGainDb, double? albumPeak)
+        => TrySetReplayGain(path, trackGainDb, trackPeak, albumGainDb, albumPeak, writeR128: false);
+
+    /// <summary>
+    /// Writes ReplayGain values, optionally also as ReplayGain 2.0 fields
+    /// (<c>R128_TRACK_GAIN</c> / <c>R128_ALBUM_GAIN</c>, LU relative to −18 LUFS). RG2 defines no
+    /// peak fields, so peaks only land in the RG1 fields.
+    /// </summary>
+    public static bool TrySetReplayGain(string path, double trackGainDb, double trackPeak,
+        double? albumGainDb, double? albumPeak, bool writeR128)
     {
         if (!File.Exists(path)) return false;
 
@@ -106,6 +115,14 @@ public static class TagWriter
                     {
                         SetReplayField(container, "REPLAYGAIN_ALBUM_GAIN", FormatGain(albumGainDb.Value));
                         SetReplayField(container, "REPLAYGAIN_ALBUM_PEAK", FormatPeak(albumPeak.Value));
+                    }
+                    if (writeR128)
+                    {
+                        SetReplayField(container, "R128_TRACK_GAIN", FormatLU(trackGainDb));
+                        if (albumGainDb.HasValue)
+                        {
+                            SetReplayField(container, "R128_ALBUM_GAIN", FormatLU(albumGainDb.Value));
+                        }
                     }
                     tf.Save();
                 }
@@ -127,6 +144,84 @@ public static class TagWriter
             TryDeleteTemp(temp);
         }
     }
+
+    /// <summary>
+    /// Writes a 0-5 star rating through the atomic path: ID3v2 POPM (Popularimeter, de facto
+    /// anchors 1/64/128/196/255, 0 clears) for MP3, and the free-form <c>RATING</c> field
+    /// (1-5 scale, empty clears) for Xiph/Apple/APE containers.
+    /// </summary>
+    public static bool TrySetRating(string path, int stars)
+    {
+        if (!File.Exists(path)) return false;
+        stars = Math.Clamp(stars, 0, 5);
+
+        string temp = TempPath(path);
+        try
+        {
+            File.Copy(path, temp, overwrite: true);
+
+            try
+            {
+                using (var tf = TagLib.File.Create(temp))
+                {
+                    WriteRatingToContainer(ResolveWritable(tf), stars);
+                    tf.Save();
+                }
+            }
+            catch
+            {
+                return false;
+            }
+
+            File.Replace(temp, path, null);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+        finally
+        {
+            TryDeleteTemp(temp);
+        }
+    }
+
+    private static void WriteRatingToContainer(TagLib.Tag container, int stars)
+    {
+        if (container is TagLib.Id3v2.Tag id3)
+        {
+            var frame = TagLib.Id3v2.PopularimeterFrame.Get(id3, user: string.Empty, create: true);
+            frame.Rating = StarsToPopm(stars);
+        }
+        else if (container is TagLib.Ogg.XiphComment xiph)
+        {
+            if (stars > 0) xiph.SetField("RATING", new[] { stars.ToString(CultureInfo.InvariantCulture) });
+            else xiph.RemoveField("RATING");
+        }
+        else if (container is TagLib.Mpeg4.AppleTag apple)
+        {
+            if (stars > 0) apple.SetDashBox("com.apple.iTunes", "rating", stars.ToString(CultureInfo.InvariantCulture));
+            else apple.SetDashBox("com.apple.iTunes", "rating", string.Empty);
+        }
+        else if (container is TagLib.Ape.Tag ape)
+        {
+            if (stars > 0) ape.SetItem(new TagLib.Ape.Item("RATING", stars.ToString(CultureInfo.InvariantCulture)));
+            else ape.RemoveItem("RATING");
+        }
+        // Unknown containers are skipped for the same reason as SetReplayField.
+    }
+
+    /// <summary>Star count → POPM counter byte, using the anchors most writers agree on
+    /// (1 / 64 / 128 / 196 / 255; 0 clears).</summary>
+    public static byte StarsToPopm(int stars) => Math.Clamp(stars, 0, 5) switch
+    {
+        1 => 1,
+        2 => 64,
+        3 => 128,
+        4 => 196,
+        5 => 255,
+        _ => 0,
+    };
 
     private static void ApplyFields(TagLib.Tag union, TagLib.Tag container, TagEdit edit, TagLib.IPicture? cover)
     {
@@ -211,6 +306,10 @@ public static class TagWriter
 
     private static string FormatGain(double db) =>
         (db >= 0 ? "+" : string.Empty) + db.ToString("F2", CultureInfo.InvariantCulture) + " dB";
+
+    /// <summary>R128 fields are bare LU values ("-4.25"), no unit and no forced sign.</summary>
+    private static string FormatLU(double lu) =>
+        lu.ToString("F2", CultureInfo.InvariantCulture);
 
     private static string FormatPeak(double peak) =>
         peak.ToString("F6", CultureInfo.InvariantCulture);

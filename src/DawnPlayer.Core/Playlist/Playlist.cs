@@ -41,6 +41,18 @@ public sealed class Playlist : INotifyPropertyChanged
         set { if (_isSmart != value) { _isSmart = value; OnPropertyChanged(); } }
     }
 
+    private string? _smartQuery;
+    /// <summary>
+    /// The query text a user-created smart playlist runs, or null for the built-in kinds (which
+    /// are keyed by <c>SmartPlaylistKind</c> in the manager instead). Non-null marks the playlist
+    /// as user-owned: editable and deletable through the manager, unlike the built-ins.
+    /// </summary>
+    public string? SmartQuery
+    {
+        get => _smartQuery;
+        set { if (!string.Equals(_smartQuery, value, StringComparison.Ordinal)) { _smartQuery = value; OnPropertyChanged(); } }
+    }
+
     public object SyncRoot { get; } = new();
 
     /// <summary>

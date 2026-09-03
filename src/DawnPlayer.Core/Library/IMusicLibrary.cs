@@ -31,6 +31,9 @@ public interface IMusicLibrary : IDisposable
     /// last played) without touching any other column.</summary>
     void UpdateStats(Track track);
 
+    /// <summary>Persists the star rating of a working-set track (0-5).</summary>
+    void UpdateRating(Track track);
+
     /// <summary>Persists the ReplayGain fields of a working-set track.</summary>
     void UpdateReplayGain(Track track);
 

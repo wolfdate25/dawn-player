@@ -123,6 +123,33 @@ public sealed class PlaylistItem : INotifyPropertyChanged
         }
     }
 
+    private int _rating = int.MinValue;
+    /// <summary>
+    /// Star rating of the underlying track, 0-5. A notifying proxy over <see cref="Track.Rating"/>
+    /// (records cannot raise PropertyChanged): rows bound to this update the moment a rating
+    /// command lands, on every view that shares the same working-set track.
+    /// </summary>
+    public int Rating
+    {
+        get
+        {
+            var cached = Volatile.Read(ref _rating);
+            return cached == int.MinValue ? Track.Rating : cached;
+        }
+        set
+        {
+            if (Volatile.Read(ref _rating) != value)
+            {
+                Volatile.Write(ref _rating, value);
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    /// <summary>Pulls the track's rating into the notifying proxy (after a mutation made
+    /// elsewhere on the shared Track instance).</summary>
+    public void SyncRating() => Rating = Track.Rating;
+
     public PlaylistItem(Track track) => Track = track ?? throw new ArgumentNullException(nameof(track));
 
     public override string ToString() => Track.ToString();

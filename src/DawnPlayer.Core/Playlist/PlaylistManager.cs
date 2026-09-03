@@ -48,6 +48,11 @@ public sealed class PlaylistManager : IPlaylistManager
     private Playlist? _current;
     private Playlist? _nowPlaying;
     private readonly Dictionary<SmartPlaylistKind, Playlist> _smartPlaylists = new();
+    private readonly List<Playlist> _userSmartPlaylists = new();
+
+    /// <summary>Raised (on the calling thread) whenever a user smart playlist is added, edited or
+    /// deleted, so the host can persist the definitions. Not raised for content refreshes.</summary>
+    public event Action? UserSmartPlaylistsChanged;
 
     /// <summary>Upper bound on the size of each generated smart playlist.</summary>
     private const int SmartPlaylistCap = 100;
@@ -123,6 +128,12 @@ public sealed class PlaylistManager : IPlaylistManager
             if (!Playlists.Contains(kv.Value)) continue;
             ReplaceWithTracks(kv.Value, QuerySmartPlaylist(kv.Key));
         }
+
+        foreach (var pl in _userSmartPlaylists)
+        {
+            if (!Playlists.Contains(pl)) continue;
+            ReplaceWithTracks(pl, QueryUserSmartPlaylist(pl));
+        }
     }
 
     private IEnumerable<Track> QuerySmartPlaylist(SmartPlaylistKind kind)
@@ -144,15 +155,136 @@ public sealed class PlaylistManager : IPlaylistManager
                     .ThenBy(t => t.AlbumSortKey)
                     .Take(SmartPlaylistCap);
 
-            default:
-                // Never-played tracks (last_played = 0) sort first, which is the point: this view
-                // surfaces music the library has on disk but the user has not heard.
-                return tracks
-                    .OrderBy(t => t.LastPlayedUtcTicks)
-                    .ThenBy(t => t.PlayCount)
-                    .ThenBy(t => t.AlbumSortKey)
-                    .Take(SmartPlaylistCap);
+                default:
+                    // Never-played tracks (last_played = 0) sort first, which is the point: this view
+                    // surfaces music the library has on disk but the user has not heard.
+                    return tracks
+                        .OrderBy(t => t.LastPlayedUtcTicks)
+                        .ThenBy(t => t.PlayCount)
+                        .ThenBy(t => t.AlbumSortKey)
+                        .Take(SmartPlaylistCap);
         }
+    }
+
+    // ---------------- user-defined smart playlists ----------------
+
+    /// <summary>The user smart playlist definitions, in sidebar order — the shape the host
+    /// persists. Definitions whose stored query no longer parses are skipped (empty playlist).</summary>
+    public IReadOnlyList<(string Name, string Query)> GetUserSmartPlaylists() =>
+        _userSmartPlaylists.Select(p => (p.Name, p.SmartQuery ?? "")).ToList();
+
+    /// <summary>Recreates the persisted user smart playlists after startup (or a language change
+    /// is irrelevant here — names are user-chosen). Invalid stored queries are kept as definitions
+    /// but generate empty playlists, so editing them can fix the query without losing the name.</summary>
+    public void EnsureUserSmartPlaylists(IReadOnlyList<(string Name, string Query)>? definitions)
+    {
+        if (definitions == null) return;
+
+        _ = NowPlaying;
+
+        lock (_saveLock)
+        {
+            foreach (var (name, query) in definitions)
+            {
+                if (_userSmartPlaylists.Any(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))) continue;
+
+                var pl = new Playlist(name) { IsSmart = true, SmartQuery = query };
+                _userSmartPlaylists.Add(pl);
+                Playlists.Insert(Math.Min(SmartInsertIndexLocked(), Playlists.Count), pl);
+            }
+        }
+
+        RefreshSmartPlaylists();
+    }
+
+    /// <summary>Creates a query-driven smart playlist. Validates the query first; on failure
+    /// returns null and fills <paramref name="error"/>.</summary>
+    public Playlist? AddUserSmartPlaylist(string name, string query, out string? error)
+    {
+        error = null;
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            error = "The playlist needs a name.";
+            return null;
+        }
+        if (!SmartPlaylistQuery.TryParse(query, out var parsed, out var parseError))
+        {
+            error = parseError;
+            return null;
+        }
+
+        Playlist pl;
+        lock (_saveLock)
+        {
+            if (Playlists.Any(p => string.Equals(p.Name, name.Trim(), StringComparison.OrdinalIgnoreCase)))
+            {
+                error = "A playlist with that name already exists.";
+                return null;
+            }
+
+            pl = new Playlist(name.Trim()) { IsSmart = true, SmartQuery = parsed!.Source };
+            _userSmartPlaylists.Add(pl);
+            Playlists.Insert(Math.Min(SmartInsertIndexLocked(), Playlists.Count), pl);
+        }
+
+        ReplaceWithTracks(pl, parsed!.Apply(_library.Tracks));
+        UserSmartPlaylistsChanged?.Invoke();
+        return pl;
+    }
+
+    /// <summary>Renames and/or re-queries a user smart playlist in one step (the name is its
+    /// identity, so renaming goes through here rather than <see cref="RenamePlaylist"/>).</summary>
+    public bool TryUpdateUserSmartPlaylist(Playlist pl, string name, string query, out string? error)
+    {
+        error = null;
+        if (pl == null || pl.SmartQuery == null)
+        {
+            error = "Not a user smart playlist.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            error = "The playlist needs a name.";
+            return false;
+        }
+        if (!SmartPlaylistQuery.TryParse(query, out var parsed, out var parseError))
+        {
+            error = parseError;
+            return false;
+        }
+
+        lock (_saveLock)
+        {
+            if (Playlists.Any(p => !ReferenceEquals(p, pl) &&
+                                   string.Equals(p.Name, name.Trim(), StringComparison.OrdinalIgnoreCase)))
+            {
+                error = "A playlist with that name already exists.";
+                return false;
+            }
+            pl.Name = name.Trim();
+            pl.SmartQuery = parsed!.Source;
+        }
+
+        ReplaceWithTracks(pl, parsed!.Apply(_library.Tracks));
+        UserSmartPlaylistsChanged?.Invoke();
+        return true;
+    }
+
+    private IEnumerable<Track> QueryUserSmartPlaylist(Playlist pl) =>
+        SmartPlaylistQuery.TryParse(pl.SmartQuery, out var parsed, out _)
+            ? parsed!.Apply(_library.Tracks)
+            : Enumerable.Empty<Track>();
+
+    /// <summary>First sidebar slot after the built-in smart block, so user smart playlists sit
+    /// with their siblings and above the plain user playlists.</summary>
+    private int SmartInsertIndexLocked()
+    {
+        int index = 1; // after Now Playing
+        for (int i = 0; i < Playlists.Count; i++)
+        {
+            if (Playlists[i] is { IsSmart: true }) index = i + 1;
+        }
+        return index;
     }
 
     public Playlist Current
@@ -369,8 +501,9 @@ public sealed class PlaylistManager : IPlaylistManager
 
         if (pl.IsSmart)
         {
-            // Generated playlists are code-owned; a deleted one would resurrect on the next refresh.
-            return;
+            // Built-in smart playlists are code-owned; a deleted one would resurrect on the next
+            // refresh. User-defined ones (SmartQuery set) are deletable like any user playlist.
+            if (pl.SmartQuery == null) return;
         }
 
         Timer? timerToDispose = null;
@@ -381,6 +514,7 @@ public sealed class PlaylistManager : IPlaylistManager
             if (idx < 0) return;
 
             Playlists.RemoveAt(idx);
+            _userSmartPlaylists.Remove(pl);
 
             _saveTimers.TryRemove(pl, out timerToDispose);
 
@@ -404,7 +538,15 @@ public sealed class PlaylistManager : IPlaylistManager
             ItemsRemoved?.Invoke(pl, removedItems);
         }
 
-        DeletePlaylistFile(pl);
+        // User smart playlists have no file on disk; the others do.
+        if (pl.SmartQuery == null)
+        {
+            DeletePlaylistFile(pl);
+        }
+        if (pl.IsSmart)
+        {
+            UserSmartPlaylistsChanged?.Invoke();
+        }
     }
 
     public void RemovePlaylist(string playlistIdOrName)

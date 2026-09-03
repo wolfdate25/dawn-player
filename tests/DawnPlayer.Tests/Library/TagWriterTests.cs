@@ -100,6 +100,127 @@ public sealed class TagWriterTests
         Assert.Equal(TagWriteResult.FileMissing,
             TagWriter.TryApplyAtomic(Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".flac"), new TagEdit()));
         Assert.False(TagWriter.TrySetReplayGain(Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".flac"), 0, 0, 0, 0));
+        Assert.False(TagWriter.TrySetRating(Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".flac"), 3));
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    public void SetRating_RoundTrips_ThroughTagReader(int stars)
+    {
+        var dir = NewTempDir();
+        var file = Path.Combine(dir, $"rate{stars}.wav");
+        File.WriteAllBytes(file, MinimalWav(44100, 2, 440.0, 0.2));
+        try
+        {
+            Assert.True(TagWriter.TrySetRating(file, stars));
+
+            var reread = TagReader.TryRead(file, out _);
+            Assert.NotNull(reread);
+            Assert.Equal(stars, reread!.Rating);
+        }
+        finally
+        {
+            Cleanup(dir);
+        }
+    }
+
+    [Fact]
+    public void SetRating_Zero_ClearsTheRating()
+    {
+        var dir = NewTempDir();
+        var file = Path.Combine(dir, "unrate.wav");
+        File.WriteAllBytes(file, MinimalWav(44100, 2, 440.0, 0.2));
+        try
+        {
+            Assert.True(TagWriter.TrySetRating(file, 4));
+            Assert.Equal(4, TagReader.TryRead(file, out _)!.Rating);
+
+            Assert.True(TagWriter.TrySetRating(file, 0));
+            Assert.Equal(0, TagReader.TryRead(file, out _)!.Rating);
+        }
+        finally
+        {
+            Cleanup(dir);
+        }
+    }
+
+    [Fact]
+    public void PopmAnchors_MapBothWays()
+    {
+        // The de facto anchors (1/64/128/196/255) must survive a write→read cycle exactly, which
+        // is what interop with other players' ratings depends on.
+        int[] anchors = { 1, 64, 128, 196, 255 };
+        for (int i = 0; i < anchors.Length; i++)
+        {
+            Assert.Equal(anchors[i], TagWriter.StarsToPopm(i + 1));
+        }
+        Assert.Equal(0, TagWriter.StarsToPopm(0));
+
+        foreach (int anchor in anchors)
+        {
+            Assert.Equal(Array.IndexOf(anchors, anchor) + 1, TagReader.PopmToStars((byte)anchor));
+        }
+        Assert.Equal(0, TagReader.PopmToStars(0));
+    }
+
+    [Fact]
+    public void RatingScales_AdaptToStars()
+    {
+        // 1-5 direct, 0-10 half, 0-100 by twentieth.
+        Assert.Equal(4, TagReader.ScaleRating(4));
+        Assert.Equal(4, TagReader.ScaleRating(8));
+        Assert.Equal(4, TagReader.ScaleRating(80));
+        Assert.Equal(0, TagReader.ScaleRating(0));
+        Assert.Equal(5, TagReader.ScaleRating(100));
+    }
+
+    [Fact]
+    public void SetReplayGain_WithR128_WritesBothFieldSets()
+    {
+        var dir = NewTempDir();
+        var file = Path.Combine(dir, "rg2.wav");
+        File.WriteAllBytes(file, MinimalWav(48000, 2, 1000.0, 1.0));
+        try
+        {
+            Assert.True(TagWriter.TrySetReplayGain(file, -4.25, 0.987654, -3.5, 0.95, writeR128: true));
+
+            // RG1 fields present and readable as before...
+            var reread = TagReader.TryRead(file, out _);
+            Assert.NotNull(reread);
+            Assert.True(Math.Abs(reread!.RgTrackGainDb!.Value - (-4.25)) < 0.01);
+            Assert.True(Math.Abs(reread.RgAlbumGainDb!.Value - (-3.5)) < 0.01);
+
+            // ...and the R128 fields exist too: strip the classic ones and the reader must fall
+            // back to the RG2 values instead of reporting the track as untagged.
+            using (var tf = TagLib.File.Create(file))
+            {
+                var id3 = (TagLib.Id3v2.Tag)tf.GetTag(TagLib.TagTypes.Id3v2)!;
+                foreach (var frame in id3.GetFrames<TagLib.Id3v2.UserTextInformationFrame>()
+                             .Where(f => f.Description?.StartsWith("REPLAYGAIN_", StringComparison.OrdinalIgnoreCase) == true)
+                             .ToList())
+                {
+                    id3.RemoveFrame(frame);
+                }
+                tf.Save();
+            }
+
+            var stripped = TagReader.TryRead(file, out _);
+            Assert.NotNull(stripped);
+            Assert.True(Math.Abs(stripped!.RgTrackGainDb!.Value - (-4.25)) < 0.01,
+                $"expected R128 track gain fallback, got {stripped.RgTrackGainDb}");
+            Assert.True(Math.Abs(stripped.RgAlbumGainDb!.Value - (-3.5)) < 0.01,
+                $"expected R128 album gain fallback, got {stripped.RgAlbumGainDb}");
+            // RG2 defines no peak fields: the stripped peaks are gone for good.
+            Assert.Null(stripped.RgTrackPeak);
+        }
+        finally
+        {
+            Cleanup(dir);
+        }
     }
 
     private static string NewTempDir()

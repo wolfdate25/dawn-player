@@ -45,6 +45,11 @@ public sealed record Track
     /// backfilled from the file mtime at migration time).</summary>
     public long FirstSeenUtcTicks { get; set; }
 
+    /// <summary>User rating, 0 (unrated) to 5 stars (library schema v3). Mutated in place by the
+    /// rating commands, like the statistics fields above — it belongs to the file path, so a
+    /// rescan carries it forward over a freshly read tag snapshot.</summary>
+    public int Rating { get; set; }
+
     public TimeSpan Duration => TimeSpan.FromMilliseconds(DurationMs);
 
     /// <summary>Primary sort artist: album artist if present, otherwise performer.</summary>

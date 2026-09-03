@@ -140,7 +140,8 @@ public sealed class PlayStatisticsTests
             }
 
             using var migrated = new MusicLibrary(dbPath);
-            Assert.Equal(2, migrated.DatabaseSchemaVersion);
+            // v1 now steps through both v2 (stats) and v3 (rating + play_events) migrations.
+            Assert.Equal(3, migrated.DatabaseSchemaVersion);
             migrated.LoadFromDb();
 
             var track = migrated.GetTrack("C:/m/old.flac");

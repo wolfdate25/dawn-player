@@ -24,6 +24,7 @@ public sealed class AppSettings
     public CrossfeedSettings Crossfeed { get; set; } = new();
     public EqualizerSettings Equalizer { get; set; } = new();
     public LibrarySettings Library { get; set; } = new();
+    public PlaylistSettings Playlist { get; set; } = new();
     public LyricsSettings Lyrics { get; set; } = new();
     public LyricsOnlineSettings LyricsOnline { get; set; } = new();
     public UiSettings Ui { get; set; } = new();
@@ -81,6 +82,20 @@ public sealed class LibrarySettings
 {
     public List<string> Folders { get; set; } = new();
     public bool ScanOnStartup { get; set; } = true;
+
+    /// <summary>Also write ReplayGain 2.0 fields (R128_TRACK_GAIN / R128_ALBUM_GAIN, LU relative
+    /// to −18 LUFS) when the batch scanner tags files. Off keeps files at classic RG1 fields only.</summary>
+    public bool WriteR128Tags { get; set; }
+}
+
+/// <summary>A user-defined smart playlist persisted by name + query text.</summary>
+public sealed record SmartPlaylistDefinition(string Name, string Query);
+
+public sealed class PlaylistSettings
+{
+    /// <summary>User-created query smart playlists, in sidebar order. The query syntax is the
+    /// subset of foobar2000's implemented by <c>SmartPlaylistQuery</c>.</summary>
+    public List<SmartPlaylistDefinition> UserSmartPlaylists { get; set; } = new();
 }
 
 public sealed class LyricsSettings

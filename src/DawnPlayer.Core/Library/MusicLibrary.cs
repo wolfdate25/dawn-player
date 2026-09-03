@@ -13,7 +13,7 @@ public sealed record ScanProgress(int Done, int Total, string CurrentFile, bool 
 public sealed class MusicLibrary : IMusicLibrary
 {
     /// <summary>Layout stamped into the file as <c>PRAGMA user_version</c>.</summary>
-    private const int SchemaVersion = 2;
+    private const int SchemaVersion = 3;
 
     /// <summary>
     /// The one column order shared by the SELECT in <see cref="LoadFromDb"/>, the INSERT in
@@ -23,7 +23,7 @@ public sealed class MusicLibrary : IMusicLibrary
         "path,title,artist,album_artist,album,genre,year,track_no,disc_no,duration_ms," +
         "sample_rate,channels,bits,codec,bitrate,size,mtime,has_lrc,art_path," +
         "rg_track_gain,rg_track_peak,rg_album_gain,rg_album_peak," +
-        "play_count,skip_count,last_played,first_seen";
+        "play_count,skip_count,last_played,first_seen,rating";
 
     /// <summary>Shortest gap between two non-final scan reports, in milliseconds.</summary>
     private const int ProgressThrottleMs = 100;
@@ -109,7 +109,12 @@ public sealed class MusicLibrary : IMusicLibrary
                 play_count INTEGER NOT NULL DEFAULT 0,
                 skip_count INTEGER NOT NULL DEFAULT 0,
                 last_played INTEGER NOT NULL DEFAULT 0,
-                first_seen INTEGER NOT NULL DEFAULT 0
+                first_seen INTEGER NOT NULL DEFAULT 0,
+                rating INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE TABLE IF NOT EXISTS play_events(
+                played_utc INTEGER NOT NULL,
+                path TEXT NOT NULL
             );
             """;
         cmd.ExecuteNonQuery();
@@ -128,6 +133,7 @@ public sealed class MusicLibrary : IMusicLibrary
             // landed. A database created by the CREATE above already has the current layout, and
             // each migration is idempotent, so fresh and upgraded files converge on the same shape.
             MigrateToV2(cmd);
+            MigrateToV3(cmd);
             try
             {
                 cmd.CommandText = $"PRAGMA user_version = {SchemaVersion};";
@@ -176,6 +182,38 @@ public sealed class MusicLibrary : IMusicLibrary
         try
         {
             cmd.CommandText = "UPDATE tracks SET first_seen = mtime WHERE first_seen = 0 AND mtime > 0;";
+            cmd.ExecuteNonQuery();
+        }
+        catch { }
+    }
+
+    /// <summary>v2 → v3: track rating column and the play-event history table. Idempotent for the
+    /// same reasons as <see cref="MigrateToV2"/> — fresh creates and partial upgrades converge.</summary>
+    private static void MigrateToV3(SqliteCommand cmd)
+    {
+        var present = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        cmd.CommandText = "PRAGMA table_info(tracks);";
+        using (var reader = cmd.ExecuteReader())
+        {
+            int nameOrdinal = reader.GetOrdinal("name");
+            while (reader.Read()) present.Add(reader.GetString(nameOrdinal));
+        }
+
+        if (!present.Contains("rating"))
+        {
+            try
+            {
+                cmd.CommandText = "ALTER TABLE tracks ADD COLUMN rating INTEGER NOT NULL DEFAULT 0;";
+                cmd.ExecuteNonQuery();
+            }
+            catch { /* read-only media */ }
+        }
+
+        try
+        {
+            // v3 tracks listening history over time, not just per-track aggregates: the listening
+            // report joins these rows back onto the working set at read time.
+            cmd.CommandText = "CREATE TABLE IF NOT EXISTS play_events(played_utc INTEGER NOT NULL, path TEXT NOT NULL);";
             cmd.ExecuteNonQuery();
         }
         catch { }
@@ -332,6 +370,7 @@ public sealed class MusicLibrary : IMusicLibrary
                                 SkipCount = previous.SkipCount,
                                 LastPlayedUtcTicks = previous.LastPlayedUtcTicks,
                                 FirstSeenUtcTicks = previous.FirstSeenUtcTicks,
+                                Rating = previous.Rating,
                             };
                         }
                         if (track.FirstSeenUtcTicks == 0)
@@ -490,6 +529,7 @@ public sealed class MusicLibrary : IMusicLibrary
             SkipCount = r.GetInt32(24),
             LastPlayedUtcTicks = r.GetInt64(25),
             FirstSeenUtcTicks = r.GetInt64(26),
+            Rating = Math.Clamp(r.GetInt32(27), 0, 5),
         };
     }
 
@@ -500,7 +540,7 @@ public sealed class MusicLibrary : IMusicLibrary
         cmd.CommandText =
             "INSERT OR REPLACE INTO tracks (" + TrackColumns + ") VALUES " +
             "(@p,@t,@a,@aa,@al,@g,@y,@tn,@dn,@dur,@sr,@ch,@bits,@codec,@br,@size,@mtime,@lrc,@art," +
-            " @rg1,@rg2,@rg3,@rg4,@pc,@sc,@lp,@fs)";
+            " @rg1,@rg2,@rg3,@rg4,@pc,@sc,@lp,@fs,@rating)";
 
         cmd.Parameters.Add("@p", SqliteType.Text);
         cmd.Parameters.Add("@t", SqliteType.Text);
@@ -529,6 +569,7 @@ public sealed class MusicLibrary : IMusicLibrary
         cmd.Parameters.Add("@sc", SqliteType.Integer);
         cmd.Parameters.Add("@lp", SqliteType.Integer);
         cmd.Parameters.Add("@fs", SqliteType.Integer);
+        cmd.Parameters.Add("@rating", SqliteType.Integer);
         cmd.Prepare();
         return cmd;
     }
@@ -563,6 +604,7 @@ public sealed class MusicLibrary : IMusicLibrary
         p["@sc"].Value = t.SkipCount;
         p["@lp"].Value = t.LastPlayedUtcTicks;
         p["@fs"].Value = t.FirstSeenUtcTicks;
+        p["@rating"].Value = Math.Clamp(t.Rating, 0, 5);
         cmd.ExecuteNonQuery();
     }
 
@@ -625,6 +667,75 @@ public sealed class MusicLibrary : IMusicLibrary
                 // still stand, and the next scan reconciles the row.
             }
         }
+    }
+
+    /// <summary>
+    /// Persists the rating of a working-set track — same dedicated single-column UPDATE pattern as
+    /// <see cref="UpdateStats"/>, so rating from the UI never races a scan's whole-row upsert.
+    /// </summary>
+    public void UpdateRating(Track track)
+    {
+        if (track == null || string.IsNullOrEmpty(track.Path)) return;
+
+        lock (_ioLock)
+        {
+            using var cmd = _conn.CreateCommand();
+            cmd.CommandText = "UPDATE tracks SET rating=@rating WHERE path=@p";
+            cmd.Parameters.AddWithValue("@rating", Math.Clamp(track.Rating, 0, 5));
+            cmd.Parameters.AddWithValue("@p", track.Path);
+            try
+            {
+                cmd.ExecuteNonQuery();
+            }
+            catch
+            {
+                // Read-only media or a track deleted since the scan started: the in-memory value
+                // still stands, and the next scan reconciles the row.
+            }
+        }
+    }
+
+    /// <summary>Appends one counted play to the history table. Fire-and-forget by design — a lost
+    /// row only slightly dents the report, and blocking playback teardown on a write is worse.</summary>
+    public void RecordPlayEvent(Track track)
+    {
+        if (track == null || string.IsNullOrEmpty(track.Path)) return;
+
+        lock (_ioLock)
+        {
+            using var cmd = _conn.CreateCommand();
+            cmd.CommandText = "INSERT INTO play_events(played_utc, path) VALUES (@ts, @p)";
+            cmd.Parameters.AddWithValue("@ts", DateTime.UtcNow.Ticks);
+            cmd.Parameters.AddWithValue("@p", track.Path);
+            try
+            {
+                cmd.ExecuteNonQuery();
+            }
+            catch { /* read-only media: aggregates in `tracks` still stand */ }
+        }
+    }
+
+    /// <summary>Every play event at or after <paramref name="sinceUtcTicks"/> (UTC ticks), oldest
+    /// first. Paths are returned verbatim — unresolved ones are the caller's to ignore.</summary>
+    public IReadOnlyList<(long PlayedUtcTicks, string Path)> ReadPlayEvents(long sinceUtcTicks = 0)
+    {
+        var events = new List<(long, string)>();
+        lock (_ioLock)
+        {
+            using var cmd = _conn.CreateCommand();
+            cmd.CommandText = "SELECT played_utc, path FROM play_events WHERE played_utc >= @since ORDER BY played_utc";
+            cmd.Parameters.AddWithValue("@since", sinceUtcTicks);
+            try
+            {
+                using var r = cmd.ExecuteReader();
+                while (r.Read())
+                {
+                    events.Add((r.GetInt64(0), r.GetString(1)));
+                }
+            }
+            catch { /* pre-v3 database without the table: no history yet */ }
+        }
+        return events;
     }
 
     /// <summary>

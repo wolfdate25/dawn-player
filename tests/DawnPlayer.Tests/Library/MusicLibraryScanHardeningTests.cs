@@ -175,11 +175,11 @@ public sealed class MusicLibraryScanHardeningTests
         {
             using (var created = new MusicLibrary(dbPath))
             {
-                Assert.Equal(2, created.DatabaseSchemaVersion);
+                Assert.Equal(3, created.DatabaseSchemaVersion);
             }
 
             using var reopened = new MusicLibrary(dbPath);
-            Assert.Equal(2, reopened.DatabaseSchemaVersion);
+            Assert.Equal(3, reopened.DatabaseSchemaVersion);
         }
         finally
         {

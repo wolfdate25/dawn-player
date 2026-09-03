@@ -253,6 +253,7 @@ public class PlaylistSnapshotTests : IDisposable
             _tracks.TryGetValue(path, out var t) ? t : null;
 
         public void UpdateStats(Track track) { }
+        public void UpdateRating(Track track) { }
 
         public void UpdateReplayGain(Track track) { }
 
