@@ -515,6 +515,8 @@ public class RegressionAuditFixTests
         public event Action<ScanProgress>? ScanProgress { add { } remove { } }
         public Track? GetTrack(string path) => null;
         public void UpdateStats(Track track) { }
+        public void UpdateReplayGain(Track track) { }
+        public void ReplaceTracks(IReadOnlyCollection<Track> tracks) { }
         public void LoadFromDb() { }
         public static System.Threading.Tasks.Task ScanAsync(CancellationToken cancellationToken = default)
             => System.Threading.Tasks.Task.CompletedTask;

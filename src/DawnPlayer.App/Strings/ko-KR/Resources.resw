@@ -91,6 +91,7 @@
   <data name="NowPlaying_QueueTitle.Text" xml:space="preserve"><value>재생 대기열</value></data>
   <data name="NowPlaying_QueueSaveButton.Content" xml:space="preserve"><value>재생목록으로 저장</value></data>
   <data name="NowPlaying_QueueClearButton.Content" xml:space="preserve"><value>비우기</value></data>
+  <data name="NowPlaying_SpectrumCanvas.AutomationProperties.Name" xml:space="preserve"><value>스펙트럼</value></data>
   <data name="NowPlaying_QueueRemoveButton.AutomationProperties.Name" xml:space="preserve"><value>대기열에서 제거</value></data>
   <data name="NowPlaying_QueueRemoveButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>대기열에서 제거</value></data>
   <data name="NowPlaying_QueueEmptyText.Text" xml:space="preserve"><value>대기열이 비어 있습니다. 트랙에서 마우스 오른쪽 버튼으로 '대기열에 추가'를 선택하세요.</value></data>
@@ -157,6 +158,25 @@
   <data name="Library_AlbumMenu_AddToPlaylist.Text" xml:space="preserve"><value>현재 재생목록에 추가</value></data>
   <data name="Library_AlbumMenu_SendToPlaylist.Text" xml:space="preserve"><value>특정 재생목록에 추가</value></data>
   <data name="Library_AlbumMenu_Enqueue.Text" xml:space="preserve"><value>대기열에 추가</value></data>
+  <data name="Library_AlbumMenu_EditTags.Text" xml:space="preserve"><value>앨범 태그 편집…</value></data>
+  <data name="Msg_TagEditorDialogTitle" xml:space="preserve"><value>태그 편집</value></data>
+  <data name="Msg_TagEditorAlbumDialogTitle" xml:space="preserve"><value>앨범 태그 편집</value></data>
+  <data name="Msg_TagEditorSingleHint" xml:space="preserve"><value>빈 칸은 그대로 둡니다. 저장은 원자적으로 교체됩니다.</value></data>
+  <data name="Msg_TagEditorAlbumHint" xml:space="preserve"><value>공유 필드만 변경됩니다 (앨범·가수·장르·연도). 비워 두면 그대로 둡니다.</value></data>
+  <data name="Msg_TagEditorAlbumTitle" xml:space="preserve"><value>{0}개 트랙 앨범 태그 편집</value></data>
+  <data name="Msg_TagEditorTrackPath" xml:space="preserve"><value>파일</value></data>
+  <data name="Msg_TagEditorTitle" xml:space="preserve"><value>제목</value></data>
+  <data name="Msg_TagEditorArtist" xml:space="preserve"><value>아티스트</value></data>
+  <data name="Msg_TagEditorAlbumArtist" xml:space="preserve"><value>앨범 아티스트</value></data>
+  <data name="Msg_TagEditorAlbum" xml:space="preserve"><value>앨범</value></data>
+  <data name="Msg_TagEditorGenre" xml:space="preserve"><value>장르</value></data>
+  <data name="Msg_TagEditorYear" xml:space="preserve"><value>연도</value></data>
+  <data name="Msg_TagEditorTrackNo" xml:space="preserve"><value>트랙 번호</value></data>
+  <data name="Msg_TagEditorDiscNo" xml:space="preserve"><value>디스크 번호</value></data>
+  <data name="Msg_TagEditorArt" xml:space="preserve"><value>앨범아트</value></data>
+  <data name="Msg_TagEditorArtChange" xml:space="preserve"><value>변경…</value></data>
+  <data name="Msg_TagEditorArtRemove" xml:space="preserve"><value>제거</value></data>
+  <data name="Msg_TagEditorFailedFormat" xml:space="preserve"><value>태그 저장 실패: {0}개 파일</value></data>
 
   <data name="Library_Drawer_PlayAlbum.AutomationProperties.Name" xml:space="preserve"><value>앨범 전체 재생</value></data>
   <data name="Library_Drawer_PlayAlbum.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>앨범 전체 재생</value></data>
@@ -171,6 +191,7 @@
   <data name="Library_TrackMenu_AddToPlaylist.Text" xml:space="preserve"><value>현재 재생목록에 추가</value></data>
   <data name="Library_TrackMenu_SendToPlaylist.Text" xml:space="preserve"><value>특정 재생목록에 추가</value></data>
   <data name="Library_TrackMenu_Enqueue.Text" xml:space="preserve"><value>대기열에 추가</value></data>
+  <data name="Library_TrackMenu_EditTags.Text" xml:space="preserve"><value>태그 편집…</value></data>
   <data name="Library_TrackMenu_ShowInExplorer.Text" xml:space="preserve"><value>탐색기에서 보기</value></data>
 
   <data name="Library_Header_TrackNo.Text" xml:space="preserve"><value>#</value></data>
@@ -303,6 +324,7 @@
   <!-- Common Dialog & Button Actions -->
   <data name="Common_OK" xml:space="preserve"><value>확인</value></data>
   <data name="Common_Cancel" xml:space="preserve"><value>취소</value></data>
+  <data name="Common_Save" xml:space="preserve"><value>저장</value></data>
   <data name="Common_Delete" xml:space="preserve"><value>삭제</value></data>
   <data name="Common_Create" xml:space="preserve"><value>생성</value></data>
   <data name="Common_Change" xml:space="preserve"><value>변경</value></data>
@@ -522,6 +544,19 @@
   <data name="Settings_Playback_RgPreamp_Desc.Text" xml:space="preserve"><value>-12.0 ~ +12.0 dB 범위로 기준 음량을 미세 조절합니다.</value></data>
   <data name="Settings_Playback_PreventClipping_Title.Text" xml:space="preserve"><value>클리핑 방지 (Prevent Clipping)</value></data>
   <data name="Settings_Playback_PreventClipping_Desc.Text" xml:space="preserve"><value>증폭 시 피크 값을 넘는 왜곡을 방지하기 위해 자동으로 게인을 감쇄합니다.</value></data>
+  <data name="Settings_Playback_Mono_Title.Text" xml:space="preserve"><value>모노 다운믹스 (Mono Downmix)</value></data>
+  <data name="Settings_Playback_Mono_Desc.Text" xml:space="preserve"><value>모든 채널을 평균 신호로 합칩니다. 위상 문제 확인과 한쪽 귀 청취용.</value></data>
+  <data name="Settings_Playback_Crossfeed_Low.Content" xml:space="preserve"><value>약함</value></data>
+  <data name="Settings_Playback_Crossfeed_Normal.Content" xml:space="preserve"><value>보통</value></data>
+  <data name="Settings_Playback_Crossfeed_High.Content" xml:space="preserve"><value>강함</value></data>
+  <data name="Settings_Playback_CrossfeedStrength_Title.Text" xml:space="preserve"><value>크로스피드 강도</value></data>
+  <data name="Settings_Playback_CrossfeedStrength_Desc.Text" xml:space="preserve"><value>강할수록 반대 채널이 더 많이, 더 높은 대역부터 섞입니다.</value></data>
+  <data name="Settings_Playback_Crossfeed_Title.Text" xml:space="preserve"><value>헤드폰 크로스피드 (Headphone Crossfeed)</value></data>
+  <data name="Settings_Playback_Crossfeed_Desc.Text" xml:space="preserve"><value>반대 채널의 저역을 살짝 섞어 헤드폰에서도 스피커처럼 자연스러운 음상을 만듭니다.</value></data>
+  <data name="Settings_Playback_Crossfeed_Toggle.OnContent" xml:space="preserve"><value>켬</value></data>
+  <data name="Settings_Playback_Crossfeed_Toggle.OffContent" xml:space="preserve"><value>끔</value></data>
+  <data name="Settings_Playback_Mono_Toggle.OnContent" xml:space="preserve"><value>켬</value></data>
+  <data name="Settings_Playback_Mono_Toggle.OffContent" xml:space="preserve"><value>끔</value></data>
 
   <!-- Library -->
   <data name="Settings_Library_Header.Text" xml:space="preserve"><value>음악 라이브러리 (Music Library)</value></data>
@@ -532,6 +567,14 @@
   <data name="Settings_Library_ScanNow_Button.Content" xml:space="preserve"><value>지금 스캔</value></data>
   <data name="Settings_Library_StartupScan_Title.Text" xml:space="preserve"><value>시작할 때 자동 스캔</value></data>
   <data name="Settings_Library_StartupScan_Desc.Text" xml:space="preserve"><value>Dawn Player를 실행할 때 감시 폴더의 신규/수정된 음원을 자동으로 색인합니다.</value></data>
+  <data name="Settings_Library_Rg_Title.Text" xml:space="preserve"><value>ReplayGain 분석 (EBU R128, −18 LUFS)</value></data>
+  <data name="Settings_Library_Rg_Desc.Text" xml:space="preserve"><value>라이브러리의 곡별·앨범별 음량을 분석해 태그(REPLAYGAIN_*)에 기록합니다. 처음에는 태그가 없는 곡만 분석합니다.</value></data>
+  <data name="Settings_Library_Rg_Scan_Button.Content" xml:space="preserve"><value>분석 시작</value></data>
+  <data name="Settings_Library_Rg_Rescan_Button.Content" xml:space="preserve"><value>전체 재분석</value></data>
+  <data name="Settings_Library_Rg_NothingToScan" xml:space="preserve"><value>분석할 트랙이 없습니다 (모두 ReplayGain 태그가 있습니다).</value></data>
+  <data name="Settings_Library_Rg_ScanningFormat" xml:space="preserve"><value>{0}/{1} · {2}</value></data>
+  <data name="Settings_Library_Rg_DoneFormat" xml:space="preserve"><value>완료: {0}개 분석, {1}개 실패</value></data>
+  <data name="Msg_RgScanFailed" xml:space="preserve"><value>ReplayGain 분석 실패: {0}</value></data>
 
   <!-- Lyrics & Typography -->
   <data name="Settings_Lyrics_Header.Text" xml:space="preserve"><value>가사 &amp; 타이포그래피 (Lyrics &amp; Typography)</value></data>

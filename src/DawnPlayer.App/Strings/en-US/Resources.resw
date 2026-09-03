@@ -91,6 +91,7 @@
   <data name="NowPlaying_QueueTitle.Text" xml:space="preserve"><value>Playback Queue</value></data>
   <data name="NowPlaying_QueueSaveButton.Content" xml:space="preserve"><value>Save as playlist</value></data>
   <data name="NowPlaying_QueueClearButton.Content" xml:space="preserve"><value>Clear</value></data>
+  <data name="NowPlaying_SpectrumCanvas.AutomationProperties.Name" xml:space="preserve"><value>Spectrum</value></data>
   <data name="NowPlaying_QueueRemoveButton.AutomationProperties.Name" xml:space="preserve"><value>Remove from queue</value></data>
   <data name="NowPlaying_QueueRemoveButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Remove from queue</value></data>
   <data name="NowPlaying_QueueEmptyText.Text" xml:space="preserve"><value>The queue is empty. Right-click a track and select 'Add to queue'.</value></data>
@@ -157,6 +158,25 @@
   <data name="Library_AlbumMenu_AddToPlaylist.Text" xml:space="preserve"><value>Add to current playlist</value></data>
   <data name="Library_AlbumMenu_SendToPlaylist.Text" xml:space="preserve"><value>Add to playlist</value></data>
   <data name="Library_AlbumMenu_Enqueue.Text" xml:space="preserve"><value>Add to queue</value></data>
+  <data name="Library_AlbumMenu_EditTags.Text" xml:space="preserve"><value>Edit Album Tags…</value></data>
+  <data name="Msg_TagEditorDialogTitle" xml:space="preserve"><value>Edit Tags</value></data>
+  <data name="Msg_TagEditorAlbumDialogTitle" xml:space="preserve"><value>Edit Album Tags</value></data>
+  <data name="Msg_TagEditorSingleHint" xml:space="preserve"><value>Empty fields are left alone. Saving replaces the file atomically.</value></data>
+  <data name="Msg_TagEditorAlbumHint" xml:space="preserve"><value>Only shared fields change (album · artists · genre · year). Leave blank to keep.</value></data>
+  <data name="Msg_TagEditorAlbumTitle" xml:space="preserve"><value>Edit album tags for {0} tracks</value></data>
+  <data name="Msg_TagEditorTrackPath" xml:space="preserve"><value>File</value></data>
+  <data name="Msg_TagEditorTitle" xml:space="preserve"><value>Title</value></data>
+  <data name="Msg_TagEditorArtist" xml:space="preserve"><value>Artist</value></data>
+  <data name="Msg_TagEditorAlbumArtist" xml:space="preserve"><value>Album Artist</value></data>
+  <data name="Msg_TagEditorAlbum" xml:space="preserve"><value>Album</value></data>
+  <data name="Msg_TagEditorGenre" xml:space="preserve"><value>Genre</value></data>
+  <data name="Msg_TagEditorYear" xml:space="preserve"><value>Year</value></data>
+  <data name="Msg_TagEditorTrackNo" xml:space="preserve"><value>Track No.</value></data>
+  <data name="Msg_TagEditorDiscNo" xml:space="preserve"><value>Disc No.</value></data>
+  <data name="Msg_TagEditorArt" xml:space="preserve"><value>Album Art</value></data>
+  <data name="Msg_TagEditorArtChange" xml:space="preserve"><value>Change…</value></data>
+  <data name="Msg_TagEditorArtRemove" xml:space="preserve"><value>Remove</value></data>
+  <data name="Msg_TagEditorFailedFormat" xml:space="preserve"><value>Failed to save tags: {0} file(s)</value></data>
 
   <data name="Library_Drawer_PlayAlbum.AutomationProperties.Name" xml:space="preserve"><value>Play album</value></data>
   <data name="Library_Drawer_PlayAlbum.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Play album</value></data>
@@ -171,6 +191,7 @@
   <data name="Library_TrackMenu_AddToPlaylist.Text" xml:space="preserve"><value>Add to current playlist</value></data>
   <data name="Library_TrackMenu_SendToPlaylist.Text" xml:space="preserve"><value>Add to playlist</value></data>
   <data name="Library_TrackMenu_Enqueue.Text" xml:space="preserve"><value>Add to queue</value></data>
+  <data name="Library_TrackMenu_EditTags.Text" xml:space="preserve"><value>Edit Tags…</value></data>
   <data name="Library_TrackMenu_ShowInExplorer.Text" xml:space="preserve"><value>Show in File Explorer</value></data>
 
   <data name="Library_Header_TrackNo.Text" xml:space="preserve"><value>#</value></data>
@@ -303,6 +324,7 @@
   <!-- Common Dialog & Button Actions -->
   <data name="Common_OK" xml:space="preserve"><value>OK</value></data>
   <data name="Common_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Common_Save" xml:space="preserve"><value>Save</value></data>
   <data name="Common_Delete" xml:space="preserve"><value>Delete</value></data>
   <data name="Common_Create" xml:space="preserve"><value>Create</value></data>
   <data name="Common_Change" xml:space="preserve"><value>Change</value></data>
@@ -522,6 +544,19 @@
   <data name="Settings_Playback_RgPreamp_Desc.Text" xml:space="preserve"><value>Fine-tunes baseline volume within -12.0 to +12.0 dB.</value></data>
   <data name="Settings_Playback_PreventClipping_Title.Text" xml:space="preserve"><value>Prevent Clipping</value></data>
   <data name="Settings_Playback_PreventClipping_Desc.Text" xml:space="preserve"><value>Automatically attenuates gain to prevent digital distortion exceeding peak levels during amplification.</value></data>
+  <data name="Settings_Playback_Mono_Title.Text" xml:space="preserve"><value>Mono Downmix</value></data>
+  <data name="Settings_Playback_Mono_Desc.Text" xml:space="preserve"><value>Folds every channel to the average signal. For phase checks and single-ear listening.</value></data>
+  <data name="Settings_Playback_Crossfeed_Low.Content" xml:space="preserve"><value>Low</value></data>
+  <data name="Settings_Playback_Crossfeed_Normal.Content" xml:space="preserve"><value>Normal</value></data>
+  <data name="Settings_Playback_Crossfeed_High.Content" xml:space="preserve"><value>High</value></data>
+  <data name="Settings_Playback_CrossfeedStrength_Title.Text" xml:space="preserve"><value>Crossfeed Strength</value></data>
+  <data name="Settings_Playback_CrossfeedStrength_Desc.Text" xml:space="preserve"><value>Higher blends more of the opposite channel, from further up in frequency.</value></data>
+  <data name="Settings_Playback_Crossfeed_Title.Text" xml:space="preserve"><value>Headphone Crossfeed</value></data>
+  <data name="Settings_Playback_Crossfeed_Desc.Text" xml:space="preserve"><value>Blends a little of the opposite channel's low end so headphones image like speakers.</value></data>
+  <data name="Settings_Playback_Crossfeed_Toggle.OnContent" xml:space="preserve"><value>On</value></data>
+  <data name="Settings_Playback_Crossfeed_Toggle.OffContent" xml:space="preserve"><value>Off</value></data>
+  <data name="Settings_Playback_Mono_Toggle.OnContent" xml:space="preserve"><value>On</value></data>
+  <data name="Settings_Playback_Mono_Toggle.OffContent" xml:space="preserve"><value>Off</value></data>
 
   <!-- Library -->
   <data name="Settings_Library_Header.Text" xml:space="preserve"><value>Music Library</value></data>
@@ -532,6 +567,14 @@
   <data name="Settings_Library_ScanNow_Button.Content" xml:space="preserve"><value>Scan Now</value></data>
   <data name="Settings_Library_StartupScan_Title.Text" xml:space="preserve"><value>Scan on Startup</value></data>
   <data name="Settings_Library_StartupScan_Desc.Text" xml:space="preserve"><value>Automatically indexes new or modified tracks in monitored folders when Dawn Player launches.</value></data>
+  <data name="Settings_Library_Rg_Title.Text" xml:space="preserve"><value>ReplayGain Analysis (EBU R128, −18 LUFS)</value></data>
+  <data name="Settings_Library_Rg_Desc.Text" xml:space="preserve"><value>Analyzes per-track and per-album loudness and writes REPLAYGAIN_* tags. First run analyzes untagged tracks only.</value></data>
+  <data name="Settings_Library_Rg_Scan_Button.Content" xml:space="preserve"><value>Start Analysis</value></data>
+  <data name="Settings_Library_Rg_Rescan_Button.Content" xml:space="preserve"><value>Re-analyze All</value></data>
+  <data name="Settings_Library_Rg_NothingToScan" xml:space="preserve"><value>Nothing to analyze (all tracks already have ReplayGain tags).</value></data>
+  <data name="Settings_Library_Rg_ScanningFormat" xml:space="preserve"><value>{0}/{1} · {2}</value></data>
+  <data name="Settings_Library_Rg_DoneFormat" xml:space="preserve"><value>Done: {0} analyzed, {1} failed</value></data>
+  <data name="Msg_RgScanFailed" xml:space="preserve"><value>ReplayGain analysis failed: {0}</value></data>
 
   <!-- Lyrics & Typography -->
   <data name="Settings_Lyrics_Header.Text" xml:space="preserve"><value>Lyrics &amp; Typography</value></data>

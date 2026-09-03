@@ -25,6 +25,8 @@ public sealed class SmartPlaylistTests
 #pragma warning restore CS0067
         public Track? GetTrack(string path) => TracksList.FirstOrDefault(t => t.Path == path);
         public void UpdateStats(Track track) { }
+        public void UpdateReplayGain(Track track) { }
+        public void ReplaceTracks(IReadOnlyCollection<Track> tracks) { }
         public void LoadFromDb() => TracksChanged?.Invoke();
         public Task ScanAsync(AppSettings settings, CancellationToken ct = default) => Task.CompletedTask;
         public void Dispose() { }

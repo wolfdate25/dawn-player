@@ -332,6 +332,152 @@ public static class AppServices
         });
     }
 
+    // ---------------- ReplayGain batch scan ----------------
+
+    private static CancellationTokenSource? _rgScanCts;
+    private static Task? _rgScanTask;
+
+    public static event Action<string>? RgScanProgressChanged;
+    public static bool IsRgScanRunning => Volatile.Read(ref _rgScanCts) != null;
+
+    /// <summary>
+    /// Scans the library for loudness (EBU R128, ReplayGain 2.0 at −18 LUFS), storing track and
+    /// album values in the DB and writing REPLAYGAIN_* tags back to the files. Cancels any running
+    /// RG scan; a library scan running concurrently is left alone (both only read the files).
+    /// </summary>
+    /// <param name="rescanAll">False analyzes only tracks whose tags are missing.</param>
+    public static void StartReplayGainScan(bool rescanAll)
+    {
+        var previous = Interlocked.Exchange(ref _rgScanCts, null);
+        try { previous?.Cancel(); } catch (ObjectDisposedException) { }
+
+        var cts = new CancellationTokenSource();
+        _rgScanCts = cts;
+        var ct = cts.Token;
+
+        _rgScanTask = Task.Run(() => RunReplayGainScan(rescanAll, ct), ct)
+            .ContinueWith(t =>
+            {
+                Interlocked.CompareExchange(ref _rgScanCts, null, cts);
+                cts.Dispose();
+                if (t.IsFaulted)
+                {
+                    var ex = t.Exception?.InnerException;
+                    if (ex != null && ex is not OperationCanceledException)
+                    {
+                        RunOnUi(() => WarningRaised?.Invoke(AppStrings.Format("Msg_RgScanFailed", ex.Message)));
+                    }
+                }
+            }, TaskScheduler.Default);
+    }
+
+    public static void CancelReplayGainScan()
+    {
+        var cts = Interlocked.Exchange(ref _rgScanCts, null);
+        try { cts?.Cancel(); } catch (ObjectDisposedException) { }
+    }
+
+    private static void RunReplayGainScan(bool rescanAll, CancellationToken ct)
+    {
+        var tracks = Library.Tracks
+            .Where(t => rescanAll
+                || !t.RgTrackGainDb.HasValue || !t.RgTrackPeak.HasValue
+                || !t.RgAlbumGainDb.HasValue || !t.RgAlbumPeak.HasValue)
+            .ToList();
+        int total = tracks.Count;
+        if (total == 0)
+        {
+            RunOnUi(() => RgScanProgressChanged?.Invoke(AppStrings.Get(
+                "Settings_Library_Rg_NothingToScan", "분석할 트랙이 없습니다 (모두 ReplayGain 태그가 있습니다).")));
+            return;
+        }
+
+        int done = 0;
+        int failures = 0;
+
+        foreach (var group in tracks.GroupBy(t => t.AlbumKey))
+        {
+            ct.ThrowIfCancellationRequested();
+            var members = group.ToList();
+
+            // Album values integrate every block of the album: one scanner is fed across all of
+            // the album's tracks while each track is finished separately for its track values.
+            Core.Audio.Dsp.LoudnessScanner? albumScanner = null;
+
+            foreach (var track in members)
+            {
+                ct.ThrowIfCancellationRequested();
+                RunOnUi(() => RgScanProgressChanged?.Invoke(AppStrings.Format(
+                    "Settings_Library_Rg_ScanningFormat", "{0}/{1} · {2}",
+                    Interlocked.Increment(ref done), total, track.Title)));
+
+                try
+                {
+                    using var reader = Core.Audio.AudioFileReaderFactory.Open(track.Path);
+                    var fmt = reader.SourceFormat;
+                    var weights = SurroundWeights(fmt.Channels);
+
+                    var trackScanner = new Core.Audio.Dsp.LoudnessScanner(fmt.SampleRate, fmt.Channels);
+                    var buf = new float[fmt.SampleRate * fmt.Channels]; // ~1 s slices
+                    int read;
+                    while ((read = reader.Samples.Read(buf, 0, buf.Length)) > 0)
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        trackScanner.ProcessSamples(buf, 0, read, fmt.Channels, weights);
+                    }
+
+                    var result = trackScanner.Finish();
+                    albumScanner ??= new Core.Audio.Dsp.LoudnessScanner(fmt.SampleRate, fmt.Channels);
+                    albumScanner.AppendBlocks(trackScanner.BlockEnergies);
+
+                    track.RgTrackGainDb = Math.Round(SafeGainDb(result), 2);
+                    track.RgTrackPeak = Math.Round(Math.Min(result.Peak, 1.0), 6);
+                    Library.UpdateReplayGain(track);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    App.Log($"[rg-scan] {track.Path}: {ex.Message}");
+                    failures++;
+                }
+            }
+
+            if (albumScanner != null)
+            {
+                var albumResult = albumScanner.Finish();
+                double albumGain = SafeGainDb(albumResult);
+                double albumPeak = Math.Min(albumResult.Peak, 1.0);
+                foreach (var track in members)
+                {
+                    if (!track.RgTrackGainDb.HasValue) continue; // member failed above
+                    track.RgAlbumGainDb = Math.Round(albumGain, 2);
+                    track.RgAlbumPeak = Math.Round(albumPeak, 6);
+                    Library.UpdateReplayGain(track);
+                    if (!Core.Library.TagWriter.TrySetReplayGain(track.Path,
+                        track.RgTrackGainDb.Value, track.RgTrackPeak ?? 0,
+                        track.RgAlbumGainDb, track.RgAlbumPeak))
+                    {
+                        App.Log($"[rg-scan] tag write failed: {track.Path}");
+                    }
+                }
+            }
+        }
+
+        RunOnUi(() => RgScanProgressChanged?.Invoke(AppStrings.Format(
+            "Settings_Library_Rg_DoneFormat", "완료: {0}개 분석, {1}개 실패", total - failures, failures)));
+    }
+
+    /// <summary>Gain for a result, treating silence (dropped gates) as unity instead of −inf.</summary>
+    private static double SafeGainDb(Core.Audio.Dsp.LoudnessResult result) =>
+        double.IsNegativeInfinity(result.IntegratedLufs) ? 0.0 : result.TrackGainDb;
+
+    private static double[]? SurroundWeights(int channels) => channels switch
+    {
+        1 => new double[] { 1.0 },
+        2 => new double[] { 1.0, 1.0 },
+        6 => new double[] { 1.0, 1.0, 1.0, 0.0, 1.41, 1.41 },
+        _ => null,
+    };
+
     public static void Shutdown()
     {
         // Stop the scan before disposing the library: a scan still running would write through
@@ -341,6 +487,15 @@ public static class AppServices
             var cts = Interlocked.Exchange(ref _scanCts, null);
             cts?.Cancel();
             _scanTask?.Wait(TimeSpan.FromSeconds(3));
+        }
+        catch { }
+
+        // The RG batch scan writes through the same SQLite connection.
+        try
+        {
+            var rgCts = Interlocked.Exchange(ref _rgScanCts, null);
+            rgCts?.Cancel();
+            _rgScanTask?.Wait(TimeSpan.FromSeconds(3));
         }
         catch { }
 

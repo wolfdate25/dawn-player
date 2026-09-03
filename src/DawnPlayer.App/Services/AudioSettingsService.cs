@@ -131,6 +131,21 @@ public sealed class AudioSettingsService : IAudioSettingsService
         _playback?.ApplyNormalizer();
     }
 
+    public void SetCrossfeed(bool enabled, CrossfeedStrength strength)
+    {
+        _settings.Crossfeed.Enabled = enabled;
+        _settings.Crossfeed.Strength = strength;
+        SettingsWriter.Schedule(_settings);
+        _playback?.ApplySpatial();
+    }
+
+    public void SetMonoDownmix(bool enabled)
+    {
+        _settings.Playback.MonoDownmixEnabled = enabled;
+        SettingsWriter.Schedule(_settings);
+        _playback?.ApplySpatial();
+    }
+
     public void OpenSoundControlPanel()
     {
         WasapiDeviceService.OpenSoundControlPanel();

@@ -91,6 +91,7 @@
   <data name="NowPlaying_QueueTitle.Text" xml:space="preserve"><value>再生キュー</value></data>
   <data name="NowPlaying_QueueSaveButton.Content" xml:space="preserve"><value>プレイリストとして保存</value></data>
   <data name="NowPlaying_QueueClearButton.Content" xml:space="preserve"><value>クリア</value></data>
+  <data name="NowPlaying_SpectrumCanvas.AutomationProperties.Name" xml:space="preserve"><value>スペクトラム</value></data>
   <data name="NowPlaying_QueueRemoveButton.AutomationProperties.Name" xml:space="preserve"><value>キューから削除</value></data>
   <data name="NowPlaying_QueueRemoveButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>キューから削除</value></data>
   <data name="NowPlaying_QueueEmptyText.Text" xml:space="preserve"><value>キューは空です。トラックを右クリックして「キューに追加」を選択してください。</value></data>
@@ -157,6 +158,25 @@
   <data name="Library_AlbumMenu_AddToPlaylist.Text" xml:space="preserve"><value>現在のプレイリストに追加</value></data>
   <data name="Library_AlbumMenu_SendToPlaylist.Text" xml:space="preserve"><value>特定のプレイリストに追加</value></data>
   <data name="Library_AlbumMenu_Enqueue.Text" xml:space="preserve"><value>キューに追加</value></data>
+  <data name="Library_AlbumMenu_EditTags.Text" xml:space="preserve"><value>アルバムのタグ編集…</value></data>
+  <data name="Msg_TagEditorDialogTitle" xml:space="preserve"><value>タグ編集</value></data>
+  <data name="Msg_TagEditorAlbumDialogTitle" xml:space="preserve"><value>アルバムのタグ編集</value></data>
+  <data name="Msg_TagEditorSingleHint" xml:space="preserve"><value>空欄は変更されません。保存はアトミックに置換されます。</value></data>
+  <data name="Msg_TagEditorAlbumHint" xml:space="preserve"><value>共有フィールドのみ変更されます (アルバム・アーティスト・ジャンル・年)。空欄はそのままです。</value></data>
+  <data name="Msg_TagEditorAlbumTitle" xml:space="preserve"><value>{0}曲のアルバムタグを編集</value></data>
+  <data name="Msg_TagEditorTrackPath" xml:space="preserve"><value>ファイル</value></data>
+  <data name="Msg_TagEditorTitle" xml:space="preserve"><value>タイトル</value></data>
+  <data name="Msg_TagEditorArtist" xml:space="preserve"><value>アーティスト</value></data>
+  <data name="Msg_TagEditorAlbumArtist" xml:space="preserve"><value>アルバムアーティスト</value></data>
+  <data name="Msg_TagEditorAlbum" xml:space="preserve"><value>アルバム</value></data>
+  <data name="Msg_TagEditorGenre" xml:space="preserve"><value>ジャンル</value></data>
+  <data name="Msg_TagEditorYear" xml:space="preserve"><value>年</value></data>
+  <data name="Msg_TagEditorTrackNo" xml:space="preserve"><value>トラック番号</value></data>
+  <data name="Msg_TagEditorDiscNo" xml:space="preserve"><value>ディスク番号</value></data>
+  <data name="Msg_TagEditorArt" xml:space="preserve"><value>アルバムアート</value></data>
+  <data name="Msg_TagEditorArtChange" xml:space="preserve"><value>変更…</value></data>
+  <data name="Msg_TagEditorArtRemove" xml:space="preserve"><value>削除</value></data>
+  <data name="Msg_TagEditorFailedFormat" xml:space="preserve"><value>タグ保存失敗: {0}ファイル</value></data>
 
   <data name="Library_Drawer_PlayAlbum.AutomationProperties.Name" xml:space="preserve"><value>アルバム全曲再生</value></data>
   <data name="Library_Drawer_PlayAlbum.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>アルバム全曲再生</value></data>
@@ -171,6 +191,7 @@
   <data name="Library_TrackMenu_AddToPlaylist.Text" xml:space="preserve"><value>現在のプレイリストに追加</value></data>
   <data name="Library_TrackMenu_SendToPlaylist.Text" xml:space="preserve"><value>特定のプレイリストに追加</value></data>
   <data name="Library_TrackMenu_Enqueue.Text" xml:space="preserve"><value>キューに追加</value></data>
+  <data name="Library_TrackMenu_EditTags.Text" xml:space="preserve"><value>タグ編集…</value></data>
   <data name="Library_TrackMenu_ShowInExplorer.Text" xml:space="preserve"><value>エクスプローラーで表示</value></data>
 
   <data name="Library_Header_TrackNo.Text" xml:space="preserve"><value>#</value></data>
@@ -303,6 +324,7 @@
   <!-- Common Dialog & Button Actions -->
   <data name="Common_OK" xml:space="preserve"><value>OK</value></data>
   <data name="Common_Cancel" xml:space="preserve"><value>キャンセル</value></data>
+  <data name="Common_Save" xml:space="preserve"><value>保存</value></data>
   <data name="Common_Delete" xml:space="preserve"><value>削除</value></data>
   <data name="Common_Create" xml:space="preserve"><value>作成</value></data>
   <data name="Common_Change" xml:space="preserve"><value>変更</value></data>
@@ -522,6 +544,19 @@
   <data name="Settings_Playback_RgPreamp_Desc.Text" xml:space="preserve"><value>-12.0 ～ +12.0 dB の範囲で基準音量を微調整します。</value></data>
   <data name="Settings_Playback_PreventClipping_Title.Text" xml:space="preserve"><value>クリッピング防止 (Prevent Clipping)</value></data>
   <data name="Settings_Playback_PreventClipping_Desc.Text" xml:space="preserve"><value>増幅時にピーク値を超える歪みを防ぐため、自動的にゲインを減衰させます。</value></data>
+  <data name="Settings_Playback_Mono_Title.Text" xml:space="preserve"><value>モノダウンミックス</value></data>
+  <data name="Settings_Playback_Mono_Desc.Text" xml:space="preserve"><value>すべてのチャンネルを平均信号にまとめます。位相チェックや片耳リスニング用。</value></data>
+  <data name="Settings_Playback_Crossfeed_Low.Content" xml:space="preserve"><value>弱</value></data>
+  <data name="Settings_Playback_Crossfeed_Normal.Content" xml:space="preserve"><value>通常</value></data>
+  <data name="Settings_Playback_Crossfeed_High.Content" xml:space="preserve"><value>強</value></data>
+  <data name="Settings_Playback_CrossfeedStrength_Title.Text" xml:space="preserve"><value>クロスフィード強度</value></data>
+  <data name="Settings_Playback_CrossfeedStrength_Desc.Text" xml:space="preserve"><value>強いほど反対チャンネルが多く、より高い帯域から混ざります。</value></data>
+  <data name="Settings_Playback_Crossfeed_Title.Text" xml:space="preserve"><value>ヘッドホンクロスフィード</value></data>
+  <data name="Settings_Playback_Crossfeed_Desc.Text" xml:space="preserve"><value>反対チャンネルの低域を少し混ぜて、ヘッドホンでもスピーカーのような自然な音像にします。</value></data>
+  <data name="Settings_Playback_Crossfeed_Toggle.OnContent" xml:space="preserve"><value>オン</value></data>
+  <data name="Settings_Playback_Crossfeed_Toggle.OffContent" xml:space="preserve"><value>オフ</value></data>
+  <data name="Settings_Playback_Mono_Toggle.OnContent" xml:space="preserve"><value>オン</value></data>
+  <data name="Settings_Playback_Mono_Toggle.OffContent" xml:space="preserve"><value>オフ</value></data>
 
   <!-- Library -->
   <data name="Settings_Library_Header.Text" xml:space="preserve"><value>音楽ライブラリ (Music Library)</value></data>
@@ -532,6 +567,14 @@
   <data name="Settings_Library_ScanNow_Button.Content" xml:space="preserve"><value>今すぐスキャン</value></data>
   <data name="Settings_Library_StartupScan_Title.Text" xml:space="preserve"><value>起動時に自動スキャン</value></data>
   <data name="Settings_Library_StartupScan_Desc.Text" xml:space="preserve"><value>Dawn Playerの起動時に監視フォルダー内の新規/変更された音源を自動的にインデックスします。</value></data>
+  <data name="Settings_Library_Rg_Title.Text" xml:space="preserve"><value>ReplayGain解析 (EBU R128, −18 LUFS)</value></data>
+  <data name="Settings_Library_Rg_Desc.Text" xml:space="preserve"><value>ライブラリのトラック別・アルバム別音量を解析し、REPLAYGAIN_*タグに記録します。初回はタグのない曲のみ解析します。</value></data>
+  <data name="Settings_Library_Rg_Scan_Button.Content" xml:space="preserve"><value>解析開始</value></data>
+  <data name="Settings_Library_Rg_Rescan_Button.Content" xml:space="preserve"><value>全曲再解析</value></data>
+  <data name="Settings_Library_Rg_NothingToScan" xml:space="preserve"><value>解析するトラックがありません (すべてにReplayGainタグがあります)。</value></data>
+  <data name="Settings_Library_Rg_ScanningFormat" xml:space="preserve"><value>{0}/{1} · {2}</value></data>
+  <data name="Settings_Library_Rg_DoneFormat" xml:space="preserve"><value>完了: {0}曲解析、{1}曲失敗</value></data>
+  <data name="Msg_RgScanFailed" xml:space="preserve"><value>ReplayGain解析失敗: {0}</value></data>
 
   <!-- Lyrics & Typography -->
   <data name="Settings_Lyrics_Header.Text" xml:space="preserve"><value>歌詞＆タイポグラフィ (Lyrics &amp; Typography)</value></data>

@@ -26,6 +26,8 @@ public sealed class PlaylistManagerCurrentAccessorTests
         public event Action<ScanProgress>? ScanProgress;
         public Track? GetTrack(string path) => null;
         public void UpdateStats(Track track) { }
+        public void UpdateReplayGain(Track track) { }
+        public void ReplaceTracks(IReadOnlyCollection<Track> tracks) { }
         public void LoadFromDb() { }
         public Task ScanAsync(AppSettings settings, CancellationToken ct = default) => Task.CompletedTask;
         public void Dispose() { }

@@ -58,6 +58,7 @@
     <Compile Include="..\..\src\DawnPlayer.App\Shortcuts\ShortcutMapStore.cs" Link="Shortcuts\ShortcutMapStore.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\ViewModels\ViewModelBase.cs" Link="ViewModels\ViewModelBase.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Calculators\EqVisualizerCalculator.cs" Link="Calculators\EqVisualizerCalculator.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Calculators\SpectrumCalculator.cs" Link="Calculators\SpectrumCalculator.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\EqBandViewModel.cs" Link="ViewModels\Settings\EqBandViewModel.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\AudioSettingsViewModel.cs" Link="ViewModels\Settings\AudioSettingsViewModel.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\EqualizerSettingsViewModel.cs" Link="ViewModels\Settings\EqualizerSettingsViewModel.cs" />

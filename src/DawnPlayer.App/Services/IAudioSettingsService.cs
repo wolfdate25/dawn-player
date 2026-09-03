@@ -74,6 +74,16 @@ public interface IAudioSettingsService
     void SetNormalizer(bool enabled, NormalizerMode mode, double targetLevelDb, double maxBoostDb, NormalizerSpeed speed);
 
     /// <summary>
+    /// Updates the headphone crossfeed switch and strength preset (applied live).
+    /// </summary>
+    void SetCrossfeed(bool enabled, CrossfeedStrength strength);
+
+    /// <summary>
+    /// Updates the mono-downmix switch (applied live).
+    /// </summary>
+    void SetMonoDownmix(bool enabled);
+
+    /// <summary>
     /// Opens the Windows Sound Control Panel (mmsys.cpl) for audio hardware configuration.
     /// </summary>
     void OpenSoundControlPanel();

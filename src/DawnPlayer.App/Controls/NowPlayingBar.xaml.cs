@@ -28,6 +28,15 @@ public sealed partial class NowPlayingBar : UserControl
     private bool _volumeAvailableInSession = true;
     private int _artGeneration;
 
+    // Spectrum strip rendering state. Bars are created once against the Canvas; per tick the
+    // calculator fills _levels and heights are updated with a simple peak fall so pause/resume
+    // does not snap the display.
+    private Microsoft.UI.Xaml.Shapes.Rectangle[] _spectrumBars = System.Array.Empty<Microsoft.UI.Xaml.Shapes.Rectangle>();
+    private readonly float[] _spectrumWindow = new float[Core.Audio.Dsp.SpectrumTapDspEffect.WindowSamples];
+    private readonly double[] _spectrumLevels = new double[Calculators.SpectrumCalculator.BinCount];
+    private readonly double[] _spectrumShown = new double[Calculators.SpectrumCalculator.BinCount];
+    private long _spectrumVersion = -1;
+
     public event Action? LyricsToggleRequested;
 
     public NowPlayingBar()
@@ -225,6 +234,10 @@ public sealed partial class NowPlayingBar : UserControl
                 : Visibility.Visible;
             if (OutputBadge.Visibility != outputWanted) OutputBadge.Visibility = outputWanted;
         }
+
+        // Spectrum bars are positioned against the strip width; rebuild positions on resize.
+        // (ActualWidth may lag one frame behind — the next tick's EnsureSpectrumBars covers that.)
+        LayoutSpectrumBars();
     }
 
     private void UpdateFormatBadge()
@@ -319,6 +332,72 @@ public sealed partial class NowPlayingBar : UserControl
 
         if (++_smtcTick % 5 == 0)
             AppServices.Smtc.UpdateTimeline(position, duration);
+
+        UpdateSpectrum();
+    }
+
+    private void UpdateSpectrum()
+    {
+        EnsureSpectrumBars();
+        if (_spectrumBars.Length == 0) return;
+
+        var playback = AppServices.Playback;
+        bool playing = playback?.State == PlaybackState.Playing;
+        if (playing && playback!.TryCopySpectrumWindow(_spectrumWindow, out int sampleRate, out long version)
+            && version != _spectrumVersion)
+        {
+            _spectrumVersion = version;
+            Calculators.SpectrumCalculator.ComputeLevels(_spectrumWindow, sampleRate, _spectrumLevels);
+        }
+
+        // Peak fall: fast attack from the analyzer, exponential release so the strip decays
+        // gracefully on quiet passages and on pause (no new windows arrive then).
+        double release = playing ? 0.30 : 0.12;
+        for (int i = 0; i < _spectrumBars.Length && i < _spectrumLevels.Length; i++)
+        {
+            double target = playing ? _spectrumLevels[i] : 0.0;
+            _spectrumShown[i] = Math.Max(target, _spectrumShown[i] - release);
+            double height = Math.Max(2.0, _spectrumShown[i] * SpectrumCanvas.ActualHeight);
+            _spectrumBars[i].Height = height;
+            Microsoft.UI.Xaml.Controls.Canvas.SetTop(_spectrumBars[i], SpectrumCanvas.ActualHeight - height);
+        }
+    }
+
+    private void EnsureSpectrumBars()
+    {
+        if (_spectrumBars.Length > 0 || SpectrumCanvas == null) return;
+        if (SpectrumCanvas.ActualWidth <= 0) return;
+
+        int n = Calculators.SpectrumCalculator.BinCount;
+        _spectrumBars = new Microsoft.UI.Xaml.Shapes.Rectangle[n];
+        var brush = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White) { Opacity = 0.45 };
+        for (int i = 0; i < n; i++)
+        {
+            var bar = new Microsoft.UI.Xaml.Shapes.Rectangle
+            {
+                Width = 3,
+                Height = 2,
+                RadiusX = 1,
+                RadiusY = 1,
+                Fill = brush
+            };
+            SpectrumCanvas.Children.Add(bar);
+            _spectrumBars[i] = bar;
+        }
+
+        LayoutSpectrumBars();
+    }
+
+    private void LayoutSpectrumBars()
+    {
+        if (_spectrumBars.Length == 0) return;
+        double width = SpectrumCanvas.ActualWidth;
+        int n = _spectrumBars.Length;
+        double step = width / n;
+        for (int i = 0; i < n; i++)
+        {
+            Microsoft.UI.Xaml.Controls.Canvas.SetLeft(_spectrumBars[i], i * step + (step - 3) / 2);
+        }
     }
 
     // ---------- seek ----------

@@ -784,6 +784,58 @@
                                 </Grid>
                             </StackPanel>
                         </Border>
+
+                        <!-- 3. Spatial Listening Card (Crossfeed + Mono) -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="10">
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock x:Uid="Settings_Playback_Crossfeed_Title" Text="헤드폰 크로스피드 (Headphone Crossfeed)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Playback_Crossfeed_Desc" Text="반대 채널의 저역을 살짝 섞어 헤드폰에서도 스피커처럼 자연스러운 음상을 만듭니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch x:Uid="Settings_Playback_Crossfeed_Toggle" Grid.Column="1" HorizontalAlignment="Right"
+                                                  IsOn="{x:Bind ViewModel.Playback.CrossfeedEnabled, Mode=TwoWay}" OnContent="켬" OffContent="끔"/>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock x:Uid="Settings_Playback_CrossfeedStrength_Title" Text="크로스피드 강도" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Playback_CrossfeedStrength_Desc" Text="강할수록 반대 채널이 더 많이, 더 높은 대역부터 섞입니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ComboBox Grid.Column="1" Width="150" HorizontalAlignment="Right"
+                                              SelectedIndex="{x:Bind ViewModel.Playback.CrossfeedStrengthIndex, Mode=TwoWay}">
+                                        <ComboBoxItem x:Uid="Settings_Playback_Crossfeed_Low" Content="약함"/>
+                                        <ComboBoxItem x:Uid="Settings_Playback_Crossfeed_Normal" Content="보통"/>
+                                        <ComboBoxItem x:Uid="Settings_Playback_Crossfeed_High" Content="강함"/>
+                                    </ComboBox>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock x:Uid="Settings_Playback_Mono_Title" Text="모노 다운믹스 (Mono Downmix)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Playback_Mono_Desc" Text="모든 채널을 평균 신호로 합칩니다. 위상 문제 확인과 한쪽 귀 청취용." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch x:Uid="Settings_Playback_Mono_Toggle" Grid.Column="1" HorizontalAlignment="Right"
+                                                  IsOn="{x:Bind ViewModel.Playback.MonoDownmixEnabled, Mode=TwoWay}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
 
                     <!-- ==================== 4. MUSIC LIBRARY SECTION ==================== -->
@@ -834,6 +886,28 @@
                                     <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
                                                   IsOn="{x:Bind ViewModel.Library.ScanOnStartup, Mode=TwoWay}"/>
                                 </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- ReplayGain Scan Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="10">
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock x:Uid="Settings_Library_Rg_Title" Text="ReplayGain 분석 (EBU R128, −18 LUFS)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Library_Rg_Desc" Text="라이브러리의 곡별·앨범별 음량을 분석해 태그(REPLAYGAIN_*)에 기록합니다. 처음에는 태그가 없는 곡만 분석합니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                        <Button x:Uid="Settings_Library_Rg_Scan_Button" Content="분석 시작" FontSize="12" Click="OnRgScanStart"/>
+                                        <Button x:Uid="Settings_Library_Rg_Rescan_Button" Content="전체 재분석" FontSize="12" Click="OnRgScanRescanAll"/>
+                                    </StackPanel>
+                                </Grid>
+                                <TextBlock x:Name="RgScanStatusText" FontSize="12" Foreground="{ThemeResource TextTertiaryBrush}"
+                                           TextWrapping="Wrap" Visibility="Collapsed"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>

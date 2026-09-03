@@ -69,6 +69,7 @@ public sealed partial class SettingsPage : Page
     private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
         AppServices.OutputSessionChanged += OnOutputSessionChanged;
+        AppServices.RgScanProgressChanged += OnRgScanProgress;
         ViewModel.Equalizer.PropertyChanged += OnEqualizerPropertyChanged;
         ViewModel.Lyrics.PropertyChanged += OnLyricsPropertyChanged;
         ViewModel.Shortcuts.AttachToStore();
@@ -81,9 +82,17 @@ public sealed partial class SettingsPage : Page
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
         AppServices.OutputSessionChanged -= OnOutputSessionChanged;
+        AppServices.RgScanProgressChanged -= OnRgScanProgress;
         ViewModel.Equalizer.PropertyChanged -= OnEqualizerPropertyChanged;
         ViewModel.Lyrics.PropertyChanged -= OnLyricsPropertyChanged;
         ViewModel.Shortcuts.DetachFromStore();
+    }
+
+    private void OnRgScanProgress(string message)
+    {
+        if (RgScanStatusText == null) return;
+        RgScanStatusText.Text = message;
+        RgScanStatusText.Visibility = Visibility.Visible;
     }
 
     private void OnOutputSessionChanged(SessionInfo info)
@@ -397,6 +406,12 @@ public sealed partial class SettingsPage : Page
 
     private void OnScanNow(object sender, RoutedEventArgs e) =>
         ViewModel.Library.TriggerScanNow();
+
+    private void OnRgScanStart(object sender, RoutedEventArgs e) =>
+        AppServices.StartReplayGainScan(false);
+
+    private void OnRgScanRescanAll(object sender, RoutedEventArgs e) =>
+        AppServices.StartReplayGainScan(true);
 
     private void OnLrcPatternsLostFocus(object sender, RoutedEventArgs e) =>
         ViewModel.Lyrics.SaveLrcPatterns(LrcPatternsBox.Text);

@@ -277,6 +277,9 @@
                                                                 <MenuFlyoutItem x:Uid="Library_AlbumMenu_Enqueue" Text="대기열에 추가" Click="OnAlbumEnqueue">
                                                                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8FD;"/></MenuFlyoutItem.Icon>
                                                                 </MenuFlyoutItem>
+                                                                <MenuFlyoutItem x:Uid="Library_AlbumMenu_EditTags" Text="앨범 태그 편집…" Click="OnAlbumEditTags">
+                                                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE70F;"/></MenuFlyoutItem.Icon>
+                                                                </MenuFlyoutItem>
                                                             </MenuFlyout>
                                                         </Button.ContextFlyout>
                                                         <Grid Width="{x:Bind CardWidth, Mode=OneWay}" Background="Transparent" Padding="2">
@@ -616,6 +619,11 @@
                                 <MenuFlyoutItem x:Uid="Library_TrackMenu_Enqueue" Text="대기열에 추가" Click="OnQueueSelected">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE8FD;"/>
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem x:Uid="Library_TrackMenu_EditTags" Text="태그 편집…" Click="OnEditTrackTags">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE70F;"/>
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
                                 <MenuFlyoutSeparator/>

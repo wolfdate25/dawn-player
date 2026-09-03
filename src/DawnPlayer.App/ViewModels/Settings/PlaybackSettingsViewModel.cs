@@ -216,6 +216,66 @@ public sealed class PlaybackSettingsViewModel : ViewModelBase
             _settings.Normalizer.Speed);
     }
 
+    public bool CrossfeedEnabled
+    {
+        get => _settings.Crossfeed.Enabled;
+        set
+        {
+            if (_settings.Crossfeed.Enabled != value)
+            {
+                _settings.Crossfeed.Enabled = value;
+                OnPropertyChanged();
+                SaveSpatial();
+            }
+        }
+    }
+
+    public int CrossfeedStrengthIndex
+    {
+        get => _settings.Crossfeed.Strength switch
+        {
+            CrossfeedStrength.Low => 0,
+            CrossfeedStrength.High => 2,
+            _ => 1
+        };
+        set
+        {
+            var strength = value switch
+            {
+                0 => CrossfeedStrength.Low,
+                2 => CrossfeedStrength.High,
+                _ => CrossfeedStrength.Normal
+            };
+            if (_settings.Crossfeed.Strength != strength)
+            {
+                _settings.Crossfeed.Strength = strength;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(CrossfeedStrengthIndex));
+                SaveSpatial();
+            }
+        }
+    }
+
+    public bool MonoDownmixEnabled
+    {
+        get => _settings.Playback.MonoDownmixEnabled;
+        set
+        {
+            if (_settings.Playback.MonoDownmixEnabled != value)
+            {
+                _settings.Playback.MonoDownmixEnabled = value;
+                OnPropertyChanged();
+                SaveSpatial();
+            }
+        }
+    }
+
+    public void SaveSpatial()
+    {
+        _audioSettingsService.SetCrossfeed(_settings.Crossfeed.Enabled, _settings.Crossfeed.Strength);
+        _audioSettingsService.SetMonoDownmix(_settings.Playback.MonoDownmixEnabled);
+    }
+
     public void SaveReplayGain()
     {
         _audioSettingsService.SetReplayGain(

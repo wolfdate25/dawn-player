@@ -1028,6 +1028,20 @@ public sealed partial class LibraryPage : Page
         }
     }
 
+    private async void OnEditTrackTags(object sender, RoutedEventArgs e)
+    {
+        var track = GetSelectedTracks().FirstOrDefault();
+        if (track == null || XamlRoot == null) return;
+        await TagEditorDialogs.ShowForTrackAsync(track, XamlRoot);
+    }
+
+    private async void OnAlbumEditTags(object sender, RoutedEventArgs e)
+    {
+        var tracks = GetSelectedAlbumTracks(sender);
+        if (tracks.Count == 0 || XamlRoot == null) return;
+        await TagEditorDialogs.ShowForAlbumAsync(tracks, XamlRoot);
+    }
+
     // ---------------- Cover Zoom (Slider / Ctrl+Wheel / Presets) ----------------
 
     private void SetCoverSize(double size)

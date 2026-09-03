@@ -254,6 +254,10 @@ public class PlaylistSnapshotTests : IDisposable
 
         public void UpdateStats(Track track) { }
 
+        public void UpdateReplayGain(Track track) { }
+
+        public void ReplaceTracks(IReadOnlyCollection<Track> tracks) { }
+
         public void LoadFromDb() { }
 
         public Task ScanAsync(AppSettings settings, CancellationToken ct = default)
