@@ -362,6 +362,18 @@ public sealed partial class MainWindow : Window
         NavigateToSettings();
     }
 
+    private async void OnMenuReport(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await Views.ListeningReportDialog.ShowAsync(Content.XamlRoot);
+        }
+        catch (Exception ex)
+        {
+            App.Log($"[ListeningReport] {ex}");
+        }
+    }
+
     private void OnMenuExit(object sender, RoutedEventArgs e)
     {
         ShutdownForReal();

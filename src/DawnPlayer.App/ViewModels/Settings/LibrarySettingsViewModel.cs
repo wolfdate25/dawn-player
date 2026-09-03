@@ -58,6 +58,21 @@ public sealed class LibrarySettingsViewModel : ViewModelBase
         }
     }
 
+    /// <summary>Also write ReplayGain 2.0 (R128_*) fields when the RG batch scanner tags files.</summary>
+    public bool WriteR128Tags
+    {
+        get => _settings.Library.WriteR128Tags;
+        set
+        {
+            if (_settings.Library.WriteR128Tags != value)
+            {
+                _settings.Library.WriteR128Tags = value;
+                OnPropertyChanged();
+                _settingsSaver?.Invoke(_settings);
+            }
+        }
+    }
+
     public bool AddFolder(string path)
     {
         if (string.IsNullOrWhiteSpace(path)) return false;

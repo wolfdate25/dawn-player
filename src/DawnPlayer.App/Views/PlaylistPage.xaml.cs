@@ -217,6 +217,42 @@ public sealed partial class PlaylistPage : Page
         _ = PlaylistDialogs.ShowRenameDialogAsync(pl, XamlRoot, AppServices.Playlists);
     }
 
+    private async void OnCreateSmartPlaylistClick(object sender, RoutedEventArgs e)
+    {
+        var pl = await PlaylistDialogs.ShowCreateSmartDialogAsync(XamlRoot, AppServices.Playlists);
+        if (pl != null)
+        {
+            PlaylistsCountText.Text = AppServices.Playlists.Playlists.Count.ToString(CultureInfo.InvariantCulture);
+            PlaylistsSidebarList.SelectedItem = pl;
+        }
+    }
+
+    private async void OnEditSmartPlaylist(object sender, RoutedEventArgs e)
+    {
+        var pl = ResolveSidebarPlaylist(sender);
+        if (pl is not { SmartQuery: not null }) return;
+        if (await PlaylistDialogs.ShowEditSmartDialogAsync(pl, XamlRoot, AppServices.Playlists))
+        {
+            Rebuild();
+        }
+    }
+
+    // ---------------- rating ----------------
+
+    private void RateSelected(int stars)
+    {
+        var sel = SelectedItems();
+        if (sel.Count == 0) return;
+        AppServices.RateTracks(sel.Select(i => i.Track).ToList(), stars);
+    }
+
+    private void OnRateItems1(object sender, RoutedEventArgs e) => RateSelected(1);
+    private void OnRateItems2(object sender, RoutedEventArgs e) => RateSelected(2);
+    private void OnRateItems3(object sender, RoutedEventArgs e) => RateSelected(3);
+    private void OnRateItems4(object sender, RoutedEventArgs e) => RateSelected(4);
+    private void OnRateItems5(object sender, RoutedEventArgs e) => RateSelected(5);
+    private void OnUnrateItems(object sender, RoutedEventArgs e) => RateSelected(0);
+
     private void OnSidebarListRightTapped(object sender, RightTappedRoutedEventArgs e)
     {
         if (e.OriginalSource is FrameworkElement fe && VisualTreeHelperExtensions.FindAncestorDataContext<Playlist>(fe) is { } pl)
@@ -273,19 +309,29 @@ public sealed partial class PlaylistPage : Page
     private void OnSidebarContextMenuOpening(object sender, object e)
     {
         var pl = ResolveSidebarPlaylist(null);
-        // System (Now Playing) and smart (generated) playlists cannot be renamed, exported as a
-        // user file, or deleted; smart ones cannot be cleared either — the next refresh would
-        // just regenerate the contents.
-        bool locked = pl is { IsSystem: true } or { IsSmart: true };
+        // System (Now Playing) and built-in smart (generated) playlists cannot be renamed,
+        // exported as a user file, or deleted; smart ones cannot be cleared either — the next
+        // refresh would just regenerate the contents. User smart playlists (query-driven) are
+        // editable and deletable like user content.
+        bool userSmart = pl is { SmartQuery: not null };
+
+        if (SidebarEditSmartMenuItem != null)
+            SidebarEditSmartMenuItem.Visibility = userSmart ? Visibility.Visible : Visibility.Collapsed;
 
         if (SidebarRenameMenuItem != null)
-            SidebarRenameMenuItem.Visibility = locked ? Visibility.Collapsed : Visibility.Visible;
+            SidebarRenameMenuItem.Visibility = pl is { IsSystem: true } or { IsSmart: true }
+                ? Visibility.Collapsed
+                : Visibility.Visible;
 
         if (SidebarDeleteSeparator != null)
-            SidebarDeleteSeparator.Visibility = locked ? Visibility.Collapsed : Visibility.Visible;
+            SidebarDeleteSeparator.Visibility = pl is { IsSystem: true } or { IsSmart: true } && !userSmart
+                ? Visibility.Collapsed
+                : Visibility.Visible;
 
         if (SidebarDeleteMenuItem != null)
-            SidebarDeleteMenuItem.Visibility = locked ? Visibility.Collapsed : Visibility.Visible;
+            SidebarDeleteMenuItem.Visibility = pl is { IsSystem: true } or { IsSmart: true } && !userSmart
+                ? Visibility.Collapsed
+                : Visibility.Visible;
 
         if (SidebarClearMenuItem != null)
         {

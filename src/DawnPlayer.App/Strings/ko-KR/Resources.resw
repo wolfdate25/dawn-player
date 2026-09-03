@@ -741,4 +741,40 @@
   <data name="Settings_About_Database.Text" xml:space="preserve"><value>데이터베이스: Microsoft.Data.Sqlite (SQLite)</value></data>
 
   <!-- Common Dialogs -->
+  <data name="Common_Close" xml:space="preserve"><value>닫기</value></data>
+
+  <!-- Stage-1 features: rating, query smart playlists, RG2, listening report -->
+  <data name="Playlist_CreateSmartButton.AutomationProperties.Name" xml:space="preserve"><value>스마트 재생목록 만들기</value></data>
+  <data name="Playlist_CreateSmartButtonText.Text" xml:space="preserve"><value>스마트 재생목록 만들기</value></data>
+  <data name="Playlist_SidebarMenu_EditSmart.Text" xml:space="preserve"><value>스마트 쿼리 편집...</value></data>
+  <data name="Playlist_TrackMenu_Rating.Text" xml:space="preserve"><value>평점</value></data>
+  <data name="Playlist_TrackMenu_Rate1.Text" xml:space="preserve"><value>★</value></data>
+  <data name="Playlist_TrackMenu_Rate2.Text" xml:space="preserve"><value>★★</value></data>
+  <data name="Playlist_TrackMenu_Rate3.Text" xml:space="preserve"><value>★★★</value></data>
+  <data name="Playlist_TrackMenu_Rate4.Text" xml:space="preserve"><value>★★★★</value></data>
+  <data name="Playlist_TrackMenu_Rate5.Text" xml:space="preserve"><value>★★★★★</value></data>
+  <data name="Playlist_TrackMenu_Unrate.Text" xml:space="preserve"><value>평점 없음</value></data>
+  <data name="Smart_Dialog_CreateTitle" xml:space="preserve"><value>스마트 재생목록 만들기</value></data>
+  <data name="Smart_Dialog_EditTitle" xml:space="preserve"><value>{0} 편집</value></data>
+  <data name="Smart_Dialog_NameHeader" xml:space="preserve"><value>이름</value></data>
+  <data name="Smart_Dialog_QueryHeader" xml:space="preserve"><value>쿼리 (foobar2000 스타일)</value></data>
+  <data name="Smart_Dialog_Help" xml:space="preserve"><value>필드: %title% %artist% %album% %genre% %rating% %play_count% %last_played% %first_seen% 등&#13;연산자: IS / != / HAS / GREATER / LESS / MISSING / PRESENT / AND / OR / NOT / ( )&#13;예: %rating% GREATER 3 AND %last_played% DURING LAST 30 DAYS LIMIT 50</value></data>
+  <data name="Smart_Dialog_InvalidFormat" xml:space="preserve"><value>쿼리를 적용할 수 없습니다: {0}</value></data>
+  <data name="Settings_Library_Rg_R128_Title.Text" xml:space="preserve"><value>ReplayGain 2.0 태그(R128_*) 함께 기록</value></data>
+  <data name="Settings_Library_Rg_R128_Desc.Text" xml:space="preserve"><value>분석 결과를 R128_TRACK_GAIN / R128_ALBUM_GAIN 필드에도 기록합니다. 다른 플레이어의 RG2 구현과 호환됩니다.</value></data>
+  <data name="MainWindow_Menu_Report.Text" xml:space="preserve"><value>청취 리포트 (Listening Report)...</value></data>
+  <data name="Report_Title" xml:space="preserve"><value>청취 리포트</value></data>
+  <data name="Report_PeriodHeader" xml:space="preserve"><value>기간</value></data>
+  <data name="Report_PeriodAllTime" xml:space="preserve"><value>전체</value></data>
+  <data name="Report_Period30Days" xml:space="preserve"><value>최근 30일</value></data>
+  <data name="Report_PeriodThisYear" xml:space="preserve"><value>올해</value></data>
+  <data name="Report_TotalPlays" xml:space="preserve"><value>총 재생</value></data>
+  <data name="Report_UniqueTracks" xml:space="preserve"><value>재생한 곡</value></data>
+  <data name="Report_ListenTime" xml:space="preserve"><value>청취 시간</value></data>
+  <data name="Report_TopArtists" xml:space="preserve"><value>많이 들은 아티스트</value></data>
+  <data name="Report_TopAlbums" xml:space="preserve"><value>많이 들은 앨범</value></data>
+  <data name="Report_TopGenres" xml:space="preserve"><value>장르</value></data>
+  <data name="Report_TopTracks" xml:space="preserve"><value>많이 들은 곡</value></data>
+  <data name="Report_PlaysFormat" xml:space="preserve"><value>{0}회</value></data>
+  <data name="Report_Empty" xml:space="preserve"><value>이 기간에 기록된 재생이 없습니다.</value></data>
 </root>

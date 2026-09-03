@@ -741,4 +741,40 @@
   <data name="Settings_About_Database.Text" xml:space="preserve"><value>データベース: Microsoft.Data.Sqlite (SQLite)</value></data>
 
   <!-- Common Dialogs -->
+  <data name="Common_Close" xml:space="preserve"><value>閉じる</value></data>
+
+  <!-- Stage-1 features: rating, query smart playlists, RG2, listening report -->
+  <data name="Playlist_CreateSmartButton.AutomationProperties.Name" xml:space="preserve"><value>スマートプレイリストを作成</value></data>
+  <data name="Playlist_CreateSmartButtonText.Text" xml:space="preserve"><value>スマートプレイリストを作成</value></data>
+  <data name="Playlist_SidebarMenu_EditSmart.Text" xml:space="preserve"><value>スマートクエリを編集...</value></data>
+  <data name="Playlist_TrackMenu_Rating.Text" xml:space="preserve"><value>評価</value></data>
+  <data name="Playlist_TrackMenu_Rate1.Text" xml:space="preserve"><value>★</value></data>
+  <data name="Playlist_TrackMenu_Rate2.Text" xml:space="preserve"><value>★★</value></data>
+  <data name="Playlist_TrackMenu_Rate3.Text" xml:space="preserve"><value>★★★</value></data>
+  <data name="Playlist_TrackMenu_Rate4.Text" xml:space="preserve"><value>★★★★</value></data>
+  <data name="Playlist_TrackMenu_Rate5.Text" xml:space="preserve"><value>★★★★★</value></data>
+  <data name="Playlist_TrackMenu_Unrate.Text" xml:space="preserve"><value>評価なし</value></data>
+  <data name="Smart_Dialog_CreateTitle" xml:space="preserve"><value>スマートプレイリストを作成</value></data>
+  <data name="Smart_Dialog_EditTitle" xml:space="preserve"><value>{0} を編集</value></data>
+  <data name="Smart_Dialog_NameHeader" xml:space="preserve"><value>名前</value></data>
+  <data name="Smart_Dialog_QueryHeader" xml:space="preserve"><value>クエリ (foobar2000 スタイル)</value></data>
+  <data name="Smart_Dialog_Help" xml:space="preserve"><value>フィールド: %title% %artist% %album% %genre% %rating% %play_count% %last_played% %first_seen% など&#13;演算子: IS / != / HAS / GREATER / LESS / MISSING / PRESENT / AND / OR / NOT / ( )&#13;例: %rating% GREATER 3 AND %last_played% DURING LAST 30 DAYS LIMIT 50</value></data>
+  <data name="Smart_Dialog_InvalidFormat" xml:space="preserve"><value>クエリを適用できません: {0}</value></data>
+  <data name="Settings_Library_Rg_R128_Title.Text" xml:space="preserve"><value>ReplayGain 2.0 タグ (R128_*) も書き込む</value></data>
+  <data name="Settings_Library_Rg_R128_Desc.Text" xml:space="preserve"><value>分析結果を R128_TRACK_GAIN / R128_ALBUM_GAIN フィールドにも記録し、他プレーヤーの RG2 実装と互換性を保ちます。</value></data>
+  <data name="MainWindow_Menu_Report.Text" xml:space="preserve"><value>リスニングレポート...</value></data>
+  <data name="Report_Title" xml:space="preserve"><value>リスニングレポート</value></data>
+  <data name="Report_PeriodHeader" xml:space="preserve"><value>期間</value></data>
+  <data name="Report_PeriodAllTime" xml:space="preserve"><value>全期間</value></data>
+  <data name="Report_Period30Days" xml:space="preserve"><value>過去30日</value></data>
+  <data name="Report_PeriodThisYear" xml:space="preserve"><value>今年</value></data>
+  <data name="Report_TotalPlays" xml:space="preserve"><value>再生数</value></data>
+  <data name="Report_UniqueTracks" xml:space="preserve"><value>再生した曲</value></data>
+  <data name="Report_ListenTime" xml:space="preserve"><value>視聴時間</value></data>
+  <data name="Report_TopArtists" xml:space="preserve"><value>よく聴いたアーティスト</value></data>
+  <data name="Report_TopAlbums" xml:space="preserve"><value>よく聴いたアルバム</value></data>
+  <data name="Report_TopGenres" xml:space="preserve"><value>ジャンル</value></data>
+  <data name="Report_TopTracks" xml:space="preserve"><value>よく聴いた曲</value></data>
+  <data name="Report_PlaysFormat" xml:space="preserve"><value>{0}回</value></data>
+  <data name="Report_Empty" xml:space="preserve"><value>この期間に再生記録がありません。</value></data>
 </root>

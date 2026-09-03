@@ -906,6 +906,18 @@
                                         <Button x:Uid="Settings_Library_Rg_Rescan_Button" Content="전체 재분석" FontSize="12" Click="OnRgScanRescanAll"/>
                                     </StackPanel>
                                 </Grid>
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock x:Uid="Settings_Library_Rg_R128_Title" Text="ReplayGain 2.0 태그(R128_*) 함께 기록" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Library_Rg_R128_Desc" Text="분석 결과를 R128_TRACK_GAIN / R128_ALBUM_GAIN 필드에도 기록합니다. 다른 플레이어의 RG2 구현과 호환됩니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
+                                                  IsOn="{x:Bind ViewModel.Library.WriteR128Tags, Mode=TwoWay}"/>
+                                </Grid>
                                 <TextBlock x:Name="RgScanStatusText" FontSize="12" Foreground="{ThemeResource TextTertiaryBrush}"
                                            TextWrapping="Wrap" Visibility="Collapsed"/>
                             </StackPanel>

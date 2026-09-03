@@ -741,4 +741,40 @@
   <data name="Settings_About_Database.Text" xml:space="preserve"><value>Database: Microsoft.Data.Sqlite (SQLite)</value></data>
 
   <!-- Common Dialogs -->
+  <data name="Common_Close" xml:space="preserve"><value>Close</value></data>
+
+  <!-- Stage-1 features: rating, query smart playlists, RG2, listening report -->
+  <data name="Playlist_CreateSmartButton.AutomationProperties.Name" xml:space="preserve"><value>New smart playlist</value></data>
+  <data name="Playlist_CreateSmartButtonText.Text" xml:space="preserve"><value>New smart playlist</value></data>
+  <data name="Playlist_SidebarMenu_EditSmart.Text" xml:space="preserve"><value>Edit smart query...</value></data>
+  <data name="Playlist_TrackMenu_Rating.Text" xml:space="preserve"><value>Rating</value></data>
+  <data name="Playlist_TrackMenu_Rate1.Text" xml:space="preserve"><value>★</value></data>
+  <data name="Playlist_TrackMenu_Rate2.Text" xml:space="preserve"><value>★★</value></data>
+  <data name="Playlist_TrackMenu_Rate3.Text" xml:space="preserve"><value>★★★</value></data>
+  <data name="Playlist_TrackMenu_Rate4.Text" xml:space="preserve"><value>★★★★</value></data>
+  <data name="Playlist_TrackMenu_Rate5.Text" xml:space="preserve"><value>★★★★★</value></data>
+  <data name="Playlist_TrackMenu_Unrate.Text" xml:space="preserve"><value>No rating</value></data>
+  <data name="Smart_Dialog_CreateTitle" xml:space="preserve"><value>New smart playlist</value></data>
+  <data name="Smart_Dialog_EditTitle" xml:space="preserve"><value>Edit {0}</value></data>
+  <data name="Smart_Dialog_NameHeader" xml:space="preserve"><value>Name</value></data>
+  <data name="Smart_Dialog_QueryHeader" xml:space="preserve"><value>Query (foobar2000 style)</value></data>
+  <data name="Smart_Dialog_Help" xml:space="preserve"><value>Fields: %title% %artist% %album% %genre% %rating% %play_count% %last_played% %first_seen% ...&#13;Operators: IS / != / HAS / GREATER / LESS / MISSING / PRESENT / AND / OR / NOT / ( )&#13;Example: %rating% GREATER 3 AND %last_played% DURING LAST 30 DAYS LIMIT 50</value></data>
+  <data name="Smart_Dialog_InvalidFormat" xml:space="preserve"><value>The query could not be applied: {0}</value></data>
+  <data name="Settings_Library_Rg_R128_Title.Text" xml:space="preserve"><value>Also write ReplayGain 2.0 (R128_*) tags</value></data>
+  <data name="Settings_Library_Rg_R128_Desc.Text" xml:space="preserve"><value>Stores the analysis in R128_TRACK_GAIN / R128_ALBUM_GAIN fields as well, staying compatible with RG2 implementations in other players.</value></data>
+  <data name="MainWindow_Menu_Report.Text" xml:space="preserve"><value>Listening report...</value></data>
+  <data name="Report_Title" xml:space="preserve"><value>Listening report</value></data>
+  <data name="Report_PeriodHeader" xml:space="preserve"><value>Period</value></data>
+  <data name="Report_PeriodAllTime" xml:space="preserve"><value>All time</value></data>
+  <data name="Report_Period30Days" xml:space="preserve"><value>Last 30 days</value></data>
+  <data name="Report_PeriodThisYear" xml:space="preserve"><value>This year</value></data>
+  <data name="Report_TotalPlays" xml:space="preserve"><value>Plays</value></data>
+  <data name="Report_UniqueTracks" xml:space="preserve"><value>Tracks played</value></data>
+  <data name="Report_ListenTime" xml:space="preserve"><value>Listen time</value></data>
+  <data name="Report_TopArtists" xml:space="preserve"><value>Top artists</value></data>
+  <data name="Report_TopAlbums" xml:space="preserve"><value>Top albums</value></data>
+  <data name="Report_TopGenres" xml:space="preserve"><value>Genres</value></data>
+  <data name="Report_TopTracks" xml:space="preserve"><value>Top tracks</value></data>
+  <data name="Report_PlaysFormat" xml:space="preserve"><value>{0} plays</value></data>
+  <data name="Report_Empty" xml:space="preserve"><value>No plays recorded in this period.</value></data>
 </root>

@@ -53,6 +53,21 @@ public sealed class QueueIndexToTextConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotSupportedException();
 }
 
+/// <summary>0-5 rating → filled-star text ("" when unrated); a negative/absent value also maps to
+/// "" so a half-initialized proxy never renders garbage.</summary>
+public sealed class RatingToStarsConverter : IValueConverter
+{
+    private const string FilledStar = "\u2605"; // ★
+
+    public static string Convert(int rating) =>
+        rating > 0 ? new string(FilledStar[0], Math.Min(rating, 5)) : "";
+
+    public object Convert(object value, Type targetType, object parameter, string language)
+        => value is int r ? Convert(r) : "";
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotSupportedException();
+}
+
 public sealed class TrackNoFormatterConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)

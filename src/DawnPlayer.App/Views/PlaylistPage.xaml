@@ -18,6 +18,7 @@
         <services:QueueIndexToTextConverter x:Key="QueueText"/>
         <services:TrackNoFormatterConverter x:Key="TrackNoText"/>
         <services:IsPlayingToFontWeightConverter x:Key="PlayingFontWeight"/>
+        <services:RatingToStarsConverter x:Key="RatingStars"/>
         <CollectionViewSource x:Name="PlaylistCvs" IsSourceGrouped="True" ItemsPath="Items"/>
     </Page.Resources>
 
@@ -52,14 +53,23 @@
                            Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>
             </Grid>
 
-            <!-- Create Playlist Action Button -->
-            <Button x:Uid="Playlist_CreateButton" Grid.Row="1" Click="OnCreatePlaylistClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                    Margin="10,0,10,8" Padding="10,6" Background="Transparent" BorderThickness="0" CornerRadius="4">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <FontIcon Glyph="&#xE710;" FontSize="12" Foreground="{ThemeResource DawnAccentBrush}"/>
-                    <TextBlock x:Uid="Playlist_CreateButtonText" Text="Create Playlist" FontSize="12" Foreground="{ThemeResource TextPrimaryBrush}"/>
-                </StackPanel>
-            </Button>
+            <!-- Create Playlist Action Buttons -->
+            <StackPanel Grid.Row="1" Margin="10,0,10,8" Spacing="2">
+                <Button x:Uid="Playlist_CreateButton" Click="OnCreatePlaylistClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                        Padding="10,6" Background="Transparent" BorderThickness="0" CornerRadius="4">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE710;" FontSize="12" Foreground="{ThemeResource DawnAccentBrush}"/>
+                        <TextBlock x:Uid="Playlist_CreateButtonText" Text="Create Playlist" FontSize="12" Foreground="{ThemeResource TextPrimaryBrush}"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Uid="Playlist_CreateSmartButton" Click="OnCreateSmartPlaylistClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                        Padding="10,6" Background="Transparent" BorderThickness="0" CornerRadius="4">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE71C;" FontSize="12" Foreground="{ThemeResource DawnAccentBrush}"/>
+                        <TextBlock x:Uid="Playlist_CreateSmartButtonText" Text="Create Smart Playlist" FontSize="12" Foreground="{ThemeResource TextPrimaryBrush}"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
 
             <!-- Playlists ListView -->
             <ListView x:Name="PlaylistsSidebarList" Grid.Row="2"
@@ -94,28 +104,31 @@
                         </Grid>
                     </DataTemplate>
                 </ListView.ItemTemplate>
-                <ListView.ContextFlyout>
-                    <MenuFlyout Opening="OnSidebarContextMenuOpening">
-                        <MenuFlyoutItem x:Uid="Playlist_SidebarMenu_Import" Text="재생목록 가져오기 (M3U8)..." Click="OnImportPlaylistClick">
-                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8E5;"/></MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutSeparator/>
-                        <MenuFlyoutItem x:Uid="Playlist_SidebarMenu_Rename" x:Name="SidebarRenameMenuItem" Text="이름 변경..." Click="OnRenameSidebarPlaylist">
-                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8AC;"/></MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem x:Uid="Playlist_SidebarMenu_Export" Text="다른 이름으로 저장 (M3U8)..." Click="OnExportSidebarPlaylist">
-                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE78C;"/></MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutSeparator/>
-                        <MenuFlyoutItem x:Uid="Playlist_SidebarMenu_Clear" x:Name="SidebarClearMenuItem" Text="재생목록 비우기" Click="OnClearSidebarPlaylist">
-                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE75C;"/></MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutSeparator x:Name="SidebarDeleteSeparator"/>
-                        <MenuFlyoutItem x:Uid="Playlist_SidebarMenu_Delete" x:Name="SidebarDeleteMenuItem" Text="재생목록 삭제" Click="OnDeleteSidebarPlaylist">
-                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74D;"/></MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                    </MenuFlyout>
-                </ListView.ContextFlyout>
+                    <ListView.ContextFlyout>
+                        <MenuFlyout Opening="OnSidebarContextMenuOpening">
+                            <MenuFlyoutItem x:Uid="Playlist_SidebarMenu_Import" Text="재생목록 가져오기 (M3U8)..." Click="OnImportPlaylistClick">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8E5;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutItem x:Uid="Playlist_SidebarMenu_EditSmart" x:Name="SidebarEditSmartMenuItem" Text="스마트 쿼리 편집..." Click="OnEditSmartPlaylist">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE70F;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem x:Uid="Playlist_SidebarMenu_Rename" x:Name="SidebarRenameMenuItem" Text="이름 변경..." Click="OnRenameSidebarPlaylist">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8AC;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem x:Uid="Playlist_SidebarMenu_Export" Text="다른 이름으로 저장 (M3U8)..." Click="OnExportSidebarPlaylist">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE78C;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutItem x:Uid="Playlist_SidebarMenu_Clear" x:Name="SidebarClearMenuItem" Text="재생목록 비우기" Click="OnClearSidebarPlaylist">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE75C;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutSeparator x:Name="SidebarDeleteSeparator"/>
+                            <MenuFlyoutItem x:Uid="Playlist_SidebarMenu_Delete" x:Name="SidebarDeleteMenuItem" Text="재생목록 삭제" Click="OnDeleteSidebarPlaylist">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74D;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                        </MenuFlyout>
+                    </ListView.ContextFlyout>
             </ListView>
 
             <!-- Left Splitter Grip -->
@@ -236,6 +249,7 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="28"/>
                                         <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="54"/>
                                     </Grid.ColumnDefinitions>
 
@@ -261,8 +275,13 @@
                                         </Border>
                                     </StackPanel>
 
+                                    <!-- Star Rating -->
+                                    <TextBlock Grid.Column="2" Text="{x:Bind Rating, Converter={StaticResource RatingStars}, Mode=OneWay}"
+                                               FontSize="9.5" Foreground="{ThemeResource DawnAccentBrush}"
+                                               VerticalAlignment="Center" Margin="0,1,0,0"/>
+
                                     <!-- Static Duration -->
-                                    <TextBlock Grid.Column="2" FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}"
+                                    <TextBlock Grid.Column="3" FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}"
                                                HorizontalAlignment="Right" VerticalAlignment="Center"
                                                Text="{x:Bind DurationDisplay, Mode=OneWay}"/>
                                 </Grid>
@@ -275,6 +294,7 @@
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="28"/>
                                             <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
 
@@ -304,8 +324,13 @@
                                             </Border>
                                         </StackPanel>
 
+                                        <!-- Star Rating -->
+                                        <TextBlock Grid.Column="2" Text="{x:Bind Rating, Converter={StaticResource RatingStars}, Mode=OneWay}"
+                                                   FontSize="9.5" Foreground="{ThemeResource DawnAccentBrush}"
+                                                   VerticalAlignment="Center" Margin="0,1,0,0"/>
+
                                         <!-- Remaining Time (e.g. -3:40) -->
-                                        <TextBlock Grid.Column="2" FontSize="11.5" Foreground="{ThemeResource TextSecondaryBrush}"
+                                        <TextBlock Grid.Column="3" FontSize="11.5" Foreground="{ThemeResource TextSecondaryBrush}"
                                                    HorizontalAlignment="Right" VerticalAlignment="Center"
                                                    Text="{x:Bind DurationDisplay, Mode=OneWay}"/>
                                     </Grid>
@@ -370,6 +395,17 @@
                             <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Queue" Text="대기열에 추가" Click="OnQueueItems">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE710;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutSubItem x:Uid="Playlist_TrackMenu_Rating" Text="평점">
+                                <MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xE735;"/></MenuFlyoutSubItem.Icon>
+                                <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Rate1" Text="★" Click="OnRateItems1"/>
+                                <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Rate2" Text="★★" Click="OnRateItems2"/>
+                                <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Rate3" Text="★★★" Click="OnRateItems3"/>
+                                <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Rate4" Text="★★★★" Click="OnRateItems4"/>
+                                <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Rate5" Text="★★★★★" Click="OnRateItems5"/>
+                                <MenuFlyoutSeparator/>
+                                <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Unrate" Text="평점 없음" Click="OnUnrateItems"/>
+                            </MenuFlyoutSubItem>
                             <MenuFlyoutSeparator/>
                             <MenuFlyoutItem x:Uid="Playlist_TrackMenu_MoveUp" Text="위로 이동 (Alt+↑)" Click="OnMoveUpClick">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE70E;"/></MenuFlyoutItem.Icon>

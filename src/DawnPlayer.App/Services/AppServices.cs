@@ -95,6 +95,15 @@ public static class AppServices
             (SmartPlaylistKind.RecentlyAdded, AppStrings.Get("Smart_RecentlyAdded", "최근 추가")),
             (SmartPlaylistKind.NotRecentlyPlayed, AppStrings.Get("Smart_NotRecentlyPlayed", "한동안 안 들은")),
         });
+        Playlists.EnsureUserSmartPlaylists(
+            Settings.Playlist.UserSmartPlaylists.Select(d => (d.Name, d.Query)).ToList());
+        Playlists.UserSmartPlaylistsChanged += () =>
+        {
+            Settings.Playlist.UserSmartPlaylists = Playlists.GetUserSmartPlaylists()
+                .Select(t => new SmartPlaylistDefinition(t.Name, t.Query))
+                .ToList();
+            SettingsWriter.Schedule(Settings);
+        };
         Playback = new PlaybackController(Settings, Playlists);
         SleepTimer = new SleepTimerService();
         Playlists.ItemsRemoved += (_, items) => Playback.Queue.RemoveItems(items);
@@ -188,6 +197,7 @@ public static class AppServices
             {
                 track.PlayCount++;
                 track.LastPlayedUtcTicks = DateTime.UtcNow.Ticks;
+                Library.RecordPlayEvent(track); // per-play history for the listening report
             }
             else if (skipped)
             {
@@ -205,6 +215,90 @@ public static class AppServices
         {
             App.Log($"[stats] failed to record: {ex}");
         }
+    }
+
+    // ---------------- rating ----------------
+
+    /// <summary>
+    /// Applies a 0-5 star rating to the working-set tracks: the in-memory value and the DB column
+    /// update immediately, and the file tags are rewritten on the thread pool through the atomic
+    /// tag writer (best effort — a read-only file just keeps its DB rating). Refreshes smart
+    /// playlists afterwards because queries can filter on %rating%. Must be called on the UI
+    /// thread: it notifies the bound rating proxies of every playlist item sharing the track.
+    /// </summary>
+    public static void RateTracks(IReadOnlyList<Track> tracks, int stars)
+    {
+        if (tracks == null || tracks.Count == 0) return;
+        stars = Math.Clamp(stars, 0, 5);
+
+        var distinct = tracks.Where(t => t != null && !string.IsNullOrEmpty(t.Path))
+            .GroupBy(t => t.Path, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .ToList();
+        if (distinct.Count == 0) return;
+
+        foreach (var track in distinct)
+        {
+            track.Rating = stars;
+            Library.UpdateRating(track);
+        }
+
+        foreach (var pl in Playlists.Playlists)
+        {
+            if (pl == null) continue;
+            foreach (var item in pl.GetSnapshot())
+            {
+                if (item != null && distinct.Any(t => ReferenceEquals(t, item.Track)))
+                {
+                    item.SyncRating();
+                }
+            }
+        }
+
+        var paths = distinct.Select(t => t.Path).ToList();
+        Task.Run(() =>
+        {
+            foreach (var path in paths)
+            {
+                try
+                {
+                    if (!Core.Library.TagWriter.TrySetRating(path, stars))
+                    {
+                        App.Log($"[rating] tag write failed: {path}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    App.Log($"[rating] tag write threw: {path}: {ex.Message}");
+                }
+            }
+        });
+
+        Playlists.RefreshSmartPlaylists();
+    }
+
+    // ---------------- listening report ----------------
+
+    /// <summary>Window the listening report aggregates over.</summary>
+    public enum ReportPeriod { AllTime, Last30Days, ThisYear }
+
+    /// <summary>Builds the listening report on a thread-pool thread; call from the UI thread and
+    /// await. Falls back to the aggregate columns when no play history exists (pre-v3 database).</summary>
+    public static Task<Core.Library.ListeningReport> BuildListeningReportAsync(ReportPeriod period)
+    {
+        var now = DateTime.UtcNow;
+        var since = period switch
+        {
+            ReportPeriod.Last30Days => now - TimeSpan.FromDays(30),
+            ReportPeriod.ThisYear => new DateTime(now.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            _ => DateTime.MinValue,
+        };
+
+        return Task.Run(() =>
+        {
+            var events = Library.ReadPlayEvents(since.Ticks);
+            return Core.Library.ListeningReportBuilder.Build(Library.Tracks, events, since, now);
+        });
     }
 
     /// <summary>
@@ -454,7 +548,8 @@ public static class AppServices
                     Library.UpdateReplayGain(track);
                     if (!Core.Library.TagWriter.TrySetReplayGain(track.Path,
                         track.RgTrackGainDb.Value, track.RgTrackPeak ?? 0,
-                        track.RgAlbumGainDb, track.RgAlbumPeak))
+                        track.RgAlbumGainDb, track.RgAlbumPeak,
+                        writeR128: Settings.Library.WriteR128Tags))
                     {
                         App.Log($"[rg-scan] tag write failed: {track.Path}");
                     }
