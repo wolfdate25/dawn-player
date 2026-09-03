@@ -93,6 +93,8 @@ public sealed class SequencerStream : IWaveProvider
         EqProfile? initialEqProfile = null,
         NormalizerSettings? initialNormalizerSettings = null,
         Func<Track, float?>? replayGainProvider = null,
+        CrossfeedSettings? initialCrossfeed = null,
+        bool initialMonoDownmix = false,
         IAudioDspChain? dspChain = null)
     {
         _outFormat = outFormat;
@@ -110,7 +112,10 @@ public sealed class SequencerStream : IWaveProvider
             var defaultChain = new AudioDspChain();
             defaultChain.AddEffect(new EqualizerDspEffect(initialEqProfile));
             defaultChain.AddEffect(new DynamicNormalizerDspEffect(initialNormalizerSettings));
+            defaultChain.AddEffect(new CrossfeedDspEffect(initialCrossfeed));
+            defaultChain.AddEffect(new MonoDownmixDspEffect(initialMonoDownmix));
             defaultChain.AddEffect(new SoftLimiterDspEffect(0.90f));
+            defaultChain.AddEffect(new SpectrumTapDspEffect());
             _dspChain = defaultChain;
         }
 
@@ -314,6 +319,16 @@ public sealed class SequencerStream : IWaveProvider
         bool eqActive = _dspChain.GetEffect<EqualizerDspEffect>()?.CanAlterLevel == true;
         bool normalizerActive = _dspChain.GetEffect<DynamicNormalizerDspEffect>()?.CanAlterLevel == true;
         limiter.IsEnabled = _applyVolume || eqActive || normalizerActive;
+    }
+
+    /// <summary>The analysis tap at the end of the chain, or null for a custom chain without one.</summary>
+    public SpectrumTapDspEffect? SpectrumTap => _dspChain.GetEffect<SpectrumTapDspEffect>();
+
+    /// <summary>Updates crossfeed and mono-downmix live (spatial DSP).</summary>
+    public void SetSpatial(CrossfeedSettings? crossfeed, bool monoDownmix)
+    {
+        _dspChain.GetEffect<CrossfeedDspEffect>()?.ApplySettings(crossfeed);
+        _dspChain.GetEffect<MonoDownmixDspEffect>()?.ApplySettings(monoDownmix);
     }
 
     /// <summary>Updates the dynamic normalizer settings and active ReplayGain linear multiplier.</summary>
@@ -527,7 +542,10 @@ public sealed class SequencerStream : IWaveProvider
 
         if (gapless)
         {
+            // The EQ and the crossfeed delay lines must not carry the previous track over the
+            // boundary; the normalizer deliberately keeps its converged loudness gain.
             _dspChain.GetEffect<EqualizerDspEffect>()?.Reset();
+            _dspChain.GetEffect<CrossfeedDspEffect>()?.Reset();
         }
         else
         {

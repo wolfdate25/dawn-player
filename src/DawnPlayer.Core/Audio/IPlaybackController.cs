@@ -37,5 +37,7 @@ public interface IPlaybackController : IDisposable
     void Seek(TimeSpan position);
     void ApplyEqualizer();
     void ApplyNormalizer();
+    void ApplySpatial();
+    bool TryCopySpectrumWindow(float[] destination, out int sampleRate, out long version);
     void RestartIfPlaying();
 }

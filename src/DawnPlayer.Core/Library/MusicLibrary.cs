@@ -596,6 +596,55 @@ public sealed class MusicLibrary : IMusicLibrary
         }
     }
 
+    /// <summary>
+    /// Persists the ReplayGain fields of a working-set track. Like <see cref="UpdateStats"/>, a
+    /// dedicated column list keeps the batch scanner and the editor from rewriting (and racing)
+    /// the statistics columns.
+    /// </summary>
+    public void UpdateReplayGain(Track track)
+    {
+        if (track == null || string.IsNullOrEmpty(track.Path)) return;
+
+        lock (_ioLock)
+        {
+            using var cmd = _conn.CreateCommand();
+            cmd.CommandText =
+                "UPDATE tracks SET rg_track_gain=@rg1, rg_track_peak=@rg2, rg_album_gain=@rg3, rg_album_peak=@rg4 WHERE path=@p";
+            cmd.Parameters.AddWithValue("@rg1", (object?)track.RgTrackGainDb ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@rg2", (object?)track.RgTrackPeak ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@rg3", (object?)track.RgAlbumGainDb ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@rg4", (object?)track.RgAlbumPeak ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@p", track.Path);
+            try
+            {
+                cmd.ExecuteNonQuery();
+            }
+            catch
+            {
+                // Read-only media or a track deleted since the scan started: the in-memory values
+                // still stand, and the next scan reconciles the row.
+            }
+        }
+    }
+
+    /// <summary>
+    /// Replaces entire rows (tag edits, RG tagging): whole-row upsert followed by a working-set
+    /// swap so listeners see the refreshed metadata exactly once.
+    /// </summary>
+    public void ReplaceTracks(IReadOnlyCollection<Track> tracks)
+    {
+        if (tracks == null || tracks.Count == 0) return;
+
+        CommitBatch(tracks, null);
+
+        lock (_ioLock)
+        {
+            var next = new Dictionary<string, Track>(_tracks, StringComparer.OrdinalIgnoreCase);
+            foreach (var t in tracks) next[t.Path] = t;
+            SwapTracks(next);
+        }
+    }
+
     public void Dispose()
     {
         lock (_ioLock)

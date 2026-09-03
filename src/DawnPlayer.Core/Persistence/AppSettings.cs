@@ -21,6 +21,7 @@ public sealed class AppSettings
     public OutputSettings Output { get; set; } = new();
     public PlaybackSettings Playback { get; set; } = new();
     public NormalizerSettings Normalizer { get; set; } = new();
+    public CrossfeedSettings Crossfeed { get; set; } = new();
     public EqualizerSettings Equalizer { get; set; } = new();
     public LibrarySettings Library { get; set; } = new();
     public LyricsSettings Lyrics { get; set; } = new();
@@ -62,6 +63,9 @@ public sealed class PlaybackSettings
         set => ShuffleMode = value ? (ShuffleMode == ShuffleMode.Off ? ShuffleMode.Tracks : ShuffleMode) : ShuffleMode.Off;
     }
     public bool StopAfterCurrent { get; set; }
+
+    /// <summary>Fold every channel to the average signal (mono check / single-ear listening).</summary>
+    public bool MonoDownmixEnabled { get; set; }
     public RepeatMode Repeat { get; set; } = RepeatMode.All;
     public ReplayGainMode ReplayGain { get; set; } = ReplayGainMode.Off;
     public double ReplayGainPreampDb { get; set; } // -12..+12
@@ -288,6 +292,23 @@ public sealed class EqBandSettings
         FrequencyHz = FrequencyHz,
         GainDb = GainDb,
         Q = Q
+    };
+}
+
+/// <summary>Headphone crossfeed strength presets: higher presets cross more of the opposite
+/// channel and from further up in frequency (Chu Moy topology).</summary>
+public enum CrossfeedStrength { Low, Normal, High }
+
+public sealed class CrossfeedSettings
+{
+    public bool Enabled { get; set; }
+
+    public CrossfeedStrength Strength { get; set; } = CrossfeedStrength.Normal;
+
+    public CrossfeedSettings Clone() => new()
+    {
+        Enabled = Enabled,
+        Strength = Strength
     };
 }
 

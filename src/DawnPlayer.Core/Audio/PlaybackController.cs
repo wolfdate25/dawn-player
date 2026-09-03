@@ -472,6 +472,29 @@ public sealed class PlaybackController : IPlaybackController
         seq.SetGain(ComputeGain(CurrentItem?.Track));
     }
 
+    /// <summary>Re-applies crossfeed / mono-downmix settings live to the running stream.</summary>
+    public void ApplySpatial()
+    {
+        Sequencer?.SetSpatial(_settings.Crossfeed, _settings.Playback.MonoDownmixEnabled);
+    }
+
+    /// <summary>
+    /// Copies the post-DSP analysis window for the spectrum meter, or false when no session is
+    /// feeding the tap. The version identifies the window: equal to the last one the caller saw
+    /// means no new samples arrived (paused or stopped).
+    /// </summary>
+    public bool TryCopySpectrumWindow(float[] destination, out int sampleRate, out long version)
+    {
+        sampleRate = 0;
+        version = 0;
+        var seq = Sequencer;
+        var tap = seq?.SpectrumTap;
+        if (tap == null) return false;
+        version = tap.CopyTo(destination);
+        sampleRate = seq!.WaveFormat.SampleRate;
+        return true;
+    }
+
     private EqProfile ResolveActiveProfile(SessionSnapshot? session)
     {
         var driver = session?.Driver ?? _settings.Output.DriverType;

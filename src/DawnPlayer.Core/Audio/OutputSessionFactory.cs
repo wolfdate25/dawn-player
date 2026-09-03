@@ -77,7 +77,8 @@ public sealed class OutputSessionFactory
     private SequencerStream CreateSequencer(WaveFormat target, bool applyVolume, int latency, EqProfile eqProfile)
     {
         var seq = new SequencerStream(
-            target, applyVolume, _gainProvider, latency, eqProfile, _settings.Normalizer, _replayGainProvider);
+            target, applyVolume, _gainProvider, latency, eqProfile, _settings.Normalizer, _replayGainProvider,
+            _settings.Crossfeed, _settings.Playback.MonoDownmixEnabled);
         _subscribeSequencer(seq);
         return seq;
     }

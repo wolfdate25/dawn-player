@@ -31,6 +31,12 @@ public interface IMusicLibrary : IDisposable
     /// last played) without touching any other column.</summary>
     void UpdateStats(Track track);
 
+    /// <summary>Persists the ReplayGain fields of a working-set track.</summary>
+    void UpdateReplayGain(Track track);
+
+    /// <summary>Replaces entire rows (tag edits, RG tagging) and swaps the working set in one step.</summary>
+    void ReplaceTracks(IReadOnlyCollection<Track> tracks);
+
     /// <summary>Loads track catalog into memory from SQLite database.</summary>
     void LoadFromDb();
 
