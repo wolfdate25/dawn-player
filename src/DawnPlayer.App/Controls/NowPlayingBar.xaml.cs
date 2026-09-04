@@ -143,6 +143,13 @@ public sealed partial class NowPlayingBar : UserControl
     /// </summary>
     private void LoadWaveform(Track track)
     {
+        // A live stream has no waveform (and opening its URL twice would double the connection).
+        if (Core.Audio.RadioTrack.IsStreamUrl(track.Path))
+        {
+            ClearWaveform();
+            return;
+        }
+
         int generation = ++_waveGeneration;
         string path = track.Path;
         Task.Run(() => Core.Audio.WaveformPeaks.GetOrScan(path)).ContinueWith(t =>

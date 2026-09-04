@@ -410,6 +410,30 @@ public sealed partial class SettingsPage : Page
     private void OnRgScanStart(object sender, RoutedEventArgs e) =>
         AppServices.StartReplayGainScan(false);
 
+    private async void OnPickImpulseClick(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var picker = new Windows.Storage.Pickers.FileOpenPicker();
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, AppServices.MainWindowHandle);
+            picker.FileTypeFilter.Add(".wav");
+            picker.FileTypeFilter.Add(".flac");
+            picker.FileTypeFilter.Add(".mp3");
+            picker.FileTypeFilter.Add(".ogg");
+            picker.FileTypeFilter.Add(".m4a");
+
+            var file = await picker.PickSingleFileAsync();
+            if (file != null) ViewModel.Playback.SetImpulsePath(file.Path);
+        }
+        catch (Exception ex)
+        {
+            App.Log($"[impulse pick] {ex}");
+        }
+    }
+
+    private void OnClearImpulseClick(object sender, RoutedEventArgs e) =>
+        ViewModel.Playback.SetImpulsePath("");
+
     private void OnRgScanRescanAll(object sender, RoutedEventArgs e) =>
         AppServices.StartReplayGainScan(true);
 

@@ -270,6 +270,35 @@ public sealed class PlaybackSettingsViewModel : ViewModelBase
         }
     }
 
+    public bool ConvolutionEnabled
+    {
+        get => _settings.Convolution.Enabled;
+        set
+        {
+            if (_settings.Convolution.Enabled != value)
+            {
+                _settings.Convolution.Enabled = value;
+                OnPropertyChanged();
+                _audioSettingsService.SetConvolution(_settings.Convolution.Enabled, _settings.Convolution.ImpulsePath);
+            }
+        }
+    }
+
+    /// <summary>Short display form of the impulse path (file name only; the full path is the tooltip's job).</summary>
+    public string ConvolutionImpulseDisplay =>
+        string.IsNullOrEmpty(_settings.Convolution.ImpulsePath)
+            ? DawnPlayer.App.Localization.AppStrings.Get("Settings_Playback_Convolution_Empty", "(임펄스 없음)")
+            : System.IO.Path.GetFileName(_settings.Convolution.ImpulsePath);
+
+    public void SetImpulsePath(string? path)
+    {
+        var trimmed = path ?? "";
+        if (_settings.Convolution.ImpulsePath == trimmed) return;
+        _settings.Convolution.ImpulsePath = trimmed;
+        OnPropertyChanged(nameof(ConvolutionImpulseDisplay));
+        _audioSettingsService.SetConvolution(_settings.Convolution.Enabled, trimmed);
+    }
+
     public void SaveSpatial()
     {
         _audioSettingsService.SetCrossfeed(_settings.Crossfeed.Enabled, _settings.Crossfeed.Strength);

@@ -25,6 +25,7 @@ public static class AppServices
     public static IShortcutService Shortcuts { get; set; } = null!;
     public static ILyricsOnlineService LyricsOnline { get; set; } = null!;
     public static SleepTimerService SleepTimer { get; private set; } = null!;
+    public static ScrobbleService Scrobbler { get; private set; } = null!;
 
     public static DispatcherQueue? Ui { get; private set; }
     public static IntPtr MainWindowHandle { get; private set; }
@@ -106,6 +107,7 @@ public static class AppServices
         };
         Playback = new PlaybackController(Settings, Playlists);
         SleepTimer = new SleepTimerService();
+        Scrobbler = new ScrobbleService(() => Settings, msg => App.Log(msg));
         Playlists.ItemsRemoved += (_, items) => Playback.Queue.RemoveItems(items);
 
         AudioSettings = new AudioSettingsService(Settings, Playback);
@@ -135,7 +137,22 @@ public static class AppServices
         Smtc = new SmtcService(Playback);
         Smtc.TryInitialize(MainWindowHandle);
 
-        Playback.CurrentChanged += item => RunOnUi(() => CurrentTrackChanged?.Invoke(item));
+        Playback.CurrentChanged += item => RunOnUi(() =>
+        {
+            CurrentTrackChanged?.Invoke(item);
+            if (item != null && Playback.State == PlaybackState.Playing)
+            {
+                Scrobbler.NotifyTrackStarted(item.Track);
+            }
+        });
+        Playback.StateChanged += () => RunOnUi(() =>
+        {
+            // Resuming a restored session also counts as "started playing now" for now-playing.
+            if (Playback.State == PlaybackState.Playing && Playback.CurrentItem != null)
+            {
+                Scrobbler.NotifyTrackStarted(Playback.CurrentItem.Track);
+            }
+        });
         Playback.StateChanged += () => RunOnUi(() => PlaybackStateChanged?.Invoke());
         Playback.StopAfterCurrentChanged += () => RunOnUi(() =>
         {
@@ -147,7 +164,13 @@ public static class AppServices
         Playback.AbRepeatChanged += () => RunOnUi(() => AbRepeatChanged?.Invoke());
         Playback.TrackLeft += OnPlaybackTrackLeft;
         Playback.Warning += msg => { App.Log($"[Playback] {msg}"); RunOnUi(() => WarningRaised?.Invoke(msg)); };
-        Playback.SessionStarted += info => { App.Log($"[Session] {info.DeviceName} exclusive={info.Exclusive} {info.FormatDescription}"); RunOnUi(() => OutputSessionChanged?.Invoke(info)); };
+        Playback.SessionStarted += info =>
+        {
+            App.Log($"[Session] {info.DeviceName} exclusive={info.Exclusive} {info.FormatDescription}");
+            RunOnUi(() => OutputSessionChanged?.Invoke(info));
+            // A fresh sequencer carries no impulse; the convolver re-applies per session.
+            Playback.ApplyConvolution();
+        };
         Library.TracksChanged += () =>
         {
             // A scan re-sorts every smart playlist; coalesce here so the UI event and the refresh
@@ -209,6 +232,10 @@ public static class AppServices
             }
 
             Library.UpdateStats(track);
+            if (counted)
+            {
+                Scrobbler.NotifyTrackPlayed(track, TimeSpan.Zero);
+            }
             RunOnUi(Playlists.RefreshSmartPlaylists);
         }
         catch (Exception ex)
@@ -231,7 +258,7 @@ public static class AppServices
         if (tracks == null || tracks.Count == 0) return;
         stars = Math.Clamp(stars, 0, 5);
 
-        var distinct = tracks.Where(t => t != null && !string.IsNullOrEmpty(t.Path))
+        var distinct = tracks.Where(t => t != null && !string.IsNullOrEmpty(t.Path) && !Core.Audio.RadioTrack.IsStreamUrl(t.Path))
             .GroupBy(t => t.Path, StringComparer.OrdinalIgnoreCase)
             .Select(g => g.First())
             .ToList();
@@ -478,6 +505,9 @@ public static class AppServices
                 || !t.RgTrackGainDb.HasValue || !t.RgTrackPeak.HasValue
                 || !t.RgAlbumGainDb.HasValue || !t.RgAlbumPeak.HasValue)
             .ToList();
+        // Radio URLs are not in the library, but guard anyway: decoding a live stream would
+        // never finish.
+        tracks.RemoveAll(t => Core.Audio.RadioTrack.IsStreamUrl(t.Path));
         int total = tracks.Count;
         if (total == 0)
         {

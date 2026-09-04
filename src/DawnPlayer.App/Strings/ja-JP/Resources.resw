@@ -779,4 +779,26 @@
   <data name="Report_Empty" xml:space="preserve"><value>この期間に再生記録がありません。</value></data>
   <data name="MainWindow_Menu_Mini.Text" xml:space="preserve"><value>ミニプレーヤー</value></data>
   <data name="Toast_NowPlaying" xml:space="preserve"><value>再生中</value></data>
+  <data name="Settings_Playback_Convolution_Title.Text" xml:space="preserve"><value>コンボリューション (インパルス応答)</value></data>
+  <data name="Settings_Playback_Convolution_Desc.Text" xml:space="preserve"><value>インパルス応答ファイルでルーム / スピーカー / ヘッドホン補正を適用します。WAV・FLAC・MP3 など対応オーディオファイルをインパルスとして使用でき、再生中の変更も即座に反映されます。</value></data>
+  <data name="Settings_Playback_Convolution_Toggle.OnContent" xml:space="preserve"><value>オン</value></data>
+  <data name="Settings_Playback_Convolution_Toggle.OffContent" xml:space="preserve"><value>オフ</value></data>
+  <data name="Settings_Playback_Convolution_Browse.Content" xml:space="preserve"><value>インパルスを選択...</value></data>
+  <data name="Settings_Playback_Convolution_Clear.Content" xml:space="preserve"><value>解除</value></data>
+  <data name="Settings_Playback_Convolution_Empty" xml:space="preserve"><value>(インパルスなし)</value></data>
+  <data name="MainWindow_Menu_OpenUrl.Text" xml:space="preserve"><value>ネットワークストリームを開く (ラジオ)...</value></data>
+  <data name="OpenUrl_Title" xml:space="preserve"><value>ネットワークストリームを開く</value></data>
+  <data name="OpenUrl_Header" xml:space="preserve"><value>ストリーム URL (Icecast/Shoutcast MP3)</value></data>
+  <data name="MainWindow_Menu_Lastfm.Text" xml:space="preserve"><value>Last.fm スクログブル...</value></data>
+  <data name="Lastfm_Title" xml:space="preserve"><value>Last.fm スクログブル</value></data>
+  <data name="Lastfm_StatusNeedKeys" xml:space="preserve"><value>Last.fm の API キーとシークレットを入力してください (last.fm/api で作成)。</value></data>
+  <data name="Lastfm_StatusAuthed" xml:space="preserve"><value>{0} として認証済み · 送信待ち {1} 件</value></data>
+  <data name="Lastfm_StatusNotAuthed" xml:space="preserve"><value>ブラウザで認証するとスクログブルが有効になります。</value></data>
+  <data name="Lastfm_StartAuth" xml:space="preserve"><value>ブラウザで認証</value></data>
+  <data name="Lastfm_Reauth" xml:space="preserve"><value>再認証</value></data>
+  <data name="Lastfm_AuthPending" xml:space="preserve"><value>ブラウザで許可した後、[認証を完了] を押してください。</value></data>
+  <data name="Lastfm_AuthDone" xml:space="preserve"><value>{0} として認証しました。スクログブルが有効です。</value></data>
+  <data name="Lastfm_AuthFailed" xml:space="preserve"><value>認証に失敗: {0}</value></data>
+  <data name="Lastfm_EnabledOn" xml:space="preserve"><value>スクログブル オン</value></data>
+  <data name="Lastfm_EnabledOff" xml:space="preserve"><value>オフ</value></data>
 </root>

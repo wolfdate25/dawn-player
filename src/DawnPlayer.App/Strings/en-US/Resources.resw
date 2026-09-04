@@ -779,4 +779,26 @@
   <data name="Report_Empty" xml:space="preserve"><value>No plays recorded in this period.</value></data>
   <data name="MainWindow_Menu_Mini.Text" xml:space="preserve"><value>Mini player</value></data>
   <data name="Toast_NowPlaying" xml:space="preserve"><value>Now playing</value></data>
+  <data name="Settings_Playback_Convolution_Title.Text" xml:space="preserve"><value>Convolution (Impulse Response)</value></data>
+  <data name="Settings_Playback_Convolution_Desc.Text" xml:space="preserve"><value>Applies room / speaker / headphone correction from an impulse-response file. Any supported audio file (WAV, FLAC, MP3, ...) works as an impulse; changes apply live during playback.</value></data>
+  <data name="Settings_Playback_Convolution_Toggle.OnContent" xml:space="preserve"><value>On</value></data>
+  <data name="Settings_Playback_Convolution_Toggle.OffContent" xml:space="preserve"><value>Off</value></data>
+  <data name="Settings_Playback_Convolution_Browse.Content" xml:space="preserve"><value>Pick impulse...</value></data>
+  <data name="Settings_Playback_Convolution_Clear.Content" xml:space="preserve"><value>Clear</value></data>
+  <data name="Settings_Playback_Convolution_Empty" xml:space="preserve"><value>(no impulse)</value></data>
+  <data name="MainWindow_Menu_OpenUrl.Text" xml:space="preserve"><value>Open network stream (radio)...</value></data>
+  <data name="OpenUrl_Title" xml:space="preserve"><value>Open network stream</value></data>
+  <data name="OpenUrl_Header" xml:space="preserve"><value>Stream URL (Icecast/Shoutcast MP3)</value></data>
+  <data name="MainWindow_Menu_Lastfm.Text" xml:space="preserve"><value>Last.fm scrobbling...</value></data>
+  <data name="Lastfm_Title" xml:space="preserve"><value>Last.fm scrobbling</value></data>
+  <data name="Lastfm_StatusNeedKeys" xml:space="preserve"><value>Enter your Last.fm API key and secret (create them at last.fm/api).</value></data>
+  <data name="Lastfm_StatusAuthed" xml:space="preserve"><value>Authenticated as {0} · {1} scrobbles queued</value></data>
+  <data name="Lastfm_StatusNotAuthed" xml:space="preserve"><value>Authorize in the browser to enable scrobbling.</value></data>
+  <data name="Lastfm_StartAuth" xml:space="preserve"><value>Authorize in browser</value></data>
+  <data name="Lastfm_Reauth" xml:space="preserve"><value>Re-authorize</value></data>
+  <data name="Lastfm_AuthPending" xml:space="preserve"><value>Allow access in the browser, then press [Finish auth].</value></data>
+  <data name="Lastfm_AuthDone" xml:space="preserve"><value>Authenticated as {0}. Scrobbling is on.</value></data>
+  <data name="Lastfm_AuthFailed" xml:space="preserve"><value>Auth failed: {0}</value></data>
+  <data name="Lastfm_EnabledOn" xml:space="preserve"><value>Scrobbling on</value></data>
+  <data name="Lastfm_EnabledOff" xml:space="preserve"><value>Off</value></data>
 </root>

@@ -146,6 +146,14 @@ public sealed class AudioSettingsService : IAudioSettingsService
         _playback?.ApplySpatial();
     }
 
+    public void SetConvolution(bool enabled, string impulsePath)
+    {
+        _settings.Convolution.Enabled = enabled;
+        _settings.Convolution.ImpulsePath = impulsePath ?? "";
+        SettingsWriter.Schedule(_settings);
+        _playback?.ApplyConvolution();
+    }
+
     public void OpenSoundControlPanel()
     {
         WasapiDeviceService.OpenSoundControlPanel();

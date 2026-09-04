@@ -363,6 +363,18 @@ public sealed partial class MainWindow : Window
         NavigateToSettings();
     }
 
+    private async void OnMenuLastfm(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await Views.LastfmDialog.ShowAsync(Content.XamlRoot);
+        }
+        catch (Exception ex)
+        {
+            App.Log($"[lastfm-dialog] {ex}");
+        }
+    }
+
     private async void OnMenuReport(object sender, RoutedEventArgs e)
     {
         try
@@ -378,6 +390,43 @@ public sealed partial class MainWindow : Window
     private void OnMenuExit(object sender, RoutedEventArgs e)
     {
         ShutdownForReal();
+    }
+
+    private async void OnMenuOpenUrl(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var box = new TextBox
+            {
+                PlaceholderText = "http://stream.example.com:8000/stream",
+                Header = AppStrings.Get("OpenUrl_Header", "스트림 URL (Icecast/Shoutcast MP3)"),
+            };
+            var dialog = new ContentDialog
+            {
+                Title = AppStrings.Get("OpenUrl_Title", "네트워크 스트림 열기"),
+                Content = box,
+                PrimaryButtonText = AppStrings.Get("Common_OK", "확인"),
+                CloseButtonText = AppStrings.Get("Common_Cancel", "취소"),
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = Content.XamlRoot,
+            };
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            var url = box.Text.Trim();
+            if (url.Length == 0) return;
+
+            var playlists = AppServices.Playlists;
+            var playlist = playlists.NowPlaying;
+            var item = playlists.AddTracks(playlist, new[] { Core.Audio.RadioTrack.Create(url) }).FirstOrDefault();
+            if (item != null && AppServices.Playback != null)
+            {
+                await Controls.PlaybackUiHelper.PlayItemAsync(AppServices.Playback, playlist, item);
+            }
+        }
+        catch (Exception ex)
+        {
+            App.Log($"[open-url] {ex}");
+            ShowWarning(ex.Message);
+        }
     }
 
     // ---------------- mini player mode ----------------

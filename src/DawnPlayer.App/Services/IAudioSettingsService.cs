@@ -83,6 +83,9 @@ public interface IAudioSettingsService
     /// </summary>
     void SetMonoDownmix(bool enabled);
 
+    /// <summary>Sets the convolution (impulse response) state; empty path = bypass.</summary>
+    void SetConvolution(bool enabled, string impulsePath);
+
     /// <summary>
     /// Opens the Windows Sound Control Panel (mmsys.cpl) for audio hardware configuration.
     /// </summary>

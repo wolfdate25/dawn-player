@@ -40,6 +40,9 @@
                             <MenuFlyoutItem x:Uid="MainWindow_Menu_Rescan" Text="라이브러리 새로고침" Click="OnMenuRescan">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE72C;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
+                            <MenuFlyoutItem x:Uid="MainWindow_Menu_OpenUrl" Text="네트워크 스트림 열기 (라디오)..." Click="OnMenuOpenUrl">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE968;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
                             <MenuFlyoutSubItem x:Uid="MainWindow_Menu_SleepTimer" x:Name="SleepTimerMenu" Text="수면 타이머">
                                 <MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xE708;"/></MenuFlyoutSubItem.Icon>
                                 <ToggleMenuFlyoutItem x:Uid="MainWindow_Menu_Sleep_Off" x:Name="SleepOffItem" Text="끔" Click="OnSleepTimerOff"/>
@@ -50,6 +53,9 @@
                             </MenuFlyoutSubItem>
                             <MenuFlyoutItem x:Uid="MainWindow_Menu_Mini" x:Name="MiniModeMenuItem" Text="미니 플레이어 (Mini Player)" Click="OnMenuMiniToggle">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE740;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem x:Uid="MainWindow_Menu_Lastfm" Text="Last.fm 스러블링..." Click="OnMenuLastfm">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8F2;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                             <MenuFlyoutItem x:Uid="MainWindow_Menu_Report" Text="청취 리포트 (Listening Report)..." Click="OnMenuReport">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE9D9;"/></MenuFlyoutItem.Icon>
