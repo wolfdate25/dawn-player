@@ -127,6 +127,16 @@
 - ✅ **트랙 변경 토스트**: 트레이 풍선 알림(숨김 상태에서만, NIIF_RESPECT_QUIET_TIME)
 - ✅ **미니 플레이어**: 타이틀 메뉴 토글 — 콘텐츠 숨김 + 항상 위 + 배경 드래그 이동 + Esc 해제
 
+## 3. 새 시나리오 — 진행 상황 (2026-09-05)
+
+- ✅ **인터넷 라디오**: `RadioStreamReader`(ICY 메타데이터 필터 + MP3 프레임 ACM 디코드 + PCM 버퍼,
+  언더런 시 무음 유지로 세션 생존), URL 트랙은 라이브러리 미색인·재생목록 전용, 통계·스러블 제외,
+  타이틀 메뉴 URL 열기, M3U8 URL 항목 지원
+- ✅ **컨볼버 DSP**: `Fft`(radix-2) + `ConvolutionDspEffect`(uniform-partition overlap-save,
+  IR 피크 정규화 0.5, 스레드 안전 IR 스왑, 리셋 안전) + `ImpulseResponse` 모노 로더 + 설정 UI
+- ✅ **Last.fm 스러블링**: `LastfmClient`(웹 인증 토큰/세션, md5 요청 서명, now-playing, scrobble) +
+  `ScrobbleService`(카운트된 재생에만 스러블, 실패 큐 재시도, 13일/50개 제한) + 계정 다이얼로그
+
 ## 추천 우선순위
 
 | 단계 | 항목 | 이유 |

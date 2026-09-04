@@ -655,12 +655,21 @@ public sealed class PlaylistManager : IPlaylistManager
         var items = new List<PlaylistItem>();
         foreach (var file in files)
         {
-            var track = _library.GetTrack(file) ?? TagReader.TryRead(file);
+            var track = ResolveEntry(file);
             if (track != null) items.Add(new PlaylistItem(track));
         }
         if (items.Count == 0) return items;
         InsertItems(pl, items, insertAt);
         return items;
+    }
+
+    /// <summary>Library cache → radio URL → tag read, in that order.</summary>
+    private Models.Track? ResolveEntry(string file)
+    {
+        var track = _library.GetTrack(file);
+        if (track != null) return track;
+        if (Audio.RadioTrack.IsStreamUrl(file)) return Audio.RadioTrack.Create(file);
+        return TagReader.TryRead(file);
     }
 
     /// <summary>Concurrently resolves audio files using library cache and Parallel.ForEachAsync for missing tags.</summary>
@@ -699,7 +708,9 @@ public sealed class PlaylistManager : IPlaylistManager
             {
                 token.ThrowIfCancellationRequested();
                 var file = fileList[idx];
-                var track = TagReader.TryRead(file);
+                var track = Audio.RadioTrack.IsStreamUrl(file)
+                    ? Audio.RadioTrack.Create(file)
+                    : TagReader.TryRead(file);
                 if (track != null)
                 {
                     items[idx] = new PlaylistItem(track);
@@ -924,7 +935,7 @@ public sealed class PlaylistManager : IPlaylistManager
         if (pl == null) return 0;
         var snapshot = pl.GetSnapshot();
         if (snapshot.Length == 0) return 0;
-        var dead = snapshot.Where(i => !string.IsNullOrEmpty(i.Track.Path) && !File.Exists(AppPaths.PhysicalPath(i.Track.Path))).ToList();
+        var dead = snapshot.Where(i => !string.IsNullOrEmpty(i.Track.Path) && !Audio.RadioTrack.IsStreamUrl(i.Track.Path) && !File.Exists(AppPaths.PhysicalPath(i.Track.Path))).ToList();
         if (dead.Count > 0)
         {
             RemoveItems(pl, dead);
@@ -939,7 +950,7 @@ public sealed class PlaylistManager : IPlaylistManager
         if (snapshot.Length == 0) return 0;
         var dead = await Task.Run(() =>
         {
-            return snapshot.Where(i => !ct.IsCancellationRequested && !string.IsNullOrEmpty(i.Track.Path) && !File.Exists(AppPaths.PhysicalPath(i.Track.Path))).ToList();
+            return snapshot.Where(i => !ct.IsCancellationRequested && !string.IsNullOrEmpty(i.Track.Path) && !Audio.RadioTrack.IsStreamUrl(i.Track.Path) && !File.Exists(AppPaths.PhysicalPath(i.Track.Path))).ToList();
         }, ct).ConfigureAwait(false);
 
         if (dead.Count > 0 && !ct.IsCancellationRequested)
@@ -1123,7 +1134,11 @@ public sealed class PlaylistManager : IPlaylistManager
                     foreach (var entry in entries)
                     {
                         Track? track = null;
-                        if (File.Exists(AppPaths.PhysicalPath(entry.Path)))
+                        if (Audio.RadioTrack.IsStreamUrl(entry.Path))
+                        {
+                            track = Audio.RadioTrack.Create(entry.Path);
+                        }
+                        else if (File.Exists(AppPaths.PhysicalPath(entry.Path)))
                         {
                             // Virtual cue rows only resolve through the library (their path is a
                             // fragment, not a file); physical files fall back to a fresh tag read.

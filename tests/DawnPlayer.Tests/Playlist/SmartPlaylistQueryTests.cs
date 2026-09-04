@@ -40,7 +40,7 @@ public sealed class SmartPlaylistQueryTests
         TrackNo = trackNo,
     };
 
-    private static IReadOnlyList<string> Apply(string query, params Track[] tracks)
+    private static List<string> Apply(string query, params Track[] tracks)
     {
         Assert.True(SmartPlaylistQuery.TryParse(query, out var parsed, out var error), error);
         return parsed!.Apply(tracks).Select(t => t.Path).ToList();

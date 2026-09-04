@@ -80,6 +80,14 @@ public static class AudioFileReaderFactory
                 TimeSpan.FromMilliseconds(endMs));
         }
 
+        if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            var radio = new RadioStreamReader(path);
+            radio.Connect();
+            return radio;
+        }
+
         var ext = System.IO.Path.GetExtension(path).ToLowerInvariant();
         try
         {

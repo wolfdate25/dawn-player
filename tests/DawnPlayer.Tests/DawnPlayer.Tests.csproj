@@ -37,6 +37,8 @@
     <Compile Include="..\..\src\DawnPlayer.App\Services\IAudioSettingsService.cs" Link="Services\IAudioSettingsService.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Services\AudioSettingsService.cs" Link="Services\AudioSettingsService.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Services\ILyricsOnlineService.cs" Link="Services\ILyricsOnlineService.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Services\LastfmClient.cs" Link="Services\LastfmClient.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Services\ScrobbleService.cs" Link="Services\ScrobbleService.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Services\IEqSettingsService.cs" Link="Services\IEqSettingsService.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Services\EqSettingsService.cs" Link="Services\EqSettingsService.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Services\IAppearanceSettingsService.cs" Link="Services\IAppearanceSettingsService.cs" />

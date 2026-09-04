@@ -22,6 +22,7 @@ public sealed class AppSettings
     public PlaybackSettings Playback { get; set; } = new();
     public NormalizerSettings Normalizer { get; set; } = new();
     public CrossfeedSettings Crossfeed { get; set; } = new();
+    public ConvolutionSettings Convolution { get; set; } = new();
     public EqualizerSettings Equalizer { get; set; } = new();
     public LibrarySettings Library { get; set; } = new();
     public PlaylistSettings Playlist { get; set; } = new();
@@ -29,6 +30,7 @@ public sealed class AppSettings
     public LyricsOnlineSettings LyricsOnline { get; set; } = new();
     public UiSettings Ui { get; set; } = new();
     public ShortcutSettings Shortcuts { get; set; } = new();
+    public LastfmSettings Lastfm { get; set; } = new();
 
     public static AppSettings CreateDefault() => new();
 }
@@ -86,6 +88,19 @@ public sealed class LibrarySettings
     /// <summary>Also write ReplayGain 2.0 fields (R128_TRACK_GAIN / R128_ALBUM_GAIN, LU relative
     /// to −18 LUFS) when the batch scanner tags files. Off keeps files at classic RG1 fields only.</summary>
     public bool WriteR128Tags { get; set; }
+}
+
+/// <summary>Last.fm scrobbling credentials. Every user supplies their own API key/secret pair
+/// created at last.fm/api (the client signs requests with the secret); the session key is the
+/// web-auth result and is what actually authorizes scrobbles.</summary>
+public sealed class LastfmSettings
+{
+    public bool Enabled { get; set; }
+    public string ApiKey { get; set; } = "";
+    public string ApiSecret { get; set; } = "";
+    /// <summary>Web-auth session key; empty until the user completes the browser flow.</summary>
+    public string SessionKey { get; set; } = "";
+    public string Username { get; set; } = "";
 }
 
 /// <summary>A user-defined smart playlist persisted by name + query text.</summary>
@@ -324,6 +339,21 @@ public sealed class CrossfeedSettings
     {
         Enabled = Enabled,
         Strength = Strength
+    };
+}
+
+/// <summary>Impulse-response convolution (room/ headphone compensation). The IR file can be any
+/// supported audio format; it is decoded to mono and peak-normalized on load.</summary>
+public sealed class ConvolutionSettings
+{
+    public bool Enabled { get; set; }
+    /// <summary>Path of the impulse-response file, or empty for bypass.</summary>
+    public string ImpulsePath { get; set; } = "";
+
+    public ConvolutionSettings Clone() => new()
+    {
+        Enabled = Enabled,
+        ImpulsePath = ImpulsePath,
     };
 }
 

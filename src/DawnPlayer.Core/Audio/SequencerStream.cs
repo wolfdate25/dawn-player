@@ -114,6 +114,7 @@ public sealed class SequencerStream : IWaveProvider
             defaultChain.AddEffect(new DynamicNormalizerDspEffect(initialNormalizerSettings));
             defaultChain.AddEffect(new CrossfeedDspEffect(initialCrossfeed));
             defaultChain.AddEffect(new MonoDownmixDspEffect(initialMonoDownmix));
+            defaultChain.AddEffect(new ConvolutionDspEffect());
             defaultChain.AddEffect(new SoftLimiterDspEffect(0.90f));
             defaultChain.AddEffect(new SpectrumTapDspEffect());
             _dspChain = defaultChain;
@@ -318,7 +319,8 @@ public sealed class SequencerStream : IWaveProvider
 
         bool eqActive = _dspChain.GetEffect<EqualizerDspEffect>()?.CanAlterLevel == true;
         bool normalizerActive = _dspChain.GetEffect<DynamicNormalizerDspEffect>()?.CanAlterLevel == true;
-        limiter.IsEnabled = _applyVolume || eqActive || normalizerActive;
+        bool convolutionActive = _dspChain.GetEffect<ConvolutionDspEffect>() is { IsEnabled: true, HasImpulse: true };
+        limiter.IsEnabled = _applyVolume || eqActive || normalizerActive || convolutionActive;
     }
 
     /// <summary>The analysis tap at the end of the chain, or null for a custom chain without one.</summary>
@@ -329,6 +331,20 @@ public sealed class SequencerStream : IWaveProvider
     {
         _dspChain.GetEffect<CrossfeedDspEffect>()?.ApplySettings(crossfeed);
         _dspChain.GetEffect<MonoDownmixDspEffect>()?.ApplySettings(monoDownmix);
+    }
+
+    /// <summary>
+    /// Swaps the convolver's impulse (already prepared by the caller, off-thread) and its enable
+    /// state. Null or an empty impulse bypasses the effect.
+    /// </summary>
+    public void SetConvolution(bool enabled, float[]? monoImpulse)
+    {
+        var conv = _dspChain.GetEffect<ConvolutionDspEffect>();
+        if (conv == null) return;
+
+        conv.SetImpulse(monoImpulse is { Length: > 0 } ? monoImpulse : null);
+        conv.IsEnabled = enabled && monoImpulse is { Length: > 0 };
+        SyncLimiterEnabled();
     }
 
     /// <summary>Updates the dynamic normalizer settings and active ReplayGain linear multiplier.</summary>

@@ -479,6 +479,39 @@ public sealed class PlaybackController : IPlaybackController
     }
 
     /// <summary>
+    /// Re-applies the convolver impulse. Impulse decoding and partition preparation run on the
+    /// thread pool (a 2 s IR decode is tens of milliseconds; not render-thread work). The last
+    /// request wins, so dragging the IR picker cannot interleave stale loads.
+    /// </summary>
+    private int _convolutionGeneration;
+
+    public void ApplyConvolution()
+    {
+        var sequencer = Sequencer;
+        if (sequencer == null) return;
+
+        bool enabled = _settings.Convolution.Enabled;
+        string? path = _settings.Convolution.ImpulsePath;
+        int generation = Interlocked.Increment(ref _convolutionGeneration);
+
+        if (!enabled || string.IsNullOrWhiteSpace(path))
+        {
+            sequencer.SetConvolution(false, null);
+            return;
+        }
+
+        Task.Run(() =>
+        {
+            var impulse = ImpulseResponse.LoadMono(path);
+            // A newer request (or a session rebuild) supersedes this one.
+            if (Volatile.Read(ref _convolutionGeneration) != generation) return;
+            var seq = Sequencer;
+            if (seq == null) return;
+            seq.SetConvolution(enabled, impulse);
+        });
+    }
+
+    /// <summary>
     /// Copies the post-DSP analysis window for the spectrum meter, or false when no session is
     /// feeding the tap. The version identifies the window: equal to the last one the caller saw
     /// means no new samples arrived (paused or stopped).
