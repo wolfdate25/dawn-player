@@ -118,7 +118,7 @@ public static class TagReader
         return 0;
     }
 
-    private static IEnumerable<TagLib.Tag> EnumerateConcreteTags(TagLib.File tf, TagLib.Tag tag)
+    private static List<TagLib.Tag> EnumerateConcreteTags(TagLib.File tf, TagLib.Tag tag)
     {
         // Collected eagerly (no yield) because the per-tag type probing below must stay inside
         // try/catch, and C# forbids yielding from a try with a catch.
@@ -227,6 +227,7 @@ public static class TagReader
             ".mp3" => "MP3",
             ".flac" => "FLAC",
             ".ogg" or ".oga" => "Vorbis",
+            ".opus" => "OPUS",
             ".wav" => "WAV",
             ".m4a" or ".m4b" or ".mp4" or ".alac" => "ALAC/AAC",
             ".aac" => "AAC",

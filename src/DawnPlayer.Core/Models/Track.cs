@@ -2,7 +2,10 @@ using System.Runtime.CompilerServices;
 
 namespace DawnPlayer.Core.Models;
 
-/// <summary>A single music file with its metadata snapshot from the last scan.</summary>
+/// <summary>A single music file with its metadata snapshot from the last scan. Most rows address
+/// a physical file via <see cref="Path"/>, but cue-sheet tracks carry a
+/// <c>#cue=&lt;startMs&gt;-&lt;endMs&gt;</c> fragment (see <see cref="Util.AppPaths"/>) — every
+/// existence check and tag write on a path must go through <c>AppPaths.PhysicalPath</c>.</summary>
 public sealed record Track
 {
     public string Path { get; set; } = "";

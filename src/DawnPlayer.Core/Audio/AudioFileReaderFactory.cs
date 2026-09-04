@@ -1,3 +1,4 @@
+using DawnPlayer.Core.Util;
 using NAudio.Vorbis;
 using NAudio.Wave;
 
@@ -69,6 +70,16 @@ public static class AudioFileReaderFactory
     /// <summary>Opens a supported audio file. Throws <see cref="AudioOpenException"/> on failure.</summary>
     public static ITrackReader Open(string path)
     {
+        // A cue-sheet virtual track addresses a range inside a physical file; open the parent and
+        // wrap it in a range reader that the sequencer can chain gaplessly.
+        if (AppPaths.TryDecodeCuePath(path, out var physical, out var startMs, out var endMs))
+        {
+            var inner = Open(physical);
+            return new CueTrackReader(inner,
+                TimeSpan.FromMilliseconds(startMs),
+                TimeSpan.FromMilliseconds(endMs));
+        }
+
         var ext = System.IO.Path.GetExtension(path).ToLowerInvariant();
         try
         {

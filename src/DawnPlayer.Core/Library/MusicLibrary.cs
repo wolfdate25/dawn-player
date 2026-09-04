@@ -247,6 +247,7 @@ public sealed class MusicLibrary : IMusicLibrary
         if (folders.Count == 0) { ScanProgress?.Invoke(new ScanProgress(0, 0, "", Finished: true)); return; }
 
         var files = new List<string>();
+        var cueFiles = new List<string>();
         // Only roots we actually finished walking may have their tracks pruned. Treating an
         // offline root (unplugged drive, NAS not mounted yet at login) as "everything under it
         // was deleted" wiped the whole catalogue for that root on every launch.
@@ -257,6 +258,7 @@ public sealed class MusicLibrary : IMusicLibrary
             {
                 files.AddRange(Directory.EnumerateFiles(folder, "*.*", SearchOption.AllDirectories)
                     .Where(AppPaths.IsSupportedAudioFile));
+                cueFiles.AddRange(Directory.EnumerateFiles(folder, "*.cue", SearchOption.AllDirectories));
                 scannedRoots.Add(folder.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
                                        + Path.DirectorySeparatorChar);
             }
@@ -273,6 +275,81 @@ public sealed class MusicLibrary : IMusicLibrary
         // cover files can be added, replaced or removed between scans, so a longer-lived cache
         // would keep handing out whatever it found first.
         var folderArt = new ConcurrentDictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+        // CUE sheets become per-track virtual rows inside the album image (foobar behavior: the
+        // image's own whole-file row is hidden while a playable cue covers it). Parsed before the
+        // audio pass so covered files can be skipped below; each virtual track inherits the base
+        // file's tags, art and ReplayGain, and its play range is encoded in the path fragment.
+        var coveredByCue = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var cueUpserts = new ConcurrentBag<Track>();
+        foreach (var cueFile in cueFiles)
+        {
+            ct.ThrowIfCancellationRequested();
+            var cue = CueSheet.TryParseFile(cueFile);
+            if (cue == null) continue;
+
+            foreach (var group in cue.Entries.GroupBy(e => e.AudioPath, StringComparer.OrdinalIgnoreCase))
+            {
+                var baseFile = group.Key;
+                if (!File.Exists(baseFile) || !AppPaths.IsSupportedAudioFile(baseFile)) continue;
+
+                var baseTrack = TagReader.TryRead(baseFile, out var pic);
+                if (baseTrack == null) continue;
+
+                var members = group.OrderBy(e => e.Start).ToList();
+                for (int i = 0; i < members.Count; i++)
+                {
+                    long startMs = (long)members[i].Start.TotalMilliseconds;
+                    // The last track of the file runs to the audio's own duration.
+                    long endMs = i + 1 < members.Count
+                        ? (long)members[i + 1].Start.TotalMilliseconds
+                        : Math.Max((long)baseTrack.DurationMs, startMs);
+                    if (endMs <= startMs) continue; // degenerate cue entry (zero-length range)
+
+                    // A bare WAV/APE image often carries no tags at all — the cue sheet is the
+                    // only metadata source. Its album TITLE/PERFORMER fill the album fields then.
+                    var track = baseTrack with
+                    {
+                        Path = AppPaths.MakeCuePath(baseFile, startMs, endMs),
+                        Title = members[i].Title.Length > 0 ? members[i].Title : baseTrack.Title,
+                        Artist = members[i].Performer.Length > 0 ? members[i].Performer : baseTrack.Artist,
+                        Album = baseTrack.Album.Length > 0 ? baseTrack.Album : (cue.AlbumTitle ?? ""),
+                        AlbumArtist = baseTrack.AlbumArtist.Length > 0 ? baseTrack.AlbumArtist
+                            : !string.IsNullOrEmpty(cue.AlbumPerformer) ? cue.AlbumPerformer : baseTrack.AlbumArtist,
+                        TrackNo = members[i].TrackNumber,
+                        DurationMs = endMs - startMs,
+                        HasLrc = false, // per-track .lrc lookups cannot address a fragment path
+                    };
+
+                    var albumKey = AlbumArtService.ComputeAlbumKey(track);
+                    var art = (pic != null ? TagReader.TryExtractArt(track, albumKey, pic) : null)
+                              ?? TagReader.FindFolderArt(baseFile, folderArt);
+                    track = track with { ArtPath = art };
+
+                    if (existing.TryGetValue(track.Path, out var previous))
+                    {
+                        track = track with
+                        {
+                            PlayCount = previous.PlayCount,
+                            SkipCount = previous.SkipCount,
+                            LastPlayedUtcTicks = previous.LastPlayedUtcTicks,
+                            FirstSeenUtcTicks = previous.FirstSeenUtcTicks,
+                            Rating = previous.Rating,
+                        };
+                    }
+                    if (track.FirstSeenUtcTicks == 0)
+                    {
+                        track = track with { FirstSeenUtcTicks = DateTime.UtcNow.Ticks };
+                    }
+
+                    result[track.Path] = track;
+                    cueUpserts.Add(track);
+                }
+
+                coveredByCue.Add(baseFile);
+            }
+        }
+        CommitBatch(cueUpserts, null);
 
         int done = 0;
         int total = files.Count;
@@ -300,6 +377,7 @@ public sealed class MusicLibrary : IMusicLibrary
         foreach (var file in files)
         {
             ct.ThrowIfCancellationRequested();
+            if (coveredByCue.Contains(file)) continue; // cue rows replace the whole-file row
             bool useCached = false;
             if (existing.TryGetValue(file, out var cached))
             {
@@ -398,6 +476,14 @@ public sealed class MusicLibrary : IMusicLibrary
         foreach (var kv in existing)
         {
             if (result.ContainsKey(kv.Key)) continue;
+
+            // A newly-appearing cue hides the image's whole-file row: drop it, and stale virtual
+            // rows die through the normal File.Exists check below (a fragment path never exists).
+            if (coveredByCue.Contains(kv.Key))
+            {
+                toDelete.Add(kv.Key);
+                continue;
+            }
 
             bool underScannedRoot = false;
             for (int i = 0; i < scannedRoots.Count; i++)

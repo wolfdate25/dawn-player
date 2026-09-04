@@ -619,7 +619,10 @@ public sealed class PlaylistManager : IPlaylistManager
                         .Where(AppPaths.IsSupportedAudioFile)
                         .OrderBy(f => f, StringComparer.OrdinalIgnoreCase));
                 }
-                else if (File.Exists(p) && AppPaths.IsSupportedAudioFile(p))
+                // Cue virtual tracks arrive as fragment paths (file.ext#cue=...) whose
+                // extension no longer parses as audio, so route them through their physical half.
+                else if ((AppPaths.IsCueFragment(p) && File.Exists(AppPaths.PhysicalPath(p))) ||
+                         (File.Exists(p) && AppPaths.IsSupportedAudioFile(p)))
                 {
                     files.Add(p);
                 }
@@ -728,7 +731,7 @@ public sealed class PlaylistManager : IPlaylistManager
         var entries = M3u.Read(filePath);
         var name = playlistName ?? Path.GetFileNameWithoutExtension(filePath);
         var pl = CreatePlaylist(name);
-        var files = entries.Select(e => e.Path).Where(File.Exists).ToList();
+        var files = entries.Select(e => e.Path).Where(e => File.Exists(AppPaths.PhysicalPath(e))).ToList();
         AddFiles(pl, files);
         return pl;
     }
@@ -745,7 +748,7 @@ public sealed class PlaylistManager : IPlaylistManager
         await RunOnUiAsync(() => pl = CreatePlaylist(name)).ConfigureAwait(false);
         if (pl == null) return null;
 
-        var files = entries.Select(e => e.Path).Where(File.Exists).ToList();
+        var files = entries.Select(e => e.Path).Where(e => File.Exists(AppPaths.PhysicalPath(e))).ToList();
         await AddFilesAsync(pl, files, ct: ct).ConfigureAwait(false);
         return pl;
     }
@@ -921,7 +924,7 @@ public sealed class PlaylistManager : IPlaylistManager
         if (pl == null) return 0;
         var snapshot = pl.GetSnapshot();
         if (snapshot.Length == 0) return 0;
-        var dead = snapshot.Where(i => !string.IsNullOrEmpty(i.Track.Path) && !File.Exists(i.Track.Path)).ToList();
+        var dead = snapshot.Where(i => !string.IsNullOrEmpty(i.Track.Path) && !File.Exists(AppPaths.PhysicalPath(i.Track.Path))).ToList();
         if (dead.Count > 0)
         {
             RemoveItems(pl, dead);
@@ -936,7 +939,7 @@ public sealed class PlaylistManager : IPlaylistManager
         if (snapshot.Length == 0) return 0;
         var dead = await Task.Run(() =>
         {
-            return snapshot.Where(i => !ct.IsCancellationRequested && !string.IsNullOrEmpty(i.Track.Path) && !File.Exists(i.Track.Path)).ToList();
+            return snapshot.Where(i => !ct.IsCancellationRequested && !string.IsNullOrEmpty(i.Track.Path) && !File.Exists(AppPaths.PhysicalPath(i.Track.Path))).ToList();
         }, ct).ConfigureAwait(false);
 
         if (dead.Count > 0 && !ct.IsCancellationRequested)
@@ -1120,9 +1123,12 @@ public sealed class PlaylistManager : IPlaylistManager
                     foreach (var entry in entries)
                     {
                         Track? track = null;
-                        if (File.Exists(entry.Path))
+                        if (File.Exists(AppPaths.PhysicalPath(entry.Path)))
                         {
-                            track = _library.GetTrack(entry.Path) ?? TagReader.TryRead(entry.Path);
+                            // Virtual cue rows only resolve through the library (their path is a
+                            // fragment, not a file); physical files fall back to a fresh tag read.
+                            track = _library.GetTrack(entry.Path) ??
+                                    (AppPaths.IsCueFragment(entry.Path) ? null : TagReader.TryRead(entry.Path));
                         }
 
                         if (track != null) items.Add(new PlaylistItem(track));

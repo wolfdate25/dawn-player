@@ -105,11 +105,56 @@ public static class AppPaths
     /// <summary>Audio extensions the player accepts (lowercase, with dot).</summary>
     public static readonly HashSet<string> SupportedExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
-        ".mp3", ".aac", ".m4a", ".m4b", ".mp4", ".flac", ".ogg", ".oga", ".wav", ".alac"
+        ".mp3", ".aac", ".m4a", ".m4b", ".mp4", ".flac", ".ogg", ".oga", ".opus", ".wav", ".alac"
     };
 
     public static bool IsSupportedAudioFile(string path) =>
         SupportedExtensions.Contains(Path.GetExtension(path));
+
+    /// <summary>Marker suffix that turns a physical audio path into a cue-sheet virtual track.
+    /// Everything keyed on <c>Track.Path</c> (DB rows, M3U8 lines, stats) keeps working because
+    /// the fragment makes the path unique per cue track and encodes the play range:
+    /// <c>album.flac#cue=0-212500</c> (milliseconds, start inclusive, end exclusive-ish).</summary>
+    public const string CueFragmentMarker = "#cue=";
+
+    /// <summary>True when the path addresses a cue range inside a physical file.</summary>
+    public static bool IsCueFragment(string path) =>
+        path != null && path.Contains(CueFragmentMarker, StringComparison.Ordinal);
+
+    /// <summary>The real file underneath a path: the cue fragment is stripped when present.</summary>
+    public static string PhysicalPath(string path)
+    {
+        if (string.IsNullOrEmpty(path)) return path ?? "";
+        int marker = path.LastIndexOf(CueFragmentMarker, StringComparison.Ordinal);
+        return marker > 0 ? path[..marker] : path;
+    }
+
+    /// <summary>Builds the virtual-track path for a cue range. End milliseconds of 0 means "until
+    /// the end of the file" and is resolved to a concrete value by the scanner.</summary>
+    public static string MakeCuePath(string physicalPath, long startMs, long endMs) =>
+        physicalPath + CueFragmentMarker + startMs.ToString(System.Globalization.CultureInfo.InvariantCulture)
+        + "-" + endMs.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+    /// <summary>Splits a virtual-track path back into its physical file and range.</summary>
+    public static bool TryDecodeCuePath(string path, out string physicalPath, out long startMs, out long endMs)
+    {
+        physicalPath = "";
+        startMs = 0;
+        endMs = 0;
+        int marker = path?.LastIndexOf(CueFragmentMarker, StringComparison.Ordinal) ?? -1;
+        if (marker <= 0 || marker + CueFragmentMarker.Length >= path!.Length) return false;
+
+        physicalPath = path[..marker];
+        var range = path[(marker + CueFragmentMarker.Length)..];
+        int dash = range.IndexOf('-');
+        if (dash <= 0 || dash == range.Length - 1) return false;
+
+        return long.TryParse(range.AsSpan(0, dash), System.Globalization.NumberStyles.Integer,
+                   System.Globalization.CultureInfo.InvariantCulture, out startMs)
+               && long.TryParse(range.AsSpan(dash + 1), System.Globalization.NumberStyles.Integer,
+                   System.Globalization.CultureInfo.InvariantCulture, out endMs)
+               && startMs >= 0 && endMs >= startMs;
+    }
 
     public static void EnsureDirectories()
     {
