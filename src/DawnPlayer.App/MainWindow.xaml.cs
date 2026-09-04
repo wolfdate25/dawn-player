@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
+using WinRT.Interop;
 using Windows.ApplicationModel.DataTransfer;
 
 namespace DawnPlayer.App;
@@ -379,6 +380,107 @@ public sealed partial class MainWindow : Window
         ShutdownForReal();
     }
 
+    // ---------------- mini player mode ----------------
+
+    private bool _isMiniMode;
+    private Windows.Graphics.SizeInt32 _preMiniSize;
+    private bool _preMiniAlwaysOnTop;
+
+    /// <summary>True while the window is collapsed to the compact player bar.</summary>
+    public bool IsMiniMode => _isMiniMode;
+
+    /// <summary>Toggles the compact always-on-top player: content and title bar hide, the bar
+    /// remains, and dragging the bar background moves the window. Escape exits as well.</summary>
+    public void ToggleMiniMode()
+    {
+        var appWindow = GetAppWindow();
+        if (appWindow == null) return;
+        var presenter = appWindow.Presenter as Microsoft.UI.Windowing.OverlappedPresenter;
+
+        if (!_isMiniMode)
+        {
+            _preMiniSize = appWindow.Size;
+            _preMiniAlwaysOnTop = presenter?.IsAlwaysOnTop == true;
+
+            AppTitleBar.Visibility = Visibility.Collapsed;
+            ContentHost.Visibility = Visibility.Collapsed;
+            RootGrid.RowDefinitions[0].Height = new GridLength(0);
+            RootGrid.RowDefinitions[1].Height = new GridLength(0);
+
+            appWindow.Resize(new Windows.Graphics.SizeInt32(500, 104));
+            if (presenter != null) presenter.IsAlwaysOnTop = true;
+            _isMiniMode = true;
+        }
+        else
+        {
+            RootGrid.RowDefinitions[0].Height = new GridLength(42);
+            RootGrid.RowDefinitions[1].Height = new GridLength(1, GridUnitType.Star);
+            AppTitleBar.Visibility = Visibility.Visible;
+            ContentHost.Visibility = Visibility.Visible;
+
+            appWindow.Resize(_preMiniSize);
+            if (presenter != null) presenter.IsAlwaysOnTop = _preMiniAlwaysOnTop;
+            _isMiniMode = false;
+        }
+    }
+
+    private Microsoft.UI.Windowing.AppWindow? GetAppWindow()
+    {
+        try
+        {
+            var id = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(WindowNative.GetWindowHandle(this));
+            return Microsoft.UI.Windowing.AppWindow.GetFromWindowId(id);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private void OnMenuMiniToggle(object sender, RoutedEventArgs e) => ToggleMiniMode();
+
+    private void OnRootKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (_isMiniMode && e.Key == Windows.System.VirtualKey.Escape)
+        {
+            ToggleMiniMode();
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>
+    /// In mini mode the whole bar becomes the drag surface: presses on background Grid/Canvas
+    /// areas start a caption drag, presses on interactive controls pass through untouched.
+    /// </summary>
+    private void OnRootPointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_isMiniMode) return;
+        if (e.OriginalSource is not DependencyObject source) return;
+        for (var node = source; node != null; node = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(node))
+        {
+            if (node is Microsoft.UI.Xaml.Controls.Control || node is Microsoft.UI.Xaml.Controls.UserControl)
+            {
+                return; // a real control owns this press
+            }
+        }
+
+        try
+        {
+            _ = NativeMethods.SendMessageForDrag(WindowNative.GetWindowHandle(this));
+        }
+        catch { }
+        e.Handled = true;
+    }
+
+    private static class NativeMethods
+    {
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        public static extern bool SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+
+        public static bool SendMessageForDrag(IntPtr hwnd) =>
+            SendMessage(hwnd, 0xA1 /* WM_NCLBUTTONDOWN */, new IntPtr(2 /* HTCAPTION */), IntPtr.Zero);
+    }
+
     // ---------------- central event handlers ----------------
 
     private void OnCurrentTrackChanged(PlaylistItem? item)
@@ -389,6 +491,15 @@ public sealed partial class MainWindow : Window
         if (item != null) AppServices.Smtc.UpdateTimeline(TimeSpan.Zero, item.Track.Duration);
 
         UpdateThemeAndWallpaperForTrack(item?.Track);
+
+        // While the window lives in the tray the only surface left for "what changed" is the
+        // balloon. Visible-window track changes stay quiet on purpose.
+        if (item != null && Services.TrayIconService.IsWindowHidden)
+        {
+            Services.TrayIconService.ShowBalloon(
+                AppStrings.Get("Toast_NowPlaying", "재생 중"),
+                $"{item.Track.Title} — {item.Track.Artist}");
+        }
     }
 
     private void OnOutputSession(DawnPlayer.Core.Audio.SessionInfo info)

@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace DawnPlayer.App.Controls;
@@ -36,6 +37,13 @@ public sealed partial class NowPlayingBar : UserControl
     private readonly double[] _spectrumLevels = new double[Calculators.SpectrumCalculator.BinCount];
     private readonly double[] _spectrumShown = new double[Calculators.SpectrumCalculator.BinCount];
     private long _spectrumVersion = -1;
+
+    // Waveform seekbar state. Two polygons share one envelope; the played one is clipped to the
+    // progress width, so the 200 ms tick only writes a Rect.
+    private Microsoft.UI.Xaml.Shapes.Polygon? _wavePlayed;
+    private Microsoft.UI.Xaml.Shapes.Polygon? _waveRest;
+    private float[]? _wavePeaks;
+    private int _waveGeneration;
 
     public event Action? LyricsToggleRequested;
 
@@ -103,6 +111,7 @@ public sealed partial class NowPlayingBar : UserControl
             ArtFlyoutImage.Source = null;
             ArtImage.Visibility = Visibility.Collapsed;
             ArtPlaceholder.Visibility = Visibility.Visible;
+            ClearWaveform();
             return;
         }
 
@@ -115,6 +124,123 @@ public sealed partial class NowPlayingBar : UserControl
         UpdateFormatBadge();
 
         UpdateArt(t);
+        LoadWaveform(t);
+    }
+
+    private void ClearWaveform()
+    {
+        _wavePeaks = null;
+        _wavePlayed = null;
+        _waveRest = null;
+        WaveformCanvas.Children.Clear();
+    }
+
+    // ---------------- waveform seekbar ----------------
+
+    /// <summary>
+    /// Decodes the track's peak envelope off-thread (cached in Core by path+mtime) and draws it as
+    /// the seekbar backdrop. Cue fragments scan only their own range.
+    /// </summary>
+    private void LoadWaveform(Track track)
+    {
+        int generation = ++_waveGeneration;
+        string path = track.Path;
+        Task.Run(() => Core.Audio.WaveformPeaks.GetOrScan(path)).ContinueWith(t =>
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                if (generation != _waveGeneration) return; // track changed while scanning
+                _wavePeaks = t.Status == TaskStatus.RanToCompletion ? t.Result : null;
+                RebuildWaveform();
+            });
+        });
+    }
+
+    private void OnWaveformSizeChanged(object sender, SizeChangedEventArgs e) => RebuildWaveform();
+
+    private void RebuildWaveform()
+    {
+        WaveformCanvas.Children.Clear();
+        var peaks = _wavePeaks;
+        double width = WaveformCanvas.ActualWidth;
+        if (peaks == null || peaks.Length == 0 || width < 8) return;
+
+        double height = WaveformCanvas.Height;
+        double mid = height / 2.0;
+        int bars = Math.Max(8, Math.Min(peaks.Length, (int)(width / 3)));
+        double barW = width / bars;
+
+        // Normalize against the observed max so quiet masters still fill the strip.
+        float peakMax = 0;
+        foreach (float p in peaks) if (p > peakMax) peakMax = p;
+        if (peakMax < 0.02f) peakMax = 0.02f;
+
+        var points = new List<Windows.Foundation.Point>(bars * 2 + 2);
+        points.Add(new Windows.Foundation.Point(0, mid));
+        for (int i = 0; i < bars; i++)
+        {
+            // Resample the scan buckets into display buckets (max of the covered range).
+            float amp = 0;
+            int from = (int)((long)i * peaks.Length / bars);
+            int to = Math.Max(from + 1, (int)((long)(i + 1) * peaks.Length / bars));
+            for (int k = from; k < to && k < peaks.Length; k++) if (peaks[k] > amp) amp = peaks[k];
+
+            double h = Math.Max(1.5, amp / peakMax * (mid - 1));
+            double x0 = i * barW;
+            double x1 = x0 + Math.Max(1.0, barW * 0.75);
+            points.Add(new Windows.Foundation.Point(x0, mid - h));
+            points.Add(new Windows.Foundation.Point(x1, mid - h));
+        }
+        points.Add(new Windows.Foundation.Point(width, mid));
+        for (int i = bars - 1; i >= 0; i--)
+        {
+            float amp = 0;
+            int from = (int)((long)i * peaks.Length / bars);
+            int to = Math.Max(from + 1, (int)((long)(i + 1) * peaks.Length / bars));
+            for (int k = from; k < to && k < peaks.Length; k++) if (peaks[k] > amp) amp = peaks[k];
+            double h = Math.Max(1.5, amp / peakMax * (mid - 1));
+            double x0 = i * barW;
+            double x1 = x0 + Math.Max(1.0, barW * 0.75);
+            points.Add(new Windows.Foundation.Point(x1, mid + h));
+            points.Add(new Windows.Foundation.Point(x0, mid + h));
+        }
+        points.Add(new Windows.Foundation.Point(0, mid));
+
+        _waveRest = MakeWavePolygon(points, "TextTertiaryBrush", 0.45);
+        _wavePlayed = MakeWavePolygon(points, "DawnAccentBrush", 0.9);
+        WaveformCanvas.Children.Add(_waveRest);
+        WaveformCanvas.Children.Add(_wavePlayed);
+        UpdateWaveProgress(AppServices.Playback?.Position ?? TimeSpan.Zero,
+                           AppServices.Playback?.Duration ?? TimeSpan.Zero);
+    }
+
+    private static Microsoft.UI.Xaml.Shapes.Polygon MakeWavePolygon(
+        List<Windows.Foundation.Point> points, string brushKey, double opacity)
+    {
+        var pointCollection = new PointCollection();
+        foreach (var pt in points) pointCollection.Add(pt);
+        var polygon = new Microsoft.UI.Xaml.Shapes.Polygon
+        {
+            Points = pointCollection,
+            Opacity = opacity,
+            IsHitTestVisible = false,
+        };
+        polygon.Fill = (Microsoft.UI.Xaml.Media.Brush)Helpers.ThemeResourceHelper.GetBrush(brushKey);
+        return polygon;
+    }
+
+    /// <summary>Called on the 200 ms tick: clips the accent polygon at the playhead.</summary>
+    private void UpdateWaveProgress(TimeSpan position, TimeSpan duration)
+    {
+        if (_wavePlayed == null) return;
+        double fraction = duration > TimeSpan.Zero
+            ? Math.Clamp(position.TotalSeconds / duration.TotalSeconds, 0.0, 1.0)
+            : 0.0;
+        double width = WaveformCanvas.ActualWidth * fraction;
+        _wavePlayed.Clip = new Microsoft.UI.Xaml.Media.RectangleGeometry
+        {
+            Rect = new Windows.Foundation.Rect(0, 0, width, WaveformCanvas.Height),
+        };
     }
 
     /// <summary>
@@ -314,6 +440,7 @@ public sealed partial class NowPlayingBar : UserControl
 
         ElapsedText.Text = SeekbarScrubbingCalculator.FormatTime(position);
         RemainingText.Text = SeekbarScrubbingCalculator.FormatRemaining(position, duration);
+        UpdateWaveProgress(position, duration);
 
         if (playback.CurrentItem != null)
         {

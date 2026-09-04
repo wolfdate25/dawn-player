@@ -546,7 +546,7 @@ public static class AppServices
                     track.RgAlbumGainDb = Math.Round(albumGain, 2);
                     track.RgAlbumPeak = Math.Round(albumPeak, 6);
                     Library.UpdateReplayGain(track);
-                    if (!Core.Library.TagWriter.TrySetReplayGain(track.Path,
+                    if (!Core.Library.TagWriter.TrySetReplayGain(Core.Util.AppPaths.PhysicalPath(track.Path),
                         track.RgTrackGainDb.Value, track.RgTrackPeak ?? 0,
                         track.RgAlbumGainDb, track.RgAlbumPeak,
                         writeR128: Settings.Library.WriteR128Tags))

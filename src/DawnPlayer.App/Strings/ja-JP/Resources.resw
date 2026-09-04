@@ -777,4 +777,6 @@
   <data name="Report_TopTracks" xml:space="preserve"><value>よく聴いた曲</value></data>
   <data name="Report_PlaysFormat" xml:space="preserve"><value>{0}回</value></data>
   <data name="Report_Empty" xml:space="preserve"><value>この期間に再生記録がありません。</value></data>
+  <data name="MainWindow_Menu_Mini.Text" xml:space="preserve"><value>ミニプレーヤー</value></data>
+  <data name="Toast_NowPlaying" xml:space="preserve"><value>再生中</value></data>
 </root>

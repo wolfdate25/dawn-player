@@ -777,4 +777,6 @@
   <data name="Report_TopTracks" xml:space="preserve"><value>Top tracks</value></data>
   <data name="Report_PlaysFormat" xml:space="preserve"><value>{0} plays</value></data>
   <data name="Report_Empty" xml:space="preserve"><value>No plays recorded in this period.</value></data>
+  <data name="MainWindow_Menu_Mini.Text" xml:space="preserve"><value>Mini player</value></data>
+  <data name="Toast_NowPlaying" xml:space="preserve"><value>Now playing</value></data>
 </root>

@@ -777,4 +777,6 @@
   <data name="Report_TopTracks" xml:space="preserve"><value>많이 들은 곡</value></data>
   <data name="Report_PlaysFormat" xml:space="preserve"><value>{0}회</value></data>
   <data name="Report_Empty" xml:space="preserve"><value>이 기간에 기록된 재생이 없습니다.</value></data>
+  <data name="MainWindow_Menu_Mini.Text" xml:space="preserve"><value>미니 플레이어 (Mini Player)</value></data>
+  <data name="Toast_NowPlaying" xml:space="preserve"><value>재생 중</value></data>
 </root>

@@ -181,6 +181,34 @@ internal static class TrayIconService
         _ = NativeMethods.Shell_NotifyIcon(1 /* NIM_MODIFY */, ref nid);
     }
 
+    /// <summary>
+    /// Shows a tray balloon toast ("Now playing — title / artist"). Best effort: requires the
+    /// tray icon to be running and silently no-ops otherwise. NIIF_RESPECT_QUIET_TIME keeps the
+    /// notification from punching through focus assist.
+    /// </summary>
+    public static void ShowBalloon(string title, string text)
+    {
+        if (!IsRunning) return;
+        try
+        {
+            if (text.Length > 255) text = text[..255];
+            if (title.Length > 63) title = title[..63];
+
+            var nid = new NOTIFYICONDATAW
+            {
+                cbSize = (uint)Marshal.SizeOf<NOTIFYICONDATAW>(),
+                hWnd = _trayHwnd,
+                uID = TrayIconId,
+                uFlags = 0x10 /* NIF_INFO */,
+                szInfo = text,
+                szInfoTitle = title,
+                dwInfoFlags = 0x80 /* NIIF_RESPECT_QUIET_TIME */,
+            };
+            _ = NativeMethods.Shell_NotifyIcon(1 /* NIM_MODIFY */, ref nid);
+        }
+        catch { }
+    }
+
     // ---------------- native plumbing ----------------
 
     private static IntPtr CreateMessageWindow()

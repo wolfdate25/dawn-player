@@ -8,7 +8,7 @@
     xmlns:views="using:DawnPlayer.App.Views">
 
     <Grid x:Name="RootGrid" AllowDrop="True" Background="Transparent"
-          DragOver="OnRootDragOver" Drop="OnRootDrop">
+          DragOver="OnRootDragOver" Drop="OnRootDrop" PointerPressed="OnRootPointerPressed" KeyDown="OnRootKeyDown">
         <Grid.RowDefinitions>
             <RowDefinition Height="42"/>
             <RowDefinition Height="*"/>
@@ -48,6 +48,9 @@
                                 <ToggleMenuFlyoutItem x:Uid="MainWindow_Menu_Sleep_60" x:Name="Sleep60Item" Text="1시간" Click="OnSleepTimer60"/>
                                 <ToggleMenuFlyoutItem x:Uid="MainWindow_Menu_Sleep_Track" x:Name="SleepTrackItem" Text="현재 곡 끝나고" Click="OnSleepTimerAfterTrack"/>
                             </MenuFlyoutSubItem>
+                            <MenuFlyoutItem x:Uid="MainWindow_Menu_Mini" x:Name="MiniModeMenuItem" Text="미니 플레이어 (Mini Player)" Click="OnMenuMiniToggle">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE740;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
                             <MenuFlyoutItem x:Uid="MainWindow_Menu_Report" Text="청취 리포트 (Listening Report)..." Click="OnMenuReport">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE9D9;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
@@ -113,7 +116,7 @@
              The lyrics pane lives inside LibraryPage and PlaylistPage, which own their own
              splitter and width; a third window-level pane was never reachable and only cost a
              duplicate lyrics load and polling timer per track change. -->
-        <Grid Grid.Row="1">
+        <Grid x:Name="ContentHost" Grid.Row="1">
             <views:LibraryPage x:Name="LibraryPageView" Visibility="Visible"/>
             <views:PlaylistPage x:Name="PlaylistPageView" Visibility="Collapsed"/>
             <Frame x:Name="ContentFrame" Visibility="Collapsed"/>
