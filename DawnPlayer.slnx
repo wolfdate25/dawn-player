@@ -6,6 +6,7 @@
   </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/LrclibLyricsPlugin/LrclibLyricsPlugin.csproj" />
+    <Project Path="samples/SampleDspPlugin/SampleDspPlugin.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/DawnPlayer.Tests/DawnPlayer.Tests.csproj" />

@@ -39,6 +39,7 @@ public sealed class OutputSessionFactory
     private readonly Action<SequencerStream> _subscribeSequencer;
     private readonly Action<IWavePlayer> _subscribeOutput;
     private readonly Action<string> _warn;
+    private readonly Func<Dsp.Plugins.PluginDspEffect?>? _pluginDsp;
 
     public OutputSessionFactory(
         AppSettings settings,
@@ -46,8 +47,10 @@ public sealed class OutputSessionFactory
         Func<Track, float?> replayGainProvider,
         Action<SequencerStream> subscribeSequencer,
         Action<IWavePlayer> subscribeOutput,
-        Action<string> warn)
+        Action<string> warn,
+        Func<Dsp.Plugins.PluginDspEffect?>? pluginDsp = null)
     {
+        _pluginDsp = pluginDsp;
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _gainProvider = gainProvider ?? throw new ArgumentNullException(nameof(gainProvider));
         _replayGainProvider = replayGainProvider ?? throw new ArgumentNullException(nameof(replayGainProvider));
@@ -78,7 +81,8 @@ public sealed class OutputSessionFactory
     {
         var seq = new SequencerStream(
             target, applyVolume, _gainProvider, latency, eqProfile, _settings.Normalizer, _replayGainProvider,
-            _settings.Crossfeed, _settings.Playback.MonoDownmixEnabled);
+            _settings.Crossfeed, _settings.Playback.MonoDownmixEnabled,
+            dspChain: null, pluginDsp: _pluginDsp?.Invoke());
         _subscribeSequencer(seq);
         return seq;
     }

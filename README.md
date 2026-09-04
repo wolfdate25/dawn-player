@@ -17,7 +17,8 @@ foobar2000의 기능성과 [Eole 테마](https://github.com/Ottodix/Eole-foobar-
 - 배타 모드에서 형식(샘플레이트/채널/비트)이 바뀌면 트랙 경계에서 출력 세션 재구성 (foobar 방식과 동일)
 - **인터넷 라디오** — Icecast/Shoutcast MP3 스트림 재생 (ICY 메타데이터의 방송국·곡 정보 표시).
   타이틀 메뉴 → 네트워크 스트림 열기, M3U8 안의 URL도 재생목록에 그대로 들어갑니다
-- **지원 형식**: MP3, AAC/ALAC(m4a), FLAC, Ogg Vorbis, Opus, WAV — Media Foundation + NVorbis 디코딩
+- **지원 형식**: MP3, AAC/ALAC(m4a), FLAC, Ogg Vorbis, Opus, WAV, DSF(DSD) — Media Foundation +
+  NVorbis 디코딩. DSF는 박스카 디시메이션으로 44.1k/48k 계열 PCM 변환 재생 (DFF는 미지원)
 - **CUE 시트 지원** — 앨범 이미지(FLAC/WAV/APE 등) + `.cue`를 스캔하면 트랙 단위 가상 트랙으로 색인해
   곡 단위 재생·통계·평점이 동작하고, 이미지 전체 행은 숨겨집니다 (foobar2000 방식).
   구간 재생은 갭리스 시퀀서 위에서 샘플 단위로 이어집니다
@@ -51,6 +52,7 @@ foobar2000의 기능성과 [Eole 테마](https://github.com/Ottodix/Eole-foobar-
 
 ### 라이브러리
 - 음악 폴더 색인 (SQLite 저장, 증분 스캔), 아티스트/앨범/장르 필터 브라우저 + 검색
+- **WAV 변환기** — 재생목록 트랙을 WAV로 내보내기 (CUE 이미지 분할, ReplayGain 굽기, 태그·아트 동반)
 - **태그 편집기** — 트랙/앨범 컨텍스트 메뉴에서 메타데이터·앨범아트 편집, 원자적(파일 교체) 저장
 - **ReplayGain 일괄 분석** — EBU R128 라우드니스 스캐너(−18 LUFS)로 곡별·앨범별 게인을 계산해
   태그(REPLAYGAIN_*)와 DB에 기록, 음량 정규화에 즉시 반영.

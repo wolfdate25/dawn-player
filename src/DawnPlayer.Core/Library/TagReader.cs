@@ -228,6 +228,7 @@ public static class TagReader
             ".flac" => "FLAC",
             ".ogg" or ".oga" => "Vorbis",
             ".opus" => "OPUS",
+            ".dsf" => "DSD (DSF)",
             ".wav" => "WAV",
             ".m4a" or ".m4b" or ".mp4" or ".alac" => "ALAC/AAC",
             ".aac" => "AAC",

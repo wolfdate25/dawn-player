@@ -31,6 +31,7 @@ public sealed class AppSettings
     public UiSettings Ui { get; set; } = new();
     public ShortcutSettings Shortcuts { get; set; } = new();
     public LastfmSettings Lastfm { get; set; } = new();
+    public PluginSettings Plugins { get; set; } = new();
 
     public static AppSettings CreateDefault() => new();
 }
@@ -88,6 +89,13 @@ public sealed class LibrarySettings
     /// <summary>Also write ReplayGain 2.0 fields (R128_TRACK_GAIN / R128_ALBUM_GAIN, LU relative
     /// to −18 LUFS) when the batch scanner tags files. Off keeps files at classic RG1 fields only.</summary>
     public bool WriteR128Tags { get; set; }
+}
+
+/// <summary>Plugin host switches.</summary>
+public sealed class PluginSettings
+{
+    /// <summary>Run loaded DSP plugins at the end of the playback chain.</summary>
+    public bool DspEnabled { get; set; }
 }
 
 /// <summary>Last.fm scrobbling credentials. Every user supplies their own API key/secret pair

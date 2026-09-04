@@ -28,6 +28,7 @@
     <ProjectReference Include="..\..\src\DawnPlayer.Core\DawnPlayer.Core.csproj" />
     <!-- Compiled ALC-loading fixture for LyricsPluginHost tests (samples/LrclibLyricsPlugin). -->
     <ProjectReference Include="..\..\samples\LrclibLyricsPlugin\LrclibLyricsPlugin.csproj" />
+    <ProjectReference Include="..\..\samples\SampleDspPlugin\SampleDspPlugin.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -137,6 +137,17 @@
 - ✅ **Last.fm 스러블링**: `LastfmClient`(웹 인증 토큰/세션, md5 요청 서명, now-playing, scrobble) +
   `ScrobbleService`(카운트된 재생에만 스러블, 실패 큐 재시도, 13일/50개 제한) + 계정 다이얼로그
 
+## 4. 포지셔닝 기능 — 진행 상황 (2026-09-05)
+
+- ✅ **변환기**: `AudioTranscoder` — 모든 지원 트랙(물리 파일·CUE 구간)을 16/24/32-bit WAV로 디코드,
+  ReplayGain 굽기 옵션, 태그·앨범아트 동반, CUE 이미지 분할 내보내기 겸용.
+  재생목록 컨텍스트 메뉴 "WAV로 변환..." (MP3/Opus 인코더는 관리형 라이브러리 부재로 미지원)
+- ✅ **DSD (DSF)**: `DsfTrackReader` — DSF 헤더 파싱, 채널-블록 DSD 스트림의 박스카 디시메이션
+  PCM 변환(44.1k/48k 계열), 시크 지원. 라이브러리 색인·팩토리 라우팅 연결. DFF는 미지원
+- ✅ **DSP 플러그인 SDK**: `IDspPlugin`/`IDspEffectInstance`/`DspPluginAttribute` 추상화 +
+  `DspPluginLoader`(폴더 스캔 ALC 로딩) + `PluginDspEffect`(체인 끝 래퍼, 실시간 토글·안전 폴백) +
+  샘플 플러그인 `samples/SampleDspPlugin`
+
 ## 추천 우선순위
 
 | 단계 | 항목 | 이유 |

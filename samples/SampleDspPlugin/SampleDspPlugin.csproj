@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>SampleDspPlugin</RootNamespace>
+    <AssemblyName>SampleDspPlugin</AssemblyName>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DawnPlayer.Plugin.Abstractions\DawnPlayer.Plugin.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

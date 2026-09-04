@@ -40,7 +40,7 @@ public sealed class AudioSessionStartException : Exception
 /// fallback), the playback queue, shuffle/repeat and playback history.
 /// Events may fire on background threads; UI must marshal.
 /// </summary>
-public sealed class PlaybackController : IPlaybackController
+public sealed partial class PlaybackController : IPlaybackController
 {
     private readonly AppSettings _settings;
     private readonly PlaylistManager _playlists;
@@ -144,13 +144,17 @@ public sealed class PlaybackController : IPlaybackController
         // TryGetCurrent, not Current: resolution runs on the thread pool and the creating
         // accessors insert into the UI-bound playlist collection.
         _playOrder = new PlayOrderResolver(settings, Queue, () => _playlists.TryGetCurrent());
+        // One shared effect instance per controller; each new session re-inserts it into the
+        // fresh chain and re-applies the persisted enable state.
+        _pluginDspEffect = new DawnPlayer.Core.Audio.Dsp.Plugins.PluginDspEffect(() => Volatile.Read(ref _pluginDspHost));
         _sessionFactory = new OutputSessionFactory(
             settings,
             ComputeGain,
             ComputeReplayGain,
             SubscribeSequencer,
             SubscribeOutput,
-            message => Warning?.Invoke(message));
+            message => Warning?.Invoke(message),
+            pluginDsp: () => Volatile.Read(ref _pluginDspEffect));
         _pollTimer = new System.Threading.Timer(_ => PollPrefetch(), null, 250, 250);
 
         // A prefetch decided up to 1.2 s before the boundary would otherwise win over a queue

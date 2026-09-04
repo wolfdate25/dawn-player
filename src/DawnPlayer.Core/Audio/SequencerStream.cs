@@ -95,7 +95,8 @@ public sealed class SequencerStream : IWaveProvider
         Func<Track, float?>? replayGainProvider = null,
         CrossfeedSettings? initialCrossfeed = null,
         bool initialMonoDownmix = false,
-        IAudioDspChain? dspChain = null)
+        IAudioDspChain? dspChain = null,
+        global::DawnPlayer.Core.Audio.Dsp.Plugins.PluginDspEffect? pluginDsp = null)
     {
         _outFormat = outFormat;
         _applyVolume = applyVolume;
@@ -115,6 +116,7 @@ public sealed class SequencerStream : IWaveProvider
             defaultChain.AddEffect(new CrossfeedDspEffect(initialCrossfeed));
             defaultChain.AddEffect(new MonoDownmixDspEffect(initialMonoDownmix));
             defaultChain.AddEffect(new ConvolutionDspEffect());
+            if (pluginDsp != null) defaultChain.AddEffect(pluginDsp);
             defaultChain.AddEffect(new SoftLimiterDspEffect(0.90f));
             defaultChain.AddEffect(new SpectrumTapDspEffect());
             _dspChain = defaultChain;
@@ -320,7 +322,9 @@ public sealed class SequencerStream : IWaveProvider
         bool eqActive = _dspChain.GetEffect<EqualizerDspEffect>()?.CanAlterLevel == true;
         bool normalizerActive = _dspChain.GetEffect<DynamicNormalizerDspEffect>()?.CanAlterLevel == true;
         bool convolutionActive = _dspChain.GetEffect<ConvolutionDspEffect>() is { IsEnabled: true, HasImpulse: true };
-        limiter.IsEnabled = _applyVolume || eqActive || normalizerActive || convolutionActive;
+        // Plugin DSPs are unknown quantity-wise: treat an armed one as level-altering.
+        bool pluginDspActive = _dspChain.GetEffect<global::DawnPlayer.Core.Audio.Dsp.Plugins.PluginDspEffect>() is { IsEnabled: true };
+        limiter.IsEnabled = _applyVolume || eqActive || normalizerActive || convolutionActive || pluginDspActive;
     }
 
     /// <summary>The analysis tap at the end of the chain, or null for a custom chain without one.</summary>
@@ -331,6 +335,16 @@ public sealed class SequencerStream : IWaveProvider
     {
         _dspChain.GetEffect<CrossfeedDspEffect>()?.ApplySettings(crossfeed);
         _dspChain.GetEffect<MonoDownmixDspEffect>()?.ApplySettings(monoDownmix);
+    }
+
+    /// <summary>Live-toggles plugin-provided DSP effects.</summary>
+    public void SetPluginDsp(bool enabled)
+    {
+        var plugin = _dspChain.GetEffect<global::DawnPlayer.Core.Audio.Dsp.Plugins.PluginDspEffect>();
+        if (plugin == null) return;
+        plugin.IsEnabled = enabled;
+        SyncLimiterEnabled();
+        if (!enabled) plugin.Reset();
     }
 
     /// <summary>

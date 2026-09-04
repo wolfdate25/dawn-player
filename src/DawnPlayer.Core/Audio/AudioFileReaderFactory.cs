@@ -89,6 +89,10 @@ public static class AudioFileReaderFactory
         }
 
         var ext = System.IO.Path.GetExtension(path).ToLowerInvariant();
+        if (ext == ".dsf")
+        {
+            return new DsfTrackReader(path);
+        }
         try
         {
             return ext is ".ogg" or ".oga"
