@@ -406,6 +406,9 @@
                                 <MenuFlyoutSeparator/>
                                 <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Unrate" Text="평점 없음" Click="OnUnrateItems"/>
                             </MenuFlyoutSubItem>
+                            <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Convert" Text="WAV로 변환..." Click="OnConvertItems">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8E5;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
                             <MenuFlyoutSeparator/>
                             <MenuFlyoutItem x:Uid="Playlist_TrackMenu_MoveUp" Text="위로 이동 (Alt+↑)" Click="OnMoveUpClick">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE70E;"/></MenuFlyoutItem.Icon>

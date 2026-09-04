@@ -26,6 +26,7 @@ public static class AppServices
     public static ILyricsOnlineService LyricsOnline { get; set; } = null!;
     public static SleepTimerService SleepTimer { get; private set; } = null!;
     public static ScrobbleService Scrobbler { get; private set; } = null!;
+    public static Core.Audio.Dsp.Plugins.DspPluginLoader DspPlugins { get; private set; } = null!;
 
     public static DispatcherQueue? Ui { get; private set; }
     public static IntPtr MainWindowHandle { get; private set; }
@@ -108,6 +109,10 @@ public static class AppServices
         Playback = new PlaybackController(Settings, Playlists);
         SleepTimer = new SleepTimerService();
         Scrobbler = new ScrobbleService(() => Settings, msg => App.Log(msg));
+        DspPlugins = new Core.Audio.Dsp.Plugins.DspPluginLoader(msg => App.Log($"[dsp-plugins] {msg}"));
+        DspPlugins.Reload();
+        // The controller's chain effect reads this loader when a session builds its graph.
+        Playback.AttachDspPlugins(DspPlugins);
         Playlists.ItemsRemoved += (_, items) => Playback.Queue.RemoveItems(items);
 
         AudioSettings = new AudioSettingsService(Settings, Playback);
@@ -170,6 +175,7 @@ public static class AppServices
             RunOnUi(() => OutputSessionChanged?.Invoke(info));
             // A fresh sequencer carries no impulse; the convolver re-applies per session.
             Playback.ApplyConvolution();
+            Playback.ApplyPluginDsp();
         };
         Library.TracksChanged += () =>
         {

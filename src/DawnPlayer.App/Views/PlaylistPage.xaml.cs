@@ -253,6 +253,53 @@ public sealed partial class PlaylistPage : Page
     private void OnRateItems5(object sender, RoutedEventArgs e) => RateSelected(5);
     private void OnUnrateItems(object sender, RoutedEventArgs e) => RateSelected(0);
 
+    private async void OnConvertItems(object sender, RoutedEventArgs e)
+    {
+        var sel = SelectedItems();
+        if (sel.Count == 0) return;
+
+        try
+        {
+            var folder = await PlaylistDialogs.PickMusicFolderAsync(AppServices.MainWindowHandle);
+            if (string.IsNullOrEmpty(folder)) return;
+
+            var options = new Core.Audio.TranscodeOptions
+            {
+                OutputDirectory = folder,
+                ApplyReplayGain = false,
+                WriteTags = true,
+            };
+
+            AppServices.RaiseWarning(AppStrings.Get("Convert_Started", "변환을 시작합니다. 완료하면 알려 드립니다."));
+
+            _ = Task.Run(() =>
+            {
+                int ok = 0, failed = 0;
+                foreach (var item in sel)
+                {
+                    try
+                    {
+                        var output = Core.Audio.AudioTranscoder.ConvertToWav(item.Track, options, out var r);
+                        if (r == Core.Audio.TranscodeResult.Ok && output != null) ok++;
+                        else failed++;
+                    }
+                    catch (Exception ex)
+                    {
+                        App.Log($"[convert] {item.Track.Path}: {ex}");
+                        failed++;
+                    }
+                }
+
+                AppServices.RaiseWarning(AppStrings.Format(
+                    "Convert_Done", "변환 완료: {0}개 성공, {1}개 실패", ok, failed));
+            });
+        }
+        catch (Exception ex)
+        {
+            App.Log($"[convert] {ex}");
+        }
+    }
+
     private void OnSidebarListRightTapped(object sender, RightTappedRoutedEventArgs e)
     {
         if (e.OriginalSource is FrameworkElement fe && VisualTreeHelperExtensions.FindAncestorDataContext<Playlist>(fe) is { } pl)

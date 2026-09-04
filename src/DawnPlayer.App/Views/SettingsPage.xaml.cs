@@ -77,6 +77,19 @@ public sealed partial class SettingsPage : Page
         ViewModel.RefreshAll();
         UpdateLyricsPreview();
         RenderVisualizer();
+
+        if (AppServices.Settings != null)
+        {
+            DspPluginsToggle.IsOn = AppServices.Settings.Plugins.DspEnabled;
+        }
+    }
+
+    private void OnDspPluginsToggled(object sender, RoutedEventArgs e)
+    {
+        if (AppServices.Settings == null) return;
+        AppServices.Settings.Plugins.DspEnabled = DspPluginsToggle.IsOn;
+        SettingsWriter.Schedule(AppServices.Settings);
+        AppServices.Playback?.ApplyPluginDsp();
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)

@@ -801,4 +801,11 @@
   <data name="Lastfm_AuthFailed" xml:space="preserve"><value>인증 실패: {0}</value></data>
   <data name="Lastfm_EnabledOn" xml:space="preserve"><value>스러블링 켬</value></data>
   <data name="Lastfm_EnabledOff" xml:space="preserve"><value>꺼짐</value></data>
+  <data name="Settings_Plugins_Dsp_Title.Text" xml:space="preserve"><value>DSP 플러그인 사용</value></data>
+  <data name="Settings_Plugins_Dsp_Desc.Text" xml:space="preserve"><value>플러그인 폴더의 DSP 효과를 재생 체인 끝에 적용합니다. 플러그인 추가 후 앱을 다시 시작하면 인식됩니다.</value></data>
+  <data name="Settings_Plugins_Dsp_Toggle.OnContent" xml:space="preserve"><value>사용</value></data>
+  <data name="Settings_Plugins_Dsp_Toggle.OffContent" xml:space="preserve"><value>사용 안 함</value></data>
+  <data name="Playlist_TrackMenu_Convert.Text" xml:space="preserve"><value>WAV로 변환...</value></data>
+  <data name="Convert_Started" xml:space="preserve"><value>변환을 시작합니다. 완료하면 알려 드립니다.</value></data>
+  <data name="Convert_Done" xml:space="preserve"><value>변환 완료: {0}개 성공, {1}개 실패</value></data>
 </root>
