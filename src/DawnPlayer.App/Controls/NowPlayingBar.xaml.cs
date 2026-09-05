@@ -573,7 +573,7 @@ public sealed partial class NowPlayingBar : UserControl
         if (tracks.Count > 0)
         {
             var pl = AppServices.Playlists.CreatePlaylistFromTracks(AppStrings.Get("Msg_DefaultSavedQueueName", "대기열 저장"), tracks);
-            AppServices.RaiseWarning(AppStrings.Format("Msg_SavedQueueToPlaylist", tracks.Count, pl.Name));
+            AppServices.RaiseWarning(AppStrings.Format("Msg_SavedQueueToPlaylist", "대기열 {0}곡을 '{1}'에 저장했습니다.", tracks.Count, pl.Name));
         }
     }
 

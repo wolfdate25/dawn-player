@@ -51,7 +51,7 @@ public sealed partial class SettingsPage : Page
         var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
         if (version != null && AboutVersionText != null)
         {
-            AboutVersionText.Text = AppStrings.Format("Settings_About_VersionFormat", version.ToString(3));
+            AboutVersionText.Text = AppStrings.Format("Settings_About_VersionFormat", "버전 {0} (x64) · foobar2000 & Eole 영감 네이티브 플레이어", version.ToString(3));
         }
 
         Loaded += OnPageLoaded;
@@ -238,7 +238,7 @@ public sealed partial class SettingsPage : Page
                 var overwrite = new ContentDialog
                 {
                     Title = AppStrings.Get("Msg_ShortcutConflictTitle", "단축키 충돌"),
-                    Content = AppStrings.Format("Msg_ShortcutConflictMessage",
+                    Content = AppStrings.Format("Msg_ShortcutConflictMessage", "'{0}' 은(는) 이미 '{1}'에 할당되어 있습니다. 덮어쓰면 해당 명령의 단축키가 해제됩니다.",
                         chord.ToDisplayString(),
                         ShortcutSettingsViewModel.GetCommandDisplayName(conflicting)),
                     PrimaryButtonText = AppStrings.Get("Common_Overwrite", "덮어쓰기"),
@@ -315,7 +315,7 @@ public sealed partial class SettingsPage : Page
         var input = new TextBox
         {
             PlaceholderText = AppStrings.Get("Msg_EqProfilePlaceholder", "프로필 이름 입력 (예: 보컬 부스트, 헤드폰)"),
-            Text = AppStrings.Format("Msg_EqProfileDefaultName", ViewModel.Equalizer.Profiles.Count + 1)
+            Text = AppStrings.Format("Msg_EqProfileDefaultName", "프로필 {0}", ViewModel.Equalizer.Profiles.Count + 1)
         };
         dialog.Content = input;
 
@@ -359,7 +359,7 @@ public sealed partial class SettingsPage : Page
         var dialog = new ContentDialog
         {
             Title = AppStrings.Get("Msg_EqDeleteProfileTitle", "프로필 삭제"),
-            Content = AppStrings.Format("Msg_EqDeleteProfileMessage", ViewModel.Equalizer.ProfileName),
+            Content = AppStrings.Format("Msg_EqDeleteProfileMessage", "'{0}' 프로필을 삭제하시겠습니까?\n이 프로필에 연결된 장치는 기본 프로필로 전환됩니다.", ViewModel.Equalizer.ProfileName),
             PrimaryButtonText = AppStrings.Get("Common_Delete", "삭제"),
             CloseButtonText = AppStrings.Get("Common_Cancel", "취소"),
             DefaultButton = ContentDialogButton.Close,

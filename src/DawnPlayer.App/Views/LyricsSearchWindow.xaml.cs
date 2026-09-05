@@ -105,7 +105,7 @@ public sealed partial class LyricsSearchWindow : Window
 
         if (AppServices.LyricsOnline == null || AppServices.LyricsOnline.Plugins.Count == 0)
         {
-            StatusText.Text = AppStrings.Format("LyricsSearch_NoPluginsFound", AppPaths.PluginsDir);
+            StatusText.Text = AppStrings.Format("LyricsSearch_NoPluginsFound", "설치된 가사 플러그인이 없습니다.\n플러그인 폴더({0})에 플러그인별 폴더를 만들어 DLL을 넣고 '다시 스캔'하세요.\n개발 방법은 docs/plugin-development.md를 참고하세요.", AppPaths.PluginsDir);
             SearchButton.IsEnabled = false;
             return;
         }
@@ -162,10 +162,10 @@ public sealed partial class LyricsSearchWindow : Window
                 var failed = outcomes.Where(o => o.Error != null).Select(o => $"{o.Plugin.Name}: {o.Error}").ToList();
                 StatusText.Text = _results.Count > 0
                     ? (failed.Count > 0
-                        ? AppStrings.Format("LyricsSearch_ResultsWithFailures", _results.Count, failed.Count)
-                        : AppStrings.Format("LyricsSearch_ResultsCount", _results.Count))
+                        ? AppStrings.Format("LyricsSearch_ResultsWithFailures", "{0}개 결과 · 실패 {1}개 플러그인", _results.Count, failed.Count)
+                        : AppStrings.Format("LyricsSearch_ResultsCount", "{0}개 결과", _results.Count))
                     : (failed.Count > 0
-                        ? AppStrings.Format("LyricsSearch_NoResultsWithErrors", string.Join(", ", failed))
+                        ? AppStrings.Format("LyricsSearch_NoResultsWithErrors", "결과 없음 · {0}", string.Join(", ", failed))
                         : AppStrings.Get("LyricsSearch_NoResults", "결과 없음. 다른 검색어로 시도해 보세요."));
             });
         }
@@ -176,7 +176,7 @@ public sealed partial class LyricsSearchWindow : Window
         {
             DispatcherQueue?.TryEnqueue(() =>
             {
-                if (!_closed) StatusText.Text = AppStrings.Format("LyricsSearch_SearchFailed", ex.Message);
+                if (!_closed) StatusText.Text = AppStrings.Format("LyricsSearch_SearchFailed", "검색 실패: {0}", ex.Message);
             });
         }
         finally
@@ -230,7 +230,7 @@ public sealed partial class LyricsSearchWindow : Window
             DispatcherQueue?.TryEnqueue(() =>
             {
                 if (!_closed && ReferenceEquals(ResultsList.SelectedItem, vm))
-                    PreviewText.Text = AppStrings.Format("LyricsSearch_FetchError", ex.Message);
+                    PreviewText.Text = AppStrings.Format("LyricsSearch_FetchError", "불러오기 실패: {0}", ex.Message);
             });
         }
         finally
@@ -258,7 +258,7 @@ public sealed partial class LyricsSearchWindow : Window
             return;
         }
         AppServices.LyricsOnline!.ApplyResult(fetched, _track);
-        StatusText.Text = AppStrings.Format("LyricsSearch_ApplySuccess", fetched.PluginName);
+        StatusText.Text = AppStrings.Format("LyricsSearch_ApplySuccess", "'{0}' 가사를 적용했습니다.", fetched.PluginName);
     }
 
     private async void OnSaveClick(object sender, RoutedEventArgs e)
@@ -274,8 +274,8 @@ public sealed partial class LyricsSearchWindow : Window
         var outcome = AppServices.LyricsOnline!.SaveResult(fetched, _track);
         StatusText.Text = outcome.Result switch
         {
-            LyricsSaveResult.Saved => AppStrings.Format("LyricsSearch_SaveResult_Saved", outcome.Path ?? ""),
-            LyricsSaveResult.SkippedExisting => AppStrings.Format("LyricsSearch_SaveResult_Skipped", outcome.Path ?? ""),
+            LyricsSaveResult.Saved => AppStrings.Format("LyricsSearch_SaveResult_Saved", "저장했습니다: {0}", outcome.Path ?? ""),
+            LyricsSaveResult.SkippedExisting => AppStrings.Format("LyricsSearch_SaveResult_Skipped", "이미 파일이 있어 건너뛰었습니다: {0}", outcome.Path ?? ""),
             _ => outcome.Error ?? AppStrings.Get("LyricsSearch_SaveResult_Failed", "저장에 실패했습니다.")
         };
     }

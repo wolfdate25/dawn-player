@@ -166,7 +166,7 @@ public static class PlaylistDialogs
             }
             catch (Exception ex)
             {
-                AppServices.RaiseWarning(AppStrings.Format("Msg_SaveFailed", ex.Message));
+                AppServices.RaiseWarning(AppStrings.Format("Msg_SaveFailed", "저장 실패: {0}", ex.Message));
             }
         }
     }

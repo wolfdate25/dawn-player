@@ -59,8 +59,8 @@ public sealed class AudioSettingsService : IAudioSettingsService
                     ? AppStrings.Get("Audio_PriorityAllowed", "허용됨 (우선권 자동 획득)")
                     : AppStrings.Get("Audio_PriorityDisabled", "꺼짐 (다른 앱 실행 시 실패)");
 
-                string statusText = AppStrings.Format("Audio_ExclusiveStatusFormat", exclusiveStr, priorityStr);
-                string detailsText = AppStrings.Format("Audio_ExclusiveDetailsFormat", exclusiveAllowed, priorityAllowed);
+                string statusText = AppStrings.Format("Audio_ExclusiveStatusFormat", "독점 제어: {0}  |  우선 순위: {1}", exclusiveStr, priorityStr);
+                string detailsText = AppStrings.Format("Audio_ExclusiveDetailsFormat", "독점 제어 허용: {0}, 우선 순위 부여: {1}", exclusiveAllowed, priorityAllowed);
 
                 return new ExclusiveModeStatus(exclusiveAllowed, priorityAllowed, statusText, detailsText);
             }

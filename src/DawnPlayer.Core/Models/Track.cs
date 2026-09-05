@@ -75,23 +75,34 @@ public sealed record Track
 
     /// <summary>
     /// Stable key identifying this track's album, used both for art-cache file names and for album
-    /// grouping / album shuffle: normalized album artist + album. Tracks with neither tag fall back
-    /// to a per-file path key, so untagged files do not collapse into one enormous album.
+    /// grouping / album shuffle: normalized album artist + album. Tracks without an album tag fall
+    /// back to the containing folder (folder-as-album convention), so a folder of loose untagged
+    /// tracks groups into one entry instead of one singleton card per file — note this changes the
+    /// key format of the untagged fallback; previously-extracted art survives via the per-track
+    /// ArtPath stored in the database.
     /// The exact format is persisted in the on-disk art cache and must not change.
     /// </summary>
     public string AlbumKey => AlbumKeyCache.GetValue(this, static t => t.ComputeAlbumKey());
 
     private string ComputeAlbumKey()
     {
-        var artist = SortArtist.Trim().ToLowerInvariant();
-        var album = Album.Trim().ToLowerInvariant();
-        if (artist.Length == 0 && album.Length == 0)
+        var album = Album?.Trim();
+        if (string.IsNullOrEmpty(album))
         {
-            return string.IsNullOrWhiteSpace(Path)
-                ? "\u0001"
-                : ("file:" + Path.Trim().ToLowerInvariant());
+            // No album tag: the containing folder is the album identity, so a folder of loose
+            // untagged tracks groups into ONE album instead of N singleton cards that all display
+            // the same folder art. (The earlier per-file fallback split them.)
+            var dir = string.IsNullOrWhiteSpace(Path)
+                ? null
+                : System.IO.Path.GetDirectoryName(Path.Trim());
+            if (string.IsNullOrWhiteSpace(dir))
+            {
+                return "\u0001";
+            }
+            return "folder:" + dir.Trim().ToLowerInvariant();
         }
-        return artist + "\u0001" + album;
+        var artist = SortArtist.Trim().ToLowerInvariant();
+        return artist + "\u0001" + album.ToLowerInvariant();
     }
 
     public override string ToString() => $"{Artist} - {Title}";

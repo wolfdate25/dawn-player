@@ -334,8 +334,8 @@ public class TagReaderAndCodecDetectionTests
         var key2 = TagReader.ComputeAlbumKey(track2);
 
         Assert.NotEqual(key1, key2);
-        Assert.StartsWith("file:", key1);
-        Assert.StartsWith("file:", key2);
+        Assert.StartsWith("folder:", key1);
+        Assert.StartsWith("folder:", key2);
         Assert.Contains("untaggedfoldera", key1);
         Assert.Contains("untaggedfolderb", key2);
     }

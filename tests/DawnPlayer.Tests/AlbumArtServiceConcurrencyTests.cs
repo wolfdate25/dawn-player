@@ -171,17 +171,17 @@ public class AlbumArtServiceConcurrencyTests
     [Fact]
     public void AlbumArtService_ComputeAlbumKey_UntaggedAndWhitespaceVariations()
     {
-        // 1. Both empty -> path-based
+        // 1. Both empty -> folder-based (folder-as-album)
         var t1 = new Track { Path = @"C:\Music\Folder1\track.mp3", Artist = "", Album = "" };
         var k1 = AlbumArtService.ComputeAlbumKey(t1);
-        Assert.Equal(@"file:c:\music\folder1\track.mp3", k1);
+        Assert.Equal(@"folder:c:\music\folder1", k1);
 
-        // 2. Both whitespace -> path-based
+        // 2. Both whitespace -> folder-based
         var t2 = new Track { Path = @"C:\Music\Folder1\track.mp3", Artist = "   ", Album = "\t\n" };
         var k2 = AlbumArtService.ComputeAlbumKey(t2);
-        Assert.Equal(@"file:c:\music\folder1\track.mp3", k2);
+        Assert.Equal(@"folder:c:\music\folder1", k2);
 
-        // 3. Different paths for untagged -> distinct keys
+        // 3. Different folders for untagged -> distinct keys
         var t3 = new Track { Path = @"C:\Music\Folder2\track.mp3", Artist = "", Album = "" };
         var k3 = AlbumArtService.ComputeAlbumKey(t3);
         Assert.NotEqual(k1, k3);
@@ -191,10 +191,11 @@ public class AlbumArtServiceConcurrencyTests
         var k4 = AlbumArtService.ComputeAlbumKey(t4);
         Assert.Equal("\u0001", k4);
 
-        // 5. Artist present but album empty
+        // 5. Artist present but album empty -> folder fallback still wins (folder-as-album),
+        //    so an artist's untagged tracks in different folders no longer merge into one bucket.
         var t5 = new Track { Path = @"C:\Music\track.mp3", Artist = "Adele", Album = "" };
         var k5 = AlbumArtService.ComputeAlbumKey(t5);
-        Assert.Equal("adele\u0001", k5);
+        Assert.Equal(@"folder:c:\music", k5);
     }
 
     [Fact]

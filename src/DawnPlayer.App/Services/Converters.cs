@@ -108,7 +108,7 @@ public static class TextFormat
     {
         if (t <= TimeSpan.Zero) return AppStrings.Get("Time_ZeroSeconds", "0초");
         if (t.TotalDays >= 1 || t.TotalHours >= 1)
-            return AppStrings.Format("Time_HoursMinutesFormat", (int)t.TotalHours, t.Minutes);
-        return AppStrings.Format("Time_MinutesFormat", (int)t.TotalMinutes);
+            return AppStrings.Format("Time_HoursMinutesFormat", "{0}시간 {1}분", (int)t.TotalHours, t.Minutes);
+        return AppStrings.Format("Time_MinutesFormat", "{0}분", (int)t.TotalMinutes);
     }
 }

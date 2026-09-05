@@ -143,19 +143,21 @@ public class TrackModelAndSortingKeyTests
         var b = new Track { Path = @"C:\rips\disc2\01.flac" };
 
         Assert.NotEqual(a.AlbumKey, b.AlbumKey);
-        Assert.Equal(@"file:c:\rips\disc1\01.flac", a.AlbumKey);
-        Assert.Equal(@"file:c:\rips\disc2\01.flac", b.AlbumKey);
+        Assert.Equal(@"folder:c:\rips\disc1", a.AlbumKey);
+        Assert.Equal(@"folder:c:\rips\disc2", b.AlbumKey);
     }
 
     [Fact]
-    public void AlbumKey_UntaggedFilesInSameFolder_GetOneKeyPerFile()
+    public void AlbumKey_UntaggedFilesInSameFolder_ShareFolderKey()
     {
         var a = new Track { Path = @"C:\rips\disc1\01.flac" };
         var b = new Track { Path = @"C:\rips\disc1\02.flac" };
 
-        // The fallback is per file, not per folder: sibling untagged files must not share a key, or
-        // they resolve to each other's cached cover.
-        Assert.NotEqual(a.AlbumKey, b.AlbumKey);
+        // Folder-as-album: sibling untagged files group into ONE album (folder = album), so an
+        // untagged folder shows a single card instead of N identical singleton cards repeating
+        // the same folder art.
+        Assert.Equal(a.AlbumKey, b.AlbumKey);
+        Assert.Equal(@"folder:c:\rips\disc1", a.AlbumKey);
         Assert.Equal(AlbumArtService.ComputeAlbumKey(a), a.AlbumKey);
         Assert.Equal(AlbumArtService.ComputeAlbumKey(b), b.AlbumKey);
     }

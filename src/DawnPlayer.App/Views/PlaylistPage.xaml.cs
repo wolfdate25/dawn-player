@@ -526,14 +526,14 @@ public sealed partial class PlaylistPage : Page
                 {
                     PlaylistsCountText.Text = AppServices.Playlists.Playlists.Count.ToString(CultureInfo.InvariantCulture);
                     PlaylistsSidebarList.SelectedItem = pl;
-                    AppServices.RaiseWarning(AppStrings.Format("Msg_PlaylistImported", pl.Name, pl.Items.Count));
+                    AppServices.RaiseWarning(AppStrings.Format("Msg_PlaylistImported", "'{0}' 재생목록을 가져왔습니다 ({1}곡).", pl.Name, pl.Items.Count));
                 }
             }
         }
         catch (Exception ex)
         {
             App.Log($"[OnImportPlaylistClick Error] {ex}");
-            AppServices.RaiseWarning(AppStrings.Format("Msg_ImportFailed", ex.Message));
+            AppServices.RaiseWarning(AppStrings.Format("Msg_ImportFailed", "가져오기 실패: {0}", ex.Message));
         }
     }
 
@@ -613,7 +613,7 @@ public sealed partial class PlaylistPage : Page
             int removed = await AppServices.Playlists.RemoveDeadItemsAsync(Current);
             if (removed > 0)
             {
-                AppServices.RaiseWarning(AppStrings.Format("Msg_RemovedMissingFiles", removed));
+                AppServices.RaiseWarning(AppStrings.Format("Msg_RemovedMissingFiles", "존재하지 않는 파일 {0}곡을 재생목록에서 제거했습니다.", removed));
             }
             else
             {

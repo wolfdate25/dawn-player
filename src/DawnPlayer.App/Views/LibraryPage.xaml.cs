@@ -410,7 +410,7 @@ public sealed partial class LibraryPage : Page
         string nodeLabel = _selectedNode?.Title ?? "Mixed selection";
         StatusText.Text = _visible.Count == 0
             ? AppStrings.Get("Msg_LibraryEmptyStatus", "트랙 없음 — 설정에서 음악 폴더를 추가하고 스캔하세요.")
-            : AppStrings.Format("Msg_LibraryStatusBarFormat", nodeLabel, TextFormat.LongDuration(TimeSpan.FromMilliseconds(totalMs)), _visible.Count, AlbumCards.Count);
+            : AppStrings.Format("Msg_LibraryStatusBarFormat", "{0} • {1}, {2:N0}곡, {3:N0}개 앨범", nodeLabel, TextFormat.LongDuration(TimeSpan.FromMilliseconds(totalMs)), _visible.Count, AlbumCards.Count);
     }
 
     private void RechunkAlbumRows()
@@ -582,7 +582,7 @@ public sealed partial class LibraryPage : Page
         if (_visible.Count == 0) return;
         var items = PlaybackUiHelper.AddTracksToNowPlaying(AppServices.Playlists, _visible);
         if (items.Count > 0)
-            AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToCurrentPlaylist", items.Count));
+            AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToCurrentPlaylist", "현재 재생목록에 {0}곡을 추가했습니다.", items.Count));
     }
 
     private void OnTreeContextMenuEnqueue(object sender, RoutedEventArgs e)
@@ -591,7 +591,7 @@ public sealed partial class LibraryPage : Page
         var items = PlaybackUiHelper.EnqueueAlbumNowPlaying(
             AppServices.Playlists, AppServices.Playback, _visible);
         if (items.Count > 0)
-            AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToQueue", items.Count));
+            AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToQueue", "대기열에 {0}곡을 추가했습니다.", items.Count));
     }
 
     private void OnTreeContextMenuOpening(object? sender, object e)
@@ -744,7 +744,7 @@ public sealed partial class LibraryPage : Page
         if (row?.SelectedAlbum != null && row.SelectedAlbum.Tracks.Count > 0)
         {
             PlaybackUiHelper.EnqueueAlbumNowPlaying(AppServices.Playlists, AppServices.Playback, row.SelectedAlbum.Tracks);
-            AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToQueue", row.SelectedAlbum.Tracks.Count));
+            AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToQueue", "대기열에 {0}곡을 추가했습니다.", row.SelectedAlbum.Tracks.Count));
         }
     }
 
@@ -754,7 +754,7 @@ public sealed partial class LibraryPage : Page
         if (row?.SelectedAlbum != null && row.SelectedAlbum.Tracks.Count > 0)
         {
             PlaybackUiHelper.AddTracksToNowPlaying(AppServices.Playlists, row.SelectedAlbum.Tracks);
-            AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToCurrentPlaylist", row.SelectedAlbum.Tracks.Count));
+            AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToCurrentPlaylist", "현재 재생목록에 {0}곡을 추가했습니다.", row.SelectedAlbum.Tracks.Count));
         }
     }
 
@@ -818,7 +818,7 @@ public sealed partial class LibraryPage : Page
     {
         var items = PlaybackUiHelper.AddTracksToNowPlaying(AppServices.Playlists, GetSelectedDrawerTracks(sender));
         if (items.Count > 0)
-            AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToCurrentPlaylist", items.Count));
+            AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToCurrentPlaylist", "현재 재생목록에 {0}곡을 추가했습니다.", items.Count));
     }
 
     private void OnDrawerTrackEnqueue(object sender, RoutedEventArgs e) =>
@@ -873,7 +873,7 @@ public sealed partial class LibraryPage : Page
         if (tracks.Count > 0)
         {
             PlaybackUiHelper.AddTracksToNowPlaying(AppServices.Playlists, tracks);
-            AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToCurrentPlaylist", tracks.Count));
+            AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToCurrentPlaylist", "현재 재생목록에 {0}곡을 추가했습니다.", tracks.Count));
         }
     }
 
@@ -883,7 +883,7 @@ public sealed partial class LibraryPage : Page
         if (tracks.Count > 0)
         {
             PlaybackUiHelper.EnqueueAlbumNowPlaying(AppServices.Playlists, AppServices.Playback, tracks);
-            AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToQueue", tracks.Count));
+            AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToQueue", "대기열에 {0}곡을 추가했습니다.", tracks.Count));
         }
     }
 
@@ -925,7 +925,7 @@ public sealed partial class LibraryPage : Page
             if (tracks.Count > 0)
             {
                 var pl = AppServices.Playlists.CreatePlaylistFromTracks(null, tracks);
-                AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToNamedPlaylist", pl.Name, tracks.Count));
+                AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToNamedPlaylist", "'{0}'에 {1}곡을 추가했습니다.", pl.Name, tracks.Count));
             }
         };
         subMenu.Items.Add(createNewItem);
@@ -948,7 +948,7 @@ public sealed partial class LibraryPage : Page
                     if (tracks.Count > 0)
                     {
                         AppServices.Playlists.AddTracks(targetPl, tracks);
-                        AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToNamedPlaylist", targetPl.Name, tracks.Count));
+                        AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToNamedPlaylist", "'{0}'에 {1}곡을 추가했습니다.", targetPl.Name, tracks.Count));
                     }
                 };
                 subMenu.Items.Add(plItem);
@@ -1009,7 +1009,7 @@ public sealed partial class LibraryPage : Page
     {
         var items = PlaybackUiHelper.AddTracksToNowPlaying(AppServices.Playlists, GetSelectedTracks());
         if (items.Count > 0)
-            AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToCurrentPlaylist", items.Count));
+            AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToCurrentPlaylist", "현재 재생목록에 {0}곡을 추가했습니다.", items.Count));
     }
 
     private void OnQueueSelected(object sender, RoutedEventArgs e) =>

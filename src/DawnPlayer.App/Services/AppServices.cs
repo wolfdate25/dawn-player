@@ -450,7 +450,7 @@ public static class AppServices
         {
             try { await Library.ScanAsync(Settings, ct); }
             catch (OperationCanceledException) { }
-            catch (Exception ex) { RunOnUi(() => WarningRaised?.Invoke(AppStrings.Format("Msg_LibraryScanFailed", ex.Message))); }
+            catch (Exception ex) { RunOnUi(() => WarningRaised?.Invoke(AppStrings.Format("Msg_LibraryScanFailed", "라이브러리 스캔 실패: {0}", ex.Message))); }
             finally
             {
                 Interlocked.CompareExchange(ref _scanCts, null, cts);
@@ -492,7 +492,7 @@ public static class AppServices
                     var ex = t.Exception?.InnerException;
                     if (ex != null && ex is not OperationCanceledException)
                     {
-                        RunOnUi(() => WarningRaised?.Invoke(AppStrings.Format("Msg_RgScanFailed", ex.Message)));
+                        RunOnUi(() => WarningRaised?.Invoke(AppStrings.Format("Msg_RgScanFailed", "ReplayGain 분석 실패: {0}", ex.Message)));
                     }
                 }
             }, TaskScheduler.Default);

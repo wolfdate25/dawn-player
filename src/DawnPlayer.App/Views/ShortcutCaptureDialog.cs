@@ -30,7 +30,7 @@ internal sealed class ShortcutCaptureDialog : ContentDialog
 
     public ShortcutCaptureDialog(string commandDisplayName)
     {
-        Title = AppStrings.Format("Msg_ShortcutCaptureTitle", commandDisplayName);
+        Title = AppStrings.Format("Msg_ShortcutCaptureTitle", "단축키 지정 — {0}", commandDisplayName);
         CloseButtonText = AppStrings.Get("Common_Cancel", "취소");
         DefaultButton = ContentDialogButton.None;
 

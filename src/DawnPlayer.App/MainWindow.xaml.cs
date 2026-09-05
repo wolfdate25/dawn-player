@@ -646,7 +646,7 @@ public sealed partial class MainWindow : Window
         {
             var baseText = AppStrings.Get("MainWindow_SettingsGearButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip", "환경설정");
             ToolTipService.SetToolTip(SettingsGearButton,
-                text == null ? baseText : AppStrings.Format("Msg_PreferencesWithChord", text));
+                text == null ? baseText : AppStrings.Format("Msg_PreferencesWithChord", "환경설정 ({0})", text));
         }
 
         PlayerBar?.RefreshShortcutHints();
@@ -681,7 +681,7 @@ public sealed partial class MainWindow : Window
                     var imported = await AppServices.Playlists.ImportPlaylistAsync(plFile);
                     if (imported != null)
                     {
-                        NotifyBar.Message = AppStrings.Format("Msg_PlaylistImported", imported.Name, imported.Items.Count);
+                        NotifyBar.Message = AppStrings.Format("Msg_PlaylistImported", "'{0}' 재생목록을 가져왔습니다 ({1}곡).", imported.Name, imported.Items.Count);
                         NotifyBar.Severity = InfoBarSeverity.Informational;
                         NotifyBar.IsOpen = true;
                     }
@@ -691,14 +691,14 @@ public sealed partial class MainWindow : Window
             if (audioPaths.Count > 0)
             {
                 var added = await AppServices.Playlists.AddPathsAsync(AppServices.Playlists.Current, audioPaths);
-                NotifyBar.Message = AppStrings.Format("Msg_TracksAddedToPlaylist", added.Count, AppServices.Playlists.Current.Name);
+                NotifyBar.Message = AppStrings.Format("Msg_TracksAddedToPlaylist", "{0}개 트랙을 '{1}'에 추가했습니다.", added.Count, AppServices.Playlists.Current.Name);
                 NotifyBar.Severity = InfoBarSeverity.Informational;
                 NotifyBar.IsOpen = true;
             }
         }
         catch (Exception ex)
         {
-            ShowWarning(AppStrings.Format("Msg_DropFailed", ex.Message));
+            ShowWarning(AppStrings.Format("Msg_DropFailed", "드롭 처리 실패: {0}", ex.Message));
         }
     }
 }

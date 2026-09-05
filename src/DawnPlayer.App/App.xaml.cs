@@ -32,7 +32,7 @@ public partial class App : Application
             try
             {
                 Services.AppServices.RaiseWarning(
-                    AppStrings.Format("Msg_UnhandledException", e.Exception?.Message ?? string.Empty));
+                    AppStrings.Format("Msg_UnhandledException", "예기치 않은 오류가 발생했습니다: {0}\n자세한 내용은 로그를 확인하세요.", e.Exception?.Message ?? string.Empty));
             }
             catch { }
         };
@@ -71,7 +71,7 @@ public partial class App : Application
             Log($"[FATAL OnLaunched] {ex}");
             try
             {
-                var msg = AppStrings.Format("Msg_StartupFatalError", ex.Message, AppPaths.LogFile);
+                var msg = AppStrings.Format("Msg_StartupFatalError", "Dawn Player를 시작할 수 없습니다.\n\n{0}\n\n자세한 내용: {1}", ex.Message, AppPaths.LogFile);
                 _ = MessageBox(IntPtr.Zero, msg, "Dawn Player", 0x00000010 /* MB_ICONERROR */);
             }
             catch { }

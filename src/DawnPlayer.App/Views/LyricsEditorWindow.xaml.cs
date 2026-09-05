@@ -210,7 +210,7 @@ public sealed partial class LyricsEditorWindow : Window
                     Text = l.Text
                 });
             }
-            StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_LinesLoaded", doc.Lines.Count);
+            StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_LinesLoaded", "가사 {0}줄 로드됨", doc.Lines.Count);
         }
         else
         {
@@ -297,7 +297,7 @@ public sealed partial class LyricsEditorWindow : Window
         {
             double delta = val - _totalOffsetMs;
             _totalOffsetMs = val;
-            TotalOffsetSecLabel.Text = AppStrings.Format("LyricsEditor_TotalOffsetSecondsFormat", $"{(_totalOffsetMs / 1000.0):+0.0000;-0.0000;0.0000}");
+            TotalOffsetSecLabel.Text = AppStrings.Format("LyricsEditor_TotalOffsetSecondsFormat", "(= {0}초)", $"{(_totalOffsetMs / 1000.0):+0.0000;-0.0000;0.0000}");
             ApplyOffsetDeltaToLines(delta);
         }
     }
@@ -306,7 +306,7 @@ public sealed partial class LyricsEditorWindow : Window
     {
         _updatingFromSync = true;
         TotalOffsetBox.Text = _totalOffsetMs >= 0 ? $"+{_totalOffsetMs:F3}" : $"{_totalOffsetMs:F3}";
-        TotalOffsetSecLabel.Text = AppStrings.Format("LyricsEditor_TotalOffsetSecondsFormat", $"{(_totalOffsetMs / 1000.0):+0.0000;-0.0000;0.0000}");
+        TotalOffsetSecLabel.Text = AppStrings.Format("LyricsEditor_TotalOffsetSecondsFormat", "(= {0}초)", $"{(_totalOffsetMs / 1000.0):+0.0000;-0.0000;0.0000}");
         _updatingFromSync = false;
     }
 
@@ -436,13 +436,13 @@ public sealed partial class LyricsEditorWindow : Window
                     }
                     ReindexLines();
                     SyncToRawText();
-                    StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_ClipboardImported", doc.Lines.Count);
+                    StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_ClipboardImported", "클립보드에서 {0}줄 가사를 불러왔습니다.", doc.Lines.Count);
                 }
             }
         }
         catch (Exception ex)
         {
-            StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_PasteError", ex.Message);
+            StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_PasteError", "붙여넣기 오류: {0}", ex.Message);
         }
     }
 
@@ -532,11 +532,11 @@ public sealed partial class LyricsEditorWindow : Window
             LrcParser.SaveToFile(_targetLrcPath, content);
 
             AppServices.RaiseLyricsChanged(_track);
-            StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_SaveSuccess", DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture), _targetLrcPath);
+            StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_SaveSuccess", "성공적으로 저장됨: {0} ({1})", DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture), _targetLrcPath);
         }
         catch (Exception ex)
         {
-            StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_SaveFailed", ex.Message);
+            StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_SaveFailed", "저장 실패: {0}", ex.Message);
         }
     }
 
