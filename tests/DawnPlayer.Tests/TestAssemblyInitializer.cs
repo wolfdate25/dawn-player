@@ -2,6 +2,9 @@ using System;
 using System.IO;
 using System.Runtime.CompilerServices;
 using DawnPlayer.Core.Util;
+using Xunit;
+
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
 
 namespace DawnPlayer.Tests;
 
@@ -9,6 +12,9 @@ public static class TestAssemblyInitializer
 {
     private static string? s_testSandboxDir;
 
+    // Parallelism note: tests mutate process-global state (AppPaths.BaseDir redirection). With
+    // parallel collections, a base-dir test's mutation window once pointed concurrent playlist
+    // tests at the REAL %APPDATA%, polluting it with ~20k .m3u8 files — hence serialization.
     [ModuleInitializer]
     public static void Initialize()
     {

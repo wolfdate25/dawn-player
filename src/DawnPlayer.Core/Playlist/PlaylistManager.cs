@@ -412,6 +412,15 @@ public sealed class PlaylistManager : IPlaylistManager
         // to the same .m3u8, and the second one's debounced save silently overwrote the first
         // (trivially reproducible with "Save queue" twice).
         name = UniqueNameLocked(name ?? "재생목록");
+        return RegisterPlaylistLocked(name);
+    }
+
+    /// <summary>Registers a playlist under the exact name given, without the uniqueness scan.
+    /// Used by <see cref="LoadAll"/>, whose names come from on-disk filenames (unique per folder
+    /// by definition) — running the O(existing) uniqueness scan per file made loading a large
+    /// playlists directory quadratic and stalled startup at ~100% CPU for minutes.</summary>
+    private Playlist RegisterPlaylistLocked(string name)
+    {
         var pl = new Playlist(name);
         pl.Items.CollectionChanged += (_, _) => ScheduleSave(pl);
         pl.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Playlist.Name)) ScheduleSave(pl); };
@@ -1127,7 +1136,7 @@ public sealed class PlaylistManager : IPlaylistManager
                     var entries = M3u.Read(file);
                     var plName = Path.GetFileNameWithoutExtension(file);
                     bool isNp = string.Equals(plName, NowPlayingPlaylistName, StringComparison.OrdinalIgnoreCase);
-                    var pl = isNp ? NowPlaying : CreatePlaylist(plName);
+                    var pl = isNp ? NowPlaying : RegisterPlaylistLocked(plName);
                     var items = new List<PlaylistItem>();
                     var unresolved = new List<string>();
 
