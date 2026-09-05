@@ -36,7 +36,7 @@ public static class AudioTranscoder
     /// <summary>Converts one track. Returns the output path, or null with <paramref name="result"/>
     /// describing the failure. Blocking with cancellation checks between decode slices.</summary>
     public static string? ConvertToWav(Track track, TranscodeOptions options, out TranscodeResult result,
-        CancellationToken ct = default, Action<double>? progress = null)
+        Action<double>? progress = null, CancellationToken ct = default)
     {
         result = TranscodeResult.Ok;
         string? outputPath = null;

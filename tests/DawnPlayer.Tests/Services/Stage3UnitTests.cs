@@ -14,6 +14,7 @@ public sealed class Stage3UnitTests
     // ---------------- Last.fm signing ----------------
 
     [Fact]
+#pragma warning disable CA5351 // the signature scheme itself is MD5-based by Last.fm spec
     public void LastfmSign_SortsParameters_AndAppendsSecret()
     {
         // Hand-computed reference: md5("api_keyKEYmethodauth.getTokenfoobar") style ordering is
@@ -39,6 +40,7 @@ public sealed class Stage3UnitTests
         // (documented behavior), so a differing secret must change the signature.
         Assert.NotEqual(sig, LastfmClient.Sign(parameters, "OTHER"));
     }
+#pragma warning restore CA5351
 
     // ---------------- ICY metadata ----------------
 

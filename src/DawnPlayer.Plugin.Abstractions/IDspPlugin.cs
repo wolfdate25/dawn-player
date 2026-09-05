@@ -57,8 +57,15 @@ public sealed class DspPluginAttribute : Attribute
         Author = author;
     }
 
+    /// <summary>Stable unique identifier, e.g. "mono-sample".</summary>
     public string Id { get; }
+
+    /// <summary>Display name shown in the UI.</summary>
     public string Name { get; }
+
+    /// <summary>Plugin version, e.g. "1.0.0".</summary>
     public string Version { get; }
+
+    /// <summary>Plugin author shown in the UI.</summary>
     public string Author { get; }
 }
