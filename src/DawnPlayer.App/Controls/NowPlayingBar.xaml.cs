@@ -38,9 +38,6 @@ public sealed partial class NowPlayingBar : UserControl
     private readonly double[] _spectrumShown = new double[Calculators.SpectrumCalculator.BinCount];
     private long _spectrumVersion = -1;
 
-    // Waveform seekbar state: the peak envelope as 2px texture bars under the seek line.
-    private float[]? _wavePeaks;
-    private int _waveGeneration;
 
     public event Action? LyricsToggleRequested;
 
@@ -108,7 +105,6 @@ public sealed partial class NowPlayingBar : UserControl
             ArtFlyoutImage.Source = null;
             ArtImage.Visibility = Visibility.Collapsed;
             ArtPlaceholder.Visibility = Visibility.Visible;
-            ClearWaveform();
             return;
         }
 
@@ -121,101 +117,8 @@ public sealed partial class NowPlayingBar : UserControl
         UpdateFormatBadge();
 
         UpdateArt(t);
-        LoadWaveform(t);
     }
 
-    private void ClearWaveform()
-    {
-        _wavePeaks = null;
-        WaveformCanvas.Children.Clear();
-        WaveformCanvas.Visibility = Visibility.Collapsed;
-    }
-
-    // ---------------- waveform seekbar ----------------
-
-    /// <summary>
-    /// Decodes the track's peak envelope off-thread (cached in Core by path+mtime) and draws it as
-    /// a low-key texture under the seek line. Cue fragments scan only their own range.
-    /// </summary>
-    private void LoadWaveform(Track track)
-    {
-        // A live stream has no waveform (and opening its URL twice would double the connection).
-        if (Core.Audio.RadioTrack.IsStreamUrl(track.Path))
-        {
-            ClearWaveform();
-            return;
-        }
-
-        int generation = ++_waveGeneration;
-        string path = track.Path;
-        Task.Run(() => Core.Audio.WaveformPeaks.GetOrScan(path)).ContinueWith(t =>
-        {
-            DispatcherQueue.TryEnqueue(() =>
-            {
-                if (generation != _waveGeneration) return; // track changed while scanning
-                _wavePeaks = t.Status == TaskStatus.RanToCompletion ? t.Result : null;
-                RebuildWaveform();
-            });
-        });
-    }
-
-    private void OnWaveformSizeChanged(object sender, SizeChangedEventArgs e) => RebuildWaveform();
-
-    private void RebuildWaveform()
-    {
-        WaveformCanvas.Children.Clear();
-        var peaks = _wavePeaks;
-        double width = WaveformCanvas.ActualWidth;
-        if (peaks == null || peaks.Length == 0 || width < 8)
-        {
-            WaveformCanvas.Visibility = Visibility.Collapsed;
-            return;
-        }
-
-        // No normalization: the envelope is drawn at an absolute scale so quiet passages stay
-        // quiet. A track whose whole envelope is silence gets no texture at all — a row of
-        // minimum-height stubs read as a broken ruler.
-        float peakMax = 0;
-        foreach (float p in peaks) if (p > peakMax) peakMax = p;
-        if (peakMax < 0.02f)
-        {
-            WaveformCanvas.Visibility = Visibility.Collapsed;
-            return;
-        }
-
-        double height = WaveformCanvas.Height;
-        double mid = height / 2.0;
-
-        // 2px bars with 2px gaps, at ~55% of the canvas as the absolute ceiling.
-        int bars = Math.Max(8, (int)(width / 4));
-        double barW = width / bars;
-        var brush = (Microsoft.UI.Xaml.Media.Brush)Helpers.ThemeResourceHelper.GetBrush("TextTertiaryBrush");
-
-        for (int i = 0; i < bars; i++)
-        {
-            float amp = 0;
-            int from = (int)((long)i * peaks.Length / bars);
-            int to = Math.Max(from + 1, (int)((long)(i + 1) * peaks.Length / bars));
-            for (int k = from; k < to && k < peaks.Length; k++) if (peaks[k] > amp) amp = peaks[k];
-            if (amp < 0.01f) continue;
-
-            double h = Math.Max(1.0, amp * (mid - 2) * 1.1);
-            var bar = new Microsoft.UI.Xaml.Shapes.Rectangle
-            {
-                Width = 2,
-                Height = h * 2,
-                Fill = brush,
-                RadiusX = 1,
-                RadiusY = 1,
-                IsHitTestVisible = false,
-            };
-            Microsoft.UI.Xaml.Controls.Canvas.SetLeft(bar, i * barW);
-            Microsoft.UI.Xaml.Controls.Canvas.SetTop(bar, mid - h);
-            WaveformCanvas.Children.Add(bar);
-        }
-
-        WaveformCanvas.Visibility = Visibility.Visible;
-    }
 
     /// <summary>
     /// Resolves and shows the artwork for <paramref name="track"/>. Tracks whose tags carried no

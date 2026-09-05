@@ -3,9 +3,11 @@ using System.Collections.Concurrent;
 namespace DawnPlayer.Core.Audio;
 
 /// <summary>
-/// Peak envelope of a track for waveform seekbars: one max-abs float per bucket (0..1 nominal).
-/// Results are cached in memory keyed by (path, range, file mtime) — a rescan of the same file
-/// replaces the entry, and the cache is trimmed oldest-first when it overflows.
+/// Peak envelope of a track: one max-abs float per bucket (0..1 nominal). Results are cached in
+/// memory keyed by (path, range, file mtime) — a rescan of the same file replaces the entry, and
+/// the cache is trimmed oldest-first when it overflows. Currently without a UI surface (the
+/// bottom bar proved too small to show a whole-track envelope legibly); kept for a future
+/// large-canvas view such as a full-screen Now Playing page.
 /// </summary>
 public static class WaveformPeaks
 {
