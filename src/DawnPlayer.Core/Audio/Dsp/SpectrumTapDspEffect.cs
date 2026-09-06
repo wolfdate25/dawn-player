@@ -4,7 +4,8 @@ namespace DawnPlayer.Core.Audio.Dsp;
 
 /// <summary>
 /// Pass-through analysis tap: mirrors the most recent post-processing samples (mono-mixed) for
-/// the UI spectrum. The render thread fills a single window buffer without locking; the UI copies
+/// visualizers. Currently without a UI surface — the bottom-bar strip was removed for space;
+/// kept for a future large-canvas visualizer. The render thread fills a single window buffer without locking; the UI copies
 /// it out whenever it wants a frame. A torn window is possible while the render thread is
 /// mid-copy — harmless here, it is a visualizer, and the worst case is one odd-looking frame.
 /// Exposes a publish version so the UI can distinguish "signal unchanged" (paused) from a new
