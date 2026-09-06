@@ -333,14 +333,11 @@
                                 </VisualState>
                             </VisualStateGroup>
                             <VisualStateGroup x:Name="CheckStates">
+                                <!-- Active state is shown by the ICON color (accent vs
+                                     secondary), which the player manages in code. The old
+                                     filled-circle background competed with the play button. -->
                                 <VisualState x:Name="Unchecked"/>
-                                <VisualState x:Name="Checked">
-                                    <Storyboard>
-                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="BackgroundBorder" Storyboard.TargetProperty="Background">
-                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource DawnAccentMutedBrush}"/>
-                                        </ObjectAnimationUsingKeyFrames>
-                                    </Storyboard>
-                                </VisualState>
+                                <VisualState x:Name="Checked"/>
                                 <VisualState x:Name="Indeterminate"/>
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>
@@ -366,17 +363,56 @@
         </Setter>
     </Style>
 
-    <!-- Play/Pause prominent button -->
+    <!-- Play/Pause: the single accent-filled control in the transport row. Glyph on top must
+         stay near-black for contrast against every accent preset. -->
     <Style x:Key="PlayPauseButton" TargetType="Button">
         <Setter Property="Width" Value="42"/>
         <Setter Property="Height" Value="42"/>
         <Setter Property="CornerRadius" Value="21"/>
-        <Setter Property="Background" Value="{ThemeResource CardBrush}"/>
-        <Setter Property="BorderBrush" Value="{ThemeResource BorderSubtleBrush}"/>
-        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Background" Value="{ThemeResource DawnAccentBrush}"/>
         <Setter Property="Padding" Value="0"/>
         <Setter Property="HorizontalAlignment" Value="Center"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="RootGrid" Background="{TemplateBinding Background}"
+                          CornerRadius="{TemplateBinding CornerRadius}">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal"/>
+                                <VisualState x:Name="PointerOver">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="RootGrid"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0.88" Duration="0"/>
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="RootGrid"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0.72" Duration="0"/>
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="RootGrid"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0.38" Duration="0"/>
+                                    </Storyboard>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <ContentPresenter Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          Margin="{TemplateBinding Padding}"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!-- Eole Audio Format / Codec Badge -->
@@ -389,11 +425,55 @@
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 
-    <!-- Eole Slim Seek Slider -->
+    <!-- Eole slim slider: 3px track, 12px round accent thumb, accent-filled left side.
+         Used by both the seek and the volume sliders so they share one visual language.
+         The template keeps the part names WinUI's Slider drives at runtime
+         (HorizontalTrackRect / HorizontalDecreaseRect / HorizontalThumb + translate transform),
+         so value→thumb positioning keeps working without the stock chrome. -->
     <Style x:Key="EoleSlimSliderStyle" TargetType="Slider">
         <Setter Property="MinHeight" Value="20"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="Padding" Value="0"/>
+        <Setter Property="Foreground" Value="{StaticResource DawnAccentBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Slider">
+                    <Grid x:Name="SliderContainer" Background="Transparent">
+                        <Grid x:Name="HorizontalTemplate" MinHeight="20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Rectangle x:Name="HorizontalTrackRect"
+                                       Grid.Column="0" Grid.ColumnSpan="3"
+                                       Height="3" RadiusX="1.5" RadiusY="1.5"
+                                       Fill="{StaticResource SeparatorSubtleBrush}"
+                                       VerticalAlignment="Center"/>
+                            <Rectangle x:Name="HorizontalDecreaseRect"
+                                       Grid.Column="0"
+                                       Height="3" RadiusX="1.5" RadiusY="1.5"
+                                       Fill="{TemplateBinding Foreground}"
+                                       VerticalAlignment="Center"/>
+                            <Thumb x:Name="HorizontalThumb" Grid.Column="1"
+                                   Width="12" Height="12"
+                                   VerticalAlignment="Center">
+                                <Thumb.RenderTransform>
+                                    <TranslateTransform x:Name="HorizontalThumbTransform"/>
+                                </Thumb.RenderTransform>
+                                <Thumb.Template>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Ellipse Fill="{StaticResource DawnAccentBrush}"
+                                                 Stroke="{StaticResource PanelBrush}"
+                                                 StrokeThickness="1.5"/>
+                                    </ControlTemplate>
+                                </Thumb.Template>
+                            </Thumb>
+                        </Grid>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!-- Eole Album Year Badge Overlay -->
