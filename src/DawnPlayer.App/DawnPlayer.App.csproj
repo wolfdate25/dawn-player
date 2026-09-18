@@ -30,7 +30,7 @@
        fallback language for the MRT Core candidate chain. -->
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.4.0" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2526" />
   </ItemGroup>
 
