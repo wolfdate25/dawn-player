@@ -1,7 +1,7 @@
 # Project: Dawn Player Residual Modularization & Clean Code Refactoring
 
 > **[역사적 문서]** 완료된 리팩토링 마일스톤(M1–M5)의 원본 계획서입니다.
-> 현재 아키텍처와 기능 목록은 [README.md](README.md), 작업 규약은 [CLAUDE.md](CLAUDE.md)를 참조하세요.
+> 현재 아키텍처와 기능 목록은 [README.md](README.md), 작업 규약은 [AGENTS.md](AGENTS.md)를 참조하세요.
 
 ## Architecture
 Dawn Player is a high-performance Windows audio player built with WinUI 3 (Windows App SDK) and .NET 8.

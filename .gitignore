@@ -12,6 +12,9 @@ tests/**/TestResults/
 # Installer / distribution output
 dist/
 
+# Local-only ZCode plugins & dev test marketplace (installed via Plugin Marketplace UI)
+plugins/
+
 # Diagnostic logs
 *.log
 
@@ -28,3 +31,6 @@ dist/
 GEMINI.md
 ORIGINAL_REQUEST.md
 THIRD-PARTY-NOTICES.md
+
+# Local-only agent pointers (canonical work rules live in tracked AGENTS.md)
+CLAUDE.md
