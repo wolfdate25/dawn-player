@@ -54,6 +54,12 @@ public interface IAudioSettingsService
     void SetExclusiveBitDepth(ExclusiveBitDepth bitDepth);
 
     /// <summary>
+    /// Sets how a rate mismatch between tracks is handled in exclusive mode
+    /// (session restart vs in-session resampling), persisting settings.
+    /// </summary>
+    void SetExclusiveRateMismatch(ExclusiveRateMismatchPolicy policy);
+
+    /// <summary>
     /// Sets the output buffer latency in milliseconds (clamped to 30ms-500ms) and persists settings.
     /// </summary>
     void SetLatency(int latencyMs);

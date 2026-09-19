@@ -134,6 +134,29 @@ public sealed class AudioSettingsViewModel : ViewModelBase
         }
     }
 
+    public int ExclusiveRateMismatchIndex
+    {
+        get => _settings.Output.ExclusiveRateMismatch switch
+        {
+            ExclusiveRateMismatchPolicy.ResampleToCurrent => 1,
+            _ => 0
+        };
+        set
+        {
+            var policy = value switch
+            {
+                1 => ExclusiveRateMismatchPolicy.ResampleToCurrent,
+                _ => ExclusiveRateMismatchPolicy.RestartSession
+            };
+
+            if (_settings.Output.ExclusiveRateMismatch != policy)
+            {
+                _audioSettingsService.SetExclusiveRateMismatch(policy);
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public int LatencyMs
     {
         get => _settings.Output.LatencyMs;

@@ -213,7 +213,10 @@ public sealed class SequencerStream : IWaveProvider
         if (position > total) position = total;
         _current.Track.Reader.CurrentTime = position;
         Volatile.Write(ref _bytesServed, MfTrackReader.TimeToBytes(_outFormat, position));
-        _dspChain.Reset();
+        // The normalizer's converged gain stays valid across a seek within the track; resetting
+        // it made the volume pump after every scrub. Delay-line/convolution/limiter state IS
+        // stale after a jump and must clear.
+        _dspChain.ResetForSeek();
     }
 
     /// <summary>Hard switch to another track within the same session (same format).</summary>
@@ -480,7 +483,8 @@ public sealed class SequencerStream : IWaveProvider
                                 TimeSpan.FromSeconds((double)loopStart / _outFormat.AverageBytesPerSecond);
                             served = loopStart;
                             Volatile.Write(ref _bytesServed, served);
-                            _dspChain.Reset();
+                            // Same reasoning as SeekLocked: delay lines clear, loudness gain stays.
+                            _dspChain.ResetForSeek();
                         }
                     }
                 }

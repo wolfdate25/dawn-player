@@ -6,6 +6,17 @@ public enum RepeatMode { Off, All, One }
 public enum ShuffleMode { Off = 0, Tracks = 1, Albums = 2 }
 public enum ReplayGainMode { Off, Track, Album }
 public enum ExclusiveBitDepth { Source, Bits16, Bits24, Bits32 }
+
+/// <summary>What happens in WASAPI exclusive mode when the next track's sample rate does not
+/// match the running session's format.</summary>
+public enum ExclusiveRateMismatchPolicy
+{
+    /// <summary>Rebuild the output session at the track boundary (bit-perfect, audible gap).</summary>
+    RestartSession = 0,
+    /// <summary>Keep the session running and resample the track to its rate (seamless, not
+    /// bit-perfect for the mismatched track).</summary>
+    ResampleToCurrent = 1,
+}
 public enum AudioDriverType { Wasapi = 0, DirectSound = 1, WaveOut = 2 }
 public enum ThemeMode { System, Light, Dark, OledBlack }
 public enum AccentColorPreset { EoleAmber, ElectricGold, ForestEmerald, CyanSapphire, CrimsonRed, ModernSlate, NordFrost, TokyoNight, CatppuccinMocha, RosePine, SunsetViolet, Custom }
@@ -43,6 +54,8 @@ public sealed class OutputSettings
     public string? DeviceId { get; set; }
     public bool UseExclusiveMode { get; set; } = true;
     public ExclusiveBitDepth ExclusiveBitDepth { get; set; } = ExclusiveBitDepth.Source;
+    /// <summary>Rate-mismatch handling between tracks in exclusive mode (see the enum).</summary>
+    public ExclusiveRateMismatchPolicy ExclusiveRateMismatch { get; set; } = ExclusiveRateMismatchPolicy.RestartSession;
     /// <summary>Requested buffer length in ms (higher = more resilient, higher latency).</summary>
     public int LatencyMs { get; set; } = 120;
     /// <summary>Allow digital volume/ReplayGain while in exclusive mode (breaks bit-perfect).</summary>

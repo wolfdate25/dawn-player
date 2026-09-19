@@ -445,6 +445,10 @@
   <data name="Settings_Audio_BitDepth_16.Content" xml:space="preserve"><value>16-bit</value></data>
   <data name="Settings_Audio_BitDepth_24.Content" xml:space="preserve"><value>24-bit</value></data>
   <data name="Settings_Audio_BitDepth_32.Content" xml:space="preserve"><value>32-bit</value></data>
+  <data name="Settings_Audio_RateMismatch_Title.Text" xml:space="preserve"><value>Sample rate mismatch handling (exclusive mode)</value></data>
+  <data name="Settings_Audio_RateMismatch_Desc.Text" xml:space="preserve"><value>Rebuild session: bit-perfect (a short silence at track boundaries) · Resample: seamless playback</value></data>
+  <data name="Settings_Audio_RateMismatch_Restart.Content" xml:space="preserve"><value>Rebuild session (bit-perfect)</value></data>
+  <data name="Settings_Audio_RateMismatch_Resample.Content" xml:space="preserve"><value>Resample and continue seamlessly</value></data>
   <data name="Settings_Audio_AllowVolume_Title.Text" xml:space="preserve"><value>Allow Volume / ReplayGain in Exclusive Mode</value></data>
   <data name="Settings_Audio_AllowVolume_Desc.Text" xml:space="preserve"><value>Disabling maintains strict bit-perfect playback (fixed at 100% volume).</value></data>
   <data name="Settings_Audio_Latency_Title.Text" xml:space="preserve"><value>Output Buffer Latency</value></data>

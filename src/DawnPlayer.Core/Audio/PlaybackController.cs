@@ -744,10 +744,33 @@ public sealed partial class PlaybackController : IPlaybackController
     private bool FormatMatchesSession(SessionSnapshot session, PendingTrack pending)
     {
         if (session.Device == null) return false;
-        var negotiated = WasapiDeviceService.TryNegotiateExclusive(
-            session.Device, pending.Reader.SourceFormat, _settings.Output.ExclusiveBitDepth);
-        return negotiated != null && FormatKey(negotiated) == FormatKey(session.Sequencer.WaveFormat);
+        WaveFormat? negotiated = null;
+        if (_settings.Output.ExclusiveRateMismatch == ExclusiveRateMismatchPolicy.RestartSession)
+        {
+            negotiated = WasapiDeviceService.TryNegotiateExclusive(
+                session.Device, pending.Reader.SourceFormat, _settings.Output.ExclusiveBitDepth);
+        }
+        return ExclusiveSessionAcceptsTrack(
+            _settings.Output.ExclusiveRateMismatch, negotiated, session.Sequencer.WaveFormat);
     }
+
+    /// <summary>Whether the running exclusive session must be rebuilt for the next track's
+    /// format. Pure so the policy matrix is testable without a device. ResampleToCurrent never
+    /// restarts: the sequencer's Prepare step inserts a resampler for any rate mismatch, which
+    /// is seamless but not bit-perfect for the mismatched track (the user's explicit choice).</summary>
+    public static bool ExclusiveSessionRestartNeeded(
+        ExclusiveRateMismatchPolicy policy, WaveFormat? negotiated, WaveFormat sessionFormat) =>
+        policy == ExclusiveRateMismatchPolicy.ResampleToCurrent
+            ? false
+            : negotiated == null || FormatKey(negotiated) != FormatKey(sessionFormat);
+
+    /// <summary>Whether an existing exclusive session can hot-swap to the given track. Pure;
+    /// the mirror of <see cref="ExclusiveSessionRestartNeeded"/> for the play-command path.</summary>
+    public static bool ExclusiveSessionAcceptsTrack(
+        ExclusiveRateMismatchPolicy policy, WaveFormat? negotiated, WaveFormat sessionFormat) =>
+        policy == ExclusiveRateMismatchPolicy.ResampleToCurrent
+            ? true
+            : negotiated != null && FormatKey(negotiated) == FormatKey(sessionFormat);
 
     /// <summary>
     /// Opens a session for <paramref name="first"/> and publishes it. Caller must hold
@@ -997,9 +1020,16 @@ public sealed partial class PlaybackController : IPlaybackController
                 bool restart = false;
                 if (session is { Exclusive: true, Device: not null })
                 {
-                    var negotiated = WasapiDeviceService.TryNegotiateExclusive(
-                        session.Device, reader.SourceFormat, _settings.Output.ExclusiveBitDepth);
-                    restart = negotiated == null || FormatKey(negotiated) != FormatKey(session.Sequencer.WaveFormat);
+                    // Probing formats is a COM round trip per candidate, so it is skipped
+                    // entirely when the policy would ignore the answer anyway.
+                    WaveFormat? negotiated = null;
+                    if (_settings.Output.ExclusiveRateMismatch == ExclusiveRateMismatchPolicy.RestartSession)
+                    {
+                        negotiated = WasapiDeviceService.TryNegotiateExclusive(
+                            session.Device, reader.SourceFormat, _settings.Output.ExclusiveBitDepth);
+                    }
+                    restart = ExclusiveSessionRestartNeeded(
+                        _settings.Output.ExclusiveRateMismatch, negotiated, session.Sequencer.WaveFormat);
                 }
                 return new PendingTrack
                 {

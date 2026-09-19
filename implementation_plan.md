@@ -2,6 +2,19 @@
 
 > 작성일: 2026-09-19 · 대상: `main` @ `242235e` + 미커밋 Last.fm 설정 통합 작업
 > 성격: **계획서 — 승인 후 착수**. 본 문서는 분석 결과와 단계별 실행 계획을 담는다.
+>
+> **진행 상황 (2026-09-19)**
+> - ✅ M0 `be544ee` — Last.fm 설정 통합 + Window 루트 x:Uid 크래시 수정(+게이트 테스트)
+> - ✅ M1 `6ddf1d2` — Core 로깅 파사드(`Log`/`ILogSink`) + 롤링 파일 싱크(5MB×3), 조용한 catch 60+곳 관측화,
+>   DSP 플러그인 로드 오류 로그 미러링, 로깅 계약 테스트 10종
+> - ✅ M2 `db5b1b9` — 엔진 seam 4종: `ITrackReaderProvider`(디코더 레지스트리), `IOutputDriver`
+>   (WASAPI/DS/WaveOut 드라이버 클래스 + 레지스트리, 내장 복원·WASAPI 폴백 고정), `ITagProvider`
+>   (TagLib# 캐치올 체인), `IPlayOrderStrategy`(주입) + `PlaybackController`→`IPlaylistManager`.
+>   계약 테스트 13종
+> - ✅ M3 — 배타 모드 샘플레이트 불일치 정책(`ExclusiveRateMismatchPolicy`: 세션 재구성[기본, 비트 퍼펙트] /
+>   세션 유지+리샘플[끊김 없음]), 환경설정 → 오디오 UI(3개 국어), 시크·A-B 반복 시 노멀라이저 수렴 이득 보존
+>   (`AudioDspChain.ResetForSeek`), 정책 매트릭스+DSP 상태 테스트 9종
+> - M4(ASIO/DoP/DFF) 이후 미착수
 
 ---
 

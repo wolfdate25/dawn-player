@@ -445,6 +445,10 @@
   <data name="Settings_Audio_BitDepth_16.Content" xml:space="preserve"><value>16비트</value></data>
   <data name="Settings_Audio_BitDepth_24.Content" xml:space="preserve"><value>24비트</value></data>
   <data name="Settings_Audio_BitDepth_32.Content" xml:space="preserve"><value>32비트</value></data>
+  <data name="Settings_Audio_RateMismatch_Title.Text" xml:space="preserve"><value>샘플레이트 불일치 처리 (배타 모드)</value></data>
+  <data name="Settings_Audio_RateMismatch_Desc.Text" xml:space="preserve"><value>세션 재구성: 비트 퍼펙트 (곡 경계에 짧은 무음) · 리샘플: 끊김 없이 이어 재생</value></data>
+  <data name="Settings_Audio_RateMismatch_Restart.Content" xml:space="preserve"><value>세션 재구성 (비트 퍼펙트)</value></data>
+  <data name="Settings_Audio_RateMismatch_Resample.Content" xml:space="preserve"><value>리샘플하여 이어 재생</value></data>
   <data name="Settings_Audio_AllowVolume_Title.Text" xml:space="preserve"><value>배타 모드에서 볼륨/리플레이게인 허용</value></data>
   <data name="Settings_Audio_AllowVolume_Desc.Text" xml:space="preserve"><value>끄면 비트 퍼펙트가 유지됩니다 (볼륨 100% 고정).</value></data>
   <data name="Settings_Audio_Latency_Title.Text" xml:space="preserve"><value>출력 버퍼 크기 (Latency)</value></data>

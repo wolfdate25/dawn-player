@@ -445,6 +445,10 @@
   <data name="Settings_Audio_BitDepth_16.Content" xml:space="preserve"><value>16ビット</value></data>
   <data name="Settings_Audio_BitDepth_24.Content" xml:space="preserve"><value>24ビット</value></data>
   <data name="Settings_Audio_BitDepth_32.Content" xml:space="preserve"><value>32ビット</value></data>
+  <data name="Settings_Audio_RateMismatch_Title.Text" xml:space="preserve"><value>サンプルレート不一致の処理 (排他モード)</value></data>
+  <data name="Settings_Audio_RateMismatch_Desc.Text" xml:space="preserve"><value>セッション再構成: ビットパーフェクト (曲の境界に短い無音) · リサンプリング: ギャップなく再生</value></data>
+  <data name="Settings_Audio_RateMismatch_Restart.Content" xml:space="preserve"><value>セッション再構成 (ビットパーフェクト)</value></data>
+  <data name="Settings_Audio_RateMismatch_Resample.Content" xml:space="preserve"><value>リサンプリングして連続再生</value></data>
   <data name="Settings_Audio_AllowVolume_Title.Text" xml:space="preserve"><value>排他モードでの音量/ReplayGainを許可</value></data>
   <data name="Settings_Audio_AllowVolume_Desc.Text" xml:space="preserve"><value>オフにするとビットパーフェクトが維持されます (音量100%固定)。</value></data>
   <data name="Settings_Audio_Latency_Title.Text" xml:space="preserve"><value>出力バッファサイズ (Latency)</value></data>

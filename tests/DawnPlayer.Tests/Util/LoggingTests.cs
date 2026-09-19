@@ -109,7 +109,7 @@ public sealed class LogFacadeTests : IDisposable
         // all 2000 must have reached one of the two sinks, intact and correctly leveled (no
         // entry vanishes in a swap — MemoryLogSink.Dispose is a no-op, so a sink swapped out
         // still accepts and records whatever was handed to it mid-swap).
-        var mine = a.Snapshot().Concat(b.Snapshot()).Where(e => e.Message.StartsWith("w", StringComparison.Ordinal)).ToList();
+        var mine = a.Snapshot().Concat(b.Snapshot()).Where(e => e.Message.StartsWith('w')).ToList();
         Assert.Equal(2000, mine.Count);
         Assert.All(mine, e =>
         {

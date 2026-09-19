@@ -99,6 +99,14 @@ public sealed class AudioSettingsService : IAudioSettingsService
         SaveAndRestart();
     }
 
+    public void SetExclusiveRateMismatch(ExclusiveRateMismatchPolicy policy)
+    {
+        // No session restart: the policy only matters at the next track boundary, where the
+        // prefetch path picks it up.
+        _settings.Output.ExclusiveRateMismatch = policy;
+        SettingsWriter.Schedule(_settings);
+    }
+
     public void SetLatency(int latencyMs)
     {
         _settings.Output.LatencyMs = Math.Clamp(latencyMs, 30, 500);

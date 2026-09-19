@@ -173,13 +173,30 @@ public sealed class AudioDspChain : IAudioDspChain
     }
 
     /// <summary>
-    /// Resets internal state for all effects in the chain (e.g. on seek or track change).
+    /// Resets internal state for all effects in the chain (e.g. on track change).
     /// </summary>
     public void Reset()
     {
         var snapshot = Volatile.Read(ref _snapshot);
         for (int i = 0; i < snapshot.Length; i++)
         {
+            snapshot[i].Reset();
+        }
+    }
+
+    /// <summary>
+    /// Resets only the state a position jump actually invalidates — delay lines (EQ, crossfeed),
+    /// convolution overlap history, limiter envelope — and keeps the loudness normalizer's
+    /// converged gain. The converged gain describes the track, not the position, so resetting it
+    /// on seek threw away seconds of loudness adaptation and audibly pumped the volume after
+    /// every scrub.
+    /// </summary>
+    public void ResetForSeek()
+    {
+        var snapshot = Volatile.Read(ref _snapshot);
+        for (int i = 0; i < snapshot.Length; i++)
+        {
+            if (snapshot[i] is DynamicNormalizerDspEffect) continue;
             snapshot[i].Reset();
         }
     }

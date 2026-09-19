@@ -27,4 +27,8 @@ public interface IAudioDspChain
 
     /// <summary>Resets internal state for all effects in the chain.</summary>
     void Reset();
+
+    /// <summary>Resets state a position jump invalidates (delay lines, convolution history,
+    /// limiter envelope) while keeping the loudness normalizer's converged gain.</summary>
+    void ResetForSeek();
 }
