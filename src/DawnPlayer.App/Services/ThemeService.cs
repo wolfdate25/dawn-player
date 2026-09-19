@@ -20,8 +20,50 @@ public static class ThemeService
     /// <summary>
     /// Applies theme mode, system backdrop, and accent color palette according to UiSettings.
     /// </summary>
-    public static void ApplyTheme(Window window, UiSettings ui, Panel? rootGrid = null)
+        private static readonly List<WeakReference<Window>> _auxiliaryWindows = new();
+
+    /// <summary>
+    /// Registers a secondary window (lyrics editor/search) so accent and palette changes reach
+    /// it too. MainWindow re-applies through its own ApplyTheme; these windows only re-theme
+    /// from here. Weak references: a closed auxiliary window must not be kept alive.
+    /// </summary>
+    public static void RegisterAuxiliaryWindow(Window window)
     {
+        _auxiliaryWindows.RemoveAll(r => !r.TryGetTarget(out _));
+        if (!_auxiliaryWindows.Any(r => r.TryGetTarget(out var w) && ReferenceEquals(w, window)))
+        {
+            _auxiliaryWindows.Add(new WeakReference<Window>(window));
+        }
+    }
+
+    /// <summary>Re-applies the current theme to every live auxiliary window. Takes the settings
+    /// explicitly — ThemeService stays parameter-driven like <see cref="ApplyTheme"/>.</summary>
+    public static void RefreshAuxiliaryWindows(UiSettings ui)
+    {
+        _auxiliaryWindows.RemoveAll(r => !r.TryGetTarget(out _));
+        foreach (var r in _auxiliaryWindows)
+        {
+            if (r.TryGetTarget(out var window))
+            {
+                ApplyTheme(window, ui);
+            }
+        }
+    }
+
+public static void ApplyTheme(Window window, UiSettings ui, Panel? rootGrid = null)
+    {
+        // High-contrast themes exist precisely to override decorative styling: painting our
+        // custom palettes and translucent backdrops over them fights the user's accessibility
+        // setup. Delegate everything except the theme flip to the system colors.
+        if (IsHighContrastActive())
+        {
+            if (window.Content is FrameworkElement hcElement)
+            {
+                hcElement.RequestedTheme = ElementTheme.Default;
+            }
+            return;
+        }
+
         var theme = ui.Theme switch
         {
             ThemeMode.Light => ElementTheme.Light,
@@ -86,6 +128,22 @@ public static class ThemeService
     /// Resolves whether the effective visual flavor is light — either an explicit Light theme, or
     /// System mode on a light-mode OS (read from the root element's ActualTheme).
     /// </summary>
+    /// <summary>Whether a Windows high-contrast theme is active. The COM lookup is not free and
+    /// ApplyTheme runs on every accent change, so the answer is memoized.</summary>
+    private static readonly Lazy<bool> _highContrast = new(() =>
+    {
+        try
+        {
+            return new Windows.UI.ViewManagement.AccessibilitySettings().HighContrast;
+        }
+        catch
+        {
+            return false;
+        }
+    });
+
+    public static bool IsHighContrastActive() => _highContrast.Value;
+
     public static bool IsEffectiveLight(Window window, UiSettings ui) =>
         ui.Theme == ThemeMode.Light ||
         (ui.Theme == ThemeMode.System &&

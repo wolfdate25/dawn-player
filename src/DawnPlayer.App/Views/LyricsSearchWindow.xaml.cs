@@ -85,6 +85,11 @@ public sealed partial class LyricsSearchWindow : Window
     public LyricsSearchWindow(Track track)
     {
         InitializeComponent();
+        // These windows are opened from the main shell but never received the shell's theme:
+        // they kept raw default theming while the accent palette they reference mutated under
+        // them. Register for accent changes as well.
+        Services.ThemeService.ApplyTheme(this, AppServices.Settings.Ui);
+        Services.ThemeService.RegisterAuxiliaryWindow(this);
         Title = AppStrings.Get("LyricsSearch_WindowTitle", "온라인 가사 검색 — Dawn Player");
         ResultsList.ItemsSource = _results;
         LoadTrack(track);

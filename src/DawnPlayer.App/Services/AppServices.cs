@@ -128,6 +128,9 @@ public static class AppServices
         AppearanceSettings.AppearanceChanged += () => RunOnUi(() =>
         {
             App.MainWin?.ApplyTheme();
+            // Accent/palette changes must reach the auxiliary windows (lyrics editor/search)
+            // too — they used to keep the stale accent forever.
+            ThemeService.RefreshAuxiliaryWindows(Settings.Ui);
             // Close-to-tray may have just been toggled: keep the tray icon's lifetime in sync. A
             // disable while the window is hidden would strand the app with no visible surface, so
             // the window comes back up before the icon goes away.

@@ -87,10 +87,10 @@ HTTP/WS 원격 제어, PLS/XSPF, 풀스크린 Now Playing(`WaveformPeaks` 보존
 | 마일스톤 | 주제 | 핵심 산출물 | 규모 |
 |---|---|---|---|
 | ~~M0–M3~~ | ~~완료~~ | ~~위 표 참조~~ | — |
-| M4 | DSD 고도화 (DoP + DFF) | `DopTrackReader`(WASAPI 배타 DoP), `DffTrackReader`, 폴백 체계 | M–L |
-| M5 | App 구조 개선 | DI 컨테이너, Library/Playlist VM 추출, 증분 UI 갱신 | L |
-| M6 | 접근성·테마·i18n 사각지대 | AutomationProperties i18n, 하이컨트라스트, 보조 창 테마, Core 문자열 외부화 | S–M |
-| M7+ | 파워유저 기능 (선택) | 파일 정리, undo/redo, AcoustID, 원격 API 등 | 개별 L |
+| M4 | DSD 고도화 (DoP + DFF) | ✅ 완료 `cfe4cd8` — `DopTrackReader`(WASAPI 배타 DoP), `DffRawReader`, PCM 폴백 체계, 정책 공존 | M–L |
+| M5 | App 구조 개선 | ✅ 1차 완료 `8a6dac1` — Lastfm VM+토큰 서비스화, SplitterChrome 통합, 타이머 게이팅. 잔여: DI 전면 전환, Library/Playlist 전체 VM화, 큐 델타 갱신 (아래 진행 기록 참조) | L |
+| M6 | 접근성·테마·i18n 사각지대 | ✅ 완료 — 가사 창 테마 연결+액센트 전파, AutomationProperties i18n(3개 국어), 하이컨트라스트 가드 | S–M |
+| M7+ | 파워유저 기능 (선택) | 파일 정리, undo/redo, AcoustID, 원격 API 등 — 미착수 | 개별 L |
 
 순서 논리: M4는 M2의 `ITrackReaderProvider`/`IOutputDriver` 위에 얹는 순수 기능 마일스톤이고,
 M5는 원격 API 등 축 C 대형 항목의 발판이므로 그 앞에 온다. M6는 어느 시점에도 끼워 넣을 수 있는

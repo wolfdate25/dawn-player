@@ -822,4 +822,9 @@
   <data name="Playlist_TrackMenu_Convert.Text" xml:space="preserve"><value>WAV に変換...</value></data>
   <data name="Convert_Started" xml:space="preserve"><value>変換を開始しました。完了時にお知らせします。</value></data>
   <data name="Convert_Done" xml:space="preserve"><value>変換完了: {0} 件成功、{1} 件失敗</value></data>
+  <data name="LyricsEditor_PlayPauseBtn.AutomationProperties.Name" xml:space="preserve"><value>再生/一時停止</value></data>
+  <data name="LyricsEditor_MoveLineUpBtn.AutomationProperties.Name" xml:space="preserve"><value>選択行を上へ</value></data>
+  <data name="LyricsEditor_MoveLineDownBtn.AutomationProperties.Name" xml:space="preserve"><value>選択行を下へ</value></data>
+  <data name="LyricsEditor_PasteClipboardBtn.AutomationProperties.Name" xml:space="preserve"><value>クリップボードから歌詞を取得</value></data>
+  <data name="LyricsEditor_SeekToLineBtn.AutomationProperties.Name" xml:space="preserve"><value>この位置から再生</value></data>
 </root>

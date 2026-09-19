@@ -822,4 +822,9 @@
   <data name="Playlist_TrackMenu_Convert.Text" xml:space="preserve"><value>Convert to WAV...</value></data>
   <data name="Convert_Started" xml:space="preserve"><value>Conversion started — you will be notified when it finishes.</value></data>
   <data name="Convert_Done" xml:space="preserve"><value>Conversion finished: {0} succeeded, {1} failed</value></data>
+  <data name="LyricsEditor_PlayPauseBtn.AutomationProperties.Name" xml:space="preserve"><value>Play/Pause</value></data>
+  <data name="LyricsEditor_MoveLineUpBtn.AutomationProperties.Name" xml:space="preserve"><value>Move line up</value></data>
+  <data name="LyricsEditor_MoveLineDownBtn.AutomationProperties.Name" xml:space="preserve"><value>Move line down</value></data>
+  <data name="LyricsEditor_PasteClipboardBtn.AutomationProperties.Name" xml:space="preserve"><value>Import lyrics from clipboard</value></data>
+  <data name="LyricsEditor_SeekToLineBtn.AutomationProperties.Name" xml:space="preserve"><value>Play audio from this position</value></data>
 </root>

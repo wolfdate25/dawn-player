@@ -141,6 +141,11 @@ public sealed partial class LyricsEditorWindow : Window
     public LyricsEditorWindow(Track track)
     {
         InitializeComponent();
+        // These windows are opened from the main shell but never received the shell's theme:
+        // they kept raw default theming while the accent palette they reference mutated under
+        // them. Register for accent changes as well.
+        Services.ThemeService.ApplyTheme(this, AppServices.Settings.Ui);
+        Services.ThemeService.RegisterAuxiliaryWindow(this);
         Title = AppStrings.Get("LyricsEditor_WindowTitle", "가사 편집기 — Dawn Player");
         _track = track;
 
