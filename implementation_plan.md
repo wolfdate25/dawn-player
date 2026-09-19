@@ -1,76 +1,72 @@
-# Dawn Player 고도화 계획 (Advanced Roadmap)
+# Dawn Player 고도화 계획 (Advanced Roadmap) — 개정 2판
 
-> 작성일: 2026-09-19 · 대상: `main` @ `242235e` + 미커밋 Last.fm 설정 통합 작업
-> 성격: **계획서 — 승인 후 착수**. 본 문서는 분석 결과와 단계별 실행 계획을 담는다.
->
-> **진행 상황 (2026-09-19)**
-> - ✅ M0 `be544ee` — Last.fm 설정 통합 + Window 루트 x:Uid 크래시 수정(+게이트 테스트)
-> - ✅ M1 `6ddf1d2` — Core 로깅 파사드(`Log`/`ILogSink`) + 롤링 파일 싱크(5MB×3), 조용한 catch 60+곳 관측화,
->   DSP 플러그인 로드 오류 로그 미러링, 로깅 계약 테스트 10종
-> - ✅ M2 `db5b1b9` — 엔진 seam 4종: `ITrackReaderProvider`(디코더 레지스트리), `IOutputDriver`
->   (WASAPI/DS/WaveOut 드라이버 클래스 + 레지스트리, 내장 복원·WASAPI 폴백 고정), `ITagProvider`
->   (TagLib# 캐치올 체인), `IPlayOrderStrategy`(주입) + `PlaybackController`→`IPlaylistManager`.
->   계약 테스트 13종
-> - ✅ M3 — 배타 모드 샘플레이트 불일치 정책(`ExclusiveRateMismatchPolicy`: 세션 재구성[기본, 비트 퍼펙트] /
->   세션 유지+리샘플[끊김 없음]), 환경설정 → 오디오 UI(3개 국어), 시크·A-B 반복 시 노멀라이저 수렴 이득 보존
->   (`AudioDspChain.ResetForSeek`), 정책 매트릭스+DSP 상태 테스트 9종
-> - M4(ASIO/DoP/DFF) 이후 미착수
+> 작성일: 2026-09-19 (개정) · 기준: `dbe334a` (M0–M3 완료 직후)
+> 개정 사유: **ASIO 지원을 로드맵에서 제외** (사용자 결정). M4를 DSD 고도화(DoP + DFF)로 재편하고,
+> ASIO 관련 항목·리스크·의존성 표현을 모두 제거했다.
+> 성격: **계획서 — 착수 전 승인 필요**. 이후 마일스톤 착수 시 본 문서의 해당 절을 계획 근거로 삼는다.
 
 ---
 
-## 1. 프로젝트 현황 진단
+## 0. 진행 상황 (완료 기록)
+
+| 마일스톤 | 커밋 | 내용 | 검증 |
+|---|---|---|---|
+| M0 | `be544ee` | Last.fm 설정 통합 + Window 루트 x:Uid 크래시 수정(+게이트 테스트) | 빌드 0경고, 필터 테스트 56 |
+| M1 | `6ddf1d2` | Core 로깅 파사드(`Log`/`ILogSink`) + 롤링 파일 싱크(5MB×3), 조용한 catch 60+곳 관측화, DSP 플러그인 오류 로그 미러링 | 로깅 계약 테스트 10 |
+| M2 | `db5b1b9` | 엔진 seam 4종 — `ITrackReaderProvider`, `IOutputDriver`, `ITagProvider`, `IPlayOrderStrategy` + `PlaybackController`→`IPlaylistManager` | 계약 테스트 13 |
+| M3 | `dbe334a` | 배타 모드 샘플레이트 불일치 정책(재구성/리샘플, 3개 국어 UI) + 시크·A-B 시 노멀라이저 수렴 이득 보존(`ResetForSeek`) | 정책 매트릭스+DSP 상태 테스트 9 |
+
+누적: **테스트 1,700개 전부 통과, 빌드 0경고 0오류 유지.**
+
+---
+
+## 1. 프로젝트 현황 진단 (개정판 기준)
 
 ### 1.1 규모 및 성숙도
 
 | 영역 | 규모 | 비고 |
 |---|---|---|
-| `DawnPlayer.Core` | 68파일 / 14,211 LOC | 오디오 엔진·재생목록·라이브러리·가사·설정 |
-| `DawnPlayer.App` | 81파일 / 16,143 LOC | WinUI 3 UI (Views·Services·Shortcuts·i18n) |
+| `DawnPlayer.Core` | 70파일 / ~14.6k LOC | 오디오 엔진·재생목록·라이브러리·가사·설정 + M1~M3 신규(로깅, seam, 정책) |
+| `DawnPlayer.App` | 81파일 / ~16.2k LOC | WinUI 3 UI (Views·Services·Shortcuts·i18n) |
 | `DawnPlayer.Plugin.Abstractions` | 6파일 / 209 LOC | DSP·가사 플러그인 SDK |
-| `DawnPlayer.Tests` | 91파일 / 28,376 LOC | 동시성 전용 스위트 포함, 1,600+ 테스트 |
-
-기능 완성도는 높음: WASAPI 배타(+DS/WaveOut 폴백), 갭리스 시퀀서, CUE/Opus/DSF, 8밴드 파라메트릭 EQ,
-컨볼루션, ReplayGain 1.0+2.0/AGC, 평점·쿼리 스마트 재생목록, 청취 리포트, 인터넷 라디오, Last.fm,
-WAV 변환기, DSP 플러그인 SDK, 3개 국어 i18n, 인스톨러/포터블, CI/CD+CodeQL.
-기존 제안서(`docs/feature-enhancement-proposals.md`)의 1~4단계는 **거의 전부 구현 완료** 상태.
+| `DawnPlayer.Tests` | 93파일 / ~28.8k LOC | 동시성 전용 스위트 포함 1,700+ 테스트 |
 
 ### 1.2 강점 (유지·확장할 자산)
 
-- **동시성 설계가 예외적 수준**: 불변 스냅샷 게시(`SessionSnapshot` + `Volatile.Write`), 명령 세대 카운터,
-  오디오 스레드→ThreadPool 핸드오프 + 세션 동일성 재검증, 문서화된 락 순서(`_gate`→`_prefetchLock`).
-- 코드 마커(TODO/HACK) **0개** — 부채가 주석이 아니라 구조로 존재.
-- DSP 체인 copy-on-write·무할당 렌더, 플러그인 계약이 렌더 스레드 제약을 명시.
-- i18n 키 드리프트를 xUnit으로 게이트. 인큐베이션된 3개 언어 resw 동기화.
+- **동시성 설계**: 불변 스냅샷 게시(`SessionSnapshot` + `Volatile.Write`), 명령 세대 카운터,
+  오디오 스레드→ThreadPool 핸드오프 + 세션 동일성 재검증, 문서화된 락 순서.
+- **M1 이후 관측 가능**: 모든 조용한 폴백이 로그에 흔적을 남긴다. 롤링 싱크로 무한 증가도 차단.
+- **M2 이후 확장 가능**: 디코더·출력 드라이버·태그·재생 순서가 모두 "등록"으로 추가된다.
+  (`IOutputDriver`는 ASIO가 빠져도 가상 장치·원격 출력 등 미래 백엔드의 솔로 남는다.)
+- **M3 이후 충실도 선택권**: 배타 모드에서 레이트 불일치를 비트 퍼펙트(재구성)와
+  끊김 없음(리샘플) 중 사용자가 고른다. 기본값은 기존 동작(비트 퍼펙트).
 
-### 1.3 약점 (고도화 대상)
+### 1.3 남은 약점 (고도화 대상)
 
-**Core**
-1. **관측성 부재** — 로깅 추상화 없음, 조용한 `catch {}` 54곳(최다: WasapiDeviceService 11,
-   PlaybackController·MusicLibrary·TagReader 각 7). 장애 재현이 사용자 보고에 의존.
-2. **추상화 솔(seam) 부재** — 디코더(`AudioFileReaderFactory.Open` 확장자 switch), 출력 드라이버
-   (`OutputSessionFactory.Start` enum switch), 태그(정적 `TagReader`), 재생 순서(`PlayOrderResolver` 구체형)가
-   모두 하드코딩. `IPlaylistManager`가 존재하는데 `PlaybackController`가 구체형 `PlaylistManager`에 의존.
-3. **오디오 충실도 갭** — 사용자 설정 리샘플러(ASRC) 없음: 배타 모드에서 레이트 불일치 시 트랙 경계에서
-   **세션 재구성(가청 갭)**. ASIO 미지원. DSD는 박스카 PCM뿐(DoP/DFF 없음). 시크 시 DSP 전체 리셋.
-   변환기는 WAV 전용.
-4. **갓 클래스** — `PlaylistManager`(1,187 LOC, 6개 책임: CRUD·스마트목록·M3U8 영속화·태그 병렬 해석·
-   정렬/중복제거·UI 마샬링), `PlaybackController`(1,154), `MusicLibrary`(856: 스키마+마이그레이션+스캔+업서트).
-5. **Core가 헤드리스가 아님** — `ObservableCollection`/INPC/`UiInvoke` 마샬링이 Core에 유입.
-6. **Core i18n 누수** — 한국어 문자열이 Core에 하드코딩(PlaybackController 4곳, OutputSessionFactory 5곳 등).
-7. **중복** — 통계 carry-forward 2벌(MusicLibrary 329-343 vs 443-456), sync/async 쌍 4벌, Enqueue/EnqueueNext.
+**오디오 충실도**
+1. **DSD 재생이 박스카 PCM뿐** — `DsfTrackReader`가 디시메이션 변환만 한다. DoP가 없어
+   DSD-capable DAC의 DSD 경로를 전혀 활용하지 못하고, DFF(DSDIFF)는 미지원.
+2. **포맷 불일치 갭의 잔여 영역** — M3 정책이 레이트 불일치를 다루지만, 채널 수 불일치는
+   여전히 세션 재구성을 강제한다 (리샘플 정책으로 자연스럽게 확장 가능).
+3. 시크가 샘플 단위 정밀 시크 추상화가 없어 디코더별 편차를 그대로 받는다 (소규모 개선 과제).
 
-**App**
-1. **MVVM 이원화** — Settings만 진짜 MVVM. Library(1,164 LOC)·Playlist(741)은 code-behind-as-viewmodel.
-2. **정적 조합 루트** — `AppServices`(643 LOC)가 서비스 보유 + 이벤트 버스 + 비즈니스 로직(재생 카운트
-   휴리스틱, DB 복구, 배치 스캔)까지 겸함. DI 컨테이너 부재.
-3. **전체 새로고침 UI 패턴** — `RechunkAlbumRows`가 필터/리사이즈/줌마다 전체 행 재생성, 큐 변경마다 전체
-   재그룹, NowPlayingBar 200ms 타이머 상시 구동. 대형 라이브러리에서 비용 선형 증가.
-4. **접근성** — `AutomationProperties.Name`이 전부 하드코딩 한국어(resw 파이프라인 미연결), 하이컨트라스트 미지원.
-5. **테마 사각지대** — `LyricsEditorWindow`/`LyricsSearchWindow`가 ThemeService/Mica 적용 제외.
-6. **중복/파편화** — 스플리터 plumbing 2벌(LibraryPage vs PlaylistPage), 다이얼로그 작성 방식 3가지 혼재.
+**Core 구조**
+4. 갓 클래스 — `PlaylistManager`(1,187 LOC, 6개 책임), `MusicLibrary`(856 LOC, 스키마+마이그레이션+스캔+업서트).
+5. Core가 헤드리스가 아님 — `ObservableCollection`/INPC/`UiInvoke` 마샬링이 Core에 유입.
+6. Core i18n 누수 — 한국어 문자열이 Core에 하드코딩(PlaybackController, OutputSessionFactory 등).
+7. 관측화가 *존재* 수준 — 구조적 컨텍스트(세션 ID, 명령 세대)가 로그 라인에 없어 상관 분석은 수동.
 
-**잔여 미구현 제안**(구 제안서 기준): APE/WavPack/DFF, 손실 인코더 변환, 파일 정리, 재생목록 undo/redo,
-AcoustID/MusicBrainz, HTTP/WS 원격 제어, 풀스크린 비주얼라이저(웨이브폼 스캐너는 보존됨).
+**App 구조**
+8. MVVM 이원화 — Settings만 진짜 MVVM. Library(1,164 LOC)·Playlist(741)은 code-behind-as-viewmodel.
+9. 정적 조합 루트 — `AppServices`(643 LOC)가 서비스 보유 + 이벤트 버스 + 비즈니스 로직까지 겸함. DI 부재.
+10. 전체 새로고침 UI 패턴 — 큐 변경마다 전체 재그룹, `RechunkAlbumRows` 전체 재생성, 200ms 타이머 상시 구동.
+11. 접근성 — `AutomationProperties.Name` 하드코딩 한국어, 하이컨트라스트 미지원.
+12. 테마 사각지대 — `LyricsEditorWindow`/`LyricsSearchWindow`가 ThemeService/Mica 적용 제외.
+13. 중복 — 스플리터 plumbing 2벌, 다이얼로그 작성 방식 3가지 혼재.
+
+**잔여 미구현 제안**: 손실 인코더 변환, 파일 정리, 재생목록 undo/redo, AcoustID/MusicBrainz,
+HTTP/WS 원격 제어, PLS/XSPF, 풀스크린 Now Playing(`WaveformPeaks` 보존됨), APE/WavPack/DFF.
+(**ASIO는 범위에서 제외** — 사용자 결정. 본 문서 어디에도 ASIO 작업을 두지 않는다.)
 
 ---
 
@@ -78,98 +74,61 @@ AcoustID/MusicBrainz, HTTP/WS 원격 제어, 풀스크린 비주얼라이저(웨
 
 지향: **"foobar2000의 기능적 깊이 × 상업 앱 수준의 내품질"**. 세 축으로 진행한다.
 
-- **축 A — 오디오 충실도/기능**: 사용자 가치가 가장 큰 엔진 항목.
-- **축 B — 아키텍처/내품질**: 확장성·관측성·접근성. 대형 기능(ASIO, 컴포넌트 생태계)의 전제가 되는 작업을 먼저.
+- **축 A — 오디오 충실도**: DSD 경로 완성(DoP·DFF)과 포맷 전환 경험 마무리. ASIO 없이
+  WASAPI 배타를 유일한 비트퍼펙트 경로로 전제하며, 그 경로의 품질에 집중한다.
+- **축 B — 아키텍처/내품질**: App 쪽 구조(구조 개선은 M2가 Core 쪽 절반을 이미 해소).
 - **축 C — 파워유저 기능**: foobar DNA 계열 신기능.
 
-원칙(프로젝트 규약 준수): 착수 전 결함 트리 분석 + 실패 시나리오 테스트先行, 빌드 0 경고 유지,
+원칙(프로젝트 규약 준수): 착수 전 결함 트리 분석 + 실패 시나리오 테스트 선행, 빌드 0 경고 유지,
 테스트는 타깃 필터 실행 + 마일스톤 종료 시 전체 1회, 임의 배포 금지.
 
 ### 마일스톤 개요
 
 | 마일스톤 | 주제 | 핵심 산출물 | 규모 |
 |---|---|---|---|
-| M0 | 미커밋 작업 마무리 | Last.fm 설정 통합 커밋 | S |
-| M1 | 관측성 기반 공사 | Core 로깅 추상화 + 조용한 catch 정리 | M |
-| M2 | 엔진 seam 도입 | 디코더/출력드라이버/태그/재생순서 인터페이스화, `IPlaylistManager` 연결 | M |
-| M3 | 오디오 충실도 | ASRC 리샘플러 옵션, 시크 DSP 상태 보존 | M |
-| M4 | ASIO + DSD 고도화 | `IOutputDriver` 기반 ASIO, DoP, DFF | L |
+| ~~M0–M3~~ | ~~완료~~ | ~~위 표 참조~~ | — |
+| M4 | DSD 고도화 (DoP + DFF) | `DopTrackReader`(WASAPI 배타 DoP), `DffTrackReader`, 폴백 체계 | M–L |
 | M5 | App 구조 개선 | DI 컨테이너, Library/Playlist VM 추출, 증분 UI 갱신 | L |
-| M6 | 접근성·테마·마무리 | AutomationProperties i18n, 하이컨트라스트, 보조 창 테마 연결 | S–M |
-| M7+ | 파워유저 기능 (선택) | 파일 정리, undo/redo, AcoustID, 원격 API | 개별 L |
+| M6 | 접근성·테마·i18n 사각지대 | AutomationProperties i18n, 하이컨트라스트, 보조 창 테마, Core 문자열 외부화 | S–M |
+| M7+ | 파워유저 기능 (선택) | 파일 정리, undo/redo, AcoustID, 원격 API 등 | 개별 L |
+
+순서 논리: M4는 M2의 `ITrackReaderProvider`/`IOutputDriver` 위에 얹는 순수 기능 마일스톤이고,
+M5는 원격 API 등 축 C 대형 항목의 발판이므로 그 앞에 온다. M6는 어느 시점에도 끼워 넣을 수 있는
+독립 규모다.
 
 ---
 
 ## 3. 마일스톤 상세
 
-### M0 — 미커밋 작업 마무리 (S, 반나절)
+### M4 — DSD 고도화: DoP + DFF (M–L, 약 1주)
 
-작업 트리에 Last.fm 대화상자→설정 페이지 통합이 완료 상태로 존재 (구 `LastfmDialog.cs` 삭제,
-`SettingsPage`에 `InitializeLastfmSection` 등 +303/-220, 3개 언어 resw 21키 동기, 테스트 갱신 완료).
-잔여 검증 후 커밋만 수행:
+**목표**: DSD 소스를 PCM 강등 없이(DoP) 재생하고, DFF 파일도 색인·재생한다.
+출력은 **WASAPI 배타만** 전제한다(ASIO 없음이 본 개정판의 전제).
 
-1. `dotnet build DawnPlayer.slnx` 0경고 확인 + `--filter` i18n/Settings VM 테스트.
-2. 사소한 후속: `LyricsEditorWindow.xaml`/`LyricsSearchWindow.xaml`의 `x:Uid` 제거 잔분 정리 확인
-   (신규 LocalizationTests가 Window 루트 x:Uid 금지를 검사 — 통과 여부만 확인).
-3. 커밋 분할 제안: `feat(app): integrate Last.fm into settings page` + UI 여백/슬라이더 정리분.
-
-### M1 — 관측성 기반 공사 (M, 2–4일)
-
-**목표**: 장애를 재현 가능하게 만들어 이후 모든 마일스톤의 리스크를 낮춘다.
-
-1. **로깅 추상화 도입(Core)**: `Microsoft.Extensions.Logging.ILogger` 추상 또는 경량 자체 인터페이스
-   (`ILogSink` — App이 파일 싱크 주입, 테스트는 메모리 싱크). 기존 `App.Log`(File.AppendAllText)을 싱크로 교체.
-   - 결함 분석: 오디오 렌더 스레드에서는 무할당/논블로킹이므로 **로그는 ThreadPool 핸드오프 지점에서만**.
-2. **조용한 catch 54곳 정리**: 각 블록에 사유 주석이 이미 있으므로 `Log.Debug/Trace` 1줄씩 부착.
-   사용자 의사결정이 필요한 곳(장치 열기 실패 등)만 `Warning` 승격.
-3. **플러그인 로드 오류·오디오 스레드 예외의 영속 기록**: `DspPluginLoader.LoadErrors`, `ReadError` 경로 연결.
-4. 로그 롤링(현재 단일 파일 무한 증가 가능성) — 크기 기반 5MB×3 롤.
-5. 실패 시나리오 테스트: 메모리 싱크로 "catch 도달 시 로그 1회, 렌더 스레드 무차단" 검증.
-
-**완료 기준**: Core의 모든 catch가 관측 가능(로그 또는 명시적 무시 사유 주석 태그), dawnplayer.log 롤링,
-관련 단위 테스트 통과.
-
-### M2 — 엔진 seam(인터페이스화) (M, 3–5일)
-
-**목표**: 신규 디코더/출력/메타데이터가 "팩토리 편집"이 아니라 "등록"으로 추가되게 한다.
-
-1. **`ITrackReaderProvider` 레지스트리**: `AudioFileReaderFactory`의 확장자 switch를
-   provider 등록 모델로(기존 리더들은 provider로 래핑, 동작 100% 보존).
-2. **`IOutputDriver`**: `OutputSessionFactory`의 enum switch 분해 — WasapiShared/WasapiExclusive/
-   DirectSound/WaveOut 각 driver 클래스화. M4(ASIO)의 직접 전제.
-3. **`ITagProvider`**: 정적 `TagReader`/`TagWriter` 뒤 인터페이스 — AcoustID(M7)와 태그 포맷 확장의 전제.
-4. **`IPlayOrderStrategy`**: `PlayOrderResolver` 인터페이스화 + `PlaybackController` 생성자 주입.
-5. **`PlaybackController` → `IPlaylistManager` 의존 전환**(인터페이스 이미 존재, 미사용).
-6. 각 seam에 대한 계약 테스트(기존 동작과 동일함을 스냅샷 비교).
-
-**완료 기준**: 팩토리/스위치 제거, 전체 오디오 경로 회귀 테스트 통과, 빌드 0 경고.
-
-### M3 — 오디오 충실도: ASRC + 시크 개선 (M, 3–5일)
-
-1. **고품질 리샘플러 옵션**: 배타 모드에서 레이트 불일치 시 (a) 세션 재구성(현행, 갭 있음) 또는
-   (b) 고품질 리샘플(`WdlResamplingSampleProvider` 이미 사용 중 — HQ 모드 파라미터 공개) 중 선택.
-   - 설정: 환경설정 → 재생 → "샘플레이트 불일치 처리" (재구성/리샘플 자동/리샜플 고정 레이트).
-   - 결함 분석: 리샘플 도입 시 DSP 체인 순서(리샘플은 게인/EQ **앞**, 비트퍼펙트 경로에서는 자동 무장 해제
-     로직과 상호작용 — `SequencerStream.cs:311-328` 불변식 재검증 필수).
-2. **시크 시 DSP 상태 보존**: 현재 전체 리셋 → 컨볼루션/AGC 등 상태 유지 시크(리밋터만 리셋) 옵션화.
-3. 웨이브폼/스펙트럼이 리샘플된 신호를 따라가는지 확인(SpectrumTap 위치 검증).
-4. 실패 시나리오: 샘플레이트 급변 연속 트랙(44.1k→96k→44.1k), A-B 반복 구간 내 리샘플, 시크 중 일시정지.
-
-**완료 기준**: 배타+혼합 레이트 재생에서 사용자 선택 동작, 갭리스 회귀(동일 포맷 체인) 무손상 유지.
-
-### M4 — ASIO + DSD 고도화 (L, 1–2주)
-
-1. **ASIO 출력 드라이버**: M2의 `IOutputDriver` 위에 `AsioOutDriver`(NAudio AsioOut).
-   - 32비트 float/INT32 형식 협상, 배타적 접근 충돌(WASAPI 배타와 상호배제) 처리, 장치 열거 UI.
-   - 이벤트 타이밍 모드 지원 여부 확인(커버리지: 버퍼 크기 조절 설정 노출).
-2. **DoP(DSD over PCM)**: DSF 판독 경로에서 박스카 대신 DoP 패킹(0x05/0xFA 마커) — ASIO/WASAPI 배타
-   24비트 경로에서만 활성화. DSD 네이티브(ASIO DSD)는 후속 분리 과제로 표기.
-3. **DFF 지원**: `DsfTrackReader`와 병렬 `DffTrackReader`(DFF/DSDIFF 헤더 파싱, 로직 대부분 공유).
-4. 실패 시나리오: DoP 미지원 장치 조합 폴백(박스카 PCM으로 자동 강등 + 알림), ASIO 드라이버 크래시
-   시 세션 복구, DSD256/512 초고속 스트림 메모리 예산.
-
-**완료 기준**: ASIO 장치에서 재생·볼륨 정책(ASIO는 하드웨어 볼륨 또는 무음 주의 — UI 사전 경고),
-DoP 재생 확인, 기존 PCM 경로 무회귀.
+1. **DoP(DSD over PCM) 송신 경로**
+   - `DsfTrackReader`의 박스카 디시메이션과 별도로, DSD 비트스트림을 DoP 프레임
+     (24-bit PCM, 0x05/0xFA 마커, DSD64→176.4kHz)으로 패킹하는 `DopTrackReader` 추가.
+     `ITrackReaderProvider`로 등록(DSF/DFF + DoP 활성 설정 → 우선순위 공급).
+   - **활성 조건은 포맷 프로브 기반**: `WasapiDeviceService.TryNegotiateExclusive`가
+     DoP 레이트(176.4/352.8kHz·24비트)를 수락할 때만 세션을 DoP 포맷으로 연다.
+     수락하지 않으면(일반 엔드포인트가 그렇다) 기존 박스카 PCM으로 자동 강등 + InfoBar 알림.
+     "설정했지만 장치가 못 받는" 상태를 조용히 두지 않는다.
+   - M3의 `ExclusiveRateMismatchPolicy`와 상호작용: DoP 세션 중 일반 PCM 트랙으로 넘어가면
+     재구성(기본) 또는 리샘플(선택)이 그대로 적용되게 한다 — 새 정책이 기존 정책을 우회하지 않음.
+   - 볼륨: DoP 프레임에 디지털 볼륨을 적용하면 DSD 스트림이 깨진다(마커 바이트 훼손).
+     DoP 세션은 `AllowVolumeInExclusive`와 무관하게 볼륨/DSP를 강제 바이패스하고 UI에 표기.
+2. **DFF(DSDIFF) 지원**
+   - `DffTrackReader`: DFF 헤더 파싱(FRM8/FSND chunk, DSD/DST), DSF와 로직 공유.
+     DST 압축 트랙은 1차에서 미지원(명확한 오류 메시지)으로 하고, 필요 시 후속.
+   - 라이브러리 색인·확장자 연결(`AppPaths.SupportedExtensions`, 파일 피커, 인스톨러)·태그 읽기.
+3. **설정 UI**: 환경설정 → 재생에 "DSD 재생 방식" (DoP 우선 / 항상 PCM 변환) 추가. 3개 국어 resw.
+4. **실패 시나리오 테스트 (착수 전 설계)**
+   - DoP 레이트 미수락 엔드포인트 → 박스카 폴백 + 알림 1회(트랙마다 반복 금지).
+   - DoP 세션 중 볼륨/이퀄라이저/컨볼루션 활성 → 바이패스 불변식 (마커 바이트 무결성 검사).
+   - DSD64/128/256 스트림의 메모리 예산과 prefetch 상호작용.
+   - M3 정책 공존: DoP↔PCM 전환 시 재구성/리샘플 정책 일관성.
+5. **완료 기준**: DoP 수락 장치에서 마커 무결성 유지 재생, 미수락 장치에서 조용한 PCM 폴백,
+   DFF 색인·재생, 기존 PCM 경로 무회귀, 전체 테스트 통과.
 
 ### M5 — App 구조 개선: DI + VM 추출 + 증분 UI (L, 1–2주)
 
@@ -184,42 +143,39 @@ DoP 재생 확인, 기존 PCM 경로 무회귀.
    위치 이벤트 구동(스크럽 중만 타이머).
 4. **중복 제거**: 스플리터 attached behavior 통합, 다이얼로그 팩토리 단일화(PlaylistDialogs 스타일로),
    `Converters.cs` 위치 정리, `LibraryTreeBuilder`/`LibraryTreeModelBuilder` 명명 정리.
-5. **Last.fm 섹션 VM화**: `LastfmSettingsViewModel` — `_pendingLastfmToken` 페이지 상태 문제
-   (네비게이션 이탈 시 인증 흐름 소실) 함께 해결.
-6. Core 헤드리스화 1차: `FastObservableCollection`, `Playlist`/`PlaylistItem` INPC를 App 쪽 어댑터로 이동
-   (Core는 순수 모델+통지 인터페이스만). **범위 크므로 M5에서는 인터페이스 경계만 확립, 이전은 별도 커밋.**
+5. **Last.fm 섹션 VM화**: `LastfmSettingsViewModel` — 인증 토큰이 페이지 상태로 남아
+   네비게이션 이탈 시 흐름이 소실되는 문제를 함께 해결.
+6. Core 헤드리스화 1차: `FastObservableCollection`, `Playlist`/`PlaylistItem` INPC의
+   인터페이스 경계만 확립(이전은 별도 커밋 — 범위 폭발 방지).
 
-**완료 기준**: Library/Playlist 페이지 code-behind LOC 절감(목표 50%+), 페이지 단위 회귀(수동 시나리오 +
-기존 `PlaybackUiHelper` 등 계산 로직 테스트), 10만 트랙 스케일 스모크 테스트(목킹)에서 UI 응답성 유지.
+**완료 기준**: Library/Playlist code-behind LOC 50%+ 절감, 수동 시나리오 + 기존 계산 로직 테스트 통과,
+10만 트랙 스케일 목킹 스모크에서 UI 응답성 유지.
 
 ### M6 — 접근성·테마·i18n 사각지대 (S–M, 2–4일)
 
-1. **AutomationProperties i18n**: 모든 하드코딩 한국어 값을 `…AutomationProperties.Name` resw 키로
-   (파이프라인 이미 지원, 신규 Lastfm 키가 선례). 리스트 행·앨범 카드·드로어에 automation name 부여.
-2. **하이컨트라스트 대응**: `ThemeService`가 HC 테마 감지 시 커스텀 팔레트 오버라이드 축소
-   (`SystemParameters.HighContrast` / `AccessibilitySettings`), 필수 브러시만 시스템 위임.
-3. **보조 창 테마 연결**: `LyricsEditorWindow`/`LyricsSearchWindow`에 ThemeService 백드롭·액센트 적용,
-   액센트 변경 전파.
+1. **AutomationProperties i18n**: 하드코딩 한국어 값을 `…AutomationProperties.Name` resw 키로.
+   리스트 행·앨범 카드·드로어에 automation name 부여.
+2. **하이컨트라스트 대응**: HC 감지 시 `ThemeService` 커스텀 팔레트 오버라이드 축소, 필수 브러시 시스템 위임.
+3. **보조 창 테마 연결**: `LyricsEditorWindow`/`LyricsSearchWindow`에 ThemeService 백드롭·액센트 적용.
 4. **Core 하드코딩 한국어 → 리소스 키**: `PlaybackController`/`OutputSessionFactory`/
-   `AudioFileReaderFactory` 사용자 메시지를 코드 반환 → App 레이어 변환(enum/키) 구조로
-   (M1 로깅과 함께 진행하면 자연스러움 — 순서 조정 가능).
+   `AudioFileReaderFactory` 사용자 메시지를 enum/키 반환 → App 레이어 변환 구조로.
 5. i18n 테스트 강화: AutomationProperties 키 누락 검사 추가.
 
-**완료 기준**: 내레이터 스모크(재생 제어·탐색), HC 켰 때 대비 텍스트 대비 유지, 3개 언어 resw 동기 게이트 통과.
+**완료 기준**: 내레이터 스모크(재생 제어·탐색), HC 켬 시 텍스트 대비 유지, 3개 언어 resw 동기 게이트 통과.
 
 ### M7+ — 파워유저 기능 (선택, 착수 시 개별 계획서)
 
 우선순위 제안(가치/준비도 기준):
 
 1. **파일 정리(File Operations)** — `%artist%/%album%/%track% - %title%` 이동/이름변경.
-   태그 인프라 공유. M2의 `ITagProvider` 후 활용. (L)
-2. **재생목록 실행 취소/다시 실행 + 잠금** — `PlaylistManager` 스냅샷 인프라(`CollectionSnapshot` 존재) 재사용. (M)
-3. **원격 제어 HTTP/WS API** — 스마트폰 리모컨. `AppServices` 이벤트 버스가 M5에서 정리된 후 착수 권장. (L)
-4. **AcoustID/MusicBrainz 자동 태깅** — `ITagProvider` + 원자적 쓰기 이미 완비. (L)
-5. **PLS/XSPF 가져오기** — 재생목록 포맷 추상화(M2 부산물). (S)
-6. **풀스크린 Now Playing + 웨이브폼 캔버스** — `WaveformPeaks` 스캐너 보존 상태, 큰 캔버스에서 부활. (M)
-7. **APE/WavPack 디코딩, FLAC 등 손실무손실 인코더 변환기 확장** — 관리형 라이브러리 생태계 조사 후
-   착수(M4 이후 `ITrackReaderProvider`에 등록형). (조사 필요)
+   M2의 `ITagProvider`와 태그 편집기 인프라 공유. (L)
+2. **재생목록 실행 취소/다시 실행 + 잠금** — `CollectionSnapshot` 인프라 재사용. (M)
+3. **원격 제어 HTTP/WS API** — 스마트폰 리모컨. M5의 정리된 서비스 경계 위에서 착수. (L)
+4. **AcoustID/MusicBrainz 자동 태깅** — `ITagProvider` 체인에 등록하는 형태. 원자적 쓰기 완비. (L)
+5. **PLS/XSPF 가져오기** — 재생목록 포맷 추상화. (S)
+6. **풀스크린 Now Playing + 웨이브폼 캔버스** — `WaveformPeaks` 부활. (M)
+7. **M3 정책 확장 — 채널 수 불일치도 리샘플/컨버터로 흡수하는 옵션** (S–M)
+8. **APE/WavPack 디코딩, 손실무손실 인코더 변환기 확장** — `ITrackReaderProvider` 등록형. (조사 필요)
 
 ---
 
@@ -227,13 +183,17 @@ DoP 재생 확인, 기존 PCM 경로 무회귀.
 
 | 리스크 | 영향 | 완화 |
 |---|---|---|
-| ASIO 드라이버 다양성(벤더별 버그) | M4 지연 | 드라이버 블랙리스트 + 세이프모드(ASIO 꺼짐) 폴백, 베타 옵션 출시 |
-| 배타 모드 리샘플이 비트퍼펙트 불변식 훼손 | 음질 회귀 | 리미터 무장 자동판정 로직에 "리샘플 활성" 조건 추가, A/B 테스트 시나리오 |
-| AppServices 이벤트 버스 제거 중 구독 누수 재발 | 메모리 누수 | 기존 문서화된 누수 사례(SettingsPage:258-266) 회귀 테스트로 고정 후 진행 |
-| UI 가상화 전환 시 Eole 드로어 상호작용 파괴 | UX 회귀 | 드로어 시나리오 수동 체크리스트 + feature flag로 신규 패널 전환 |
-| 대규모 리팩터링 중 오디오 회귀 | 핵심 가치 훼손 | 각 마일스톤마다 "동일 동작 스냅샷" 계약 테스트, 오디오 경로는 최소한의 mechanical 이동만 |
+| DoP 레이트를 배타 프로브가 수락하는 엔드포인트가 드뜸 | M4의 DoP가 일부 장치에서만 동작 | 프로브 기반 활성화 + PCM 폴백을 기본 동작으로 설계(이미 M3 폴백 체계와 동일 패턴), "DoP 미지원"을 결함이 아닌 상태로 알림 |
+| DoP 세션에 볼륨/DSP가 흘러들면 스트림 깨짐 | 음원 파손 사고 | DoP 경로 강제 바이패스 + 마커 바이트 무결성 단위 테스트, UI에 "볼륨 비활성" 명시 |
+| DSD 고비트레이트(DSD128+)에서 prefetch/메모리 압박 | 재생 끊김 | 스트림 속도별 예산 테스트, 초과 시 PCM 강등 폴백 |
+| 배타 모드 리샘플 정책이 비트퍼펙트 기대와 충돌 | 음질 회귀 (M3에서 이미 옵션화) | 기본값 RestartSession 고정 테스트 존재, UI 설명 유지 |
+| AppServices 이벤트 버스 정리 중 구독 누수 재발 | 메모리 누수 | 기존 문서화된 누수 사례(SettingsPage:258-266) 회귀 테스트 고정 후 진행 |
+| UI 가상화 전환 시 Eole 드로어 상호작용 파괴 | UX 회귀 | 드로어 수동 체크리스트 + feature flag 전환 |
+| 대규모 리팩터링 중 오디오 회귀 | 핵심 가치 훼손 | seam 계약 테스트(M2)가 이미 존재 — mechanical 이동만 허용 |
 
-## 5. 검증 전략 (마일스톤 공통)
+---
+
+## 5. 검증 전략 (마일스톤 공통, 변경 없음)
 
 - 착수 전: 해당 범위 결함 트리 + 실패 시나리오 테스트 먼저 작성(규약 3).
 - 진행 중: 수정 클래스 단위 `dotnet test --filter` 만.
@@ -243,5 +203,5 @@ DoP 재생 확인, 기존 PCM 경로 무회귀.
 
 ## 6. 즉시 실행 가능한 다음 액션
 
-1. M0 커밋 (미커밋 Last.fm 통합 — 검증만 남음).
-2. M1 착수 승인 요청 — 로깅 추상화 설계안(인터페이스 초안 + 싱크 주입 지점) 제시 후 승인받아 구현.
+1. **M4(DSD 고도화) 착수 승인 요청** — DoP 프레임 포맷·프로브 활성화 설계안 제시 후 승인받아 구현.
+2. M5/M6는 순서 대기 (M4 완료 후 M5 권장 — 원격 API 등 축 C의 전제).
