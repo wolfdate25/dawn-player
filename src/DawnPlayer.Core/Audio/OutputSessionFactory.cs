@@ -22,8 +22,9 @@ public sealed record OutputSession(
     SessionInfo Info);
 
 /// <summary>
-/// Opens an output session for the configured driver: WASAPI (exclusive with shared fallback),
-/// DirectSound, or WaveOut.
+/// Opens an output session for the configured driver through the registered
+/// <see cref="IOutputDriver"/> chain. The driver set is process-wide: register additional
+/// backends once at startup; resolution falls back to the WASAPI driver when a type has none.
 /// </summary>
 /// <remarks>
 /// Separated from the playback controller because this is the slow, driver-facing half — device
@@ -33,6 +34,17 @@ public sealed record OutputSession(
 /// </remarks>
 public sealed class OutputSessionFactory
 {
+    private static readonly object _driverGate = new();
+    private static readonly Dictionary<AudioDriverType, IOutputDriver> _builtIns = CreateDefaultDrivers();
+    private static Dictionary<AudioDriverType, IOutputDriver> _drivers = new(_builtIns);
+
+    private static Dictionary<AudioDriverType, IOutputDriver> CreateDefaultDrivers() => new()
+    {
+        [AudioDriverType.Wasapi] = new WasapiOutputDriver(),
+        [AudioDriverType.DirectSound] = new DirectSoundOutputDriver(),
+        [AudioDriverType.WaveOut] = new WaveOutOutputDriver(),
+    };
+
     private readonly AppSettings _settings;
     private readonly Func<Track, float> _gainProvider;
     private readonly Func<Track, float?> _replayGainProvider;
@@ -59,6 +71,57 @@ public sealed class OutputSessionFactory
         _warn = warn ?? throw new ArgumentNullException(nameof(warn));
     }
 
+    /// <summary>Snapshot of the registered drivers, keyed by the driver type they serve.</summary>
+    public static IReadOnlyDictionary<AudioDriverType, IOutputDriver> Drivers
+    {
+        get { lock (_driverGate) return new Dictionary<AudioDriverType, IOutputDriver>(_drivers); }
+    }
+
+    /// <summary>Registers (or replaces) the driver for its <see cref="IOutputDriver.DriverType"/>.</summary>
+    public static void RegisterDriver(IOutputDriver driver)
+    {
+        ArgumentNullException.ThrowIfNull(driver);
+        lock (_driverGate)
+        {
+            var next = new Dictionary<AudioDriverType, IOutputDriver>(_drivers)
+            {
+                [driver.DriverType] = driver,
+            };
+            _drivers = next;
+        }
+    }
+
+    /// <summary>Removes the driver registered for <paramref name="type"/>, restoring the
+    /// built-in for that type (or the WASAPI fallback when the type has none). Returns false
+    /// when nothing was registered beyond the built-in. The WASAPI driver itself cannot be
+    /// removed — it is the fallback.</summary>
+    public static bool UnregisterDriver(AudioDriverType type)
+    {
+        lock (_driverGate)
+        {
+            if (type == AudioDriverType.Wasapi || !_drivers.TryGetValue(type, out var current) ||
+                ReferenceEquals(current, _builtIns.GetValueOrDefault(type)))
+            {
+                return false;
+            }
+
+            var next = new Dictionary<AudioDriverType, IOutputDriver>(_drivers);
+            next.Remove(type);
+            if (_builtIns.TryGetValue(type, out var builtIn)) next[type] = builtIn;
+            _drivers = next;
+            return true;
+        }
+    }
+
+    /// <summary>The driver serving <paramref name="type"/>, falling back to WASAPI.</summary>
+    public static IOutputDriver ResolveDriver(AudioDriverType type)
+    {
+        lock (_driverGate)
+        {
+            return _drivers.GetValueOrDefault(type) ?? _drivers[AudioDriverType.Wasapi];
+        }
+    }
+
     /// <summary>
     /// Opens a session and starts it playing <paramref name="first"/>. Throws
     /// <see cref="AudioSessionStartException"/> when the failure has already been explained to the
@@ -69,12 +132,19 @@ public sealed class OutputSessionFactory
         ArgumentNullException.ThrowIfNull(first);
         var latency = Math.Clamp(_settings.Output.LatencyMs, 20, 1000);
 
-        return _settings.Output.DriverType switch
-        {
-            AudioDriverType.DirectSound => StartDirectSound(first, latency),
-            AudioDriverType.WaveOut => StartWaveOut(first, latency),
-            _ => StartWasapi(first, latency)
-        };
+        var driver = ResolveDriver(_settings.Output.DriverType);
+        return driver.Start(new OutputSessionRequest(
+            first,
+            latency,
+            _settings,
+            _gainProvider,
+            _replayGainProvider,
+            _subscribeSequencer,
+            _subscribeOutput,
+            _warn,
+            _pluginDsp,
+            (target, applyVolume, eqProfile) => CreateSequencer(target, applyVolume, latency, eqProfile),
+            ReopenPending));
     }
 
     private SequencerStream CreateSequencer(WaveFormat target, bool applyVolume, int latency, EqProfile eqProfile)
@@ -85,145 +155,6 @@ public sealed class OutputSessionFactory
             dspChain: null, pluginDsp: _pluginDsp?.Invoke());
         _subscribeSequencer(seq);
         return seq;
-    }
-
-    private OutputSession StartDirectSound(PendingTrack first, int latency)
-    {
-        Guid dsGuid = WasapiDeviceService.ResolveDirectSoundDevice(_settings.Output.DeviceId);
-        if (!string.IsNullOrEmpty(_settings.Output.DeviceId)
-            && (!Guid.TryParse(_settings.Output.DeviceId, out var configuredGuid) || configuredGuid != dsGuid))
-        {
-            _warn("설정된 DirectSound 장치를 찾을 수 없어 기본 장치로 재생합니다.");
-        }
-
-        var rate = first.Reader.SourceFormat.SampleRate > 0 ? first.Reader.SourceFormat.SampleRate : 44100;
-        var channels = first.Reader.SourceFormat.Channels > 0 ? first.Reader.SourceFormat.Channels : 2;
-        var target = WaveFormat.CreateIeeeFloatWaveFormat(rate, channels);
-        var eqProfile = EqualizerProfileResolver.Resolve(_settings.Equalizer, AudioDriverType.DirectSound, dsGuid.ToString());
-
-        var seq = CreateSequencer(target, applyVolume: true, latency, eqProfile);
-        seq.SwitchTo(first);
-
-        var dsOutput = new DirectSoundOut(dsGuid, latency);
-        _subscribeOutput(dsOutput);
-        dsOutput.Init(seq);
-        dsOutput.Play();
-
-        var devInfo = WasapiDeviceService.EnumerateDirectSoundDevices().FirstOrDefault(d => d.Id == dsGuid.ToString());
-        string devName = devInfo?.Name ?? "DirectSound (Windows Audio)";
-        var info = new SessionInfo(devName, false, $"DirectSound • {rate / 1000.0:0.#}kHz / 32-bit float", latency, AudioDriverType.DirectSound);
-
-        return new OutputSession(seq, dsOutput, Device: null, Exclusive: false,
-            AudioDriverType.DirectSound, dsGuid.ToString(), info);
-    }
-
-    private OutputSession StartWaveOut(PendingTrack first, int latency)
-    {
-        int devNum = WasapiDeviceService.ResolveWaveOutDeviceNumber(_settings.Output.DeviceId);
-        if (!string.IsNullOrEmpty(_settings.Output.DeviceId)
-            && (!int.TryParse(_settings.Output.DeviceId, out var configuredNum) || configuredNum != devNum))
-        {
-            _warn("설정된 WaveOut 장치를 찾을 수 없어 기본 사운드 매퍼로 재생합니다.");
-        }
-
-        var rate = first.Reader.SourceFormat.SampleRate > 0 ? first.Reader.SourceFormat.SampleRate : 44100;
-        var channels = first.Reader.SourceFormat.Channels > 0 ? first.Reader.SourceFormat.Channels : 2;
-        var target = new WaveFormat(rate, 16, channels);
-        var eqProfile = EqualizerProfileResolver.Resolve(_settings.Equalizer, AudioDriverType.WaveOut, devNum.ToString(CultureInfo.InvariantCulture));
-
-        var seq = CreateSequencer(target, applyVolume: true, latency, eqProfile);
-        seq.SwitchTo(first);
-
-        var waveOut = new WaveOutEvent { DeviceNumber = devNum, DesiredLatency = latency };
-        _subscribeOutput(waveOut);
-        waveOut.Init(seq);
-        waveOut.Play();
-
-        var devInfo = WasapiDeviceService.EnumerateWaveOutDevices().FirstOrDefault(d => d.Id == devNum.ToString(CultureInfo.InvariantCulture));
-        string devName = devInfo?.Name ?? "WaveOut (Windows Audio)";
-        var info = new SessionInfo(devName, false, $"WaveOut • {rate / 1000.0:0.#}kHz / 16-bit", latency, AudioDriverType.WaveOut);
-
-        return new OutputSession(seq, waveOut, Device: null, Exclusive: false,
-            AudioDriverType.WaveOut, devNum.ToString(CultureInfo.InvariantCulture), info);
-    }
-
-    private OutputSession StartWasapi(PendingTrack first, int latency)
-    {
-        var device = WasapiDeviceService.OpenDevice(_settings.Output.DeviceId);
-        if (device == null)
-            throw new InvalidOperationException("오디오 출력 장치를 찾을 수 없습니다.");
-
-        bool exclusive = _settings.Output.UseExclusiveMode;
-
-        WaveFormat? target = null;
-        if (exclusive)
-            target = WasapiDeviceService.TryNegotiateExclusive(
-                device, first.Reader.SourceFormat, _settings.Output.ExclusiveBitDepth);
-        if (target == null)
-        {
-            if (exclusive)
-                _warn(AudioErrorMessages.BuildExclusiveFailureReason(device, first.Reader.SourceFormat));
-            exclusive = false;
-            target = WasapiDeviceService.GetSharedTarget(device);
-        }
-
-        var applyVolume = !exclusive || _settings.Output.AllowVolumeInExclusive;
-        var eqProfile = EqualizerProfileResolver.Resolve(_settings.Equalizer, AudioDriverType.Wasapi, device.ID);
-        var seq = CreateSequencer(target, applyVolume, latency, eqProfile);
-        seq.SwitchTo(first); // initial load
-
-        var output = new WasapiOut(device,
-            exclusive ? AudioClientShareMode.Exclusive : AudioClientShareMode.Shared,
-            useEventSync: true, latency);
-        _subscribeOutput(output);
-        try
-        {
-            output.Init(seq);
-            output.Play();
-        }
-        catch (Exception exclusiveFailure) when (exclusive)
-        {
-            output.Dispose();
-
-            // Cancel() disposes the reader the failed sequencer took ownership of in SwitchTo,
-            // so the shared-mode retry needs a freshly opened one — reusing the disposed reader
-            // would make the fallback session play silence.
-            seq.Cancel();
-            first = ReopenPending(first);
-
-            exclusive = false;
-            target = WasapiDeviceService.GetSharedTarget(device);
-            applyVolume = true;
-            seq = CreateSequencer(target, applyVolume, latency, eqProfile);
-            seq.SwitchTo(first);
-
-            output = new WasapiOut(device, AudioClientShareMode.Shared, true, latency);
-            _subscribeOutput(output);
-            try
-            {
-                output.Init(seq);
-                output.Play();
-            }
-            catch (Exception sharedFailure)
-            {
-                // While another application holds the endpoint in exclusive mode, Windows suspends
-                // the shared mixer too, so the fallback cannot succeed either. Announcing "falling
-                // back to shared mode" before knowing that, then reporting a bare HRESULT, told the
-                // user nothing. Report the real reason once, and only once.
-                output.Dispose();
-                seq.Cancel();
-                throw new AudioSessionStartException(
-                    AudioErrorMessages.DescribeStartFailure(sharedFailure, exclusiveFailure), sharedFailure);
-            }
-
-            // Only now is the claim true.
-            _warn("WASAPI 배타 모드를 열 수 없습니다 (다른 프로그램이 장치 사용 중). 공유 모드로 재생합니다.");
-        }
-
-        var info = new SessionInfo(
-            device.FriendlyName, exclusive, WasapiDeviceService.Describe(target), latency, AudioDriverType.Wasapi);
-
-        return new OutputSession(seq, output, device, exclusive, AudioDriverType.Wasapi, device.ID, info);
     }
 
     /// <summary>Re-opens the source file for a pending track whose reader a torn-down sequencer

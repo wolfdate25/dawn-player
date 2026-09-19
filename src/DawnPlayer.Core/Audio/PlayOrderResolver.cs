@@ -21,10 +21,23 @@ public sealed record PlayOrderContext(
     bool ManualAdvance);
 
 /// <summary>
-/// Decides which item plays next: queue first, then repeat-one, then playlist order under the
-/// active shuffle and repeat modes.
+/// Decides which item plays next. Injectable into <see cref="PlaybackController"/> so alternate
+/// orderings (e.g. weighted shuffle) are a constructor argument, not a resolver edit.
 /// </summary>
-public sealed class PlayOrderResolver
+public interface IPlayOrderStrategy
+{
+    /// <summary>
+    /// Returns the next item to play, or null when the sequence should stop.
+    /// <paramref name="skip"/> holds items already found unplayable in this resolution pass.
+    /// </summary>
+    (Playlist Playlist, PlaylistItem Item)? PeekNext(PlayOrderContext ctx, ISet<PlaylistItem> skip);
+}
+
+/// <summary>
+/// Default strategy: queue first, then repeat-one, then playlist order under the active shuffle
+/// and repeat modes.
+/// </summary>
+public sealed class PlayOrderResolver : IPlayOrderStrategy
 {
     private readonly AppSettings _settings;
     private readonly IPlaybackQueue _queue;

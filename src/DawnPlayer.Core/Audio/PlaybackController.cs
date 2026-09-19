@@ -44,8 +44,8 @@ public sealed class AudioSessionStartException : Exception
 public sealed partial class PlaybackController : IPlaybackController
 {
     private readonly AppSettings _settings;
-    private readonly PlaylistManager _playlists;
-    private readonly PlayOrderResolver _playOrder;
+    private readonly IPlaylistManager _playlists;
+    private readonly IPlayOrderStrategy _playOrder;
     private readonly OutputSessionFactory _sessionFactory;
 
     /// <summary>
@@ -138,13 +138,13 @@ public sealed partial class PlaybackController : IPlaybackController
     public bool IsExclusiveSession => Volatile.Read(ref _session)?.Exclusive ?? false;
     public SessionInfo? CurrentSessionInfo { get; private set; }
 
-    public PlaybackController(AppSettings settings, PlaylistManager playlists)
+    public PlaybackController(AppSettings settings, IPlaylistManager playlists, IPlayOrderStrategy? playOrder = null)
     {
         _settings = settings;
         _playlists = playlists;
         // TryGetCurrent, not Current: resolution runs on the thread pool and the creating
         // accessors insert into the UI-bound playlist collection.
-        _playOrder = new PlayOrderResolver(settings, Queue, () => _playlists.TryGetCurrent());
+        _playOrder = playOrder ?? new PlayOrderResolver(settings, Queue, () => _playlists.TryGetCurrent());
         // One shared effect instance per controller; each new session re-inserts it into the
         // fresh chain and re-applies the persisted enable state.
         _pluginDspEffect = new DawnPlayer.Core.Audio.Dsp.Plugins.PluginDspEffect(() => Volatile.Read(ref _pluginDspHost));

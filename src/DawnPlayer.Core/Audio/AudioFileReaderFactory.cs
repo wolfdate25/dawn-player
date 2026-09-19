@@ -1,3 +1,4 @@
+using System.Linq;
 using DawnPlayer.Core.Util;
 using NAudio.Vorbis;
 using NAudio.Wave;
@@ -65,8 +66,50 @@ public sealed class VorbisTrackReader : ITrackReader
     public void Dispose() => _reader.Dispose();
 }
 
+/// <summary>
+/// Opens a supported audio file through the registered <see cref="ITrackReaderProvider"/> chain
+/// (highest order first; the Media Foundation provider is the unconditional catch-all). Throws
+/// <see cref="AudioOpenException"/> on failure. Registration mutates a copy-on-write snapshot,
+/// so hot opens never lock.
+/// </summary>
 public static class AudioFileReaderFactory
 {
+    private static readonly object _gate = new();
+    private static ITrackReaderProvider[] _providers =
+    {
+        new RadioStreamTrackReaderProvider(),
+        new DsfTrackReaderProvider(),
+        new VorbisTrackReaderProvider(),
+        new MfTrackReaderProvider(),
+    };
+
+    /// <summary>Snapshot of the active provider chain, highest order first.</summary>
+    public static IReadOnlyList<ITrackReaderProvider> Providers
+    {
+        get { lock (_gate) return _providers.ToArray(); }
+    }
+
+    /// <summary>Adds a provider to the chain, keeping descending-order arrangement.</summary>
+    public static void Register(ITrackReaderProvider provider)
+    {
+        ArgumentNullException.ThrowIfNull(provider);
+        lock (_gate)
+        {
+            _providers = _providers.Append(provider).OrderByDescending(p => p.Order).ToArray();
+        }
+    }
+
+    /// <summary>Removes a previously registered provider. Returns false when it was not registered.</summary>
+    public static bool Unregister(ITrackReaderProvider provider)
+    {
+        lock (_gate)
+        {
+            int before = _providers.Length;
+            _providers = _providers.Where(p => !ReferenceEquals(p, provider)).ToArray();
+            return _providers.Length != before;
+        }
+    }
+
     /// <summary>Opens a supported audio file. Throws <see cref="AudioOpenException"/> on failure.</summary>
     public static ITrackReader Open(string path)
     {
@@ -80,24 +123,35 @@ public static class AudioFileReaderFactory
                 TimeSpan.FromMilliseconds(endMs));
         }
 
-        if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-            path.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        var ext = System.IO.Path.GetExtension(path).ToLowerInvariant();
+
+        ITrackReaderProvider? chosen = null;
+        lock (_gate)
         {
-            var radio = new RadioStreamReader(path);
-            radio.Connect();
-            return radio;
+            foreach (var provider in _providers)
+            {
+                if (provider.CanOpen(path, ext))
+                {
+                    chosen = provider;
+                    break;
+                }
+            }
         }
 
-        var ext = System.IO.Path.GetExtension(path).ToLowerInvariant();
-        if (ext == ".dsf")
+        if (chosen == null)
         {
-            return new DsfTrackReader(path);
+            throw new AudioOpenException(
+                $"지원하지 않는 형식입니다: {System.IO.Path.GetFileName(path)}",
+                new InvalidOperationException($"no track reader provider accepts '{ext}'"));
         }
+
         try
         {
-            return ext is ".ogg" or ".oga"
-                ? new VorbisTrackReader(path)
-                : new MfTrackReader(path);
+            return chosen.Open(path);
+        }
+        catch (AudioOpenException)
+        {
+            throw; // already user-facing (e.g. radio connect failure)
         }
         catch (Exception ex)
         {

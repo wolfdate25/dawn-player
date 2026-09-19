@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Globalization;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using DawnPlayer.Core.Models;
@@ -7,12 +8,93 @@ using DawnPlayer.Core.Util;
 
 namespace DawnPlayer.Core.Library;
 
-/// <summary>Reads a <see cref="Track"/> from a file's tags/properties via TagLib#.</summary>
-public static class TagReader
+/// <summary>
+/// Metadata seam: one candidate for reading a file's tags. <see cref="TagReader"/> walks
+/// providers by descending <see cref="Order"/> and takes the first non-null read, so an
+/// additional metadata source (e.g. a fingerprint-based tagger) is a registration, not an edit
+/// to the TagLib path.
+/// </summary>
+public interface ITagProvider
 {
+    /// <summary>Higher wins when several providers can read the same path.</summary>
+    int Order { get; }
+
+    /// <summary>Whether this provider can read the path (extension lowercased, with dot).</summary>
+    bool CanRead(string path, string extension);
+
+    /// <summary>Reads the track, or null when the file carries nothing usable.</summary>
+    Track? TryRead(string path, out TagLib.IPicture? embeddedArt);
+}
+
+/// <summary>Reads a <see cref="Track"/> from a file's tags/properties via the registered
+/// <see cref="ITagProvider"/> chain (TagLib# by default; higher-order providers win).</summary>
+public static partial class TagReader
+{
+    private static readonly object _gate = new();
+    private static ITagProvider[] _providers = { new TagLibTagProvider() };
+
+    /// <summary>Snapshot of the active provider chain, highest order first.</summary>
+    public static IReadOnlyList<ITagProvider> Providers
+    {
+        get { lock (_gate) return _providers.ToArray(); }
+    }
+
+    /// <summary>Adds a provider to the chain, keeping descending-order arrangement.</summary>
+    public static void RegisterProvider(ITagProvider provider)
+    {
+        ArgumentNullException.ThrowIfNull(provider);
+        lock (_gate)
+        {
+            _providers = _providers.Append(provider).OrderByDescending(p => p.Order).ToArray();
+        }
+    }
+
+    /// <summary>Removes a previously registered provider. Returns false when it was not registered.</summary>
+    public static bool UnregisterProvider(ITagProvider provider)
+    {
+        lock (_gate)
+        {
+            int before = _providers.Length;
+            _providers = _providers.Where(p => !ReferenceEquals(p, provider)).ToArray();
+            return _providers.Length != before;
+        }
+    }
+
     public static Track? TryRead(string path) => TryRead(path, out _);
 
     public static Track? TryRead(string path, out TagLib.IPicture? embeddedArt)
+    {
+        embeddedArt = null;
+        if (string.IsNullOrWhiteSpace(path)) return null;
+
+        var ext = Path.GetExtension(path).ToLowerInvariant();
+        ITagProvider[] chain;
+        lock (_gate) chain = _providers.ToArray();
+
+        foreach (var provider in chain)
+        {
+            if (!provider.CanRead(path, ext)) continue;
+            var track = provider.TryRead(path, out embeddedArt);
+            if (track != null) return track;
+        }
+        return null;
+    }
+}
+
+/// <summary>The built-in TagLib# reader. Unconditional catch-all, so it must keep order 0.</summary>
+public sealed class TagLibTagProvider : ITagProvider
+{
+    public int Order => 0;
+
+    public bool CanRead(string path, string extension) => true;
+
+    public Track? TryRead(string path, out TagLib.IPicture? embeddedArt) =>
+        TagReader.TryReadViaTagLib(path, out embeddedArt);
+}
+
+public static partial class TagReader
+{
+    internal static Track? TryReadViaTagLib(string path, out TagLib.IPicture? embeddedArt)
     {
         embeddedArt = null;
         try
