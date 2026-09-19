@@ -1,193 +1,223 @@
-# Dawn Player 고도화 계획 (Advanced Roadmap) — 개정 2판
+# Dawn Player 고도화 계획 (Advanced Roadmap) — 개정 4판
 
-> 작성일: 2026-09-19 (개정) · 기준: `dbe334a` (M0–M3 완료 직후)
-> 개정 사유: **ASIO 지원을 로드맵에서 제외** (사용자 결정). M4를 DSD 고도화(DoP + DFF)로 재편하고,
-> ASIO 관련 항목·리스크·의존성 표현을 모두 제거했다.
-> 성격: **계획서 — 착수 전 승인 필요**. 이후 마일스톤 착수 시 본 문서의 해당 절을 계획 근거로 삼는다.
+> 작성일: 2026-09-20 (개정) · 기준: `8ebfe12` (M0–M6 완료 후)
+> 개정 사유: **사용자 판단으로 개정 3판(파워유저 기능 M7–M10)을 폐기**하고, UI/UX 고도화로 로드맵을
+> 전면 재편한다. 근거 자료: **ui-ux-pro-max 스킬 v2.13.0**(로컬 플러그인 — 스타일/팔레트/타이포/UX
+> 가이드/WinUI 스택 DB 검색) + 2026-09-20 수행한 Dawn Player UI 실측 감사. ASIO 제외 원칙은 유지.
+> 성격: 계획서이며 **U0–U5는 2026-09-20 사용자 승인 하에 전부 구현 완료**(`d8696b7`, `89b3999` —
+> NAudio 3.1 마이그레이션은 별도 세션 병행 작업). 게이트: 콜드 리빌드 0경고 0오류, 전체 테스트 1,779/1,779.
+> 작업 규약: [AGENTS.md](AGENTS.md).
 
 ---
 
 ## 0. 진행 상황 (완료 기록)
 
-> **M4–M6 실행 기록 (2026-09-19)**
-> - **M4 완료** `cfe4cd8`: DoP 패킹(마커 무결성 비트Exact 테스트), WASAPI 배타 프로브 게이팅 + PCM 폴백/1회 알림,
->   raw-passthrough(볼륨·DSP 우회), DFF 파서(DST 명확 거부), DSD 재생 모드 UI(3개 국어), M3 정책 공존 셀 12종 테스트.
->   ⚠️ 미수행: 실기기 청음 체크리스트(이 환경에서 오디오 하드웨어 접근 불가 — 배포 전 사용자 확인 권장).
-> - **M5 1차 완료** `8a6dac1`: LastfmSettingsViewModel 추출 + 인증 토큰 서비스 스코프화(내비게이션 이탈 시
->   승인 유실 버그 수정, VM 테스트 6종), SplitterChrome 통합(재생목록 페이지 드래그 가드 결함 수정),
->   NowPlayingBar 위치 폴링을 재생 중으로 한정(배터리). **잔여(후속 마일스톤으로 이월)**: DI 컨테이너 전면 전환,
->   Library/Playlist 전체 VM화(LOC −50% 기준), 큐 패널 델타 갱신, Core 헤드리스 경계 확립 — 각각 규모가 커서
->   개별 계획서로 착수 필요.
-> - **M6 부분 완료** `79ef494`: 가사 편집기/검색 창 테마 연결 + 액센트 전파(보조 창 레지스트리),
->   AutomationProperties 25종 3개 국어화, 하이컨트라스트 가드. **잔여**: M6-4(Core 한국어 문자열 리소스화), M6-5(검사 추가).
+### 마일스톤 완료 표 (M0–M6, 개정 1·2판)
 
 | 마일스톤 | 커밋 | 내용 | 검증 |
 |---|---|---|---|
 | M0 | `be544ee` | Last.fm 설정 통합 + Window 루트 x:Uid 크래시 수정(+게이트 테스트) | 빌드 0경고, 필터 테스트 56 |
-| M1 | `6ddf1d2` | Core 로깅 파사드(`Log`/`ILogSink`) + 롤링 파일 싱크(5MB×3), 조용한 catch 60+곳 관측화, DSP 플러그인 오류 로그 미러링 | 로깅 계약 테스트 10 |
+| M1 | `6ddf1d2` | Core 로깅 파사드(`Log`/`ILogSink`) + 롤링 파일 싱크(5MB×3), 조용한 catch 60+곳 관측화 | 로깅 계약 테스트 10 |
 | M2 | `db5b1b9` | 엔진 seam 4종 — `ITrackReaderProvider`, `IOutputDriver`, `ITagProvider`, `IPlayOrderStrategy` + `PlaybackController`→`IPlaylistManager` | 계약 테스트 13 |
-| M3 | `dbe334a` | 배타 모드 샘플레이트 불일치 정책(재구성/리샘플, 3개 국어 UI) + 시크·A-B 시 노멀라이저 수렴 이득 보존(`ResetForSeek`) | 정책 매트릭스+DSP 상태 테스트 9 |
+| M3 | `dbe334a` | 배타 모드 샘플레이트 불일치 정책(재구성/리샘플) + 시크·A-B 시 노멀라이저 이득 보존 | 정책 매트릭스 테스트 9 |
+| M4 | `cfe4cd8` | DSD 고도화 — DoP(WASAPI 배타), DFF 파서, PCM 폴백, raw-passthrough, 재생 모드 UI | 정책 공존 12종. ⚠️ 실기기 청음 미수행 |
+| M5 | `8a6dac1`+`3848e94`+`2f499c1` | DI 컨테이너, 큐 델타 갱신, `RechunkAlbumRows` 고속경로, `IUiDispatcher`, Library/Playlist VM, Last.fm VM, 스플리터 통합 | VM/서비스 테스트. LOC 기준은 트리거 신호 재정의로 폐지(아래) |
+| M6 | `79ef494`+`83be8f7` | 보조 창 테마 연결, AutomationProperties i18n, 하이컨트라스트 가드, Core 메시지 키화, 자동화 키 게이트 | 테스트 8종+게이트 |
 
-누적: **테스트 1,700개 전부 통과, 빌드 0경고 0오류 유지.**
+**M5 LOC 기준 재정의**: "code-behind LOC 50% 절감" 폐지 → 추출 트리거 신호 4종((1) UI 실행 없이
+테스트 불가, (2) 상태가 페이지보다 오래 살아야 함, (3) 로직 사본 갈라짐, (4) 헤드리스 회귀 증명 필요)
+발생 시에만 추출. 사후 수정: `8ebfe12` 재시작 위치 미스매치(불변식: 보고 위치 ≠ 디코더 위치 금지).
+
+**개정 3판 폐기 기록 (2026-09-20)**: M7 파일 정리 / M8 undo·redo / M9 포맷 갭 / M10 원격 API /
+R Core 내품질 트랙 — 사용자 판단으로 로드맵에서 제외. 개별 착수가 필요해지면 그때 개별 계획서로 회수.
+
+**릴리스 상태**: 공개 태그 v1.1.0. v1.2.0 포터블 ZIP 로컬 빌드 완료(`dist/`, a795e67 기준) —
+태그 푸시/GitHub Release는 사용자 명시 요청 대기(규약 §2).
+
+누적: **테스트 1,740개 통과, 빌드 0경고 0오류 (2026-09-20 기준).**
+
+### U0–U5 실행 기록 (2026-09-20, 개정 4판)
+
+| 마일스톤 | 커밋 | 내용 | 검증 |
+|---|---|---|---|
+| U0 | `89b3999` | 디자인 토큰 레이어(`Styles/DesignTokens.xaml` + `DesignTokenValues.cs` 미러), 스킬 MASTER.md 영속화 + WinUI 번역 규칙, WCAG 대비 게이트(상태색 4.5:1·본문 7:1·액센트 3:1), hex 베이스라인 게이트 | `DesignTokenTests` 11종 |
+| U1 | `89b3999` | `MotionService`(앱 토글 ∧ OS 애니메이션), `MotionHelper`(페이드·프레스 팝 — reduced-motion 시 최종 상태 즉시 고정), 탭/배경화면 페이드, `SpectrumSmoother`(즉시 공격·선형 감쇠), 설정 UI + 3개 국어 | `MotionAndSpectrumTests` 12종 |
+| U2 | `89b3999` | `NotificationPresenter`(일회성 자동 닫힘 6초·경고/오류 수동, 단일 슬롯 교체 규칙)로 InfoBar 3곳 표준화, `LoadingGate` 300ms 임계값(스캔 진행 플래싱 제거), LiveSetting 접근성 | `StateUxTests` 8종 |
+| U3 | `89b3999` | `DensityScale` 3단(Compact/Cozy=기존 룩/Comfortable) + 행 메트릭 리소스화, NowPlayingBar AdaptiveTrigger 컴팩트(<640px), LyricsPane 터치 타깃 26–28px→44px | 스위트 내 게이트 |
+| U4 | `89b3999` | 풀스크린 Now Playing 창(커버 히어로 + `WaveformLayout` 기반 파형 시크 캔버스(드래그 프리뷰) + 28밴드 스펙트럼), Acrylic 옵트인(기본 꺼짐), 타이틀 메뉴 진입, Esc 종료 | `WaveformLayoutTests` 6종 |
+| U5 | `89b3999` | 하드코딩 자동화 이름 31건 일괄 제거(x:Uid resw만이 이름의 원천 — 비한국어 UI에서 내레이터 한국어 읽힘 결함 수정) + 게이트 테스트, PlayGreen 액센트 프리셋(스킬 "Dark audio + play green"), 팔레트 대비 게이트 | `AutomationNameGateTests` 2종 |
+
+**부수 정비 (NAudio 3.1 마이그레이션 대응, `d8696b7`)**: 별도 세션에서 NAudio 2.3→3.1 전환(Span 기반
+Read, WasapiOut→WasapiPlayer)이 진행됨에 따라 (1) DirectSound 경로를 16-bit PCM 타깃으로 전환하고
+새 COM 계층의 E_NOTIMPL 즉사를 감지하는 1회성 프로브 → WaveOut 폴백(현지화 경고 포함)을 추가,
+(2) `RestartIfPlaying`의 reopen 실패가 unobserved task로 사라지지 않도록 방어 catch 추가(8ebfe12
+계약 유지), (3) 가사·설정 테스트의 액센트 인덱스 갱신.
+
+**감사 정정 (§1.2, 구현 중 확인)**: 최초 감사의 "0건" 판정 중 일부는 스캔 범위 누락이었음 —
+(1) `DawnTheme.xaml` 컨트롤 템플릿 내 상태 스토리보드(TransportToggleButton/PlayPauseButton)는
+기존 존재, (2) 스캔 ProgressBar는 `LibraryPage`에 기존 존재, (3) 가사 빈 상태는 기존 존재. "전무"
+판정이 유지되는 것은 페이지/콘텐츠 계층 모션, AdaptiveTrigger, 밀도 시스템, reduced-motion,
+풀스크린 파형이며, 이것이 U1–U4의 실제 범위였다.
+
+누적: **테스트 1,779개 통과(신규 39종 포함), 콜드 리빌드 0경고 0오류 (2026-09-20 기준).**
 
 ---
 
-## 1. 프로젝트 현황 진단 (개정판 기준)
+## 1. 프로젝트 UI/UX 진단 (스킬 검색 + 실측 감사)
 
-### 1.1 규모 및 성숙도
+### 1.1 스킬 디자인 시스템 권고 (`--design-system "music player desktop entertainment"`)
 
-| 영역 | 규모 | 비고 |
-|---|---|---|
-| `DawnPlayer.Core` | 70파일 / ~14.6k LOC | 오디오 엔진·재생목록·라이브러리·가사·설정 + M1~M3 신규(로깅, seam, 정책) |
-| `DawnPlayer.App` | 81파일 / ~16.2k LOC | WinUI 3 UI (Views·Services·Shortcuts·i18n) |
-| `DawnPlayer.Plugin.Abstractions` | 6파일 / 209 LOC | DSP·가사 플러그인 SDK |
-| `DawnPlayer.Tests` | 93파일 / ~28.8k LOC | 동시성 전용 스위트 포함 1,700+ 테스트 |
+- **스타일**: Dark Mode (OLED) — "entertainment·야간·눈 피로 방지" 적합. 요구 조건: 대비 4.5:1,
+  키보드, 가시 포커스, reduced-motion. (현재 다크 기본 방향과 일치 — 유지 확정)
+- **팔레트**: "Dark audio + play green" (#0F0F23 계열 배경 + #22C55E 액센트) — 액센트 프리셋
+  후보로 채택 가능(U5).
+- **타이포**: Righteous/Poppins(Music/Entertainment 페어링) — **웹 폰트 권고이므로 그대로 쓰지
+  않는다**. WinUI 번역 규칙: 기본은 Segoe UI Variable 스케일 매핑, 번들은 OFL 라이선스 확인 후
+  설계 단계에서 결정(U0).
+- **이펙트**: 최소 글로우, 낮은 백색 발광, 가시 포커스 / **AVOID**: 어수선한 레이아웃 + 빈약한
+  플레이어 UX.
+- **프리딜리버리 체크리스트**(§5 검증 전략에 번역 반영): 이모지 아이콘 금지, 호버 150–300ms,
+  대비 4.5:1, 가시 포커스, reduced-motion 존중, 반응형 중단점.
 
-### 1.2 강점 (유지·확장할 자산)
+### 1.2 실측 감사 (2026-09-20, src/DawnPlayer.App)
 
-- **동시성 설계**: 불변 스냅샷 게시(`SessionSnapshot` + `Volatile.Write`), 명령 세대 카운터,
-  오디오 스레드→ThreadPool 핸드오프 + 세션 동일성 재검증, 문서화된 락 순서.
-- **M1 이후 관측 가능**: 모든 조용한 폴백이 로그에 흔적을 남긴다. 롤링 싱크로 무한 증가도 차단.
-- **M2 이후 확장 가능**: 디코더·출력 드라이버·태그·재생 순서가 모두 "등록"으로 추가된다.
-  (`IOutputDriver`는 ASIO가 빠져도 가상 장치·원격 출력 등 미래 백엔드의 솔로 남는다.)
-- **M3 이후 충실도 선택권**: 배타 모드에서 레이트 불일치를 비트 퍼펙트(재구성)와
-  끊김 없음(리샘플) 중 사용자가 고른다. 기본값은 기존 동작(비트 퍼펙트).
+| 항목 | 실측 | 스킬 기준 | 판정 |
+|---|---|---|---|
+| XAML 모션(Storyboard·ThemeTransition·애니메이션) | **0건** | 호버 피드백 150–300ms, 상태 전환 | 모션 시스템 전무 |
+| 코드비하인드 모션(Composition·Storyboard) | **0건** (스펙트럼=값 갱신만) | transform/opacity 컴포지션 | 전무 |
+| AdaptiveTrigger/반응형 중단점 | **0건** | VSM+AdaptiveTrigger (High) | 전무 |
+| ProgressRing 등 로딩 표준 | **0건** | ProgressRing/ProgressBar (Medium), skeleton | 전무 |
+| 하드코딩 hex 색상 | 1건 | ThemeResource (High) | **양호** |
+| 바인딩 | x:Bind 229 : Binding 14 | x:Bind 핫패스 (Medium) | **양호** |
+| 터치 타깃 | LyricsPane 26–28px 버튼 4개 | 최소 44×44px (CRITICAL) | 미달 |
+| 자동화 이름 | LyricsPane 하드코딩 한국어 4+ (x:Uid와 병존) | 접근성 레이블 | **M6 게이트 사각지대** — 병존 케이스 미검사 |
+| 풀스크린 Now Playing | 부재 | 몰입 엔터테인먼트 방향 | 미구현 (`WaveformPeaks` Core 보존 확인) |
 
-### 1.3 남은 약점 (고도화 대상)
+### 1.3 검색 불일치(정직 기록)
 
-**오디오 충실도**
-1. **DSD 재생이 박스카 PCM뿐** — `DsfTrackReader`가 디시메이션 변환만 한다. DoP가 없어
-   DSD-capable DAC의 DSD 경로를 전혀 활용하지 못하고, DFF(DSDIFF)는 미지원.
-2. **포맷 불일치 갭의 잔여 영역** — M3 정책이 레이트 불일치를 다루지만, 채널 수 불일치는
-   여전히 세션 재구성을 강제한다 (리샘플 정책으로 자연스럽게 확장 가능).
-3. 시크가 샘플 단위 정밀 시크 추상화가 없어 디코더별 편차를 그대로 받는다 (소규모 개선 과제).
-
-**Core 구조**
-4. 갓 클래스 — `PlaylistManager`(1,187 LOC, 6개 책임), `MusicLibrary`(856 LOC, 스키마+마이그레이션+스캔+업서트).
-5. Core가 헤드리스가 아님 — `ObservableCollection`/INPC/`UiInvoke` 마샬링이 Core에 유입.
-6. Core i18n 누수 — 한국어 문자열이 Core에 하드코딩(PlaybackController, OutputSessionFactory 등).
-7. 관측화가 *존재* 수준 — 구조적 컨텍스트(세션 ID, 명령 세대)가 로그 라인에 없어 상관 분석은 수동.
-
-**App 구조**
-8. MVVM 이원화 — Settings만 진짜 MVVM. Library(1,164 LOC)·Playlist(741)은 code-behind-as-viewmodel.
-9. 정적 조합 루트 — `AppServices`(643 LOC)가 서비스 보유 + 이벤트 버스 + 비즈니스 로직까지 겸함. DI 부재.
-10. 전체 새로고침 UI 패턴 — 큐 변경마다 전체 재그룹, `RechunkAlbumRows` 전체 재생성, 200ms 타이머 상시 구동.
-11. 접근성 — `AutomationProperties.Name` 하드코딩 한국어, 하이컨트라스트 미지원.
-12. 테마 사각지대 — `LyricsEditorWindow`/`LyricsSearchWindow`가 ThemeService/Mica 적용 제외.
-13. 중복 — 스플리터 plumbing 2벌, 다이얼로그 작성 방식 3가지 혼재.
-
-**잔여 미구현 제안**: 손실 인코더 변환, 파일 정리, 재생목록 undo/redo, AcoustID/MusicBrainz,
-HTTP/WS 원격 제어, PLS/XSPF, 풀스크린 Now Playing(`WaveformPeaks` 보존됨), APE/WavPack/DFF.
-(**ASIO는 범위에서 제외** — 사용자 결정. 본 문서 어디에도 ASIO 작업을 두지 않는다.)
+`--domain chart "audio waveform spectrum"` → 매치 없음(워드클라우드 오프토픽, 재작성 재시도 후에도
+무매치) — 파형 시각화는 **검증된 스킬 매치 없음**, 보존된 `WaveformPeaks` 위의 자체 설계로 진행(U4).
+`--stack winui "smtc"`, "drag drop reorder" → 무매치(재시도 후) — 해당 항목은 일반 가이드 폴백 표기.
 
 ---
 
 ## 2. 고도화 전략
 
-지향: **"foobar2000의 기능적 깊이 × 상업 앱 수준의 내품질"**. 세 축으로 진행한다.
+지향: **"WinUI/Eole 네이티브 골격 위의 엔터테인먼트급 몰입감"** — 스킬의 연출 데이터(유리 효과,
+글로우, 웹 폰트)는 참고하되 Windows 네이티브 디자인 언어와 테마 규율(이미 우수)은 훼손하지 않는다.
 
-- **축 A — 오디오 충실도**: DSD 경로 완성(DoP·DFF)과 포맷 전환 경험 마무리. ASIO 없이
-  WASAPI 배타를 유일한 비트퍼펙트 경로로 전제하며, 그 경로의 품질에 집중한다.
-- **축 B — 아키텍처/내품질**: App 쪽 구조(구조 개선은 M2가 Core 쪽 절반을 이미 해소).
-- **축 C — 파워유저 기능**: foobar DNA 계열 신기능.
+- **토큰先行**: 색·간격·타이포·모션을 시맨틱 리소스 계층으로 먼저 고정(U0) — 이후 모든 마일스톤의 공통 언어.
+- **부재 계층 채우기**: 모션(U1) → 상태 피드백(U2) → 반응형/밀도(U3) — 감사에서 0건으로 확인된 세 계층.
+- **차별화 마무리**: 풀스크린 Now Playing + 웨이브폼(U4), 접근성·시각 감사(U5).
 
-원칙(프로젝트 규약 준수): 착수 전 결함 트리 분석 + 실패 시나리오 테스트 선행, 빌드 0 경고 유지,
-테스트는 타깃 필터 실행 + 마일스톤 종료 시 전체 1회, 임의 배포 금지.
+원칙: [AGENTS.md](AGENTS.md) — 착수 전 결함 트리+실패 시나리오 테스트 선설계, 콜드 리빌드 0경고,
+타깃 필터 테스트 + 종료 시 전체 1회, 임의 배포 금지.
 
 ### 마일스톤 개요
 
 | 마일스톤 | 주제 | 핵심 산출물 | 규모 |
 |---|---|---|---|
-| ~~M0–M3~~ | ~~완료~~ | ~~위 표 참조~~ | — |
-| M4 | DSD 고도화 (DoP + DFF) | ✅ 완료 `cfe4cd8` — `DopTrackReader`(WASAPI 배타 DoP), `DffRawReader`, PCM 폴백 체계, 정책 공존 | M–L |
-| M5 | App 구조 개선 | ✅ 대부분 완료 `8a6dac1`+`3848e94`+후속 — DI 컨테이너 도입, 큐 델타 갱신, RechunkAlbumRows 무변경 고속경로, IUiDispatcher 헤드리스 경계, Playlist/Library VM(결정 로직+테스트 7종). **미달: code-behind LOC 50% 절감 기준** — 실측 PlaylistPage 741→727, LibraryPage 1149→1180(고속경로 헬퍼 포함). 50% 절감은 XAML 이벤트→커맨드 전환을 수반하는 대형 UI 리팩터링으로 별도 착수 필요 | L |
-| M6 | 접근성·테마·i18n 사각지대 | ✅ 완료 `79ef494`+`83be8f7` — 가사 창 테마 연결+액센트 전파, AutomationProperties i18n, 하이컨트라스트 가드, Core 메시지 키화(CoreMessageKey→App 레이어 변환, 11 resw 키×3개 국어, 테스트 8종), XAML 자동화 키 누락 게이트(실제 위반 2건 적발·수정) | S–M |
-| M7+ | 파워유저 기능 (선택) | 파일 정리, undo/redo, AcoustID, 원격 API 등 — 미착수 | 개별 L |
+| U0 | 디자인 토큰 기반 | 시맨틱 토큰 레이어(색 역할·간격·타이포·모션), 스킬 MASTER.md 영속화, 타이포 번역 규칙 | S–M |
+| U1 | 모션·상호작용 피드백 | 전환·등장 표준, 호버/프레스 마이크로, 재생 상태 마이크로, reduced-motion 설정 | M |
+| U2 | 상태 UX | 빈 상태(메시지+액션), 로딩(스캔/스트림/가사), 오류 InfoBar 일관화 | S–M |
+| U3 | 적응형 레이아웃·밀도 | AdaptiveTrigger 중단점, 밀도 3단, 미니↔전체 핸드오프, 터치 타깃 44px | M |
+| U4 | 풀스크린 Now Playing + 웨이브폼 | `WaveformPeaks` 캔버스, 28밴드 스펙트럼 통합, Acrylic 뎁스, SMTC 유지 | M–L |
+| U5 | 접근성·시각 마무리 감사 | Accessibility Insights 전수, 대비 감사, 자동화 이름 게이트 강화, (선택) play-green 액센트 | S |
 
-순서 논리: M4는 M2의 `ITrackReaderProvider`/`IOutputDriver` 위에 얹는 순수 기능 마일스톤이고,
-M5는 원격 API 등 축 C 대형 항목의 발판이므로 그 앞에 온다. M6는 어느 시점에도 끼워 넣을 수 있는
-독립 규모다.
+순서 논리: U0이 U1–U5의 공통 언어(토큰)를 제공하므로 최우선. U1–U3는 서로 독립적이라 병렬
+착수 가능하나 리뷰 부담상 직렬 권장. U4는 U1(모션)·U0(토큰)의 성과를 소비하는 쇼케이스라 뒤에.
+U5는 어느 시점에도 끼워 넣는 마무리 게이트(M6의 성격과 동일).
 
 ---
 
 ## 3. 마일스톤 상세
 
-### M4 — DSD 고도화: DoP + DFF (M–L, 약 1주)
+### U0 — 디자인 토큰 기반 (S–M, 2–4일)
 
-**목표**: DSD 소스를 PCM 강등 없이(DoP) 재생하고, DFF 파일도 색인·재생한다.
-출력은 **WASAPI 배타만** 전제한다(ASIO 없음이 본 개정판의 전제).
+**목표**: UI가 "리소스 키"가 아닌 "의미 토큰"으로 그려지는 기반을 만든다.
 
-1. **DoP(DSD over PCM) 송신 경로**
-   - `DsfTrackReader`의 박스카 디시메이션과 별도로, DSD 비트스트림을 DoP 프레임
-     (24-bit PCM, 0x05/0xFA 마커, DSD64→176.4kHz)으로 패킹하는 `DopTrackReader` 추가.
-     `ITrackReaderProvider`로 등록(DSF/DFF + DoP 활성 설정 → 우선순위 공급).
-   - **활성 조건은 포맷 프로브 기반**: `WasapiDeviceService.TryNegotiateExclusive`가
-     DoP 레이트(176.4/352.8kHz·24비트)를 수락할 때만 세션을 DoP 포맷으로 연다.
-     수락하지 않으면(일반 엔드포인트가 그렇다) 기존 박스카 PCM으로 자동 강등 + InfoBar 알림.
-     "설정했지만 장치가 못 받는" 상태를 조용히 두지 않는다.
-   - M3의 `ExclusiveRateMismatchPolicy`와 상호작용: DoP 세션 중 일반 PCM 트랙으로 넘어가면
-     재구성(기본) 또는 리샘플(선택)이 그대로 적용되게 한다 — 새 정책이 기존 정책을 우회하지 않음.
-   - 볼륨: DoP 프레임에 디지털 볼륨을 적용하면 DSD 스트림이 깨진다(마커 바이트 훼손).
-     DoP 세션은 `AllowVolumeInExclusive`와 무관하게 볼륨/DSP를 강제 바이패스하고 UI에 표기.
-2. **DFF(DSDIFF) 지원**
-   - `DffTrackReader`: DFF 헤더 파싱(FRM8/FSND chunk, DSD/DST), DSF와 로직 공유.
-     DST 압축 트랙은 1차에서 미지원(명확한 오류 메시지)으로 하고, 필요 시 후속.
-   - 라이브러리 색인·확장자 연결(`AppPaths.SupportedExtensions`, 파일 피커, 인스톨러)·태그 읽기.
-3. **설정 UI**: 환경설정 → 재생에 "DSD 재생 방식" (DoP 우선 / 항상 PCM 변환) 추가. 3개 국어 resw.
-4. **실패 시나리오 테스트 (착수 전 설계)**
-   - DoP 레이트 미수락 엔드포인트 → 박스카 폴백 + 알림 1회(트랙마다 반복 금지).
-   - DoP 세션 중 볼륨/이퀄라이저/컨볼루션 활성 → 바이패스 불변식 (마커 바이트 무결성 검사).
-   - DSD64/128/256 스트림의 메모리 예산과 prefetch 상호작용.
-   - M3 정책 공존: DoP↔PCM 전환 시 재구성/리샘플 정책 일관성.
-5. **완료 기준**: DoP 수락 장치에서 마커 무결성 유지 재생, 미수락 장치에서 조용한 PCM 폴백,
-   DFF 색인·재생, 기존 PCM 경로 무회귀, 전체 테스트 통과.
+1. **시맨틱 토큰 레이어**: 색 역할(표면/카드/뮤트/보더/위험 등), 간격 스케일(스킬 density 다이얼의
+   8/16/24px 계열), 타이포 스케일, 모션 토큰(지속시간·이징 상수)을 `ThemeDictionaries` 확장으로.
+   기존 ThemeService/Mica/액센트 프리셋과 공존 — 기존 키는 유지하고 별칭 토큰을 얹는다.
+2. **스킬 디자인 시스템 영속화**(첫 실행 항목): `--design-system --persist --output-dir <repo-root>`로
+   `design-system/dawn-player/MASTER.md` 생성 — 이후 모든 UI 착수 시 읽는 원천. 생성은 승인 후 실행.
+3. **타이포 번역 규칙 확정**: Righteous/Poppins는 웹 권고이므로 (기본) Segoe UI Variable 크기/굵기
+   스케일로 매핑. 번들 도입은 OFL 라이선스·크기 검토 후 별도 결정.
+4. **실패 시나리오 테스트**: 토큰 키 누락 게이트(XAML의 hex 직접 사용 검사 — 현재 1건 기준 유지),
+   Light/HighContrast 사전 누락 시 폴백 검사, 기존 액센트 프리셋 무회귀.
+5. **완료 기준**: 토큰 리소스 전수 존재 게이트, 3개 테마(Light/Dark/HC) 렌더 스모크, 기존 테스트 전체 통과.
 
-### M5 — App 구조 개선: DI + VM 추출 + 증분 UI (L, 1–2주)
+### U1 — 모션·상호작용 피드백 (M, 4–6일)
 
-1. **DI 컨테이너 도입**: `Microsoft.Extensions.DependencyInjection` — `AppServices`의 서비스 보유/조합만
-   이관(정적 이벤트 버스는 단계적 축소, 즉시 제거하지 않음 — 페이지 구독 호환 유지).
-   비즈니스 로직(재생 카운트 휴리스틱 `OnPlaybackTrackLeft`, DB 복구, 배치 스캔)은 서비스 클래스로 분리.
-2. **Library/Playlist ViewModel 추출**: 페이지 상태(`_search`, `_visible`, `_selectedNode`)와
-   필터/정렬/레이아웃 지속을 `LibraryViewModel`/`PlaylistViewModel`로. ~20개 유사 클릭 핸들러를
-   커맨드 파라미터화("어떤 트랙 집합"만 다른 부분 제거).
-3. **증분 UI 갱신**: (a) 큐 패널 전체 재그룹 → 델타 갱신, (b) `RechunkAlbumRows` 전체 재생성 →
-   가상화 wrap panel(`ItemsRepeater` + WrapLayout) 전환 검증, (c) NowPlayingBar 200ms 타이머 →
-   위치 이벤트 구동(스크럽 중만 타이머).
-4. **중복 제거**: 스플리터 attached behavior 통합, 다이얼로그 팩토리 단일화(PlaylistDialogs 스타일로),
-   `Converters.cs` 위치 정리, `LibraryTreeBuilder`/`LibraryTreeModelBuilder` 명명 정리.
-5. **Last.fm 섹션 VM화**: `LastfmSettingsViewModel` — 인증 토큰이 페이지 상태로 남아
-   네비게이션 이탈 시 흐름이 소실되는 문제를 함께 해결.
-6. Core 헤드리스화 1차: `FastObservableCollection`, `Playlist`/`PlaylistItem` INPC의
-   인터페이스 경계만 확립(이전은 별도 커밋 — 범위 폭발 방지).
+**목표**: "즉각 반응하는" 느낌. 스킬 모션 데이터: 호버 마이크로 Subtle 티어 — 150–200ms,
+transform/opacity만, 변위 ≤2px, reduced-motion 시 비필수 모션 생략.
 
-**완료 기준**: Library/Playlist code-behind LOC 50%+ 절감, 수동 시나리오 + 기존 계산 로직 테스트 통과,
-10만 트랙 스케일 목킹 스모크에서 UI 응답성 유지.
+1. **전환·등장 표준**: 페이지 전환(NavigationThemeTransition), 목록 등장(entrance stagger는
+   가상화와 충돌 없는 범위로), 팝업/다이얼로그 연출 — 전부 WinUI 내장 표현 우선.
+2. **호버/프레스 마이크로**: 재생 버튼·앨범 카드·큐 행 — 스케일/투명도 피드백(토큰 상수).
+   레이아웃 속성(width/height/margin) 애니메이션 금지(스킬 안티패턴).
+3. **재생 상태 마이크로**: 재생/일시정지 아이콘 전환, 스펙트럼 스무딩(값 갱신 → 보간), 트랙 변경
+   크로스페이드(커버 아트). **실시간 오디오 우선** — 모션은 컴포지션/렌더 스레드로 국한.
+4. **reduced-motion**: Windows "애니메이션 효과 끄기" 감지 + 앱 내 토글. 꺼짐 시 비필수 모션 0건.
+5. **실패 시나리오**: reduced-motion 켬 → 모션 0건 게이트 테스트(비주얼 트리 단정 대신 토큰/플래그
+   단위), 위치 갱신 타이머와 애니메이션 경합 없음, 긴 목록 스크롤 프레임 드랍 없음(측정).
+6. **완료 기준**: 모션 토큰 상수 테스트, reduced-motion 게이트, 수동 시나리오(재생/시크/페이지 전환) 체크리스트.
 
-### M6 — 접근성·테마·i18n 사각지대 (S–M, 2–4일)
+### U2 — 상태 UX: 빈/로딩/오류 (S–M, 3–4일)
 
-1. **AutomationProperties i18n**: 하드코딩 한국어 값을 `…AutomationProperties.Name` resw 키로.
-   리스트 행·앨범 카드·드로어에 automation name 부여.
-2. **하이컨트라스트 대응**: HC 감지 시 `ThemeService` 커스텀 팔레트 오버라이드 축소, 필수 브러시 시스템 위임.
-3. **보조 창 테마 연결**: `LyricsEditorWindow`/`LyricsSearchWindow`에 ThemeService 백드롭·액센트 적용.
-4. **Core 하드코딩 한국어 → 리소스 키**: `PlaybackController`/`OutputSessionFactory`/
-   `AudioFileReaderFactory` 사용자 메시지를 enum/키 반환 → App 레이어 변환 구조로.
-5. i18n 테스트 강화: AutomationProperties 키 누락 검사 추가.
+**목표**: 스킬 UX 가이드(Feedback/Empty States: 메시지+액션, Loading Indicators: High —
+안정 스켈레톤·aria-busy·플래싱 금지)에 따라 세 상태를 체계화.
 
-**완료 기준**: 내레이터 스모크(재생 제어·탐색), HC 켬 시 텍스트 대비 유지, 3개 언어 resw 동기 게이트 통과.
+1. **빈 상태**: 라이브러리 미스캔/검색 결과 없음/재생목록 비어 있음/가사 없음 — 각각 안내 문구+
+  다음 액션 버튼(폴더 추가, 스마트 재생목록 만들기 등). 3개 국어 resw.
+2. **로딩**: 라이브러리 스캔(ProgressBar 결정형), 스트림 접속(무기한 ProgressRing+상태 텍스트),
+  가사 로드 — 표시 임계값(예: 300ms 미만 작업은 표시하지 않음)으로 플래싱 방지.
+3. **오류 일관화**: InfoBar 표준으로 통일 — M4 PCM 폴백 알림, 라디오 접속 실패, 태그 쓰기 실패 등
+  기존 산발 통지를 하나의 패턴으로. 자동 닫힘·재시도 액션 규칙 명시.
+4. **접근성 결합**: 로딩/오류 상태에 `AutomationProperties.LiveSetting`·상태 텍스트 부여(스킬
+  aria-busy 번역).
+5. **실패 시나리오**: 상태 머신 단위 테스트(로딩→성공/실패/타임아웃), 임계값 미만 비표시 게이트,
+  스캔 중 취소→빈 상태 복귀.
+6. **완료 기준**: 페이지별 상태 커버리지 매트릭스, Narrator 스모크, 기존 알림 경로 무회귀.
 
-### M7+ — 파워유저 기능 (선택, 착수 시 개별 계획서)
+### U3 — 적응형 레이아웃·밀도 (M, 4–6일)
 
-우선순위 제안(가치/준비도 기준):
+**목표**: 스킬 WinUI 가이드(High — VSM+AdaptiveTrigger 중단점)와 터치 타깃(CRITICAL — 44×44px) 채움.
 
-1. **파일 정리(File Operations)** — `%artist%/%album%/%track% - %title%` 이동/이름변경.
-   M2의 `ITagProvider`와 태그 편집기 인프라 공유. (L)
-2. **재생목록 실행 취소/다시 실행 + 잠금** — `CollectionSnapshot` 인프라 재사용. (M)
-3. **원격 제어 HTTP/WS API** — 스마트폰 리모컨. M5의 정리된 서비스 경계 위에서 착수. (L)
-4. **AcoustID/MusicBrainz 자동 태깅** — `ITagProvider` 체인에 등록하는 형태. 원자적 쓰기 완비. (L)
-5. **PLS/XSPF 가져오기** — 재생목록 포맷 추상화. (S)
-6. **풀스크린 Now Playing + 웨이브폼 캔버스** — `WaveformPeaks` 부활. (M)
-7. **M3 정책 확장 — 채널 수 불일치도 리샘플/컨버터로 흡수하는 옵션** (S–M)
-8. **APE/WavPack 디코딩, 손실무손실 인코더 변환기 확장** — `ITrackReaderProvider` 등록형. (조사 필요)
+1. **반응형 중단점**: 창 폭 기반 AdaptiveTrigger — 좁은 창에서 내비게이션 패널 축소, 커버 그리드
+   열수 적응, NowPlayingBar 정보 우선순위 재배치.
+2. **밀도 3단**: 여유/표준/촘촘(행 높이·간격 토큰 세트) — 환경설정 프리셋. U0 토큰 소비.
+3. **미니 플레이어↔전체 핸드오프**: 전환 시 재생 무중단, 레이아웃 상태 복원.
+4. **터치 타깃 교정**: LyricsPane 26–28px 버튼 등 미달 항목을 시각 크기 유지+히트 영역 확장으로
+   44px 확보(데스크톱 밀도를 해치지 않도록 hit-test 확장 방식).
+5. **실패 시나리오**: (a) M5 교훈 — 스플리터/드로어 상호작용 회귀 방지 수동 체크리스트+feature
+   flag, (b) 중단점 경계에서 레이아웃 진동 없음(히스테리시스), (c) 밀도 전환 시 스크롤 위치 보존.
+6. **완료 기준**: 중단점 스모크(최소/기본/최대 창), 터치 타깃 게이트(미달 0건), 밀도 프리셋 테스트.
+
+### U4 — 풀스크린 Now Playing + 웨이브폼 (M–L, 1주 내외)
+
+**목표**: 엔터테인먼트 몰입의 쇼케이스. `chart` 도메인에 파형 매치가 없음(§1.3)이므로 자체 설계.
+
+1. **풀스크린 모드**: 커버 아트 히어로 + 메타 + 파형 시크바 + 28밴드 스펙트럼. Esc/버튼/미니
+   플레이어로 복귀. 재생 중 진입·이탈 무중단.
+2. **웨이브폼 캔버스**: 보존된 `WaveformPeaks`(피크 스캔+mtime 캐시, CUE 부분 스캔)를 캔버스로 —
+   재생 위치 진행 오버레이, 시크 프리뷰. 스캔은 백그라운드+캐시 우선.
+3. **Acrylic 뎁스**(선택, 스킬 glassmorphism/spatial — risk:conditional): 배경 블러는 토글+
+   기본 절제, 텍스트 대비 게이트 필수. 배터리 프로파일에서 자동 축소.
+4. **실패 시나리오**: (a) 파형 미스캔 파일(손상/초대형) → 스캔 생략+폴백 시크바, (b) DSD/스트림 등
+   길이 미확인 소스 → 파형 없이 진행, (c) 대비 게이트(블러 위 4.5:1), (d) SMTC·단축키 유지.
+5. **완료 기준**: 파형 시크 정확성(샘플 단위 매핑 테스트), 메모리 예산(피크 캐시), 수동 몰입 모드
+   체크리스트, 기존 재생 경로 무회귀.
+
+### U5 — 접근성·시각 마무리 감사 (S, 2–3일)
+
+1. **Accessibility Insights for Windows 전수**(스킬 WinUI 가이드 High): 주요 화면 스캔+수정.
+2. **대비 감사**: 4.5:1(본문)/3:1(대형·UI) 전 화면 매트릭스 — HC 가드(M6) 위에 완성도 보강.
+3. **자동화 이름 게이트 강화**: LyricsPane의 하드코딩 한국어 `AutomationProperties.Name` 4+건
+   수정(x:Uid로) + **게이트 규칙 추가 — x:Uid와 하드코딩 자동화 속성의 병존 금지**(M6 게이트의
+   사각지대였던 케이스).
+4. **(선택) play-green 액센트 프리셋**: 스킬 팔레트의 액섴트를 프리셋 1개로 추가(기본값 변경 없음).
+5. **완료 기준**: Insights 위반 0건(주요 화면), 게이트 테스트 추가, 3개 국어 resw 동기.
 
 ---
 
@@ -195,25 +225,29 @@ M5는 원격 API 등 축 C 대형 항목의 발판이므로 그 앞에 온다. M
 
 | 리스크 | 영향 | 완화 |
 |---|---|---|
-| DoP 레이트를 배타 프로브가 수락하는 엔드포인트가 드뜸 | M4의 DoP가 일부 장치에서만 동작 | 프로브 기반 활성화 + PCM 폴백을 기본 동작으로 설계(이미 M3 폴백 체계와 동일 패턴), "DoP 미지원"을 결함이 아닌 상태로 알림 |
-| DoP 세션에 볼륨/DSP가 흘러들면 스트림 깨짐 | 음원 파손 사고 | DoP 경로 강제 바이패스 + 마커 바이트 무결성 단위 테스트, UI에 "볼륨 비활성" 명시 |
-| DSD 고비트레이트(DSD128+)에서 prefetch/메모리 압박 | 재생 끊김 | 스트림 속도별 예산 테스트, 초과 시 PCM 강등 폴백 |
-| 배타 모드 리샘플 정책이 비트퍼펙트 기대와 충돌 | 음질 회귀 (M3에서 이미 옵션화) | 기본값 RestartSession 고정 테스트 존재, UI 설명 유지 |
-| AppServices 이벤트 버스 정리 중 구독 누수 재발 | 메모리 누수 | 기존 문서화된 누수 사례(SettingsPage:258-266) 회귀 테스트 고정 후 진행 |
-| UI 가상화 전환 시 Eole 드로어 상호작용 파괴 | UX 회귀 | 드로어 수동 체크리스트 + feature flag 전환 |
-| 대규모 리팩터링 중 오디오 회귀 | 핵심 가치 훼손 | seam 계약 테스트(M2)가 이미 존재 — mechanical 이동만 허용 |
+| 모션 추가가 실시간 오디오에 간섭 | 재생 끊김(핵심 가치) | 모션은 컴포지션/렌더 스레드 국한, UI 스레드 프레임 예산 측정, 오디오 회귀 시 즉시 플래그 오프 |
+| 스킬 데이터가 웹 중심(GSAP·px 체크리스트·웹 폰트) | 잘못된 번역 적용 | U0에서 "WinUI 번역 규칙"을 문서화 — 웹 전용 수단(백드롭 필터 등)은 XAML 해당 표현으로만 치환 |
+| 유리 효과(Acrylic) GPU/배터리 비용 | 노트북 발열·배터리 | 토글+기본 절제, 배터리 프로파일 자동 축소, 대비 게이트 필수 |
+| 대형 XAML 리팩터링 중 회귀 | 스플리터/드로어 파손(M5 전례) | 단계적 마일스톤, feature flag, 수동 체크리스트, seam 테스트 방어 |
+| 44px 기준이 마우스 중심 데스크톱에 과대 | 시각 밀도 저하 | 시각 크기 유지+hit-test 확장 방식, 하이브리드/터치 장치 기준으로만 강제 |
+| 반응형 중단점 경계 진동 | 레이아웃 깜빡임 | 히스테리시스 설계+경계 테스트 |
+| 접근성 감사가 매 릴리스 반복 부담 | 유지보수 비용 | 게이트 테스트화(U5 산출)로 수동 감사 최소화 |
 
 ---
 
-## 5. 검증 전략 (마일스톤 공통, 변경 없음)
+## 5. 검증 전략 (마일스톤 공통)
 
-- 착수 전: 해당 범위 결함 트리 + 실패 시나리오 테스트 먼저 작성(규약 3).
-- 진행 중: 수정 클래스 단위 `dotnet test --filter` 만.
-- 종료 시: 전체 `dotnet test` 1회 + `dotnet build` 0경고/0오류.
-- 오디오 변경: 실기기 청음 체크리스트(갭리스 경계, 배타 협상, 폴백 알림) 1회.
-- 배포는 사용자 명시 요청 시에만(규약 2).
+[AGENTS.md](AGENTS.md) §3–§5 적용 + 스킬 프리딜리버리 체크리스트의 WinUI 번역:
+
+- 착수 전: 결함 트리 + 실패 시나리오 테스트 선설계 (각 마일스톤 절 참조).
+- 진행 중: 타깃 필터 테스트만. 종료 시: 콜드 리빌드 0경고 + 전체 테스트 1회.
+- UI 마일스톤 공통: Narrator 스모크(재생 제어·탐색), 대비 스팟 체크, 스크린샷 리뷰.
+- reduced-motion·HC·Light 테마 3상태 렌더 스모크(U1 이후 상시).
+- 배포는 사용자 명시 요청 시에만(규약 §2).
 
 ## 6. 즉시 실행 가능한 다음 액션
 
-1. **M4(DSD 고도화) 착수 승인 요청** — DoP 프레임 포맷·프로브 활성화 설계안 제시 후 승인받아 구현.
-2. M5/M6는 순서 대기 (M4 완료 후 M5 권장 — 원격 API 등 축 C의 전제).
+1. **U0–U5 수동 체크리스트** — Narrator 스모크(다국어), 밀도 전환·컴팩트 바·풀스크린 파형 육안
+   확인, reduced-motion 환경 시나리오 (자동 게이트는 전부 통과).
+2. v1.2.0 배포(태그 푸시 + GitHub Release) 여부 — 사용자 명시 요청 대기.
+3. M4 실기기 청음 체크리스트 — DSD/DoP 지원 DAC 환경에서 기회 시 수행.
