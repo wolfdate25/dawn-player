@@ -313,7 +313,7 @@ public class LocalizationTests
                 var uid = UidValuePattern.Match(tag.Value);
                 var auto = AutoNameValuePattern.Match(tag.Value);
                 // Bindings supply the name at runtime from (already localized) view data.
-                if (!auto.Success || auto.Groups[1].Value.TrimStart().StartsWith("{"))
+                if (!auto.Success || auto.Groups[1].Value.TrimStart().StartsWith((char)123))
                 {
                     continue;
                 }

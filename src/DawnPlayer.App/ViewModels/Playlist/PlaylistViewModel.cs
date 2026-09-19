@@ -40,17 +40,17 @@ public sealed class PlaylistViewModel
     }
 
     /// <summary>Whether sorting applies: a single-row (or empty) playlist has nothing to sort.</summary>
-    public bool CanSort(PlaylistEntity? playlist) => playlist != null && playlist.Items.Count > 1;
+    public static bool CanSort(PlaylistEntity? playlist) => playlist != null && playlist.Items.Count > 1;
 
     /// <summary>Whether a rating change applies to the selection.</summary>
-    public bool CanRate(IReadOnlyList<PlaylistItem> selection) => selection.Count > 0;
+    public static bool CanRate(IReadOnlyList<PlaylistItem> selection) => selection.Count > 0;
 
     /// <summary>Whether a move applies, and which items should stay selected afterwards.</summary>
-    public bool CanMove(IReadOnlyList<PlaylistItem> selection) => selection.Count > 0;
+    public static bool CanMove(IReadOnlyList<PlaylistItem> selection) => selection.Count > 0;
 
     /// <summary>Which warning to surface after a dead-item sweep. Returns null when nothing
     /// should be shown (the success-with-zero case shows the "nothing missing" note).</summary>
-    public (string Key, string Fallback, object[] Args)? DescribeDeadItemSweepOutcome(int removed)
+    public static (string Key, string Fallback, object[] Args)? DescribeDeadItemSweepOutcome(int removed)
     {
         return removed > 0
             ? ("Msg_RemovedMissingFiles", "존재하지 않는 파일 {0}곡을 재생목록에서 제거했습니다.", new object[] { removed })
@@ -60,7 +60,7 @@ public sealed class PlaylistViewModel
     /// <summary>The menu check state after mirroring: always the controller's flag. The flag is
     /// also flipped by the keyboard shortcut and cleared by the controller once the track ends,
     /// so the menu follows the controller — never the reverse reading.</summary>
-    public bool SyncStopAfterCurrentMenu(bool controllerFlag, bool menuChecked) => controllerFlag;
+    public static bool SyncStopAfterCurrentMenu(bool controllerFlag, bool menuChecked) => controllerFlag;
 }
 
 /// <summary>
@@ -98,10 +98,10 @@ public sealed class LibraryViewModel
         !string.Equals(_searchText, appliedFilter, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Clamps the cover-grid zoom level the Ctrl+wheel handler produces.</summary>
-    public double ClampCoverZoom(double zoom) => Math.Clamp(zoom, 80, 260);
+    public static double ClampCoverZoom(double zoom) => Math.Clamp(zoom, 80, 260);
 
     /// <summary>Clamps a persisted sidebar width to the splitter's resizer range.</summary>
-    public double ClampSidebarWidth(double width, double min, double max) =>
+    public static double ClampSidebarWidth(double width, double min, double max) =>
         Math.Clamp(width, min, max);
 
     /// <summary>Persists the sidebar width if it moved meaningfully (avoids a settings write

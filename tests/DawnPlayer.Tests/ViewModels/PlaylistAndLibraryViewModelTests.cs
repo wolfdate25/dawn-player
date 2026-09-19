@@ -36,20 +36,20 @@ public sealed class PlaylistAndLibraryViewModelTests
         var vm = new PlaylistViewModel(new AppSettings());
         var pl = new Playlist("pl");
 
-        Assert.False(vm.CanSort(pl));
+        Assert.False(PlaylistViewModel.CanSort(pl));
 
         pl.Items.Add(new PlaylistItem(new Track { Path = "a" }));
         pl.Items.Add(new PlaylistItem(new Track { Path = "b" }));
-        Assert.True(vm.CanSort(pl));
-        Assert.False(vm.CanSort(null));
+        Assert.True(PlaylistViewModel.CanSort(pl));
+        Assert.False(PlaylistViewModel.CanSort(null));
     }
 
     [Fact]
     public void CanRate_RequiresSelection()
     {
         var vm = new PlaylistViewModel(new AppSettings());
-        Assert.False(vm.CanRate(new List<PlaylistItem>()));
-        Assert.True(vm.CanRate(new List<PlaylistItem> { new(new Track { Path = "a" }) }));
+        Assert.False(PlaylistViewModel.CanRate(new List<PlaylistItem>()));
+        Assert.True(PlaylistViewModel.CanRate(new List<PlaylistItem> { new(new Track { Path = "a" }) }));
     }
 
     [Fact]
@@ -57,11 +57,11 @@ public sealed class PlaylistAndLibraryViewModelTests
     {
         var vm = new PlaylistViewModel(new AppSettings());
 
-        var removed = vm.DescribeDeadItemSweepOutcome(3);
+        var removed = PlaylistViewModel.DescribeDeadItemSweepOutcome(3);
         Assert.Equal("Msg_RemovedMissingFiles", removed!.Value.Key);
         Assert.Equal(3, removed.Value.Args[0]);
 
-        var none = vm.DescribeDeadItemSweepOutcome(0);
+        var none = PlaylistViewModel.DescribeDeadItemSweepOutcome(0);
         Assert.Equal("Msg_NoMissingFiles", none!.Value.Key);
     }
 
@@ -69,9 +69,9 @@ public sealed class PlaylistAndLibraryViewModelTests
     public void StopAfterCurrentMirror_FollowsTheController()
     {
         var vm = new PlaylistViewModel(new AppSettings());
-        Assert.True(vm.SyncStopAfterCurrentMenu(controllerFlag: true, menuChecked: false));
-        Assert.True(vm.SyncStopAfterCurrentMenu(controllerFlag: true, menuChecked: true));
-        Assert.False(vm.SyncStopAfterCurrentMenu(controllerFlag: false, menuChecked: false));
+        Assert.True(PlaylistViewModel.SyncStopAfterCurrentMenu(controllerFlag: true, menuChecked: false));
+        Assert.True(PlaylistViewModel.SyncStopAfterCurrentMenu(controllerFlag: true, menuChecked: true));
+        Assert.False(PlaylistViewModel.SyncStopAfterCurrentMenu(controllerFlag: false, menuChecked: false));
     }
 
     [Fact]
@@ -94,9 +94,9 @@ public sealed class PlaylistAndLibraryViewModelTests
     public void ZoomAndWidth_Clamp()
     {
         var vm = new LibraryViewModel(new AppSettings());
-        Assert.Equal(80, vm.ClampCoverZoom(10));
-        Assert.Equal(260, vm.ClampCoverZoom(9999));
-        Assert.Equal(150, vm.ClampSidebarWidth(10, min: 150, max: 400));
+        Assert.Equal(80, LibraryViewModel.ClampCoverZoom(10));
+        Assert.Equal(260, LibraryViewModel.ClampCoverZoom(9999));
+        Assert.Equal(150, LibraryViewModel.ClampSidebarWidth(10, min: 150, max: 400));
 
         // SaveSidebarWidth: below the meaningful-delta threshold writes nothing.
         Assert.False(vm.SaveSidebarWidth(200.4, current: 200, min: 150, max: 400));

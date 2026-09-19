@@ -234,7 +234,7 @@ public sealed partial class PlaylistPage : Page
     private void RateSelected(int stars)
     {
         var sel = SelectedItems();
-        if (!_vm.CanRate(sel)) return;
+        if (!ViewModels.Playlist.PlaylistViewModel.CanRate(sel)) return;
         AppServices.RateTracks(sel.Select(i => i.Track).ToList(), stars);
     }
 
@@ -588,7 +588,7 @@ public sealed partial class PlaylistPage : Page
 
     private void Sort(PlaylistSort mode)
     {
-        if (_vm.CanSort(Current)) AppServices.Playlists.Sort(Current, mode);
+        if (ViewModels.Playlist.PlaylistViewModel.CanSort(Current)) AppServices.Playlists.Sort(Current, mode);
     }
 
     private void OnRemoveDuplicates(object sender, RoutedEventArgs e) =>
@@ -599,7 +599,7 @@ public sealed partial class PlaylistPage : Page
         try
         {
             int removed = await AppServices.Playlists.RemoveDeadItemsAsync(Current);
-            var note = _vm.DescribeDeadItemSweepOutcome(removed);
+            var note = ViewModels.Playlist.PlaylistViewModel.DescribeDeadItemSweepOutcome(removed);
             if (note != null)
             {
                 var (key, fallback, args) = note.Value;
@@ -627,7 +627,7 @@ public sealed partial class PlaylistPage : Page
     {
         if (StopAfterCurrentMenuItem == null || AppServices.Playback == null) return;
         StopAfterCurrentMenuItem.IsChecked =
-            _vm.SyncStopAfterCurrentMenu(AppServices.Playback.StopAfterCurrent, StopAfterCurrentMenuItem.IsChecked);
+            ViewModels.Playlist.PlaylistViewModel.SyncStopAfterCurrentMenu(AppServices.Playback.StopAfterCurrent, StopAfterCurrentMenuItem.IsChecked);
     }
 
     private void OnClearPlaylist(object sender, RoutedEventArgs e) =>
