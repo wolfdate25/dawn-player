@@ -1126,26 +1126,11 @@ public sealed partial class LibraryPage : Page
 
     // ---------------- Interactive Splitters ----------------
 
-    private void OnSplitterPointerEntered(object sender, PointerRoutedEventArgs e)
-    {
-        ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.SizeWestEast);
-        if (sender is Border border && border.Child is Rectangle rect)
-        {
-            rect.Fill = ThemeResourceHelper.GetBrush("DawnAccentBrush");
-        }
-    }
+    private void OnSplitterPointerEntered(object sender, PointerRoutedEventArgs e) =>
+        SplitterChrome.SetHover(this, c => ProtectedCursor = c, sender as Border, hovered: true, _leftResizer, _rightResizer, _lyricsResizer);
 
-    private void OnSplitterPointerExited(object sender, PointerRoutedEventArgs e)
-    {
-        if (!_leftResizer.IsDragging && !_rightResizer.IsDragging && !_lyricsResizer.IsDragging)
-        {
-            ProtectedCursor = null;
-            if (sender is Border border && border.Child is Rectangle rect)
-            {
-                rect.Fill = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
-            }
-        }
-    }
+    private void OnSplitterPointerExited(object sender, PointerRoutedEventArgs e) =>
+        SplitterChrome.ClearHover(this, c => ProtectedCursor = c, sender as Border, _leftResizer, _rightResizer, _lyricsResizer);
 
     // Left Splitter
     private void OnLeftSplitterPressed(object sender, PointerRoutedEventArgs e) => _leftResizer.OnPointerPressed(sender, e);

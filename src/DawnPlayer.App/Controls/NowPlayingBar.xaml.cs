@@ -264,6 +264,19 @@ public sealed partial class NowPlayingBar : UserControl
         // The glyph is the only visual cue, so the automation name has to track it or a screen
         // reader always announces "\uC7AC\uC0DD" no matter what the button will actually do.
         AutomationProperties.SetName(PlayButton, playing ? "\uC77C\uC2DC\uC815\uC9C0" : "\uC7AC\uC0DD");
+
+        // Poll the playback position only while it actually moves: a permanent 200 ms
+        // dispatcher timer against a paused player is pure battery drain. One final tick
+        // settles the seekbar at the paused position.
+        if (playing)
+        {
+            _timer.Start();
+        }
+        else
+        {
+            _timer.Stop();
+            OnTimer();
+        }
     }
 
     public void OnQueueChanged()

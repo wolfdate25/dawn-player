@@ -41,6 +41,11 @@ public sealed class ScrobbleService : IDisposable
     public string Username => _settings().Lastfm.Username;
     public int QueuedCount { get { lock (_lock) return _queue.Count; } }
 
+    /// <summary>The token issued by the in-flight auth flow. Held on the app-scoped service
+    /// (not on the settings page) so navigating away mid-flow does not orphan a browser
+    /// approval the user already granted.</summary>
+    public string? PendingToken { get; set; }
+
     /// <summary>Starts the auth flow: returns the browser URL to open. The user then clicks
     /// "confirm" in the dialog, which calls <see cref="CompleteAuthAsync"/> with the same token.</summary>
     public async Task<string> StartAuthAsync()

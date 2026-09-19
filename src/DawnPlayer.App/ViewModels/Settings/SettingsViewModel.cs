@@ -19,6 +19,7 @@ public sealed class SettingsViewModel : ViewModelBase
 
     private int _selectedCategoryIndex;
 
+    public LastfmSettingsViewModel Lastfm { get; }
     public AudioSettingsViewModel Audio { get; }
     public EqualizerSettingsViewModel Equalizer { get; }
     public PlaybackSettingsViewModel Playback { get; }
@@ -41,7 +42,8 @@ public sealed class SettingsViewModel : ViewModelBase
         IShortcutBindingStore? shortcutStore = null,
         Action<string>? logger = null,
         ILyricsOnlineService? lyricsOnlineService = null,
-        Action<UiLanguage>? languageChangedNotifier = null)
+        Action<UiLanguage>? languageChangedNotifier = null,
+        LastfmSettingsViewModel? lastfm = null)
     {
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _audioSettingsService = audioSettingsService ?? throw new ArgumentNullException(nameof(audioSettingsService));
@@ -63,6 +65,8 @@ public sealed class SettingsViewModel : ViewModelBase
             });
 
         Playback = new PlaybackSettingsViewModel(_audioSettingsService, _settings);
+
+        Lastfm = lastfm ?? new LastfmSettingsViewModel(_settings, new ScrobbleService(() => _settings, msg => logger?.Invoke(msg)));
 
         Library = new LibrarySettingsViewModel(_settings, scanStarter, settingsSaver);
 

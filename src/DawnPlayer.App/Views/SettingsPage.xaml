@@ -1457,7 +1457,8 @@
                                         <TextBlock x:Uid="Settings_Lastfm_Enable_Desc" Text="들은 곡을 Last.fm 프로필에 기록하고, 재생 중인 곡은 Now Playing으로 전송합니다" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                        <ToggleSwitch x:Uid="Settings_Lastfm_Enable_Toggle" x:Name="LastfmToggle" Toggled="OnLastfmToggleToggled" OnContent="켬" OffContent="끔"/>
+                                        <ToggleSwitch x:Uid="Settings_Lastfm_Enable_Toggle" x:Name="LastfmToggle" Toggled="OnLastfmToggleToggled"
+                                                     IsOn="{x:Bind ViewModel.Lastfm.Enabled, Mode=TwoWay}" OnContent="켬" OffContent="끔"/>
                                     </StackPanel>
                                 </Grid>
 
@@ -1474,9 +1475,11 @@
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <TextBox x:Uid="Settings_Lastfm_ApiKeyBox" x:Name="LastfmApiKeyBox" Width="240" FontSize="12"
-                                                 PlaceholderText="api key" LostFocus="OnLastfmCredentialsLostFocus"/>
+                                                 PlaceholderText="api key" Text="{x:Bind ViewModel.Lastfm.ApiKey, Mode=TwoWay}"
+                                                 LostFocus="OnLastfmCredentialsLostFocus"/>
                                         <TextBox x:Uid="Settings_Lastfm_ApiSecretBox" x:Name="LastfmApiSecretBox" Width="240" FontSize="12"
-                                                 PlaceholderText="shared secret" LostFocus="OnLastfmCredentialsLostFocus"/>
+                                                 PlaceholderText="shared secret" Text="{x:Bind ViewModel.Lastfm.ApiSecret, Mode=TwoWay}"
+                                                 LostFocus="OnLastfmCredentialsLostFocus"/>
                                     </StackPanel>
                                 </Grid>
 
@@ -1489,11 +1492,18 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                         <TextBlock x:Uid="Settings_Lastfm_Auth_Title" Text="계정 연결" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock x:Name="LastfmStatusText" FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}" TextWrapping="Wrap"/>
+                                        <TextBlock x:Name="LastfmStatusText" FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}" TextWrapping="Wrap"
+                                               Text="{x:Bind ViewModel.Lastfm.StatusText, Mode=OneWay}"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                        <Button x:Name="LastfmAuthButton" FontSize="12" Click="OnLastfmAuthClick" Visibility="Collapsed"/>
-                                        <Button x:Name="LastfmConfirmButton" FontSize="12" Click="OnLastfmConfirmClick" Visibility="Collapsed"/>
+                                        <Button x:Name="LastfmAuthButton" FontSize="12" Click="OnLastfmAuthClick"
+                                                Content="{x:Bind ViewModel.Lastfm.AuthButtonText, Mode=OneWay}"
+                                                IsEnabled="{x:Bind ViewModel.Lastfm.AuthButtonEnabled, Mode=OneWay}"
+                                                Visibility="{x:Bind BooleanToVisibility(ViewModel.Lastfm.AuthButtonVisible), Mode=OneWay}"/>
+                                        <Button x:Name="LastfmConfirmButton" FontSize="12" Click="OnLastfmConfirmClick"
+                                                Content="{x:Bind ViewModel.Lastfm.ConfirmButtonText, Mode=OneWay}"
+                                                IsEnabled="{x:Bind ViewModel.Lastfm.ConfirmButtonEnabled, Mode=OneWay}"
+                                                Visibility="{x:Bind BooleanToVisibility(ViewModel.Lastfm.ConfirmButtonVisible), Mode=OneWay}"/>
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>

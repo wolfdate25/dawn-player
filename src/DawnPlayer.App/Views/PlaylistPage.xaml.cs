@@ -155,19 +155,11 @@ public sealed partial class PlaylistPage : Page
         if (ui.LyricsSidebarWidth >= 200) PlaylistLyricsPane.Width = ui.LyricsSidebarWidth;
     }
 
-    private void OnSplitterPointerEntered(object sender, PointerRoutedEventArgs e)
-    {
-        ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.SizeWestEast);
-        if (sender is Border b && b.Child is Rectangle line)
-            line.Fill = Helpers.ThemeResourceHelper.GetBrush("DawnAccentBrush");
-    }
+    private void OnSplitterPointerEntered(object sender, PointerRoutedEventArgs e) =>
+        Helpers.SplitterChrome.SetHover(this, c => ProtectedCursor = c, sender as Border, hovered: true, _leftResizer, _lyricsResizer);
 
-    private void OnSplitterPointerExited(object sender, PointerRoutedEventArgs e)
-    {
-        ProtectedCursor = null;
-        if (sender is Border b && b.Child is Rectangle line)
-            line.Fill = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
-    }
+    private void OnSplitterPointerExited(object sender, PointerRoutedEventArgs e) =>
+        Helpers.SplitterChrome.ClearHover(this, c => ProtectedCursor = c, sender as Border, _leftResizer, _lyricsResizer);
 
     private void OnLeftSplitterPressed(object sender, PointerRoutedEventArgs e) => _leftResizer?.OnPointerPressed(sender, e);
     private void OnLeftSplitterMoved(object sender, PointerRoutedEventArgs e) => _leftResizer?.OnPointerMoved(sender, e);
