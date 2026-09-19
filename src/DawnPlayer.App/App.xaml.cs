@@ -10,7 +10,11 @@ public partial class App : Application
 
     public App()
     {
-        // Language first: PrimaryLanguageOverride must be set before any resource is resolved,
+        // Logging first: every handler below (and startup failures inside InitializeComponent)
+        // writes through the Core facade, so the sink must exist before anything can fail.
+        Core.Util.Log.SetSink(new Core.Util.RollingFileLogSink(AppPaths.LogFile));
+
+        // Language second: PrimaryLanguageOverride must be set before any resource is resolved,
         // including this.InitializeComponent(), or the first frame renders in the wrong language.
         Services.AppServices.ApplyStartupLanguage();
         InitializeComponent();
@@ -38,14 +42,8 @@ public partial class App : Application
         };
     }
 
-    public static void Log(string message)
-    {
-        try
-        {
-            File.AppendAllText(AppPaths.LogFile, $"{DateTime.Now:HH:mm:ss.fff} {message}{Environment.NewLine}");
-        }
-        catch { }
-    }
+    /// <summary>Compatibility forwarder: new code should call <see cref="Core.Util.Log"/> directly.</summary>
+    public static void Log(string message) => Core.Util.Log.Info(message);
 
     [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
     private static extern int MessageBox(IntPtr hWnd, string text, string caption, uint type);
@@ -75,6 +73,7 @@ public partial class App : Application
                 _ = MessageBox(IntPtr.Zero, msg, "Dawn Player", 0x00000010 /* MB_ICONERROR */);
             }
             catch { }
+            Core.Util.Log.Shutdown();
             Environment.Exit(1);
         }
     }

@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using DawnPlayer.Core.Models;
+using DawnPlayer.Core.Util;
 
 namespace DawnPlayer.Core.Persistence;
 
@@ -19,7 +20,7 @@ public static class M3u
     static M3u()
     {
         // Needed for Encoding.GetEncoding(0) (the system ANSI code page) on .NET Core.
-        try { Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance); } catch { }
+        try { Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance); } catch (Exception ex) { Log.Debug($"[m3u] code page provider registration failed: {ex.Message}"); }
     }
 
     /// <summary>
@@ -65,18 +66,19 @@ public static class M3u
                     var ansi = Encoding.GetEncoding(0);
                     if (ansi.CodePage != Encoding.UTF8.CodePage) return ansi;
                 }
-                catch { }
+                catch (Exception ex) { Log.Debug($"[m3u] ANSI code page unavailable: {ex.Message}"); }
 
                 return Encoding.Latin1;
             }
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Debug($"[m3u] encoding detection failed, assuming UTF-8: {ex.Message}");
             return Encoding.UTF8;
         }
         finally
         {
-            try { stream.Position = 0; } catch { }
+            try { stream.Position = 0; } catch (Exception ex) { Log.Trace($"[m3u] stream rewind failed: {ex.Message}"); }
         }
     }
 
@@ -178,8 +180,9 @@ public static class M3u
             if (Path.IsPathRooted(rel) || rel.StartsWith("..", StringComparison.Ordinal)) return path;
             return rel;
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Debug($"[m3u] relative path resolution failed for '{path}': {ex.Message}");
             return path;
         }
     }

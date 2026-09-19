@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
+using DawnPlayer.Core.Util;
 
 namespace DawnPlayer.Core.Persistence;
 
@@ -113,9 +114,10 @@ public static class SettingsStore
 
                 AtomicFile.WriteAllText(targetPath, json, keepBackup: true, flushToDisk: true);
             }
-            catch
+            catch (Exception ex)
             {
                 // Best-effort persistence
+                Log.Warn($"[settings] save failed: {ex.Message}");
             }
         }
     }

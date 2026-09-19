@@ -1,4 +1,5 @@
 using DawnPlayer.Core.Models;
+using DawnPlayer.Core.Util;
 
 namespace DawnPlayer.Core.Audio;
 
@@ -149,8 +150,9 @@ public static class AudioTranscoder
             TryDelete(outputPath);
             return null;
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Warn($"[transcode] write failed for '{outputPath}': {ex.Message}");
             result = TranscodeResult.WriteFailed;
             TryDelete(outputPath);
             return null;
@@ -163,7 +165,7 @@ public static class AudioTranscoder
     private static void TryDelete(string? path)
     {
         if (string.IsNullOrEmpty(path)) return;
-        try { if (File.Exists(path)) File.Delete(path); } catch { }
+        try { if (File.Exists(path)) File.Delete(path); } catch (Exception ex) { Log.Trace($"[transcode] output delete failed '{path}': {ex.Message}"); }
     }
 
     /// <summary>Writes a canonical 44-byte PCM WAV header. Sizes are patched afterwards by

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Threading;
+using DawnPlayer.Core.Util;
 
 namespace DawnPlayer.Core.Persistence;
 
@@ -86,9 +87,10 @@ public static class AtomicFile
                 DeleteBestEffort(tmp);
             }
         }
-        catch
+        catch (Exception ex)
         {
             // Directory access error — nothing to clean up then.
+            Log.Debug($"[atomic] stale temp cleanup failed: {ex.Message}");
         }
     }
 

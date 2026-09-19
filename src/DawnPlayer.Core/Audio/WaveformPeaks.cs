@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using DawnPlayer.Core.Util;
 
 namespace DawnPlayer.Core.Audio;
 
@@ -32,8 +33,9 @@ public static class WaveformPeaks
         {
             mtime = File.GetLastWriteTimeUtc(physical).Ticks;
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Debug($"[waveform] mtime probe failed for '{physical}': {ex.Message}");
             return null;
         }
 
@@ -49,9 +51,10 @@ public static class WaveformPeaks
         {
             peaks = Scan(path, buckets);
         }
-        catch
+        catch (Exception ex)
         {
             // Undecodable file: no waveform, playback itself will surface the real error.
+            Log.Debug($"[waveform] scan failed for '{path}': {ex.Message}");
         }
 
         if (peaks != null)

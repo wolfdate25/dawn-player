@@ -74,9 +74,10 @@ public sealed class MusicLibrary : IMusicLibrary
             cmd.CommandText = "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA temp_store=MEMORY;";
             cmd.ExecuteNonQuery();
         }
-        catch
+        catch (Exception ex)
         {
             // A database that cannot take these (e.g. read-only media) still works with the defaults.
+            Log.Debug($"[library] connection pragmas rejected: {ex.Message}");
         }
     }
 
@@ -139,9 +140,10 @@ public sealed class MusicLibrary : IMusicLibrary
                 cmd.CommandText = $"PRAGMA user_version = {SchemaVersion};";
                 cmd.ExecuteNonQuery();
             }
-            catch
+            catch (Exception ex)
             {
                 // Read-only media: the layout is current regardless, it just cannot be stamped.
+                Log.Debug($"[library] schema stamp skipped: {ex.Message}");
             }
             version = SchemaVersion;
         }
@@ -169,7 +171,7 @@ public sealed class MusicLibrary : IMusicLibrary
                 cmd.CommandText = $"ALTER TABLE tracks ADD COLUMN {ddl};";
                 cmd.ExecuteNonQuery();
             }
-            catch { /* read-only media: scan/stats writes will fail softly later */ }
+            catch (Exception ex) { Log.Debug($"[library] add column '{column}' skipped: {ex.Message}"); } /* read-only media: scan/stats writes will fail softly later */
         }
 
         AddIfMissing("play_count", "play_count INTEGER NOT NULL DEFAULT 0");
@@ -184,7 +186,7 @@ public sealed class MusicLibrary : IMusicLibrary
             cmd.CommandText = "UPDATE tracks SET first_seen = mtime WHERE first_seen = 0 AND mtime > 0;";
             cmd.ExecuteNonQuery();
         }
-        catch { }
+        catch (Exception ex) { Log.Debug($"[library] first_seen backfill skipped: {ex.Message}"); }
     }
 
     /// <summary>v2 → v3: track rating column and the play-event history table. Idempotent for the
@@ -206,7 +208,7 @@ public sealed class MusicLibrary : IMusicLibrary
                 cmd.CommandText = "ALTER TABLE tracks ADD COLUMN rating INTEGER NOT NULL DEFAULT 0;";
                 cmd.ExecuteNonQuery();
             }
-            catch { /* read-only media */ }
+            catch (Exception ex) { Log.Debug($"[library] rating column migration skipped: {ex.Message}"); } /* read-only media */
         }
 
         try
@@ -216,7 +218,7 @@ public sealed class MusicLibrary : IMusicLibrary
             cmd.CommandText = "CREATE TABLE IF NOT EXISTS play_events(played_utc INTEGER NOT NULL, path TEXT NOT NULL);";
             cmd.ExecuteNonQuery();
         }
-        catch { }
+        catch (Exception ex) { Log.Debug($"[library] play_events creation skipped: {ex.Message}"); }
     }
 
     public Track? GetTrack(string path) =>
@@ -390,7 +392,7 @@ public sealed class MusicLibrary : IMusicLibrary
                         useCached = true;
                     }
                 }
-                catch { }
+                catch (Exception ex) { Log.Trace($"[library] cache probe failed for '{file}': {ex.Message}"); }
             }
 
             if (!useCached)
@@ -716,10 +718,11 @@ public sealed class MusicLibrary : IMusicLibrary
             {
                 cmd.ExecuteNonQuery();
             }
-            catch
+            catch (Exception ex)
             {
                 // Read-only media or a track deleted between scan batches: the in-memory stats
                 // still stand, and the next scan reconciles the row.
+                Log.Debug($"[library] stats write skipped for '{track.Path}': {ex.Message}");
             }
         }
     }
@@ -747,10 +750,11 @@ public sealed class MusicLibrary : IMusicLibrary
             {
                 cmd.ExecuteNonQuery();
             }
-            catch
+            catch (Exception ex)
             {
                 // Read-only media or a track deleted since the scan started: the in-memory values
                 // still stand, and the next scan reconciles the row.
+                Log.Debug($"[library] replaygain write skipped for '{track.Path}': {ex.Message}");
             }
         }
     }
@@ -773,10 +777,11 @@ public sealed class MusicLibrary : IMusicLibrary
             {
                 cmd.ExecuteNonQuery();
             }
-            catch
+            catch (Exception ex)
             {
                 // Read-only media or a track deleted since the scan started: the in-memory value
                 // still stands, and the next scan reconciles the row.
+                Log.Debug($"[library] rating write skipped for '{track.Path}': {ex.Message}");
             }
         }
     }
@@ -797,7 +802,7 @@ public sealed class MusicLibrary : IMusicLibrary
             {
                 cmd.ExecuteNonQuery();
             }
-            catch { /* read-only media: aggregates in `tracks` still stand */ }
+            catch (Exception ex) { Log.Debug($"[library] play event dropped for '{track.Path}': {ex.Message}"); } /* read-only media: aggregates in `tracks` still stand */
         }
     }
 
@@ -819,7 +824,7 @@ public sealed class MusicLibrary : IMusicLibrary
                     events.Add((r.GetInt64(0), r.GetString(1)));
                 }
             }
-            catch { /* pre-v3 database without the table: no history yet */ }
+            catch (Exception ex) { Log.Debug($"[library] play history unreadable: {ex.Message}"); } /* pre-v3 database without the table: no history yet */
         }
         return events;
     }

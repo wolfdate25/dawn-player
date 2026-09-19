@@ -60,9 +60,10 @@ public sealed class PluginDspEffect : IAudioDspEffect
             {
                 instance.Process(buffer, offset, count);
             }
-            catch
+            catch (Exception ex)
             {
                 // A throwing plugin must not kill the render thread: drop it for this session.
+                Log.Debug($"[dsp-plugin] {instance.GetType().Name} threw on the render thread, dropped for this session: {ex.Message}");
                 _instances = Array.Empty<IDspEffectInstance>();
                 return;
             }
@@ -75,7 +76,7 @@ public sealed class PluginDspEffect : IAudioDspEffect
         if (instances == null) return;
         foreach (var instance in instances)
         {
-            try { instance.Reset(); } catch { }
+            try { instance.Reset(); } catch (Exception ex) { Log.Trace($"[dsp-plugin] {instance.GetType().Name} reset failed: {ex.Message}"); }
         }
     }
 
@@ -90,8 +91,9 @@ public sealed class PluginDspEffect : IAudioDspEffect
             foreach (var instance in _instances)
             {
                 try { instance.Initialize(_sampleRate, _channels); }
-                catch
+                catch (Exception ex)
                 {
+                    Log.Debug($"[dsp-plugin] {instance.GetType().Name} rejected format {_sampleRate}Hz/{_channels}ch: {ex.Message}");
                     _instances = Array.Empty<IDspEffectInstance>();
                     _instancesForCurrentFormat = true;
                     return false;
@@ -154,6 +156,11 @@ public sealed class DspPluginLoader
             {
                 _loadErrors.Add($"plugin folder scan failed: {ex.Message}");
             }
+
+            // LoadErrors reach the settings UI, but a broken plugin otherwise leaves no trace in
+            // the log file once that page is closed — mirror them there.
+            if (_loadErrors.Count > 0)
+                Log.Warn($"[dsp-plugin] {(_loadErrors.Count)} load error(s): {string.Join("; ", _loadErrors)}");
         }
     }
 

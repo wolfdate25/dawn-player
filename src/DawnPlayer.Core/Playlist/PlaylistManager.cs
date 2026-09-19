@@ -609,7 +609,7 @@ public sealed class PlaylistManager : IPlaylistManager
                     {
                         if (File.Exists(oldPath)) File.Delete(oldPath);
                     }
-                    catch { }
+                    catch (Exception ex) { Log.Debug($"[playlists] stale playlist file delete failed '{oldPath}': {ex.Message}"); }
                 }
             }
         }
@@ -636,7 +636,7 @@ public sealed class PlaylistManager : IPlaylistManager
                     files.Add(p);
                 }
             }
-            catch { /* inaccessible */ }
+            catch (Exception ex) { Log.Debug($"[playlists] path inaccessible '{p}': {ex.Message}"); }
         }
         return files;
     }
@@ -1001,7 +1001,7 @@ public sealed class PlaylistManager : IPlaylistManager
             if (_saveTimers.TryGetValue(pl, out var existing))
             {
                 try { existing.Change(delay, Timeout.Infinite); }
-                catch (ObjectDisposedException) { }
+                catch (ObjectDisposedException) { /* timer already fired and disposed itself; a new one is created below */ }
                 return;
             }
 
@@ -1055,7 +1055,7 @@ public sealed class PlaylistManager : IPlaylistManager
             {
                 M3u.Write(path, snapshot, name, unresolved);
             }
-            catch { /* best effort */ }
+            catch (Exception ex) { Log.Warn($"[playlists] m3u8 write failed for '{name}': {ex.Message}"); } /* best effort */
         }
     }
 
@@ -1072,7 +1072,7 @@ public sealed class PlaylistManager : IPlaylistManager
                 var path = PlaylistFilePath(name);
                 if (File.Exists(path)) File.Delete(path);
             }
-            catch { }
+            catch (Exception ex) { Log.Debug($"[playlists] playlist file delete failed '{name}': {ex.Message}"); }
         }
     }
 
@@ -1168,7 +1168,7 @@ public sealed class PlaylistManager : IPlaylistManager
                         pl.Items.AddRange(items);
                     }
                 }
-                catch { /* skip broken file */ }
+                catch (Exception ex) { Log.Debug($"[playlists] skip broken playlist file '{file}': {ex.Message}"); }
             }
         }
         finally

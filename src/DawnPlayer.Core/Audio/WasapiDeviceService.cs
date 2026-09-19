@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Linq;
 using DawnPlayer.Core.Persistence;
+using DawnPlayer.Core.Util;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
 
@@ -32,7 +33,7 @@ public static class WasapiDeviceService
             using var def = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
             defaultId = def?.ID;
         }
-        catch { /* no device */ }
+        catch (Exception ex) { Log.Debug($"[wasapi] no default render endpoint: {ex.Message}"); }
 
         foreach (var d in enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active))
         {
@@ -58,7 +59,7 @@ public static class WasapiDeviceService
                 first = false;
             }
         }
-        catch { }
+        catch (Exception ex) { Log.Debug($"[wasapi] DirectSound enumeration failed: {ex.Message}"); }
         if (list.Count == 0)
         {
             list.Add(new OutputDeviceInfo(DirectSoundOut.DSDEVID_DefaultPlayback.ToString(), "기본 사운드 드라이버 (Primary Sound Driver) (기본값)", true));
@@ -81,7 +82,7 @@ public static class WasapiDeviceService
                 list.Add(new OutputDeviceInfo(i.ToString(CultureInfo.InvariantCulture), caps.ProductName, false));
             }
         }
-        catch { }
+        catch (Exception ex) { Log.Debug($"[wasapi] WaveOut capability query failed: {ex.Message}"); }
         return list;
     }
 
@@ -103,7 +104,7 @@ public static class WasapiDeviceService
                 if (EnumerateDirectSoundDevices().Any(d => d.Id == guid.ToString()))
                     return guid;
             }
-            catch { }
+            catch (Exception ex) { Log.Debug($"[wasapi] DirectSound device resolve failed for '{configuredDeviceId}': {ex.Message}"); }
         }
         return DirectSoundOut.DSDEVID_DefaultPlayback;
     }
@@ -120,7 +121,7 @@ public static class WasapiDeviceService
                 if (number < WaveOut.DeviceCount)
                     return number;
             }
-            catch { }
+            catch (Exception ex) { Log.Debug($"[wasapi] WaveOut device resolve failed for '{configuredDeviceId}': {ex.Message}"); }
         }
         return -1;
     }
@@ -134,12 +135,13 @@ public static class WasapiDeviceService
             if (!string.IsNullOrEmpty(deviceId))
             {
                 try { return enumerator.GetDevice(deviceId); }
-                catch { /* configured device vanished → default */ }
+                catch (Exception ex) { Log.Debug($"[wasapi] configured device '{deviceId}' vanished, opening default: {ex.Message}"); }
             }
             return enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Warn($"[wasapi] device open failed ({deviceId ?? "default"}): {ex.Message}");
             return null;
         }
     }
@@ -211,8 +213,10 @@ public static class WasapiDeviceService
             using var client = device.AudioClient;
             return client.IsFormatSupported(AudioClientShareMode.Exclusive, format, out _);
         }
-        catch
+        catch (Exception ex)
         {
+            // Candidate rejection is the normal path of format negotiation; trace only.
+            Log.Trace($"[wasapi] exclusive probe rejected {Describe(format)}: {ex.Message}");
             return false;
         }
     }
@@ -266,7 +270,7 @@ public static class WasapiDeviceService
                 if (val is int i) return i != 0;
             }
         }
-        catch { }
+        catch (Exception ex) { Log.Trace($"[wasapi] exclusive-mode flag unreadable: {ex.Message}"); }
         return true; // Assume enabled if we can't read it
     }
 
@@ -283,7 +287,7 @@ public static class WasapiDeviceService
                 if (val is int i) return i != 0;
             }
         }
-        catch { }
+        catch (Exception ex) { Log.Trace($"[wasapi] exclusive-priority flag unreadable: {ex.Message}"); }
         return true; // Assume enabled if we can't read it
     }
 
@@ -299,8 +303,9 @@ public static class WasapiDeviceService
                 UseShellExecute = true
             });
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Warn($"[wasapi] could not open the Sound Control Panel: {ex.Message}");
             try
             {
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
@@ -309,7 +314,7 @@ public static class WasapiDeviceService
                     UseShellExecute = true
                 });
             }
-            catch { }
+            catch (Exception ex2) { Log.Warn($"[wasapi] could not open mmsys.cpl either: {ex2.Message}"); }
         }
     }
 
@@ -331,10 +336,10 @@ public static class WasapiDeviceService
                     var name = proc.ProcessName;
                     if (!result.Contains(name)) result.Add(name);
                 }
-                catch { }
+                catch (Exception ex) { Log.Trace($"[wasapi] session holder process lookup failed: {ex.Message}"); }
             }
         }
-        catch { }
+        catch (Exception ex) { Log.Debug($"[wasapi] audio session enumeration failed: {ex.Message}"); }
         return result;
     }
 }

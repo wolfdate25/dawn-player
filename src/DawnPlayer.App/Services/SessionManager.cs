@@ -119,6 +119,8 @@ public static class SessionManager
         SaveSession(settings, playback, window, hwnd);
 
         try { AppServices.Shutdown(); } catch { }
+        // Flush the log before the hard exit or the last queued entries die with the process.
+        try { DawnPlayer.Core.Util.Log.Shutdown(); } catch { }
         try { Application.Current.Exit(); } catch { }
         Environment.Exit(0);
     }

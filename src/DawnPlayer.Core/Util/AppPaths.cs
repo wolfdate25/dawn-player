@@ -47,7 +47,7 @@ public static class AppPaths
             var dataDir = Path.Combine(appDir, "data");
             if (Directory.Exists(dataDir)) return true;
         }
-        catch { }
+        catch (Exception ex) { Log.Debug($"[paths] portable mode detection failed: {ex.Message}"); }
 
         return false;
     }
@@ -60,8 +60,9 @@ public static class AppPaths
             if (string.IsNullOrEmpty(appDir)) return false;
             return dir.StartsWith(appDir, StringComparison.OrdinalIgnoreCase);
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Debug($"[paths] portable dir check failed for '{dir}': {ex.Message}");
             return false;
         }
     }
@@ -165,7 +166,7 @@ public static class AppPaths
             Directory.CreateDirectory(PlaylistsDir);
             Directory.CreateDirectory(PluginsDataDir);
         }
-        catch { }
+        catch (Exception ex) { Log.Warn($"[paths] data directory creation failed under '{BaseDir}': {ex.Message}"); }
     }
 
     static AppPaths()

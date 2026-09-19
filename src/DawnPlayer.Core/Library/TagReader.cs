@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using DawnPlayer.Core.Models;
+using DawnPlayer.Core.Util;
 
 namespace DawnPlayer.Core.Library;
 
@@ -61,8 +62,9 @@ public static class TagReader
                 Rating = ReadRating(tf, tag),
             };
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Debug($"[tags] read failed for '{path}': {ex.Message}");
             return null;
         }
     }
@@ -114,7 +116,7 @@ public static class TagReader
                 }
             }
         }
-        catch { }
+        catch (Exception ex) { Log.Debug($"[tags] rating read failed: {ex.Message}"); }
         return 0;
     }
 
@@ -147,7 +149,7 @@ public static class TagReader
                     result.Add(specific);
                 }
             }
-            catch { }
+            catch (Exception ex) { Log.Trace($"[tags] tag type probe failed: {ex.Message}"); }
         }
         return result;
     }
@@ -185,7 +187,7 @@ public static class TagReader
                 if (!string.IsNullOrWhiteSpace(uslt)) return uslt.Trim();
             }
         }
-        catch { }
+        catch (Exception ex) { Log.Debug($"[tags] embedded lyrics read failed for '{path}': {ex.Message}"); }
         return null;
     }
 
@@ -212,7 +214,7 @@ public static class TagReader
         {
             desc = props.Codecs.FirstOrDefault()?.Description ?? "";
         }
-        catch { }
+        catch (Exception ex) { Log.Trace($"[tags] codec description unreadable: {ex.Message}"); }
 
         var ext = Path.GetExtension(path).ToLowerInvariant();
         if (desc.Contains("Apple Lossless", StringComparison.OrdinalIgnoreCase) ||
@@ -268,11 +270,11 @@ public static class TagReader
                             if (!string.IsNullOrWhiteSpace(val)) return val;
                         }
                     }
-                    catch { }
+                    catch (Exception ex) { Log.Trace($"[tags] field '{field}' tag probe failed: {ex.Message}"); }
                 }
             }
         }
-        catch { }
+        catch (Exception ex) { Log.Debug($"[tags] field '{field}' read failed: {ex.Message}"); }
 
         return null;
     }
@@ -341,7 +343,7 @@ public static class TagReader
                 if (!string.IsNullOrWhiteSpace(desc)) return desc;
             }
         }
-        catch { }
+        catch (Exception ex) { Log.Debug($"[tags] field '{field}' decode failed: {ex.Message}"); }
 
         return null;
     }

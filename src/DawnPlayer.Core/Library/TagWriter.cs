@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using DawnPlayer.Core.Util;
 
 namespace DawnPlayer.Core.Library;
 
@@ -63,15 +64,17 @@ public static class TagWriter
                     tf.Save();
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Log.Warn($"[tags] write read-phase failed for '{path}': {ex.Message}");
                 return TagWriteResult.ReadFailed;
             }
 
             File.Replace(temp, path, null);
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Warn($"[tags] write save-phase failed for '{path}': {ex.Message}");
             return TagWriteResult.SaveFailed;
         }
         finally
@@ -127,16 +130,18 @@ public static class TagWriter
                     tf.Save();
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Log.Warn($"[tags] replaygain write read-phase failed for '{path}': {ex.Message}");
                 return false;
             }
 
             File.Replace(temp, path, null);
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Warn($"[tags] replaygain write save-phase failed for '{path}': {ex.Message}");
             return false;
         }
         finally
@@ -168,16 +173,18 @@ public static class TagWriter
                     tf.Save();
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Log.Warn($"[tags] rating write read-phase failed for '{path}': {ex.Message}");
                 return false;
             }
 
             File.Replace(temp, path, null);
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Warn($"[tags] rating write save-phase failed for '{path}': {ex.Message}");
             return false;
         }
         finally
@@ -258,8 +265,9 @@ public static class TagWriter
                 MimeType = MimeFromExtension(Path.GetExtension(edit.ArtSourcePath)),
             };
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Debug($"[tags] artwork load failed for '{edit.ArtSourcePath}': {ex.Message}");
             return null;
         }
     }
@@ -344,6 +352,6 @@ public static class TagWriter
     private static void TryDeleteTemp(string temp)
     {
         if (string.IsNullOrEmpty(temp)) return;
-        try { if (File.Exists(temp)) File.Delete(temp); } catch { }
+        try { if (File.Exists(temp)) File.Delete(temp); } catch (Exception ex) { Log.Trace($"[tags] temp delete failed '{temp}': {ex.Message}"); }
     }
 }

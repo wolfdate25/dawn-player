@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using DawnPlayer.Core.Util;
 
 namespace DawnPlayer.Core.Library;
 
@@ -72,9 +73,10 @@ public static class AlbumArtBlurHelper
                 File.Move(tempFile, targetFile, overwrite: true);
                 return targetFile;
             }
-            catch
+            catch (Exception ex)
             {
-                try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch { }
+                Log.Debug($"[art] blur render failed, reusing cache if any: {ex.Message}");
+                try { if (File.Exists(tempFile)) File.Delete(tempFile); } catch (Exception dex) { Log.Trace($"[art] blur temp delete failed: {dex.Message}"); }
                 if (File.Exists(targetFile) && new FileInfo(targetFile).Length > 0)
                 {
                     return targetFile;
@@ -82,8 +84,9 @@ public static class AlbumArtBlurHelper
                 return null;
             }
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Debug($"[art] blur skipped: {ex.Message}");
             return null;
         }
     }

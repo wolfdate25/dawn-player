@@ -1,5 +1,6 @@
 using DawnPlayer.Core.Models;
 using DawnPlayer.Core.Persistence;
+using DawnPlayer.Core.Util;
 
 namespace DawnPlayer.Core.Lyrics;
 
@@ -27,7 +28,7 @@ public static class LyricsFinder
             {
                 return LrcParser.ParseFile(path);
             }
-            catch { }
+            catch (Exception ex) { Log.Debug($"[lyrics] parse failed for '{path}': {ex.Message}"); }
         }
 
         if (settings.Lyrics.ReadEmbeddedLyrics)
@@ -40,7 +41,7 @@ public static class LyricsFinder
                     return LrcParser.Parse(embedded, track.Path);
                 }
             }
-            catch { }
+            catch (Exception ex) { Log.Debug($"[lyrics] embedded lyrics parse failed for '{track.Path}': {ex.Message}"); }
         }
 
         return null;

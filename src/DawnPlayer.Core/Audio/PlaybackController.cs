@@ -2,6 +2,7 @@ using System.Globalization;
 using DawnPlayer.Core.Models;
 using DawnPlayer.Core.Persistence;
 using DawnPlayer.Core.Playlists;
+using DawnPlayer.Core.Util;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
 
@@ -570,7 +571,7 @@ public sealed partial class PlaybackController : IPlaybackController
                     StateChanged?.Invoke();
                 }
             }
-            catch (AudioOpenException) { }
+            catch (AudioOpenException ex) { Log.Debug($"[playback] restart open failed: {ex.Message}"); }
         });
     }
 
@@ -639,7 +640,7 @@ public sealed partial class PlaybackController : IPlaybackController
                 // the rest of the process lifetime.
                 if (!started && !ReferenceEquals(Sequencer?.CurrentItem, pending.Item))
                 {
-                    try { pending.Reader.Dispose(); } catch { }
+                    try { pending.Reader.Dispose(); } catch (Exception ex) { Log.Trace($"[playback] reader dispose after failed start: {ex.Message}"); }
                 }
             }
         }
@@ -708,8 +709,9 @@ public sealed partial class PlaybackController : IPlaybackController
                     }
             }
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Debug($"[playback] desired device key resolve failed: {ex.Message}");
             return null;
         }
     }
@@ -820,9 +822,9 @@ public sealed partial class PlaybackController : IPlaybackController
         CurrentSessionInfo = null;
         if (session == null) return;
 
-        try { session.Sequencer.Cancel(); } catch { }
-        try { session.Output.Dispose(); } catch { }
-        try { session.Device?.Dispose(); } catch { }
+        try { session.Sequencer.Cancel(); } catch (Exception ex) { Log.Trace($"[playback] sequencer cancel during teardown: {ex.Message}"); }
+        try { session.Output.Dispose(); } catch (Exception ex) { Log.Trace($"[playback] output dispose during teardown: {ex.Message}"); }
+        try { session.Device?.Dispose(); } catch (Exception ex) { Log.Trace($"[playback] device dispose during teardown: {ex.Message}"); }
     }
 
     // ---------------- sequencer events (audio thread → threadpool) ----------------
@@ -935,7 +937,7 @@ public sealed partial class PlaybackController : IPlaybackController
                     Volatile.Read(ref _commandGeneration) != gen ||
                     State == PlaybackState.Stopped)
                 {
-                    try { pending.Reader.Dispose(); } catch { }
+                    try { pending.Reader.Dispose(); } catch (Exception ex) { Log.Trace($"[playback] superseded advance reader dispose: {ex.Message}"); }
                     return;
                 }
 
@@ -949,9 +951,10 @@ public sealed partial class PlaybackController : IPlaybackController
                 }
                 catch (Exception ex)
                 {
-                    try { pending.Reader.Dispose(); } catch { }
+                    try { pending.Reader.Dispose(); } catch (Exception dex) { Log.Trace($"[playback] reader dispose after failed advance: {dex.Message}"); }
                     TeardownSessionLocked();
                     State = PlaybackState.Stopped;
+                    Log.Warn($"[playback] natural advance failed: {ex}");
                     Warning?.Invoke($"다음 트랙 재생 실패: {(ex is AudioSessionStartException ? ex.Message : AudioErrorMessages.DescribeStartFailure(ex))}");
                 }
             }
@@ -1006,8 +1009,9 @@ public sealed partial class PlaybackController : IPlaybackController
                     RequiresRestart = restart
                 };
             }
-            catch (AudioOpenException)
+            catch (AudioOpenException ex)
             {
+                Log.Debug($"[playback] skipping unreadable '{target.Value.Item.Track.Path}': {ex.Message}");
                 skipped.Add(target.Value.Item);
 
                 // The skip set is local to this call, so an unplayable entry left in the queue
@@ -1136,11 +1140,12 @@ public sealed partial class PlaybackController : IPlaybackController
                 // Losing the race costs one wasted open, which is why it is safe to resolve first.
                 if (!installed)
                 {
-                    try { pending.Reader.Dispose(); } catch { }
+                    try { pending.Reader.Dispose(); } catch (Exception ex) { Log.Trace($"[playback] lost prefetch race reader dispose: {ex.Message}"); }
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Log.Debug($"[playback] prefetch abandoned: {ex.Message}");
                 seq.SetPrefetched(null);
             }
             finally
