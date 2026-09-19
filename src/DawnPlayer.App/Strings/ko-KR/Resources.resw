@@ -449,6 +449,10 @@
   <data name="Settings_Audio_RateMismatch_Desc.Text" xml:space="preserve"><value>세션 재구성: 비트 퍼펙트 (곡 경계에 짧은 무음) · 리샘플: 끊김 없이 이어 재생</value></data>
   <data name="Settings_Audio_RateMismatch_Restart.Content" xml:space="preserve"><value>세션 재구성 (비트 퍼펙트)</value></data>
   <data name="Settings_Audio_RateMismatch_Resample.Content" xml:space="preserve"><value>리샘플하여 이어 재생</value></data>
+  <data name="Settings_Audio_DsdMode_Title.Text" xml:space="preserve"><value>DSD 재생 방식 (DSF/DFF)</value></data>
+  <data name="Settings_Audio_DsdMode_Desc.Text" xml:space="preserve"><value>DoP 우선: DSD 대응 DAC에서 배타 모드로 원음 비트 전송 (미지원 시 PCM 변환) · PCM 변환: 항상 디시메이션</value></data>
+  <data name="Settings_Audio_DsdMode_Pcm.Content" xml:space="preserve"><value>PCM 변환 (기본)</value></data>
+  <data name="Settings_Audio_DsdMode_Dop.Content" xml:space="preserve"><value>DoP 우선</value></data>
   <data name="Settings_Audio_AllowVolume_Title.Text" xml:space="preserve"><value>배타 모드에서 볼륨/리플레이게인 허용</value></data>
   <data name="Settings_Audio_AllowVolume_Desc.Text" xml:space="preserve"><value>끄면 비트 퍼펙트가 유지됩니다 (볼륨 100% 고정).</value></data>
   <data name="Settings_Audio_Latency_Title.Text" xml:space="preserve"><value>출력 버퍼 크기 (Latency)</value></data>

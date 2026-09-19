@@ -79,6 +79,7 @@ public static class AudioFileReaderFactory
     {
         new RadioStreamTrackReaderProvider(),
         new DsfTrackReaderProvider(),
+        new DffTrackReaderProvider(),
         new VorbisTrackReaderProvider(),
         new MfTrackReaderProvider(),
     };

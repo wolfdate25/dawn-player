@@ -19,7 +19,8 @@ public sealed record OutputSession(
     bool Exclusive,
     AudioDriverType Driver,
     string DeviceKey,
-    SessionInfo Info);
+    SessionInfo Info,
+    bool IsDop = false);
 
 /// <summary>
 /// Opens an output session for the configured driver through the registered
@@ -143,16 +144,20 @@ public sealed class OutputSessionFactory
             _subscribeOutput,
             _warn,
             _pluginDsp,
-            (target, applyVolume, eqProfile) => CreateSequencer(target, applyVolume, latency, eqProfile),
-            ReopenPending));
+            (pending, target, applyVolume, eqProfile) => CreateSequencer(pending, target, applyVolume, latency, eqProfile),
+            ReopenPending,
+            DsdSupport.ReopenAsPcm));
     }
 
-    private SequencerStream CreateSequencer(WaveFormat target, bool applyVolume, int latency, EqProfile eqProfile)
+    private SequencerStream CreateSequencer(PendingTrack pending, WaveFormat target, bool applyVolume, int latency, EqProfile eqProfile)
     {
+        // DoP containers ride the pipeline as opaque words — volume/EQ arithmetic corrupts the
+        // markers, so such sessions run the sequencer in raw-passthrough mode.
+        bool rawPassthrough = DsdSupport.IsRawDsdReader(pending.Reader);
         var seq = new SequencerStream(
             target, applyVolume, _gainProvider, latency, eqProfile, _settings.Normalizer, _replayGainProvider,
             _settings.Crossfeed, _settings.Playback.MonoDownmixEnabled,
-            dspChain: null, pluginDsp: _pluginDsp?.Invoke());
+            dspChain: null, pluginDsp: _pluginDsp?.Invoke(), rawPassthrough: rawPassthrough);
         _subscribeSequencer(seq);
         return seq;
     }

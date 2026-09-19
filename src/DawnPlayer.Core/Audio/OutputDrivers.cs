@@ -22,8 +22,9 @@ public sealed record OutputSessionRequest(
     Action<IWavePlayer> SubscribeOutput,
     Action<string> Warn,
     Func<Dsp.Plugins.PluginDspEffect?>? PluginDsp,
-    Func<WaveFormat, bool, EqProfile, SequencerStream> CreateSequencer,
-    Func<PendingTrack, PendingTrack> ReopenPending);
+    Func<PendingTrack, WaveFormat, bool, EqProfile, SequencerStream> CreateSequencer,
+    Func<PendingTrack, PendingTrack> ReopenPending,
+    Func<PendingTrack, PendingTrack> ReopenPendingAsPcm);
 
 /// <summary>
 /// Output driver seam: opens and starts one output session for <see cref="OutputSessionRequest.First"/>.
@@ -59,6 +60,26 @@ public sealed class WasapiOutputDriver : IOutputDriver
 
         bool exclusive = _settings.Output.UseExclusiveMode;
 
+        // DoP gating: packed DSD can only ride an exclusive session whose endpoint accepted the
+        // DoP rate. Anything else (shared mode, probe rejection, a previous rejection of this
+        // device) must swap to the plain boxcar-PCM reader first — resampling or mixing DoP
+        // frames produces garbage, and warning on every track would be noise.
+        if (DsdSupport.IsRawDsdReader(first.Reader) && DsdSupport.PlaybackMode == DsdPlaybackMode.DoPPriority)
+        {
+            bool dopUsable = exclusive && !DsdSupport.IsDoPBlocked
+                && WasapiDeviceService.TryNegotiateExclusive(
+                    device, first.Reader.SourceFormat, _settings.Output.ExclusiveBitDepth) != null;
+            if (!dopUsable)
+            {
+                if (!DsdSupport.IsDoPBlocked)
+                {
+                    DsdSupport.BlockDoP();
+                    request.Warn("이 장치에서 DoP 재생이 불가능해 DSD를 PCM으로 변환합니다 (설정에서 다시 선택 가능).");
+                }
+                first = request.ReopenPendingAsPcm(first);
+            }
+        }
+
         WaveFormat? target = null;
         if (exclusive)
             target = WasapiDeviceService.TryNegotiateExclusive(
@@ -73,7 +94,7 @@ public sealed class WasapiOutputDriver : IOutputDriver
 
         var applyVolume = !exclusive || _settings.Output.AllowVolumeInExclusive;
         var eqProfile = EqualizerProfileResolver.Resolve(_settings.Equalizer, AudioDriverType.Wasapi, device.ID);
-        var seq = request.CreateSequencer(target, applyVolume, eqProfile);
+        var seq = request.CreateSequencer(first, target, applyVolume, eqProfile);
         seq.SwitchTo(first); // initial load
 
         var output = new WasapiOut(device,
@@ -98,7 +119,7 @@ public sealed class WasapiOutputDriver : IOutputDriver
             exclusive = false;
             target = WasapiDeviceService.GetSharedTarget(device);
             applyVolume = true;
-            seq = request.CreateSequencer(target, applyVolume, eqProfile);
+            seq = request.CreateSequencer(first, target, applyVolume, eqProfile);
             seq.SwitchTo(first);
 
             output = new WasapiOut(device, AudioClientShareMode.Shared, true, latency);
@@ -125,9 +146,11 @@ public sealed class WasapiOutputDriver : IOutputDriver
         }
 
         var info = new SessionInfo(
-            device.FriendlyName, exclusive, WasapiDeviceService.Describe(target), latency, AudioDriverType.Wasapi);
+            device.FriendlyName, exclusive, WasapiDeviceService.Describe(target), latency, AudioDriverType.Wasapi,
+            IsDop: DsdSupport.IsRawDsdReader(first.Reader));
 
-        return new OutputSession(seq, output, device, exclusive, AudioDriverType.Wasapi, device.ID, info);
+        return new OutputSession(seq, output, device, exclusive, AudioDriverType.Wasapi, device.ID, info,
+            IsDop: DsdSupport.IsRawDsdReader(first.Reader));
     }
 }
 
@@ -154,7 +177,7 @@ public sealed class DirectSoundOutputDriver : IOutputDriver
         var target = WaveFormat.CreateIeeeFloatWaveFormat(rate, channels);
         var eqProfile = EqualizerProfileResolver.Resolve(_settings.Equalizer, AudioDriverType.DirectSound, dsGuid.ToString());
 
-        var seq = request.CreateSequencer(target, true, eqProfile);
+        var seq = request.CreateSequencer(first, target, true, eqProfile);
         seq.SwitchTo(first);
 
         var dsOutput = new DirectSoundOut(dsGuid, latency);
@@ -194,7 +217,7 @@ public sealed class WaveOutOutputDriver : IOutputDriver
         var target = new WaveFormat(rate, 16, channels);
         var eqProfile = EqualizerProfileResolver.Resolve(_settings.Equalizer, AudioDriverType.WaveOut, devNum.ToString(CultureInfo.InvariantCulture));
 
-        var seq = request.CreateSequencer(target, true, eqProfile);
+        var seq = request.CreateSequencer(first, target, true, eqProfile);
         seq.SwitchTo(first);
 
         var waveOut = new WaveOutEvent { DeviceNumber = devNum, DesiredLatency = latency };

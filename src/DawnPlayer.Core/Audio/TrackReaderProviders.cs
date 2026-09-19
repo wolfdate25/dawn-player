@@ -1,3 +1,4 @@
+using DawnPlayer.Core.Persistence;
 using DawnPlayer.Core.Util;
 
 namespace DawnPlayer.Core.Audio;
@@ -42,14 +43,31 @@ public sealed class RadioStreamTrackReaderProvider : ITrackReaderProvider
     }
 }
 
-/// <summary>DSD Stream File: managed boxcar-decimated playback, no Media Foundation support.</summary>
+/// <summary>DSD Stream File: boxcar-decimated PCM by default, DoP packing when the DSD
+/// playback setting prefers it and no device has rejected DoP this session.</summary>
 public sealed class DsfTrackReaderProvider : ITrackReaderProvider
 {
     public int Order => 200;
 
     public bool CanOpen(string path, string extension) => extension == ".dsf";
 
-    public ITrackReader Open(string path) => new DsfTrackReader(path);
+    public ITrackReader Open(string path) =>
+        DsdSupport.PlaybackMode == DsdPlaybackMode.DoPPriority && !DsdSupport.IsDoPBlocked
+            ? DopTrackReader.Open(path)
+            : new DsfTrackReader(path);
+}
+
+/// <summary>DSDIFF (DFF): the interleaved-container sibling of DSF, same playback modes.</summary>
+public sealed class DffTrackReaderProvider : ITrackReaderProvider
+{
+    public int Order => 200;
+
+    public bool CanOpen(string path, string extension) => extension == ".dff";
+
+    public ITrackReader Open(string path) =>
+        DsdSupport.PlaybackMode == DsdPlaybackMode.DoPPriority && !DsdSupport.IsDoPBlocked
+            ? DopTrackReader.Open(path)
+            : new DsdPcmTrackReader(new DffRawReader(path));
 }
 
 /// <summary>Ogg Vorbis via NVorbis; the Media Foundation path cannot read Vorbis comments.</summary>

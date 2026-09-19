@@ -107,6 +107,16 @@ public sealed class AudioSettingsService : IAudioSettingsService
         SettingsWriter.Schedule(_settings);
     }
 
+    public void SetDsdPlaybackMode(DsdPlaybackMode mode)
+    {
+        _settings.Output.DsdPlaybackMode = mode;
+        // The provider chain reads this synchronously for every open, and a mode change should
+        // give DoP a fresh chance even if a device rejected it earlier in the session.
+        Core.Audio.DsdSupport.PlaybackMode = mode;
+        Core.Audio.DsdSupport.ResetDoPBlock();
+        SettingsWriter.Schedule(_settings);
+    }
+
     public void SetLatency(int latencyMs)
     {
         _settings.Output.LatencyMs = Math.Clamp(latencyMs, 30, 500);

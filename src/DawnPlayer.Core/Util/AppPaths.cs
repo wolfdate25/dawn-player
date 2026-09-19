@@ -106,7 +106,7 @@ public static class AppPaths
     /// <summary>Audio extensions the player accepts (lowercase, with dot).</summary>
     public static readonly HashSet<string> SupportedExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
-        ".mp3", ".aac", ".m4a", ".m4b", ".mp4", ".flac", ".ogg", ".oga", ".opus", ".wav", ".alac", ".dsf"
+        ".mp3", ".aac", ".m4a", ".m4b", ".mp4", ".flac", ".ogg", ".oga", ".opus", ".wav", ".alac", ".dsf", ".dff"
     };
 
     public static bool IsSupportedAudioFile(string path) =>

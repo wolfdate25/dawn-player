@@ -305,6 +305,24 @@
                                     </ComboBox>
                                 </Grid>
 
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock x:Uid="Settings_Audio_DsdMode_Title" Text="DSD 재생 방식 (DSF/DFF)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Audio_DsdMode_Desc" Text="DoP 우선: DSD 대응 DAC에서 배타 모드로 원음 비트 전송 (미지원 시 PCM 변환) · PCM 변환: 항상 디시메이션" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ComboBox Grid.Column="1" Width="180" HorizontalAlignment="Right"
+                                              SelectedIndex="{x:Bind ViewModel.Audio.DsdPlaybackModeIndex, Mode=TwoWay}">
+                                        <ComboBoxItem x:Uid="Settings_Audio_DsdMode_Pcm" Content="PCM 변환 (기본)"/>
+                                        <ComboBoxItem x:Uid="Settings_Audio_DsdMode_Dop" Content="DoP 우선"/>
+                                    </ComboBox>
+                                </Grid>
+
                                 <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"
                                         Visibility="{x:Bind BooleanToVisibility(ViewModel.Audio.IsWasapiDriver), Mode=OneWay}"/>
 

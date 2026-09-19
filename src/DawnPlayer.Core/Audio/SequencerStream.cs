@@ -53,6 +53,9 @@ public sealed class SequencerStream : IWaveProvider
     private readonly object _gate = new();
     private readonly WaveFormat _outFormat;
     private readonly bool _applyVolume;
+    // DoP containers ride the pipeline as opaque 24-bit words: volume or DSP arithmetic would
+    // corrupt the 0x05/0xFA markers the DAC resyncs on, so both are skipped entirely.
+    private readonly bool _rawPassthrough;
     private readonly Func<Track, float> _gainProvider;
     private readonly Func<Track, float?>? _replayGainProvider;
     private readonly int _latencyBytes;
@@ -96,8 +99,10 @@ public sealed class SequencerStream : IWaveProvider
         CrossfeedSettings? initialCrossfeed = null,
         bool initialMonoDownmix = false,
         IAudioDspChain? dspChain = null,
-        global::DawnPlayer.Core.Audio.Dsp.Plugins.PluginDspEffect? pluginDsp = null)
+        global::DawnPlayer.Core.Audio.Dsp.Plugins.PluginDspEffect? pluginDsp = null,
+        bool rawPassthrough = false)
     {
+        _rawPassthrough = rawPassthrough;
         _outFormat = outFormat;
         _applyVolume = applyVolume;
         _gainProvider = gainProvider;
@@ -455,7 +460,7 @@ public sealed class SequencerStream : IWaveProvider
                     }
 
                     // Process through the decoupled DSP chain
-                    _dspChain.Process(_floatBuf, 0, floatsRead);
+                    if (!_rawPassthrough) _dspChain.Process(_floatBuf, 0, floatsRead);
 
                     int frames = floatsRead / _outFormat.Channels;
                     PcmConvert.ToBytes(_floatBuf, frames * _outFormat.Channels, buffer, offset + total, _outFormat);
@@ -533,7 +538,7 @@ public sealed class SequencerStream : IWaveProvider
     {
         ISampleProvider sp = track.Reader.Samples;
         VolumeSampleProvider? volume = null;
-        if (_applyVolume)
+        if (_applyVolume && !_rawPassthrough)
         {
             volume = new VolumeSampleProvider(sp) { Volume = _gainProvider(track.Item.Track) };
             sp = volume;

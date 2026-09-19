@@ -59,6 +59,9 @@ public interface IAudioSettingsService
     /// </summary>
     void SetExclusiveRateMismatch(ExclusiveRateMismatchPolicy policy);
 
+    /// <summary>Sets how DSD (DSF/DFF) tracks are played (PCM conversion vs DoP packing).</summary>
+    void SetDsdPlaybackMode(DsdPlaybackMode mode);
+
     /// <summary>
     /// Sets the output buffer latency in milliseconds (clamped to 30ms-500ms) and persists settings.
     /// </summary>

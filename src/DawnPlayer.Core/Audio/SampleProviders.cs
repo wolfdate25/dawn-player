@@ -96,10 +96,13 @@ public static class PcmConvert
                     }
                 case 24:
                     {
+                        // Round to nearest, not truncate: DoP rides this path and its container
+                        // bytes must survive the float hop bit-exactly (5/8388607f * 8388607f
+                        // evaluates to 4.9999998 — a truncating cast corrupts the marker to 4).
                         int d = destOffset;
                         for (int i = 0; i < floatCount; i++)
                         {
-                            var v = (int)Math.Clamp(src[i] * 8388607f, -8388608f, 8388607f);
+                            var v = (int)MathF.Round(Math.Clamp(src[i] * 8388607f, -8388608f, 8388607f));
                             dest[d++] = (byte)v;
                             dest[d++] = (byte)(v >> 8);
                             dest[d++] = (byte)(v >> 16);

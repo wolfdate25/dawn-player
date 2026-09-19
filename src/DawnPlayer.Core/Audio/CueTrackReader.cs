@@ -26,6 +26,10 @@ public sealed class CueTrackReader : ITrackReader
 
     public ISampleProvider Samples { get; }
 
+    /// <summary>The wrapped reader. DoP detection must see through cue wrappers: a raw-DSD
+    /// track inside a range reader still requires raw-passthrough playback.</summary>
+    public ITrackReader Inner => _inner;
+
     public WaveFormat SourceFormat => _inner.SourceFormat;
 
     public TimeSpan TotalTime => _end - _start;

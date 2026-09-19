@@ -142,8 +142,10 @@ public class PcmConvertAndSampleProviderTests
         Assert.Equal(0x00, dest[7]);
         Assert.Equal(0x80, dest[8]);
 
-        // 0.5f -> (int)(0.5f * 8388607f) = 4194303
-        Assert.Equal((int)(0.5f * 8388607f), ReadInt24(dest, 9));
+        // 0.5f -> round-to-nearest(0.5f * 8388607f) = 4194304. The 24-bit path rounds rather
+        // than truncates so DoP container bytes survive the float hop bit-exactly; ordinary
+        // audio differs by at most 1 LSB.
+        Assert.Equal(4194304, ReadInt24(dest, 9));
 
         // 5.0f -> clamped to 8388607
         Assert.Equal(8388607, ReadInt24(dest, 12));

@@ -25,7 +25,7 @@ public enum PlaybackLeaveReason
 public enum AbRepeatStage { Off, WaitingForB, Looping }
 
 public sealed record SessionInfo(string DeviceName, bool Exclusive, string FormatDescription, int LatencyMs,
-    AudioDriverType Driver = AudioDriverType.Wasapi);
+    AudioDriverType Driver = AudioDriverType.Wasapi, bool IsDop = false);
 
 /// <summary>
 /// An output session could not be opened, carrying a message that is already fit to show the user.
@@ -62,7 +62,8 @@ public sealed partial class PlaybackController : IPlaybackController
         MMDevice? Device,
         bool Exclusive,
         AudioDriverType Driver,
-        string? DeviceKey);
+        string? DeviceKey,
+        bool IsDop = false);
 
     private readonly object _sessionLock = new();
     private SessionSnapshot? _session;
@@ -751,26 +752,32 @@ public sealed partial class PlaybackController : IPlaybackController
                 session.Device, pending.Reader.SourceFormat, _settings.Output.ExclusiveBitDepth);
         }
         return ExclusiveSessionAcceptsTrack(
-            _settings.Output.ExclusiveRateMismatch, negotiated, session.Sequencer.WaveFormat);
+            _settings.Output.ExclusiveRateMismatch, negotiated, session.Sequencer.WaveFormat,
+            session.IsDop, pending.Reader is DopTrackReader);
     }
 
     /// <summary>Whether the running exclusive session must be rebuilt for the next track's
     /// format. Pure so the policy matrix is testable without a device. ResampleToCurrent never
-    /// restarts: the sequencer's Prepare step inserts a resampler for any rate mismatch, which
-    /// is seamless but not bit-perfect for the mismatched track (the user's explicit choice).</summary>
+    /// restarts for plain PCM: the sequencer's Prepare step inserts a resampler for any rate
+    /// mismatch, which is seamless but not bit-perfect (the user's explicit choice). DSD breaks
+    /// that escape hatch in both directions — packed DoP cannot survive a resampler, and PCM
+    /// cannot ride a DoP session — so a DoP/PCM boundary always restarts.</summary>
     public static bool ExclusiveSessionRestartNeeded(
-        ExclusiveRateMismatchPolicy policy, WaveFormat? negotiated, WaveFormat sessionFormat) =>
-        policy == ExclusiveRateMismatchPolicy.ResampleToCurrent
-            ? false
-            : negotiated == null || FormatKey(negotiated) != FormatKey(sessionFormat);
+        ExclusiveRateMismatchPolicy policy, WaveFormat? negotiated, WaveFormat sessionFormat,
+        bool sessionIsDop = false, bool nextIsDop = false) =>
+        sessionIsDop || nextIsDop
+            ? true
+            : policy == ExclusiveRateMismatchPolicy.ResampleToCurrent
+                ? false
+                : negotiated == null || FormatKey(negotiated) != FormatKey(sessionFormat);
 
     /// <summary>Whether an existing exclusive session can hot-swap to the given track. Pure;
     /// the mirror of <see cref="ExclusiveSessionRestartNeeded"/> for the play-command path.</summary>
     public static bool ExclusiveSessionAcceptsTrack(
-        ExclusiveRateMismatchPolicy policy, WaveFormat? negotiated, WaveFormat sessionFormat) =>
-        policy == ExclusiveRateMismatchPolicy.ResampleToCurrent
-            ? true
-            : negotiated != null && FormatKey(negotiated) == FormatKey(sessionFormat);
+        ExclusiveRateMismatchPolicy policy, WaveFormat? negotiated, WaveFormat sessionFormat,
+        bool sessionIsDop = false, bool nextIsDop = false) =>
+        !sessionIsDop && !nextIsDop && ExclusiveSessionRestartNeeded(
+            policy, negotiated, sessionFormat) == false;
 
     /// <summary>
     /// Opens a session for <paramref name="first"/> and publishes it. Caller must hold
@@ -783,7 +790,7 @@ public sealed partial class PlaybackController : IPlaybackController
         var session = _sessionFactory.Start(first);
         PublishSessionLocked(new SessionSnapshot(
             session.Sequencer, session.Output, session.Device,
-            session.Exclusive, session.Driver, session.DeviceKey));
+            session.Exclusive, session.Driver, session.DeviceKey, session.IsDop));
 
         CurrentSessionInfo = session.Info;
         SessionStarted?.Invoke(session.Info);
@@ -1029,7 +1036,8 @@ public sealed partial class PlaybackController : IPlaybackController
                             session.Device, reader.SourceFormat, _settings.Output.ExclusiveBitDepth);
                     }
                     restart = ExclusiveSessionRestartNeeded(
-                        _settings.Output.ExclusiveRateMismatch, negotiated, session.Sequencer.WaveFormat);
+                        _settings.Output.ExclusiveRateMismatch, negotiated, session.Sequencer.WaveFormat,
+                        session.IsDop, reader is DopTrackReader);
                 }
                 return new PendingTrack
                 {

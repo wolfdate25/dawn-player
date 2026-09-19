@@ -18,6 +18,10 @@ public enum ExclusiveRateMismatchPolicy
     ResampleToCurrent = 1,
 }
 public enum AudioDriverType { Wasapi = 0, DirectSound = 1, WaveOut = 2 }
+
+/// <summary>How DSD (DSF/DFF) tracks are played. DoPPriority packs the stream into DoP frames
+/// for DSD-capable DACs over WASAPI exclusive; anything else decimates to PCM as before.</summary>
+public enum DsdPlaybackMode { PcmAlways = 0, DoPPriority = 1 }
 public enum ThemeMode { System, Light, Dark, OledBlack }
 public enum AccentColorPreset { EoleAmber, ElectricGold, ForestEmerald, CyanSapphire, CrimsonRed, ModernSlate, NordFrost, TokyoNight, CatppuccinMocha, RosePine, SunsetViolet, Custom }
 public enum BackdropMode { Mica, MicaAlt, Acrylic, Solid, AlbumArtBlur }
@@ -56,6 +60,9 @@ public sealed class OutputSettings
     public ExclusiveBitDepth ExclusiveBitDepth { get; set; } = ExclusiveBitDepth.Source;
     /// <summary>Rate-mismatch handling between tracks in exclusive mode (see the enum).</summary>
     public ExclusiveRateMismatchPolicy ExclusiveRateMismatch { get; set; } = ExclusiveRateMismatchPolicy.RestartSession;
+    /// <summary>DSD track playback: boxcar PCM conversion (default) or DoP packing when the
+    /// device's exclusive probe accepts it.</summary>
+    public DsdPlaybackMode DsdPlaybackMode { get; set; } = DsdPlaybackMode.PcmAlways;
     /// <summary>Requested buffer length in ms (higher = more resilient, higher latency).</summary>
     public int LatencyMs { get; set; } = 120;
     /// <summary>Allow digital volume/ReplayGain while in exclusive mode (breaks bit-perfect).</summary>

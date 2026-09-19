@@ -147,6 +147,8 @@ Root: HKA; Subkey: "Software\Classes\.oga\OpenWithProgids"; ValueType: string; V
 Root: HKA; Subkey: "Software\Classes\.alac\OpenWithProgids"; ValueType: string; ValueName: "DawnPlayer.AudioFile"; ValueData: ""; Flags: uninsdeletevalue; Tasks: fileassoc
 Root: HKA; Subkey: "Software\Classes\.opus\OpenWithProgids"; ValueType: string; ValueName: "DawnPlayer.AudioFile"; ValueData: ""; Flags: uninsdeletevalue; Tasks: fileassoc
 Root: HKA; Subkey: "Software\Classes\.m4b\OpenWithProgids"; ValueType: string; ValueName: "DawnPlayer.AudioFile"; ValueData: ""; Flags: uninsdeletevalue; Tasks: fileassoc
+Root: HKA; Subkey: "Software\Classes\.dsf\OpenWithProgids"; ValueType: string; ValueName: "DawnPlayer.AudioFile"; ValueData: ""; Flags: uninsdeletevalue; Tasks: fileassoc
+Root: HKA; Subkey: "Software\Classes\.dff\OpenWithProgids"; ValueType: string; ValueName: "DawnPlayer.AudioFile"; ValueData: ""; Flags: uninsdeletevalue; Tasks: fileassoc
 
 ; 4. Playlist File Extensions (.m3u, .m3u8, .cue, .lrc)
 Root: HKA; Subkey: "Software\Classes\.m3u\OpenWithProgids"; ValueType: string; ValueName: "DawnPlayer.PlaylistFile"; ValueData: ""; Flags: uninsdeletevalue; Tasks: playlistassoc

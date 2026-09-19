@@ -78,6 +78,9 @@ public static class AppServices
             Settings = SettingsStore.Load();
             AppStrings.ApplyLanguage(Bcp47(Settings.Ui.Language));
         }
+        // Core reads the DSD playback policy through a process-wide hook (it has no settings
+        // service); keep both sides in sync here and wherever the setting changes.
+        Core.Audio.DsdSupport.PlaybackMode = Settings.Output.DsdPlaybackMode;
         // Core cannot reach the app's resource pipeline; hand it localized formatters instead.
         AlbumGroup.SongCountFormatter =
             count => AppStrings.Format("Library_TrackCountFormat", "{0}곡", count);

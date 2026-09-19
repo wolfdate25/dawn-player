@@ -16,7 +16,7 @@ public static class PlaylistDialogs
 {
     private static readonly string[] AudioExtensions =
     {
-        ".mp3", ".aac", ".m4a", ".m4b", ".mp4", ".flac", ".ogg", ".oga", ".opus", ".wav", ".alac", ".dsf"
+        ".mp3", ".aac", ".m4a", ".m4b", ".mp4", ".flac", ".ogg", ".oga", ".opus", ".wav", ".alac", ".dsf", ".dff"
     };
 
     /// <summary>

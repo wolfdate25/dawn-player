@@ -157,6 +157,29 @@ public sealed class AudioSettingsViewModel : ViewModelBase
         }
     }
 
+    public int DsdPlaybackModeIndex
+    {
+        get => _settings.Output.DsdPlaybackMode switch
+        {
+            DsdPlaybackMode.DoPPriority => 1,
+            _ => 0
+        };
+        set
+        {
+            var mode = value switch
+            {
+                1 => DsdPlaybackMode.DoPPriority,
+                _ => DsdPlaybackMode.PcmAlways
+            };
+
+            if (_settings.Output.DsdPlaybackMode != mode)
+            {
+                _audioSettingsService.SetDsdPlaybackMode(mode);
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public int LatencyMs
     {
         get => _settings.Output.LatencyMs;
