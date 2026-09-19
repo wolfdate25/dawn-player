@@ -9,6 +9,18 @@
 
 ## 0. 진행 상황 (완료 기록)
 
+> **M4–M6 실행 기록 (2026-09-19)**
+> - **M4 완료** `cfe4cd8`: DoP 패킹(마커 무결성 비트Exact 테스트), WASAPI 배타 프로브 게이팅 + PCM 폴백/1회 알림,
+>   raw-passthrough(볼륨·DSP 우회), DFF 파서(DST 명확 거부), DSD 재생 모드 UI(3개 국어), M3 정책 공존 셀 12종 테스트.
+>   ⚠️ 미수행: 실기기 청음 체크리스트(이 환경에서 오디오 하드웨어 접근 불가 — 배포 전 사용자 확인 권장).
+> - **M5 1차 완료** `8a6dac1`: LastfmSettingsViewModel 추출 + 인증 토큰 서비스 스코프화(내비게이션 이탈 시
+>   승인 유실 버그 수정, VM 테스트 6종), SplitterChrome 통합(재생목록 페이지 드래그 가드 결함 수정),
+>   NowPlayingBar 위치 폴링을 재생 중으로 한정(배터리). **잔여(후속 마일스톤으로 이월)**: DI 컨테이너 전면 전환,
+>   Library/Playlist 전체 VM화(LOC −50% 기준), 큐 패널 델타 갱신, Core 헤드리스 경계 확립 — 각각 규모가 커서
+>   개별 계획서로 착수 필요.
+> - **M6 부분 완료** `79ef494`: 가사 편집기/검색 창 테마 연결 + 액센트 전파(보조 창 레지스트리),
+>   AutomationProperties 25종 3개 국어화, 하이컨트라스트 가드. **잔여**: M6-4(Core 한국어 문자열 리소스화), M6-5(검사 추가).
+
 | 마일스톤 | 커밋 | 내용 | 검증 |
 |---|---|---|---|
 | M0 | `be544ee` | Last.fm 설정 통합 + Window 루트 x:Uid 크래시 수정(+게이트 테스트) | 빌드 0경고, 필터 테스트 56 |
@@ -89,7 +101,7 @@ HTTP/WS 원격 제어, PLS/XSPF, 풀스크린 Now Playing(`WaveformPeaks` 보존
 | ~~M0–M3~~ | ~~완료~~ | ~~위 표 참조~~ | — |
 | M4 | DSD 고도화 (DoP + DFF) | ✅ 완료 `cfe4cd8` — `DopTrackReader`(WASAPI 배타 DoP), `DffRawReader`, PCM 폴백 체계, 정책 공존 | M–L |
 | M5 | App 구조 개선 | ✅ 1차 완료 `8a6dac1` — Lastfm VM+토큰 서비스화, SplitterChrome 통합, 타이머 게이팅. 잔여: DI 전면 전환, Library/Playlist 전체 VM화, 큐 델타 갱신 (아래 진행 기록 참조) | L |
-| M6 | 접근성·테마·i18n 사각지대 | ✅ 완료 — 가사 창 테마 연결+액센트 전파, AutomationProperties i18n(3개 국어), 하이컨트라스트 가드 | S–M |
+| M6 | 접근성·테마·i18n 사각지대 | ✅ 부분 완료 `79ef494` — 가사 창 테마 연결+액센트 전파, AutomationProperties i18n(3개 국어), 하이컨트라스트 가드. 잔여: Core 하드코딩 한국어의 리소스 키화(M6-4), XAML 자동화 속성 키 누락 검사 추가(M6-5) | S–M |
 | M7+ | 파워유저 기능 (선택) | 파일 정리, undo/redo, AcoustID, 원격 API 등 — 미착수 | 개별 L |
 
 순서 논리: M4는 M2의 `ITrackReaderProvider`/`IOutputDriver` 위에 얹는 순수 기능 마일스톤이고,
