@@ -139,6 +139,13 @@ public sealed partial class PlaybackController : IPlaybackController
     public bool IsExclusiveSession => Volatile.Read(ref _session)?.Exclusive ?? false;
     public SessionInfo? CurrentSessionInfo { get; private set; }
 
+    /// <summary>The analysis tap at the end of the active session's DSP chain, or null when no
+    /// session is open (U4 fullscreen visualizer reads it; the tap is always in the default chain).</summary>
+    public Dsp.SpectrumTapDspEffect? SpectrumTap => Sequencer?.SpectrumTap;
+
+    /// <summary>Output sample rate of the active session, or null when stopped (U4 visualizer).</summary>
+    public int? CurrentSampleRate => Sequencer?.WaveFormat.SampleRate;
+
     public PlaybackController(AppSettings settings, IPlaylistManager playlists, IPlayOrderStrategy? playOrder = null)
     {
         _settings = settings;
@@ -578,6 +585,14 @@ public sealed partial class PlaybackController : IPlaybackController
                 // keeps playing. Stop would throw away working audio, silence would strand the
                 // user — say what happened and continue on the current output.
                 Log.Warn($"[playback] restart aborted, keeping the current session: {ex.Message}");
+                Warning?.Invoke(CoreMessages.Encode(CoreMessageKey.RestartFailedContinue, ex.Message));
+            }
+            catch (Exception ex)
+            {
+                // A reopen failure AFTER the open (output device contention etc.) must not
+                // vanish into an unobserved task: the old session is still alive, so the same
+                // keep-playing contract applies.
+                Log.Warn($"[playback] restart failed unexpectedly, keeping the current session: {ex}");
                 Warning?.Invoke(CoreMessages.Encode(CoreMessageKey.RestartFailedContinue, ex.Message));
             }
         });

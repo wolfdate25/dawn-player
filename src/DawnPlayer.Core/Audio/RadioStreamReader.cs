@@ -287,8 +287,9 @@ public sealed class RadioStreamReader : ITrackReader
 
         public WaveFormat WaveFormat => _format;
 
-        public int Read(float[] buffer, int offset, int count)
+        public int Read(Span<float> buffer)
         {
+            int count = buffer.Length;
             int bytesNeeded = count * 2; // 16-bit mono-equivalent
             if (_byteScratch.Length < bytesNeeded) _byteScratch = new byte[bytesNeeded];
 
@@ -301,7 +302,7 @@ public sealed class RadioStreamReader : ITrackReader
                 {
                     int byteIdx = (f * _format.Channels + c) * 2;
                     short sample = (short)(_byteScratch[byteIdx] | (_byteScratch[byteIdx + 1] << 8));
-                    buffer[offset + f * _format.Channels + c] = sample / 32768f;
+                    buffer[f * _format.Channels + c] = sample / 32768f;
                 }
             }
 
@@ -309,7 +310,7 @@ public sealed class RadioStreamReader : ITrackReader
             // advance the playlist away from a live station on a momentary network stall.
             for (int i = frames * _format.Channels; i < count; i++)
             {
-                buffer[offset + i] = 0f;
+                buffer[i] = 0f;
             }
             return count;
         }

@@ -395,22 +395,23 @@ public sealed class SequencerStream : IWaveProvider
         SyncLimiterEnabled();
     }
 
-    public int Read(byte[] buffer, int offset, int count)
+    public int Read(Span<byte> buffer)
     {
         try
         {
             if (IsPaused)
             {
-                Array.Clear(buffer, offset, count);
-                return count;
+                buffer.Clear();
+                return buffer.Length;
             }
 
+            int count = buffer.Length;
             int total = 0;
             lock (_gate)
             {
                 if (IsPaused)
                 {
-                    Array.Clear(buffer, offset, count);
+                    buffer.Clear();
                     return count;
                 }
 
@@ -426,7 +427,7 @@ public sealed class SequencerStream : IWaveProvider
                     int floatsWanted = framesWanted * _outFormat.Channels;
                     if (_floatBuf.Length < floatsWanted) Array.Resize(ref _floatBuf, floatsWanted);
 
-                    int floatsRead = _sourceProvider.Read(_floatBuf, 0, floatsWanted);
+                    int floatsRead = _sourceProvider.Read(_floatBuf.AsSpan(0, floatsWanted));
                     if (floatsRead <= 0)
                     {
                         var endedItem = _current.Track.Item;
@@ -474,7 +475,7 @@ public sealed class SequencerStream : IWaveProvider
                     if (!_rawPassthrough) _dspChain.Process(_floatBuf, 0, floatsRead);
 
                     int frames = floatsRead / _outFormat.Channels;
-                    PcmConvert.ToBytes(_floatBuf, frames * _outFormat.Channels, buffer, offset + total, _outFormat);
+                    PcmConvert.ToBytes(_floatBuf.AsSpan(0, frames * _outFormat.Channels), buffer.Slice(total), _outFormat);
                     total += frames * blockAlign;
                     served += (long)frames * blockAlign;
                     // Published so the lock-free position getters see the progress of this pass.

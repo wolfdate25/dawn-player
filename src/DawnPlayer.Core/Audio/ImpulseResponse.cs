@@ -19,7 +19,7 @@ public static class ImpulseResponse
             var mono = new List<float>((int)Math.Min(reader.TotalTime.TotalSeconds * fmt.SampleRate, 44100 * 60));
             var buffer = new float[fmt.SampleRate * channels];
             int read;
-            while ((read = reader.Samples.Read(buffer, 0, buffer.Length)) > 0)
+            while ((read = reader.Samples.Read(buffer)) > 0)
             {
                 int frames = read / channels;
                 for (int f = 0; f < frames; f++)

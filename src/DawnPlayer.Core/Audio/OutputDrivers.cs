@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
 using DawnPlayer.Core.Models;
 using DawnPlayer.Core.Persistence;
 using DawnPlayer.Core.Util;
@@ -98,13 +99,19 @@ public sealed class WasapiOutputDriver : IOutputDriver
         var seq = request.CreateSequencer(first, target, applyVolume, eqProfile);
         seq.SwitchTo(first); // initial load
 
-        var output = new WasapiOut(device,
-            exclusive ? AudioClientShareMode.Exclusive : AudioClientShareMode.Shared,
-            useEventSync: true, latency);
+        var output = CreatePlayer(device, exclusive, latency);
         request.SubscribeOutput(output);
         try
         {
             output.Init(seq);
+            // WasapiPlayer adapts bit depth/channels in exclusive mode when the device rejects the
+            // negotiated format (a probe/init race). The negotiated format must reach the DAC
+            // untouched — silent conversion would break bit-perfect output and corrupt DoP marker
+            // bytes — so an adapted session counts as a failed exclusive open and takes the shared
+            // fallback below.
+            if (exclusive && !output.OutputWaveFormat.Equals(seq.WaveFormat))
+                throw new NotSupportedException(
+                    $"exclusive session opened at {output.OutputWaveFormat} instead of the negotiated {seq.WaveFormat}");
             output.Play();
         }
         catch (Exception exclusiveFailure) when (exclusive)
@@ -123,7 +130,7 @@ public sealed class WasapiOutputDriver : IOutputDriver
             seq = request.CreateSequencer(first, target, applyVolume, eqProfile);
             seq.SwitchTo(first);
 
-            output = new WasapiOut(device, AudioClientShareMode.Shared, true, latency);
+            output = CreatePlayer(device, exclusive: false, latency);
             request.SubscribeOutput(output);
             try
             {
@@ -153,15 +160,86 @@ public sealed class WasapiOutputDriver : IOutputDriver
         return new OutputSession(seq, output, device, exclusive, AudioDriverType.Wasapi, device.ID, info,
             IsDop: DsdSupport.IsRawDsdReader(first.Reader));
     }
+
+    /// <summary>
+    /// Builds the NAudio 3 <see cref="WasapiPlayer"/> for one session (WasapiOut's replacement,
+    /// which implements the same <see cref="IWavePlayer"/> seam): event-driven callbacks at the
+    /// user's latency, exact-format exclusive when requested.
+    /// </summary>
+    private static WasapiPlayer CreatePlayer(MMDevice device, bool exclusive, int latency)
+    {
+        var builder = new WasapiPlayerBuilder()
+            .WithDevice(device)
+            .WithEventSync()
+            .WithLatency(latency);
+        return (exclusive ? builder.WithExclusiveMode() : builder.WithSharedMode()).Build();
+    }
 }
 
-/// <summary>DirectSound legacy path: float format at the source rate, volume applied in DSP.</summary>
+/// <summary>DirectSound legacy path: 16-bit PCM at the source rate (NAudio 3.1 rejects float
+/// secondary buffers); volume is applied in the float DSP chain before conversion.</summary>
 public sealed class DirectSoundOutputDriver : IOutputDriver
 {
     public AudioDriverType DriverType => AudioDriverType.DirectSound;
 
+    // 0 unknown, 1 usable, -1 broken. NAudio 3.1's DirectSoundOut (GeneratedComInterface
+    // rewrite) dies at startup with DSERR_UNSUPPORTED/E_NOTIMPL on machines where its new COM
+    // bridging fails — deterministically per process, and Init/Play throw nothing (the death is
+    // async on the playback thread). A one-time play probe detects that reliably and cheaply.
+    private static int _probeState;
+
+    /// <summary>One-time per process: plays ~0.5s of tone through DirectSoundOut and reports
+    /// whether the playback thread survived. First call costs up to ~500ms; the result is cached.</summary>
+    internal static bool IsDirectSoundPlaybackUsable()
+    {
+        int state = Volatile.Read(ref _probeState);
+        if (state != 0) return state == 1;
+
+        bool usable;
+        try
+        {
+            var fmt = new WaveFormat(44100, 16, 2);
+            var probe = new BufferedWaveProvider(fmt);
+            byte[] pcm = new byte[44100 * 4]; // ~0.5s stereo 16-bit tone
+            for (int i = 0; i < 44100; i++)
+            {
+                short v = (short)(Math.Sin(i * 0.05) * 6000);
+                pcm[i * 4] = (byte)v;
+                pcm[i * 4 + 1] = (byte)(v >> 8);
+                pcm[i * 4 + 2] = (byte)v;
+                pcm[i * 4 + 3] = (byte)(v >> 8);
+            }
+            probe.AddSamples(pcm, 0, pcm.Length);
+
+            using var ds = new DirectSoundOut(40);
+            ds.Init(probe);
+            ds.Play();
+            usable = true;
+            for (int i = 0; i < 25 && usable; i++)
+            {
+                Thread.Sleep(20);
+                // NAudio 3 PlaybackState is a value type without operator!= overloads.
+                if (!ds.PlaybackState.Equals(PlaybackState.Playing)) usable = false;
+            }
+            ds.Stop();
+        }
+        catch
+        {
+            usable = false;
+        }
+
+        Volatile.Write(ref _probeState, usable ? 1 : -1);
+        return usable;
+    }
+
     public OutputSession Start(OutputSessionRequest request)
     {
+        if (!IsDirectSoundPlaybackUsable())
+        {
+            request.Warn(CoreMessages.Encode(CoreMessageKey.DirectSoundUnavailableWaveOutFallback));
+            return new WaveOutOutputDriver().Start(request);
+        }
+
         var first = request.First;
         var latency = request.Latency;
         var _settings = request.Settings;
@@ -175,7 +253,11 @@ public sealed class DirectSoundOutputDriver : IOutputDriver
 
         var rate = first.Reader.SourceFormat.SampleRate > 0 ? first.Reader.SourceFormat.SampleRate : 44100;
         var channels = first.Reader.SourceFormat.Channels > 0 ? first.Reader.SourceFormat.Channels : 2;
-        var target = WaveFormat.CreateIeeeFloatWaveFormat(rate, channels);
+        // 16-bit PCM, not float: NAudio 3.1's DirectSoundOut (GeneratedComInterface rewrite)
+        // fails secondary-buffer creation with 32-bit IEEE float (E_NOTIMPL), and float was
+        // never an officially supported DirectSound buffer format anyway. Volume/DSP still run
+        // in the float chain before the sequencer converts to PCM at this target.
+        var target = new WaveFormat(rate, 16, channels);
         var eqProfile = EqualizerProfileResolver.Resolve(_settings.Equalizer, AudioDriverType.DirectSound, dsGuid.ToString());
 
         var seq = request.CreateSequencer(first, target, true, eqProfile);
@@ -188,7 +270,7 @@ public sealed class DirectSoundOutputDriver : IOutputDriver
 
         var devInfo = WasapiDeviceService.EnumerateDirectSoundDevices().FirstOrDefault(d => d.Id == dsGuid.ToString());
         string devName = devInfo?.Name ?? "DirectSound (Windows Audio)";
-        var info = new SessionInfo(devName, false, $"DirectSound • {rate / 1000.0:0.#}kHz / 32-bit float", latency, AudioDriverType.DirectSound);
+        var info = new SessionInfo(devName, false, $"DirectSound • {rate / 1000.0:0.#}kHz / 16-bit PCM", latency, AudioDriverType.DirectSound);
 
         return new OutputSession(seq, dsOutput, Device: null, Exclusive: false,
             AudioDriverType.DirectSound, dsGuid.ToString(), info);
@@ -221,7 +303,10 @@ public sealed class WaveOutOutputDriver : IOutputDriver
         var seq = request.CreateSequencer(first, target, true, eqProfile);
         seq.SwitchTo(first);
 
-        var waveOut = new WaveOutEvent { DeviceNumber = devNum, DesiredLatency = latency };
+        // NAudio 3 merged WaveOutEvent into WaveOut (event-driven). DesiredLatency sized the total
+        // across all buffers; BufferMilliseconds sizes each one, so three ⅓ buffers keep the same
+        // scheduling for the user's latency setting.
+        var waveOut = new WaveOut { DeviceNumber = devNum, BufferMilliseconds = latency / 3, NumberOfBuffers = 3 };
         request.SubscribeOutput(waveOut);
         waveOut.Init(seq);
         waveOut.Play();

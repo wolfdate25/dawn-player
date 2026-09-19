@@ -105,7 +105,7 @@ public static class WaveformPeaks
         var buffer = new float[fmt.SampleRate * fmt.Channels]; // ~1 s slices
         long framesSeen = 0;
         int read;
-        while (framesSeen < totalFrames && (read = reader.Samples.Read(buffer, 0, buffer.Length)) > 0)
+        while (framesSeen < totalFrames && (read = reader.Samples.Read(buffer)) > 0)
         {
             int frames = read / fmt.Channels;
             for (int f = 0; f < frames && framesSeen < totalFrames; f++, framesSeen++)

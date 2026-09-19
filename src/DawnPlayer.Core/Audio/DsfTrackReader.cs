@@ -212,10 +212,10 @@ public sealed class DsfTrackReader : ITrackReader
 
         public WaveFormat WaveFormat => _owner.SourceFormat;
 
-        public int Read(float[] buffer, int offset, int count)
+        public int Read(Span<float> buffer)
         {
             int channels = _owner.SourceFormat.Channels;
-            int framesWanted = count / channels;
+            int framesWanted = buffer.Length / channels;
             if (_buffers.Length != channels || _buffers[0].Length < framesWanted)
             {
                 int allocFrames = Math.Max(framesWanted, 4096);
@@ -229,7 +229,7 @@ public sealed class DsfTrackReader : ITrackReader
             {
                 for (int c = 0; c < channels; c++)
                 {
-                    buffer[offset + f * channels + c] = _buffers[c][f];
+                    buffer[f * channels + c] = _buffers[c][f];
                 }
             }
             return frames * channels;

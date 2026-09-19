@@ -69,7 +69,7 @@ public static class AudioTranscoder
             var floatBuf = new float[fmt.SampleRate * fmt.Channels];
             long framesWritten = 0;
             int read;
-            while ((read = reader.Samples.Read(floatBuf, 0, floatBuf.Length)) > 0)
+            while ((read = reader.Samples.Read(floatBuf)) > 0)
             {
                 ct.ThrowIfCancellationRequested();
                 int frames = read / fmt.Channels;

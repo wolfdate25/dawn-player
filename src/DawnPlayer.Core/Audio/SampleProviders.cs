@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using NAudio.Wave;
 
 namespace DawnPlayer.Core.Audio;
@@ -21,37 +22,37 @@ public sealed class ChannelConverterSampleProvider : ISampleProvider
         WaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(source.WaveFormat.SampleRate, outChannels);
     }
 
-    public int Read(float[] buffer, int offset, int count)
-    {
-        int outFrames = count / _outCh;
-        int needIn = outFrames * _inCh;
-        if (_inBuf.Length < needIn) Array.Resize(ref _inBuf, needIn);
-
-        int inRead = _source.Read(_inBuf, 0, needIn);
-        if (inRead == 0) return 0;
-
-        int frames = inRead / _inCh;
-        int written = 0;
-        for (int f = 0; f < frames; f++)
+        public int Read(Span<float> buffer)
         {
-            if (_inCh == 1 && _outCh == 2)
+            int outFrames = buffer.Length / _outCh;
+            int needIn = outFrames * _inCh;
+            if (_inBuf.Length < needIn) Array.Resize(ref _inBuf, needIn);
+
+            int inRead = _source.Read(_inBuf.AsSpan(0, needIn));
+            if (inRead == 0) return 0;
+
+            int frames = inRead / _inCh;
+            int written = 0;
+            for (int f = 0; f < frames; f++)
             {
-                var s = _inBuf[f];
-                buffer[offset + written++] = s;
-                buffer[offset + written++] = s;
+                if (_inCh == 1 && _outCh == 2)
+                {
+                    var s = _inBuf[f];
+                    buffer[written++] = s;
+                    buffer[written++] = s;
+                }
+                else if (_inCh == 2 && _outCh == 1)
+                {
+                    buffer[written++] = (_inBuf[f * 2] + _inBuf[f * 2 + 1]) * 0.5f;
+                }
+                else
+                {
+                    for (int c = 0; c < _outCh; c++)
+                        buffer[written++] = _inBuf[f * _inCh + Math.Min(c, _inCh - 1)];
+                }
             }
-            else if (_inCh == 2 && _outCh == 1)
-            {
-                buffer[offset + written++] = (_inBuf[f * 2] + _inBuf[f * 2 + 1]) * 0.5f;
-            }
-            else
-            {
-                for (int c = 0; c < _outCh; c++)
-                    buffer[offset + written++] = _inBuf[f * _inCh + Math.Min(c, _inCh - 1)];
-            }
+            return written;
         }
-        return written;
-    }
 }
 
 /// <summary>Float → PCM byte conversion for 16/24/32-bit integer and 32-bit float targets.
@@ -63,6 +64,9 @@ public static class PcmConvert
     private static readonly Guid SubFormatIeeeFloat = new("00000003-0000-0010-8000-00aa00389b71");
 
     public static void ToBytes(float[] src, int floatCount, byte[] dest, int destOffset, WaveFormat format)
+        => ToBytes(src.AsSpan(0, floatCount), dest.AsSpan(destOffset), format);
+
+    public static void ToBytes(ReadOnlySpan<float> src, Span<byte> dest, WaveFormat format)
     {
         bool isFloat = format.Encoding == WaveFormatEncoding.IeeeFloat;
         bool isPcm = format.Encoding == WaveFormatEncoding.Pcm;
@@ -75,7 +79,7 @@ public static class PcmConvert
 
         if (isFloat && format.BitsPerSample == 32)
         {
-            Buffer.BlockCopy(src, 0, dest, destOffset, floatCount * 4);
+            MemoryMarshal.AsBytes(src).CopyTo(dest);
             return;
         }
 
@@ -85,8 +89,8 @@ public static class PcmConvert
             {
                 case 16:
                     {
-                        int d = destOffset;
-                        for (int i = 0; i < floatCount; i++)
+                        int d = 0;
+                        for (int i = 0; i < src.Length; i++)
                         {
                             var v = (int)Math.Clamp(src[i] * 32767f, -32768f, 32767f);
                             dest[d++] = (byte)v;
@@ -99,8 +103,8 @@ public static class PcmConvert
                         // Round to nearest, not truncate: DoP rides this path and its container
                         // bytes must survive the float hop bit-exactly (5/8388607f * 8388607f
                         // evaluates to 4.9999998 — a truncating cast corrupts the marker to 4).
-                        int d = destOffset;
-                        for (int i = 0; i < floatCount; i++)
+                        int d = 0;
+                        for (int i = 0; i < src.Length; i++)
                         {
                             var v = (int)MathF.Round(Math.Clamp(src[i] * 8388607f, -8388608f, 8388607f));
                             dest[d++] = (byte)v;
@@ -118,8 +122,8 @@ public static class PcmConvert
                         // largest float that still fits in an int instead.
                         const float max32 = 2147483520f; // largest float below int.MaxValue
                         const float min32 = -2147483648f; // int.MinValue, exactly representable
-                        int d = destOffset;
-                        for (int i = 0; i < floatCount; i++)
+                        int d = 0;
+                        for (int i = 0; i < src.Length; i++)
                         {
                             var v = (int)Math.Clamp(src[i] * 2147483647f, min32, max32);
                             dest[d++] = (byte)v;

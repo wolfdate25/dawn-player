@@ -76,19 +76,19 @@ public sealed class CueTrackReader : ITrackReader
 
         public WaveFormat WaveFormat => _inner.Samples.WaveFormat;
 
-        public int Read(float[] buffer, int offset, int count)
+        public int Read(Span<float> buffer)
         {
             var remaining = _end - _inner.CurrentTime;
             if (remaining <= TimeSpan.Zero) return 0;
 
             var fmt = WaveFormat;
-            int framesWanted = count / fmt.Channels;
+            int framesWanted = buffer.Length / fmt.Channels;
             // +1 frame of slack covers block-aligned position rounding at the boundary.
             int framesAvail = (int)Math.Ceiling(remaining.TotalSeconds * fmt.SampleRate) + 1;
             int frames = Math.Min(framesWanted, framesAvail);
             if (frames <= 0) return 0;
 
-            return _inner.Samples.Read(buffer, offset, frames * fmt.Channels);
+            return _inner.Samples.Read(buffer.Slice(0, frames * fmt.Channels));
         }
     }
 }

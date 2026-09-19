@@ -130,10 +130,10 @@ public sealed class DopTrackReader : ITrackReader
 
     /// <summary>Decodes raw DSD into packed DoP floats. Interleaved per channel; the marker
     /// alternates per sample within each channel.</summary>
-    private int Read(float[] buffer, int offset, int count)
+    private int Read(Span<float> buffer)
     {
         int channels = SourceFormat.Channels;
-        int framesWanted = count / channels;
+        int framesWanted = buffer.Length / channels;
         if (framesWanted <= 0) return 0;
 
         int bytesWanted = framesWanted * DsdFramesPerSample / 8;
@@ -160,7 +160,7 @@ public sealed class DopTrackReader : ITrackReader
                 // The marker phase depends on the absolute sample index, so a seek lands back
                 // in phase instead of flipping the alternation for the rest of the track.
                 byte marker = ((baseSample + s) & 1) == 0 ? MarkerEven : MarkerOdd;
-                buffer[offset + s * channels + c] = ToContainerFloat(PackSample(b1, marker, b2));
+                buffer[s * channels + c] = ToContainerFloat(PackSample(b1, marker, b2));
             }
         }
 
@@ -174,7 +174,7 @@ public sealed class DopTrackReader : ITrackReader
         private readonly DopTrackReader _owner;
         public Provider(DopTrackReader owner) => _owner = owner;
         public WaveFormat WaveFormat => _owner.SourceFormat;
-        public int Read(float[] buffer, int offset, int count) => _owner.Read(buffer, offset, count);
+        public int Read(Span<float> buffer) => _owner.Read(buffer);
     }
 }
 
@@ -222,10 +222,10 @@ public sealed class DsdPcmTrackReader : ITrackReader
 
     public ISampleProvider Samples => new Provider(this);
 
-    private int Read(float[] buffer, int offset, int count)
+    private int Read(Span<float> buffer)
     {
         int channels = SourceFormat.Channels;
-        int framesWanted = count / channels;
+        int framesWanted = buffer.Length / channels;
         if (framesWanted <= 0) return 0;
 
         int bytesPerChannel = (framesWanted * _decimation + 7) / 8;
@@ -257,7 +257,7 @@ public sealed class DsdPcmTrackReader : ITrackReader
                 {
                     ones += System.Numerics.BitOperations.PopCount(bytes[s * bytesPerSample + b]);
                 }
-                buffer[offset + s * channels + c] = (float)((ones / (double)_decimation) * 2.0 - 1.0);
+                buffer[s * channels + c] = (float)((ones / (double)_decimation) * 2.0 - 1.0);
             }
         }
 
@@ -270,7 +270,7 @@ public sealed class DsdPcmTrackReader : ITrackReader
         private readonly DsdPcmTrackReader _owner;
         public Provider(DsdPcmTrackReader owner) => _owner = owner;
         public WaveFormat WaveFormat => _owner.SourceFormat;
-        public int Read(float[] buffer, int offset, int count) => _owner.Read(buffer, offset, count);
+        public int Read(Span<float> buffer) => _owner.Read(buffer);
     }
 }
 
