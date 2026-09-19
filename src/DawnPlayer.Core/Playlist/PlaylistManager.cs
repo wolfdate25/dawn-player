@@ -351,7 +351,18 @@ public sealed class PlaylistManager : IPlaylistManager
     /// thread-affine, while the async add/import paths complete on a thread-pool thread. Leave
     /// null (the default) for headless use and tests, where writes run inline on the caller.
     /// </summary>
-    public Action<Action>? UiInvoke { get; set; }
+    /// <summary>The UI-thread seam, typed as <see cref="IUiDispatcher"/>. Null (default) runs
+    /// writes inline — headless/tests. The App sets a <see cref="DelegateUiDispatcher"/> over
+    /// its RunOnUi.</summary>
+    public IUiDispatcher? UiDispatcher { get; set; }
+
+    /// <summary>Compatibility shim over <see cref="UiDispatcher"/> for existing Action-based
+    /// wiring; new code should set <see cref="UiDispatcher"/>.</summary>
+    public Action<Action>? UiInvoke
+    {
+        get => UiDispatcher is DelegateUiDispatcher d ? d.Post : null;
+        set => UiDispatcher = value == null ? null : new DelegateUiDispatcher(value);
+    }
 
     /// <summary>True while <see cref="LoadAll"/> is populating playlists from disk.</summary>
     private volatile bool _loading;
@@ -365,15 +376,15 @@ public sealed class PlaylistManager : IPlaylistManager
     /// <summary>Runs <paramref name="action"/> on the UI thread and completes when it has run.</summary>
     private Task RunOnUiAsync(Action action)
     {
-        var invoke = UiInvoke;
-        if (invoke == null)
+        var dispatcher = UiDispatcher;
+        if (dispatcher == null)
         {
             action();
             return Task.CompletedTask;
         }
 
         var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        invoke(() =>
+        dispatcher.Post(() =>
         {
             try
             {

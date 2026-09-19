@@ -113,4 +113,36 @@ public sealed class SeekbarLyricsAndQueueInteractionTests
         Assert.Equal(1, queue.Count);
         Assert.Equal("Song 2", queue.Entries[0].Title);
     }
+
+    [Fact]
+    public void QueuePopupController_SyncFromQueue_UpdatesInPlace_AndTrimsSurplus()
+    {
+        // M5 incremental-UI gate: the sync must reuse row instances (patching changed fields)
+        // instead of Clear+Add, so a one-track queue change does not reset the popup list.
+        var controller = new QueuePopupController();
+        var queue = new PlaybackQueue();
+
+        var pl = new Playlist("pl");
+        var a = new PlaylistItem(new Track { Path = "a", Title = "Song 1" });
+        var b = new PlaylistItem(new Track { Path = "b", Title = "Song 2" });
+        pl.Items.Add(a);
+        pl.Items.Add(b);
+        queue.Enqueue(pl, new List<PlaylistItem> { a, b });
+        controller.SyncFromQueue(queue.Entries);
+        var first = controller.Entries[0];
+        var second = controller.Entries[1];
+
+        // Same queue again: the very same row instances must come back (no reset churn).
+        controller.SyncFromQueue(queue.Entries);
+        Assert.Same(first, controller.Entries[0]);
+        Assert.Same(second, controller.Entries[1]);
+
+        // Shrinking: surplus rows are trimmed, survivors are reused and renumbered.
+        queue.RemoveItems(new[] { b });
+        controller.SyncFromQueue(queue.Entries);
+        Assert.Single(controller.Entries);
+        Assert.Same(first, controller.Entries[0]);
+        Assert.Equal(1, controller.Entries[0].Index);
+        Assert.Equal("Song 1", controller.Entries[0].Title);
+    }
 }

@@ -8,6 +8,7 @@ using DawnPlayer.Core.Util;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using WinRT.Interop;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DawnPlayer.App.Services;
 
@@ -15,6 +16,15 @@ namespace DawnPlayer.App.Services;
 public static class AppServices
 {
     public static AppSettings Settings { get; private set; } = null!;
+    /// <summary>
+    /// The composition container. Service construction lives in the registrations inside
+    /// <see cref="Initialize"/>; these static accessors remain as the (documented) compatibility
+    /// seam — pages and controls read services through them, and the static event bus stays
+    /// until page view models replace direct subscriptions. The container is never disposed:
+    /// Shutdown disposes the disposable services explicitly, in a deliberate order.
+    /// </summary>
+    public static System.IServiceProvider Container { get; private set; } = null!;
+
     public static MusicLibrary Library { get; private set; } = null!;
     public static PlaylistManager Playlists { get; private set; } = null!;
     public static PlaybackController Playback { get; private set; } = null!;
@@ -85,46 +95,77 @@ public static class AppServices
         AlbumGroup.SongCountFormatter =
             count => AppStrings.Format("Library_TrackCountFormat", "{0}곡", count);
         Library = OpenLibraryResilient(out var dbRecoveryMessage);
-        Playlists = new PlaylistManager(Library)
+
+        // Service composition moved into a DI container: each registration owns its
+        // construction (and its own side effects); cross-service event wiring stays imperative
+        // below, where the full graph exists. Statics are assigned from resolved instances.
+        var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+        services.AddSingleton(sp => Settings);
+        services.AddSingleton(Library);
+        services.AddSingleton(sp =>
         {
-            // Playlists and Playlist.Items are bound straight to WinUI controls, so the async
-            // add/import paths must apply their results on the UI thread.
-            UiInvoke = RunOnUi
-        };
-        Playlists.LoadAll();
-        // Names are injected because Core cannot reach the app's localized resources; a language
-        // change recreates them on the next launch.
-        Playlists.EnsureSmartPlaylists(new[]
-        {
-            (SmartPlaylistKind.MostPlayed, AppStrings.Get("Smart_MostPlayed", "많이 재생")),
-            (SmartPlaylistKind.RecentlyAdded, AppStrings.Get("Smart_RecentlyAdded", "최근 추가")),
-            (SmartPlaylistKind.NotRecentlyPlayed, AppStrings.Get("Smart_NotRecentlyPlayed", "한동안 안 들은")),
+            var playlists = new PlaylistManager(Library)
+            {
+                // Playlists and Playlist.Items are bound straight to WinUI controls, so the async
+                // add/import paths must apply their results on the UI thread.
+                UiDispatcher = new DelegateUiDispatcher(RunOnUi)
+            };
+            playlists.LoadAll();
+            // Names are injected because Core cannot reach the app's localized resources; a language
+            // change recreates them on the next launch.
+            playlists.EnsureSmartPlaylists(new[]
+            {
+                (SmartPlaylistKind.MostPlayed, AppStrings.Get("Smart_MostPlayed", "많이 재생")),
+                (SmartPlaylistKind.RecentlyAdded, AppStrings.Get("Smart_RecentlyAdded", "최근 추가")),
+                (SmartPlaylistKind.NotRecentlyPlayed, AppStrings.Get("Smart_NotRecentlyPlayed", "한동안 안 들은")),
+            });
+            playlists.EnsureUserSmartPlaylists(
+                Settings.Playlist.UserSmartPlaylists.Select(d => (d.Name, d.Query)).ToList());
+            playlists.UserSmartPlaylistsChanged += () =>
+            {
+                Settings.Playlist.UserSmartPlaylists = playlists.GetUserSmartPlaylists()
+                    .Select(t => new SmartPlaylistDefinition(t.Name, t.Query))
+                    .ToList();
+                SettingsWriter.Schedule(Settings);
+            };
+            return playlists;
         });
-        Playlists.EnsureUserSmartPlaylists(
-            Settings.Playlist.UserSmartPlaylists.Select(d => (d.Name, d.Query)).ToList());
-        Playlists.UserSmartPlaylistsChanged += () =>
+        services.AddSingleton<PlaybackController>(sp =>
+            new PlaybackController(Settings, sp.GetRequiredService<PlaylistManager>()));
+        services.AddSingleton(sp => new SleepTimerService());
+        services.AddSingleton(sp => new ScrobbleService(() => Settings, msg => App.Log(msg)));
+        services.AddSingleton(sp =>
         {
-            Settings.Playlist.UserSmartPlaylists = Playlists.GetUserSmartPlaylists()
-                .Select(t => new SmartPlaylistDefinition(t.Name, t.Query))
-                .ToList();
-            SettingsWriter.Schedule(Settings);
-        };
-        Playback = new PlaybackController(Settings, Playlists);
-        SleepTimer = new SleepTimerService();
-        Scrobbler = new ScrobbleService(() => Settings, msg => App.Log(msg));
-        DspPlugins = new Core.Audio.Dsp.Plugins.DspPluginLoader(msg => App.Log($"[dsp-plugins] {msg}"));
-        DspPlugins.Reload();
+            var loader = new Core.Audio.Dsp.Plugins.DspPluginLoader(msg => App.Log($"[dsp-plugins] {msg}"));
+            loader.Reload();
+            return loader;
+        });
+        services.AddSingleton(sp => new AudioSettingsService(Settings, sp.GetRequiredService<PlaybackController>()));
+        services.AddSingleton(sp => new EqSettingsService(Settings, sp.GetRequiredService<PlaybackController>()));
+        services.AddSingleton(sp => new AppearanceSettingsService(Settings));
+        services.AddSingleton(sp => new ShortcutService(Settings));
+        services.AddSingleton(sp =>
+        {
+            var lyricsOnline = new LyricsOnlineService(() => Settings, App.Log);
+            lyricsOnline.Initialize();
+            return lyricsOnline;
+        });
+        Container = services.BuildServiceProvider();
+
+        Playlists = Container.GetRequiredService<PlaylistManager>();
+        Playback = Container.GetRequiredService<PlaybackController>();
+        SleepTimer = Container.GetRequiredService<SleepTimerService>();
+        Scrobbler = Container.GetRequiredService<ScrobbleService>();
+        DspPlugins = Container.GetRequiredService<Core.Audio.Dsp.Plugins.DspPluginLoader>();
         // The controller's chain effect reads this loader when a session builds its graph.
         Playback.AttachDspPlugins(DspPlugins);
         Playlists.ItemsRemoved += (_, items) => Playback.Queue.RemoveItems(items);
 
-        AudioSettings = new AudioSettingsService(Settings, Playback);
-        EqSettings = new EqSettingsService(Settings, Playback);
-        AppearanceSettings = new AppearanceSettingsService(Settings);
-        Shortcuts = new ShortcutService(Settings);
-        var lyricsOnline = new LyricsOnlineService(() => Settings, App.Log);
-        LyricsOnline = lyricsOnline;
-        lyricsOnline.Initialize();
+        AudioSettings = Container.GetRequiredService<AudioSettingsService>();
+        EqSettings = Container.GetRequiredService<EqSettingsService>();
+        AppearanceSettings = Container.GetRequiredService<AppearanceSettingsService>();
+        Shortcuts = Container.GetRequiredService<ShortcutService>();
+        var lyricsOnline = Container.GetRequiredService<LyricsOnlineService>();
         AppearanceSettings.AppearanceChanged += () => RunOnUi(() =>
         {
             App.MainWin?.ApplyTheme();

@@ -4,11 +4,24 @@ using DawnPlayer.Core.Playlists;
 
 namespace DawnPlayer.App.Controls;
 
-public sealed class QueueUiEntry
+public sealed class QueueUiEntry : System.ComponentModel.INotifyPropertyChanged
 {
-    public int Index { get; set; }
-    public string Title { get; set; } = "";
-    public string Subtitle { get; set; } = "";
+    private int _index;
+    private string _title = "";
+    private string _subtitle = "";
+
+    public int Index { get => _index; set => Set(ref _index, value); }
+    public string Title { get => _title; set => Set(ref _title, value); }
+    public string Subtitle { get => _subtitle; set => Set(ref _subtitle, value); }
+
+    public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+
+    private void Set<T>(ref T field, T value, [System.Runtime.CompilerServices.CallerMemberName] string? name = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value)) return;
+        field = value;
+        PropertyChanged?.Invoke(this, new(name));
+    }
 }
 
 public sealed class QueuePopupController
@@ -17,19 +30,31 @@ public sealed class QueuePopupController
 
     public void SyncFromQueue(IReadOnlyList<QueueEntry>? queueEntries)
     {
-        Entries.Clear();
-        if (queueEntries == null || queueEntries.Count == 0) return;
-
-        for (int i = 0; i < queueEntries.Count; i++)
+        // Delta update: reuse the existing rows (patching only what changed) instead of
+        // Clear+Add — a queue change used to reset the whole popup list, collapsing the
+        // open popup's scroll position and re-realizing every row for a one-track change.
+        int count = 0;
+        if (queueEntries != null)
         {
-            var entry = queueEntries[i];
-            if (entry == null) continue;
-            Entries.Add(new QueueUiEntry
+            for (int i = 0; i < queueEntries.Count; i++)
             {
-                Index = i + 1,
-                Title = entry.Title ?? string.Empty,
-                Subtitle = entry.Subtitle ?? string.Empty
-            });
+                var entry = queueEntries[i];
+                if (entry == null) continue;
+                var ui = count < Entries.Count ? Entries[count] : null;
+                if (ui == null)
+                {
+                    ui = new QueueUiEntry();
+                    Entries.Add(ui);
+                }
+                ui.Index = count + 1;
+                ui.Title = entry.Title ?? string.Empty;
+                ui.Subtitle = entry.Subtitle ?? string.Empty;
+                count++;
+            }
+        }
+        while (Entries.Count > count)
+        {
+            Entries.RemoveAt(Entries.Count - 1);
         }
     }
 
