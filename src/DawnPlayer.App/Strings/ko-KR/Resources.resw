@@ -839,4 +839,19 @@
   <data name="CoreMsg_FileOpenFailed" xml:space="preserve"><value>파일을 열 수 없습니다: {0}</value></data>
   <data name="CoreMsg_UnsupportedFormat" xml:space="preserve"><value>지원하지 않는 형식입니다: {0}</value></data>
   <data name="CoreMsg_RestartFailedContinue" xml:space="preserve"><value>새 출력 설정을 적용할 수 없어 기존 출력으로 계속 재생합니다.</value></data>
+  <data name="Settings_Appearance_Motion_Title.Text" xml:space="preserve"><value>UI 모션 (UI Motion)</value></data>
+  <data name="Settings_Appearance_Motion_Desc.Text" xml:space="preserve"><value>전환·눌림 반응 같은 필수 아닌 애니메이션을 켭니다. Windows의 애니메이션 효과 설정이 꺼져 있으면 이 설정과 무관하게 생략됩니다.</value></data>
+  <data name="Settings_Appearance_Density_Title.Text" xml:space="preserve"><value>목록 밀도 (List Density)</value></data>
+  <data name="Settings_Appearance_Density_Desc.Text" xml:space="preserve"><value>라이브러리·재생목록 행의 여백과 높이를 조정합니다.</value></data>
+  <data name="Settings_Appearance_Density_Combo.AutomationProperties.Name" xml:space="preserve"><value>목록 밀도</value></data>
+  <data name="Settings_Appearance_Density_Compact.Content" xml:space="preserve"><value>촘촘 (Compact)</value></data>
+  <data name="Settings_Appearance_Density_Cozy.Content" xml:space="preserve"><value>표준 (Cozy)</value></data>
+  <data name="Settings_Appearance_Density_Comfortable.Content" xml:space="preserve"><value>여유 (Comfortable)</value></data>
+  <data name="MainWindow_Menu_Fullscreen.Text" xml:space="preserve"><value>풀스크린 Now Playing (Full-screen Now Playing)</value></data>
+  <data name="Fullscreen_WaveCanvas.AutomationProperties.Name" xml:space="preserve"><value>파형 시크바</value></data>
+  <data name="Fullscreen_SpectrumCanvas.AutomationProperties.Name" xml:space="preserve"><value>스펙트럼</value></data>
+  <data name="Settings_Appearance_FsAcrylic_Title.Text" xml:space="preserve"><value>풀스크린 아크릴 (Full-screen Acrylic)</value></data>
+  <data name="Settings_Appearance_FsAcrylic_Desc.Text" xml:space="preserve"><value>풀스크린 Now Playing 화면에 아크릴 배경을 사용합니다. GPU·배터리 사용이 늘어 기본값은 꺼짐입니다.</value></data>
+  <data name="Settings_Appearance_Accent_PlayGreen.Content" xml:space="preserve"><value>Play Green (플레이 그린)</value></data>
+  <data name="CoreMsg_DirectSoundUnavailableWaveOutFallback" xml:space="preserve"><value>DirectSound 출력을 열 수 없어 WaveOut으로 재생합니다.</value></data>
 </root>

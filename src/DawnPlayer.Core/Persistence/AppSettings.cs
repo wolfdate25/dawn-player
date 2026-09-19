@@ -23,7 +23,7 @@ public enum AudioDriverType { Wasapi = 0, DirectSound = 1, WaveOut = 2 }
 /// for DSD-capable DACs over WASAPI exclusive; anything else decimates to PCM as before.</summary>
 public enum DsdPlaybackMode { PcmAlways = 0, DoPPriority = 1 }
 public enum ThemeMode { System, Light, Dark, OledBlack }
-public enum AccentColorPreset { EoleAmber, ElectricGold, ForestEmerald, CyanSapphire, CrimsonRed, ModernSlate, NordFrost, TokyoNight, CatppuccinMocha, RosePine, SunsetViolet, Custom }
+public enum AccentColorPreset { EoleAmber, ElectricGold, ForestEmerald, CyanSapphire, CrimsonRed, ModernSlate, NordFrost, TokyoNight, CatppuccinMocha, RosePine, SunsetViolet, PlayGreen, Custom }
 public enum BackdropMode { Mica, MicaAlt, Acrylic, Solid, AlbumArtBlur }
 public enum EqFilterType { PeakEq, LowShelf, HighShelf, LowPass, HighPass }
 public enum NormalizerMode { Hybrid, AlwaysDynamic, ReplayGainOnly }
@@ -241,6 +241,17 @@ public sealed class UiSettings
     /// Real exit stays available from the tray menu.</summary>
     public bool CloseToTray { get; set; }
 
+    /// <summary>Master toggle for non-essential UI motion (U1). The OS "animation effects"
+    /// setting is honored independently — effective motion is on only when BOTH allow it
+    /// (<c>MotionService.MotionEnabled</c>).</summary>
+    public bool MotionEnabled { get; set; } = true;
+
+    /// <summary>List density preset (U3, <c>DensityScale</c>): Compact / Cozy / Comfortable.</summary>
+    public string DensityMode { get; set; } = DensityModes.Cozy;
+
+    /// <summary>Acrylic depth layer on the fullscreen Now Playing surface (U4). Default off —
+    /// blur costs GPU/battery; the contrast gate still applies when it is turned on.</summary>
+    public bool FullscreenAcrylic { get; set; }
     // Eole Layout Customization
     public double LeftSidebarWidth { get; set; } = 220;
     public double RightSidebarWidth { get; set; } = 300;
@@ -255,6 +266,23 @@ public sealed class UiSettings
     public string? LibrarySelectedFilterType { get; set; }
     public string? LibrarySelectedFilterValue { get; set; }
     public string? LibrarySelectedFilterExtra { get; set; }
+}
+
+/// <summary>Valid values for <see cref="UiSettings.DensityMode"/> (U3 list-density presets).
+/// Persisted as a string so unknown values from a future version degrade to Cozy, not crash.</summary>
+public static class DensityModes
+{
+    public const string Compact = "Compact";
+    public const string Cozy = "Cozy";
+    public const string Comfortable = "Comfortable";
+
+    public static readonly string[] All = { Compact, Cozy, Comfortable };
+
+    public static bool IsValid(string? mode) => All.Contains(mode, StringComparer.Ordinal);
+
+    /// <summary>Unknown/legacy values normalize to the default instead of throwing.</summary>
+    public static string Normalize(string? mode) =>
+        All.FirstOrDefault(m => string.Equals(m, mode, StringComparison.Ordinal)) ?? Cozy;
 }
 
 public sealed class EqualizerSettings

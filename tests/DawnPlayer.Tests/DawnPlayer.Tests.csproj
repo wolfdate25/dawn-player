@@ -81,6 +81,15 @@
     <Compile Include="..\..\src\DawnPlayer.App\Views\Library\LibraryTreeNode.cs" Link="Views\Library\LibraryTreeNode.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Views\Library\LibraryTreeModelBuilder.cs" Link="Views\Library\LibraryTreeModelBuilder.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Views\Library\LibraryFilterService.cs" Link="Views\Library\LibraryFilterService.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Helpers\ContrastMath.cs" Link="Helpers\ContrastMath.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Styles\DesignTokenValues.cs" Link="Styles\DesignTokenValues.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Services\MotionService.cs" Link="Services\MotionService.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Calculators\SpectrumSmoother.cs" Link="Calculators\SpectrumSmoother.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Services\NotificationPresenter.cs" Link="Services\NotificationPresenter.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Controls\LoadingGate.cs" Link="Controls\LoadingGate.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Services\DensityScale.cs" Link="Services\DensityScale.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Controls\WaveformLayout.cs" Link="Controls\WaveformLayout.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Helpers\AutomationNameScan.cs" Link="Helpers\AutomationNameScan.cs" />
   </ItemGroup>
 
 </Project>

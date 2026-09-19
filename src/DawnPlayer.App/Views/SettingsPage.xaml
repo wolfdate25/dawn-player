@@ -1320,11 +1320,11 @@
                                                 </Grid.ColumnDefinitions>
                                                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
                                                     <Button x:Uid="Settings_OnlineLyrics_MoveUp" Style="{StaticResource TransportButton}" Width="24" Height="24" Padding="0"
-                                                            Click="OnPluginMoveUpClick" Tag="{x:Bind}" AutomationProperties.Name="우선순위 올리기" ToolTipService.ToolTip="우선순위 올리기">
+                                                            Click="OnPluginMoveUpClick" Tag="{x:Bind}" ToolTipService.ToolTip="우선순위 올리기">
                                                         <FontIcon Glyph="&#xE74A;" FontSize="10"/>
                                                     </Button>
                                                     <Button x:Uid="Settings_OnlineLyrics_MoveDown" Style="{StaticResource TransportButton}" Width="24" Height="24" Padding="0"
-                                                            Click="OnPluginMoveDownClick" Tag="{x:Bind}" AutomationProperties.Name="우선순위 내리기" ToolTipService.ToolTip="우선순위 내리기">
+                                                            Click="OnPluginMoveDownClick" Tag="{x:Bind}" ToolTipService.ToolTip="우선순위 내리기">
                                                         <FontIcon Glyph="&#xE74B;" FontSize="10"/>
                                                     </Button>
                                                 </StackPanel>
@@ -1551,6 +1551,53 @@
                             </Grid>
                         </Border>
 
+                        <!-- Motion & Density Card (U1/U3) -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="10">
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock x:Uid="Settings_Appearance_Motion_Title" Text="UI 모션 (UI Motion)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Appearance_Motion_Desc" Text="전환·눌림 반응 같은 필수 아닌 애니메이션을 켭니다. Windows의 애니메이션 효과 설정이 꺼져 있으면 이 설정과 무관하게 생략됩니다." Style="{StaticResource SettingDesc}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
+                                                  IsOn="{x:Bind ViewModel.Appearance.MotionEnabled, Mode=TwoWay}"/>
+                                </Grid>
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock x:Uid="Settings_Appearance_Density_Title" Text="목록 밀도 (List Density)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Appearance_Density_Desc" Text="라이브러리·재생목록 행의 여백과 높이를 조정합니다." Style="{StaticResource SettingDesc}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <ComboBox Grid.Column="1" HorizontalAlignment="Right" MinWidth="160"
+                                              x:Uid="Settings_Appearance_Density_Combo"
+                                              SelectedIndex="{x:Bind ViewModel.Appearance.DensityIndex, Mode=TwoWay}">
+                                        <ComboBoxItem x:Uid="Settings_Appearance_Density_Compact"/>
+                                        <ComboBoxItem x:Uid="Settings_Appearance_Density_Cozy"/>
+                                        <ComboBoxItem x:Uid="Settings_Appearance_Density_Comfortable"/>
+                                    </ComboBox>
+                                </Grid>
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock x:Uid="Settings_Appearance_FsAcrylic_Title" Text="풀스크린 아크릴 (Full-screen Acrylic)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Appearance_FsAcrylic_Desc" Text="풀스크린 Now Playing 화면에 아크릴 배경을 사용합니다. GPU·배터리 사용이 늘어 기본값은 꺼짐입니다." Style="{StaticResource SettingDesc}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" HorizontalAlignment="Right"
+                                                  IsOn="{x:Bind ViewModel.Appearance.FullscreenAcrylic, Mode=TwoWay}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
                         <!-- Theme & Backdrop Card -->
                         <Border Style="{StaticResource SectionCard}">
                             <StackPanel Spacing="10">
@@ -1635,6 +1682,7 @@
                                         <ComboBoxItem Content="Catppuccin Mocha"/>
                                         <ComboBoxItem Content="Rose Pine"/>
                                         <ComboBoxItem Content="Sunset Violet"/>
+                                        <ComboBoxItem x:Uid="Settings_Appearance_Accent_PlayGreen" Content="Play Green"/>
                                         <ComboBoxItem x:Uid="Settings_Appearance_Accent_Custom" Content="사용자 지정 (Custom)..."/>
                                     </ComboBox>
                                 </Grid>

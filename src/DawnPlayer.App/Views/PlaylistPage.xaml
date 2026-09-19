@@ -164,7 +164,7 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                     <TextBlock x:Name="PlaylistStatsText" Text="0 items"
                                FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>
-                    <Button x:Uid="Playlist_ToolsButton" Style="{StaticResource TransportButton}" Width="28" Height="28" AutomationProperties.Name="재생목록 도구 및 정렬" ToolTipService.ToolTip="재생목록 도구 및 정렬">
+                    <Button x:Uid="Playlist_ToolsButton" Style="{StaticResource TransportButton}" Width="28" Height="28" ToolTipService.ToolTip="재생목록 도구 및 정렬">
                         <FontIcon Glyph="&#xE712;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
                         <Button.Flyout>
                             <MenuFlyout Opening="OnHeaderToolsMenuOpening">
@@ -242,9 +242,9 @@
                     <!-- Track Row Template (Eole Flat Style with Playing Highlight Box) -->
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="core:PlaylistItem">
-                            <Grid Margin="0,1" MinHeight="28">
+                            <Grid Margin="0,1" MinHeight="{ThemeResource TrackRowMinHeight}">
                                 <!-- Normal Track Row (when not playing) -->
-                                <Grid Height="28" Padding="2,0" ColumnSpacing="8"
+                                <Grid Height="{ThemeResource TrackRowMinHeight}" Padding="2,0" ColumnSpacing="8"
                                       Visibility="{x:Bind IsPlaying, Converter={StaticResource NotPlayingVis}, Mode=OneWay}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="28"/>
@@ -287,7 +287,7 @@
                                 </Grid>
 
                                 <!-- Eole Active Playing Highlight Box (when playing) -->
-                                <Border Height="30" CornerRadius="3"
+                                <Border Height="{ThemeResource TrackRowMinHeight}" CornerRadius="3"
                                         Background="{ThemeResource DawnAccentMutedBrush}" BorderBrush="{ThemeResource DawnAccentGlowBrush}" BorderThickness="1"
                                         Visibility="{x:Bind IsPlaying, Converter={StaticResource PlayingVis}, Mode=OneWay}">
                                     <Grid ColumnSpacing="8" Padding="0,0,8,0">

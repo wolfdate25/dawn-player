@@ -871,7 +871,7 @@ public sealed class AudioDspChainTests
             {
                 try
                 {
-                    int bytesRead = seq.Read(rawBuf, 0, rawBuf.Length);
+                    int bytesRead = seq.Read(rawBuf);
                     Assert.True(bytesRead >= 0);
                 }
                 catch

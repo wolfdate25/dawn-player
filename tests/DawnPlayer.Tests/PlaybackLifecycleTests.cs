@@ -82,13 +82,26 @@ public class PlaybackLifecycleTests
         var fmt = exclusiveFmt ?? WasapiDeviceService.GetSharedTarget(def);
 
         var provider = new TestCountingSampleProvider(fmt);
-        WasapiOut? output = null;
+        WasapiPlayer? output = null;
+
+        // WasapiPlayer (NAudio 3, WasapiOut's replacement). Exclusive Init can also throw
+        // NotSupportedException when the negotiated format is rejected at Init time, so the
+        // fallback catches that alongside the COM failures the old WasapiOut surfaced.
+        WasapiPlayer CreatePlayer(bool exclusive)
+        {
+            var builder = new WasapiPlayerBuilder()
+                .WithDevice(def)
+                .WithEventSync()
+                .WithLatency(100);
+            return (exclusive ? builder.WithExclusiveMode() : builder.WithSharedMode()).Build();
+        }
+
         try
         {
-            output = new WasapiOut(def, useExclusive ? AudioClientShareMode.Exclusive : AudioClientShareMode.Shared, true, 100);
+            output = CreatePlayer(useExclusive);
             output.Init(provider);
         }
-        catch (System.Runtime.InteropServices.COMException)
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or NotSupportedException)
         {
             output?.Dispose();
             // Hardware in use or exclusive blocked -> fallback to shared
@@ -96,12 +109,12 @@ public class PlaybackLifecycleTests
             provider = new TestCountingSampleProvider(fmt);
             try
             {
-                output = new WasapiOut(def, AudioClientShareMode.Shared, true, 100);
+                output = CreatePlayer(exclusive: false);
                 output.Init(provider);
             }
             catch (System.Runtime.InteropServices.COMException)
             {
-                LogEnvironmentSkip("no audio render endpoint accepts a shared-mode WasapiOut");
+                LogEnvironmentSkip("no audio render endpoint accepts a shared-mode player");
                 return;
             }
         }
@@ -210,18 +223,18 @@ public class PlaybackLifecycleTests
 
         public TestCountingSampleProvider(WaveFormat fmt) => WaveFormat = fmt;
 
-        public int Read(byte[] buffer, int offset, int count)
+        public int Read(Span<byte> buffer)
         {
             if (IsPaused)
             {
-                Array.Clear(buffer, offset, count);
+                buffer.Clear();
                 Interlocked.Increment(ref SilenceReadCount);
-                return count;
+                return buffer.Length;
             }
 
-            for (int i = 0; i < count; i++) buffer[offset + i] = 0x55;
+            buffer.Fill(0x55);
             Interlocked.Increment(ref RealReadCount);
-            return count;
+            return buffer.Length;
         }
     }
 }

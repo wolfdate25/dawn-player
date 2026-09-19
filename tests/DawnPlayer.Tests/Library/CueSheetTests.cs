@@ -144,7 +144,7 @@ public sealed class CueSheetTests
             // Reading through the range: after ~1 s of frames the provider must hit end-of-stream.
             var buffer = new float[44100 * 2];
             int total = 0, read;
-            while ((read = cueReader.Samples.Read(buffer, 0, buffer.Length)) > 0)
+            while ((read = cueReader.Samples.Read(buffer)) > 0)
             {
                 total += read;
                 Assert.True(total <= 44100 + 2205, $"range overrun: {total} frames"); // 1 s + 50 ms slack

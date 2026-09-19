@@ -49,6 +49,17 @@ public interface IAppearanceSettingsService
     void SetCloseToTray(bool enabled);
 
     /// <summary>
+    /// Sets whether the app plays non-essential UI motion (U1). The OS-level animation setting
+    /// is honored independently by <see cref="MotionService"/>.
+    /// </summary>
+    void SetMotionEnabled(bool enabled);
+
+    /// <summary>
+    /// Sets the list density preset (U3). Invalid values are normalized to the default.
+    /// </summary>
+    void SetDensityMode(string mode);
+
+    /// <summary>
     /// Manually triggers the AppearanceChanged notification.
     /// </summary>
     void RefreshAppearance();

@@ -110,7 +110,7 @@ public class RegressionAuditFixTests
 
         // And a read after cancellation must be silent rather than throwing on the render thread.
         var buffer = new byte[1024];
-        Assert.Equal(0, seq.Read(buffer, 0, buffer.Length));
+        Assert.Equal(0, seq.Read(buffer));
     }
 
     private sealed class TrackingReader : ITrackReader
@@ -130,10 +130,10 @@ public class RegressionAuditFixTests
         {
             public SilentSamples(NAudio.Wave.WaveFormat format) => WaveFormat = format;
             public NAudio.Wave.WaveFormat WaveFormat { get; }
-            public int Read(float[] buffer, int offset, int count)
+            public int Read(Span<float> buffer)
             {
-                Array.Clear(buffer, offset, count);
-                return count;
+                buffer.Clear();
+                return buffer.Length;
             }
         }
     }

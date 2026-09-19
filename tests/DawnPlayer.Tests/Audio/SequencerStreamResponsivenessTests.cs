@@ -76,12 +76,12 @@ public sealed class SequencerStreamResponsivenessTests
                 Entered.Dispose();
             }
 
-            public int Read(float[] buffer, int offset, int count)
+            public int Read(Span<float> buffer)
             {
                 Entered.Set();
                 _gate.Wait();
-                Array.Clear(buffer, offset, count);
-                return count;
+                buffer.Clear();
+                return buffer.Length;
             }
         }
     }
@@ -137,13 +137,13 @@ public sealed class SequencerStreamResponsivenessTests
                 _served = Math.Clamp(frames, 0, totalFrames) * WaveFormat.Channels;
             }
 
-            public int Read(float[] buffer, int offset, int count)
+            public int Read(Span<float> buffer)
             {
                 int remaining = _totalFloats - _served;
                 if (remaining <= 0) return 0;
 
-                int n = Math.Min(count, remaining);
-                for (int i = 0; i < n; i++) buffer[offset + i] = _amplitude;
+                int n = Math.Min(buffer.Length, remaining);
+                buffer.Slice(0, n).Fill(_amplitude);
                 _served += n;
                 return n;
             }
@@ -168,7 +168,7 @@ public sealed class SequencerStreamResponsivenessTests
         int total = 0;
         for (int i = 0; i < 100 && total < bps * 20; i++)
         {
-            int read = seq.Read(buffer, 0, buffer.Length);
+            int read = seq.Read(buffer);
             Assert.True(read > 0, "the loop must keep producing samples, not stall");
 
             // The loop may overshoot B by at most the render block being processed.
@@ -205,7 +205,7 @@ public sealed class SequencerStreamResponsivenessTests
         seq.SwitchTo(pending);
 
         var render = Task.Factory.StartNew(
-            () => seq.Read(new byte[16384], 0, 16384),
+            () => seq.Read(new byte[16384]),
             CancellationToken.None,
             TaskCreationOptions.LongRunning,
             TaskScheduler.Default);
@@ -244,7 +244,7 @@ public sealed class SequencerStreamResponsivenessTests
         seq.SwitchTo(Pending(reader));
 
         var render = Task.Factory.StartNew(
-            () => seq.Read(new byte[16384], 0, 16384),
+            () => seq.Read(new byte[16384]),
             CancellationToken.None,
             TaskCreationOptions.LongRunning,
             TaskScheduler.Default);
@@ -285,7 +285,7 @@ public sealed class SequencerStreamResponsivenessTests
 
         // Ask for far more than the first track holds, so the boundary is crossed inside one Read.
         var buffer = new byte[Format.BlockAlign * 3000];
-        int read = seq.Read(buffer, 0, buffer.Length);
+        int read = seq.Read(buffer);
 
         Assert.True(read > 0);
         Assert.Same(secondPending.Item, seq.CurrentItem);
@@ -335,7 +335,7 @@ public sealed class SequencerStreamResponsivenessTests
         int renderSamples = 0;
         for (int i = 0; i < 100; i++)
         {
-            if (seq.Read(buffer, 0, buffer.Length) == 0) break;
+            if (seq.Read(buffer) == 0) break;
             Check(seq.GetPosition());
             renderSamples++;
         }
@@ -360,7 +360,7 @@ public sealed class SequencerStreamResponsivenessTests
         // Warm every buffer the render path resizes lazily, then queue the next track: building
         // its provider graph must happen here, on this thread, not at the boundary.
         var buffer = new byte[Format.BlockAlign * 1000];
-        seq.Read(buffer, 0, buffer.Length);
+        seq.Read(buffer);
         seq.SetPrefetched(Pending(second, @"C:\m\second.flac"));
 
         GC.Collect();
@@ -369,7 +369,7 @@ public sealed class SequencerStreamResponsivenessTests
         long before = GC.GetAllocatedBytesForCurrentThread();
 
         // This pass crosses the boundary: the drained first track hands over to the queued one.
-        seq.Read(buffer, 0, buffer.Length);
+        seq.Read(buffer);
 
         long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
         GC.KeepAlive(second);
@@ -399,7 +399,7 @@ public sealed class SequencerStreamResponsivenessTests
         seq.SetPrefetched(restartPending);
 
         var buffer = new byte[Format.BlockAlign * 2000];
-        seq.Read(buffer, 0, buffer.Length);
+        seq.Read(buffer);
 
         Assert.Equal(SequencerEndReason.FormatChange, reason);
         Assert.True(first.Disposed, "The drained reader must be disposed at a format change.");
@@ -424,7 +424,7 @@ public sealed class SequencerStreamResponsivenessTests
             var buffer = new byte[Format.BlockAlign * 256];
             while (!cts.IsCancellationRequested)
             {
-                try { seq.Read(buffer, 0, buffer.Length); }
+                try { seq.Read(buffer); }
                 catch { Interlocked.Increment(ref errors); }
             }
         });

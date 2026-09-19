@@ -34,7 +34,7 @@
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <Button x:Name="PlayPauseBtn" x:Uid="LyricsEditor_PlayPauseBtn" Style="{StaticResource TransportButton}" Click="OnPlayPauseClick" AutomationProperties.Name="재생/일시정지" ToolTipService.ToolTip="재생/일시정지 (Space)">
+                <Button x:Name="PlayPauseBtn" x:Uid="LyricsEditor_PlayPauseBtn" Style="{StaticResource TransportButton}" Click="OnPlayPauseClick" ToolTipService.ToolTip="재생/일시정지 (Space)">
                     <FontIcon x:Name="PlayPauseIcon" Glyph="&#xE768;" FontSize="13"/>
                 </Button>
                 <TextBlock x:Name="PositionText" Text="0:00.000" FontSize="13" FontWeight="SemiBold"
@@ -138,13 +138,13 @@
                                         <TextBlock x:Uid="LyricsEditor_DeleteLineText" Text="줄 삭제"/>
                                     </StackPanel>
                                 </Button>
-                                <Button x:Uid="LyricsEditor_MoveLineUpBtn" Click="OnMoveLineUpClick" AutomationProperties.Name="선택 줄 위로" ToolTipService.ToolTip="선택 줄 위로">
+                                <Button x:Uid="LyricsEditor_MoveLineUpBtn" Click="OnMoveLineUpClick" ToolTipService.ToolTip="선택 줄 위로">
                                     <FontIcon Glyph="&#xE70E;" FontSize="12"/>
                                 </Button>
-                                <Button x:Uid="LyricsEditor_MoveLineDownBtn" Click="OnMoveLineDownClick" AutomationProperties.Name="선택 줄 아래로" ToolTipService.ToolTip="선택 줄 아래로">
+                                <Button x:Uid="LyricsEditor_MoveLineDownBtn" Click="OnMoveLineDownClick" ToolTipService.ToolTip="선택 줄 아래로">
                                     <FontIcon Glyph="&#xE70D;" FontSize="12"/>
                                 </Button>
-                                <Button x:Uid="LyricsEditor_PasteClipboardBtn" Click="OnPasteFromClipboardClick" AutomationProperties.Name="클립보드에서 가사 텍스트 가져오기" ToolTipService.ToolTip="클립보드에서 가사 텍스트 가져오기">
+                                <Button x:Uid="LyricsEditor_PasteClipboardBtn" Click="OnPasteFromClipboardClick" ToolTipService.ToolTip="클립보드에서 가사 텍스트 가져오기">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <FontIcon Glyph="&#xE77F;" FontSize="12"/>
                                         <TextBlock x:Uid="LyricsEditor_PasteClipboardText" Text="클립보드 붙여넣기"/>
@@ -175,7 +175,7 @@
                                         <TextBox Grid.Column="2" Text="{x:Bind Text, Mode=TwoWay}" FontSize="12.5"/>
 
                                         <Button x:Uid="LyricsEditor_SeekToLineBtn" Grid.Column="3" Style="{StaticResource TransportButton}" Width="28" Height="28"
-                                                Click="OnSeekToLineClick" Tag="{x:Bind}" AutomationProperties.Name="이 위치로 오디오 재생" ToolTipService.ToolTip="이 위치로 오디오 재생">
+                                                Click="OnSeekToLineClick" Tag="{x:Bind}" ToolTipService.ToolTip="이 위치로 오디오 재생">
                                             <FontIcon Glyph="&#xE768;" FontSize="11"/>
                                         </Button>
                                     </Grid>

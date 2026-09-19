@@ -110,7 +110,7 @@ public sealed class DoPPackingTests
 
         using var dop = new DopTrackReader(raw, "synthetic.dsf");
         var buffer = new float[4 * 2];
-        int read = dop.Samples.Read(buffer, 0, buffer.Length);
+        int read = dop.Samples.Read(buffer);
         // 32 DSD frames = 2 DoP samples per channel = 2 interleaved stereo frames.
         Assert.Equal(4, read);
 

@@ -282,8 +282,12 @@ public sealed class SettingsViewModelTests
         Assert.Equal(BackdropMode.MicaAlt, settings.Ui.Backdrop);
 
         // Custom Hex Color Validation
-        app.AccentIndex = 11; // Custom
+        app.AccentIndex = 11; // PlayGreen (inserted before Custom in U5)
+        Assert.Equal(AccentColorPreset.PlayGreen, settings.Ui.AccentColor);
+
+        app.AccentIndex = 12; // Custom
         Assert.True(app.IsCustomColorVisible);
+        Assert.Equal(AccentColorPreset.Custom, settings.Ui.AccentColor);
 
         bool validHex = app.TrySetCustomAccentHex("#3399FF");
         Assert.True(validHex);

@@ -18,6 +18,8 @@ namespace DawnPlayer.App;
 public sealed partial class MainWindow : Window
 {
     private bool _closing;
+    private readonly Services.NotificationPresenter _notifications = new();
+    private Microsoft.UI.Dispatching.DispatcherQueueTimer _notifyCloseTimer = null!;
 
     public MainWindow()
     {
@@ -39,6 +41,14 @@ public sealed partial class MainWindow : Window
         AppServices.WarningRaised += ShowWarning;
         AppServices.OutputSessionChanged += OnOutputSession;
         AppServices.LanguageChanged += OnLanguageChanged;
+
+        // U2: one policy for the single InfoBar slot — transient messages auto-close, warnings
+        // and errors stay until dismissed (timer is the presenter's arm, UI is the hand).
+        _notifications.Changed += RenderNotification;
+        _notifyCloseTimer = DispatcherQueue.CreateTimer();
+        _notifyCloseTimer.Interval = TimeSpan.FromMilliseconds(Services.NotificationPresenter.AutoCloseMs);
+        _notifyCloseTimer.IsRepeating = false;
+        _notifyCloseTimer.Tick += (_, _) => _notifications.Dismiss();
 
         // Without this the window reports the WinUI default ("WinUI Desktop") to the taskbar,
         // Alt+Tab and screen readers.
@@ -226,7 +236,7 @@ public sealed partial class MainWindow : Window
                     var bmp = new BitmapImage { DecodePixelWidth = 1280 };
                     bmp.UriSource = new Uri(blurPath, UriKind.Absolute);
                     WallpaperImage.Source = bmp;
-                    WallpaperImage.Opacity = 1;
+                    Helpers.MotionHelper.FadeIn(WallpaperImage, AppServices.Motion?.MotionEnabled ?? false);
                     WallpaperDimOverlay.Opacity = 1;
                 }
                 else
@@ -299,12 +309,28 @@ public sealed partial class MainWindow : Window
         if (TabLibrary != null) TabLibrary.IsChecked = state.TabLibraryChecked;
         if (TabPlaylists != null) TabPlaylists.IsChecked = state.TabPlaylistsChecked;
 
+        // Incoming surfaces fade in (U1); MotionHelper sets the final state instantly when the
+        // motion gate is off, so reduced-motion users get a plain visibility flip.
+        bool motion = AppServices.Motion?.MotionEnabled ?? false;
+
         if (LibraryPageView != null)
+        {
+            var wasHidden = LibraryPageView.Visibility != Visibility.Visible;
             LibraryPageView.Visibility = state.LibraryVisible ? Visibility.Visible : Visibility.Collapsed;
+            if (wasHidden && state.LibraryVisible) Helpers.MotionHelper.FadeIn(LibraryPageView, motion);
+        }
         if (PlaylistPageView != null)
+        {
+            var wasHidden = PlaylistPageView.Visibility != Visibility.Visible;
             PlaylistPageView.Visibility = state.PlaylistsVisible ? Visibility.Visible : Visibility.Collapsed;
+            if (wasHidden && state.PlaylistsVisible) Helpers.MotionHelper.FadeIn(PlaylistPageView, motion);
+        }
         if (ContentFrame != null)
+        {
+            var wasHidden = ContentFrame.Visibility != Visibility.Visible;
             ContentFrame.Visibility = state.SettingsVisible ? Visibility.Visible : Visibility.Collapsed;
+            if (wasHidden && state.SettingsVisible) Helpers.MotionHelper.FadeIn(ContentFrame, motion);
+        }
 
         if (state.LibraryVisible) LibraryPageView?.SetLyricsVisibility(state.LibraryLyricsVisible);
         if (state.PlaylistsVisible) PlaylistPageView?.SetLyricsVisibility(state.PlaylistLyricsVisible);
@@ -410,11 +436,11 @@ public sealed partial class MainWindow : Window
                 await Controls.PlaybackUiHelper.PlayItemAsync(AppServices.Playback, playlist, item);
             }
         }
-        catch (Exception ex)
-        {
-            App.Log($"[open-url] {ex}");
-            ShowWarning(ex.Message);
-        }
+            catch (Exception ex)
+            {
+                App.Log($"[open-url] {ex}");
+                ShowWarning(ex.Message);
+            }
     }
 
     // ---------------- mini player mode ----------------
@@ -475,6 +501,23 @@ public sealed partial class MainWindow : Window
     }
 
     private void OnMenuMiniToggle(object sender, RoutedEventArgs e) => ToggleMiniMode();
+
+    /// <summary>U4: opens the fullscreen Now Playing surface. Mini mode and fullscreen are both
+    /// window-state overlays — mini exits first so the two never fight over the shell.</summary>
+    private void OnMenuFullscreen(object sender, RoutedEventArgs e) => OpenFullscreenNowPlaying();
+
+    public void OpenFullscreenNowPlaying()
+    {
+        if (_isMiniMode) ToggleMiniMode();
+        try
+        {
+            new Views.FullscreenNowPlayingWindow().Activate();
+        }
+        catch (Exception ex)
+        {
+            App.Log($"[fullscreen] open failed: {ex}");
+        }
+    }
 
     private void OnRootKeyDown(object sender, KeyRoutedEventArgs e)
     {
@@ -545,9 +588,46 @@ public sealed partial class MainWindow : Window
 
     private void ShowWarning(string message)
     {
-        NotifyBar.Message = message;
-        NotifyBar.Severity = InfoBarSeverity.Warning;
+        _notifications.Show(message, Services.UiSeverity.Warning);
+    }
+
+    /// <summary>Transient (informational/success) notification through the shared presenter —
+    /// auto-closes so confirmations do not linger over the content.</summary>
+    private void ShowTransient(string message)
+    {
+        _notifications.Show(message, Services.UiSeverity.Informational);
+    }
+
+    private void RenderNotification()
+    {
+        if (NotifyBar == null) return;
+        var n = _notifications;
+        if (!n.IsOpen)
+        {
+            _notifyCloseTimer.Stop();
+            NotifyBar.IsOpen = false;
+            return;
+        }
+
+        NotifyBar.Message = n.Message;
+        NotifyBar.Severity = n.Severity switch
+        {
+            Services.UiSeverity.Success => InfoBarSeverity.Success,
+            Services.UiSeverity.Warning => InfoBarSeverity.Warning,
+            Services.UiSeverity.Error => InfoBarSeverity.Error,
+            _ => InfoBarSeverity.Informational,
+        };
         NotifyBar.IsOpen = true;
+
+        _notifyCloseTimer.Stop();
+        if (n.WillAutoClose) _notifyCloseTimer.Start();
+    }
+
+    private void OnNotifyBarClosed(InfoBar sender, object args)
+    {
+        // Manual close (the InfoBar's ✕) must not be overridden by a pending auto-close tick.
+        _notifyCloseTimer.Stop();
+        _notifications.Dismiss();
     }
 
     // ---------------- language switch ----------------
@@ -664,9 +744,7 @@ public sealed partial class MainWindow : Window
                     var imported = await AppServices.Playlists.ImportPlaylistAsync(plFile);
                     if (imported != null)
                     {
-                        NotifyBar.Message = AppStrings.Format("Msg_PlaylistImported", "'{0}' 재생목록을 가져왔습니다 ({1}곡).", imported.Name, imported.Items.Count);
-                        NotifyBar.Severity = InfoBarSeverity.Informational;
-                        NotifyBar.IsOpen = true;
+                        ShowTransient(AppStrings.Format("Msg_PlaylistImported", "'{0}' 재생목록을 가져왔습니다 ({1}곡).", imported.Name, imported.Items.Count));
                     }
                 }
             }
@@ -674,9 +752,7 @@ public sealed partial class MainWindow : Window
             if (audioPaths.Count > 0)
             {
                 var added = await AppServices.Playlists.AddPathsAsync(AppServices.Playlists.Current, audioPaths);
-                NotifyBar.Message = AppStrings.Format("Msg_TracksAddedToPlaylist", "{0}개 트랙을 '{1}'에 추가했습니다.", added.Count, AppServices.Playlists.Current.Name);
-                NotifyBar.Severity = InfoBarSeverity.Informational;
-                NotifyBar.IsOpen = true;
+                ShowTransient(AppStrings.Format("Msg_TracksAddedToPlaylist", "{0}개 트랙을 '{1}'에 추가했습니다.", added.Count, AppServices.Playlists.Current.Name));
             }
         }
         catch (Exception ex)

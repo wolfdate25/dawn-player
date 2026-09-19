@@ -347,8 +347,11 @@ public sealed partial class NowPlayingBar : UserControl
 
     // ---------- transport ----------
 
-    private void OnPlayClick(object sender, RoutedEventArgs e) =>
+    private void OnPlayClick(object sender, RoutedEventArgs e)
+    {
+        Helpers.MotionHelper.PressPop(PlayButton, AppServices.Motion?.MotionEnabled ?? false);
         _ = PlaybackUiHelper.TriggerPlayOrResumeAsync(AppServices.Playback, AppServices.Playlists, AppServices.Library);
+    }
 
     private void OnStopClick(object sender, RoutedEventArgs e) => AppServices.Playback?.Stop();
 

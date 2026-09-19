@@ -839,4 +839,19 @@
   <data name="CoreMsg_FileOpenFailed" xml:space="preserve"><value>ファイルを開けません: {0}</value></data>
   <data name="CoreMsg_UnsupportedFormat" xml:space="preserve"><value>サポートされていない形式です: {0}</value></data>
   <data name="CoreMsg_RestartFailedContinue" xml:space="preserve"><value>新しい出力設定を適用できず、現在の出力で再生を続けます。</value></data>
+  <data name="Settings_Appearance_Motion_Title.Text" xml:space="preserve"><value>UI モーション (UI Motion)</value></data>
+  <data name="Settings_Appearance_Motion_Desc.Text" xml:space="preserve"><value>画面遷移や押下フィードバックなど、必須でないアニメーションを有効にします。Windows のアニメーション効果がオフの場合、この設定にかかわらず省略されます。</value></data>
+  <data name="Settings_Appearance_Density_Title.Text" xml:space="preserve"><value>リストの密度 (List Density)</value></data>
+  <data name="Settings_Appearance_Density_Desc.Text" xml:space="preserve"><value>ライブラリとプレイリストの行の余白と高さを調整します。</value></data>
+  <data name="Settings_Appearance_Density_Combo.AutomationProperties.Name" xml:space="preserve"><value>リストの密度</value></data>
+  <data name="Settings_Appearance_Density_Compact.Content" xml:space="preserve"><value>コンパクト</value></data>
+  <data name="Settings_Appearance_Density_Cozy.Content" xml:space="preserve"><value>標準</value></data>
+  <data name="Settings_Appearance_Density_Comfortable.Content" xml:space="preserve"><value>快適</value></data>
+  <data name="MainWindow_Menu_Fullscreen.Text" xml:space="preserve"><value>フルスクリーン再生画面 (Full-screen Now Playing)</value></data>
+  <data name="Fullscreen_WaveCanvas.AutomationProperties.Name" xml:space="preserve"><value>波形シークバー</value></data>
+  <data name="Fullscreen_SpectrumCanvas.AutomationProperties.Name" xml:space="preserve"><value>スペクトラム</value></data>
+  <data name="Settings_Appearance_FsAcrylic_Title.Text" xml:space="preserve"><value>フルスクリーン アクリル</value></data>
+  <data name="Settings_Appearance_FsAcrylic_Desc.Text" xml:space="preserve"><value>フルスクリーン再生画面にアクリル背景を使用します。GPU とバッテリーの消費が増えるため、既定はオフです。</value></data>
+  <data name="Settings_Appearance_Accent_PlayGreen.Content" xml:space="preserve"><value>Play Green</value></data>
+  <data name="CoreMsg_DirectSoundUnavailableWaveOutFallback" xml:space="preserve"><value>DirectSound 出力を開けないため、WaveOut で再生します。</value></data>
 </root>

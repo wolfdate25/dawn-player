@@ -149,7 +149,7 @@ public static class WasapiDeviceService
     /// <summary>The device's shared-mode mix format (usually float32 / 2ch / 48kHz).</summary>
     public static WaveFormat GetSharedTarget(MMDevice device)
     {
-        using var client = device.AudioClient;
+        using var client = device.CreateAudioClient();
         return client.MixFormat;
     }
 
@@ -210,7 +210,7 @@ public static class WasapiDeviceService
     {
         try
         {
-            using var client = device.AudioClient;
+            using var client = device.CreateAudioClient();
             return client.IsFormatSupported(AudioClientShareMode.Exclusive, format, out _);
         }
         catch (Exception ex)
@@ -246,7 +246,7 @@ public static class WasapiDeviceService
     {
         try
         {
-            using var client = device.AudioClient;
+            using var client = device.CreateAudioClient();
             client.Initialize(AudioClientShareMode.Exclusive, AudioClientStreamFlags.EventCallback,
                 100 * 10000L, 0, format, Guid.Empty);
             return 0; // succeeded (was never started; disposed immediately)

@@ -176,6 +176,50 @@ public sealed class AppearanceSettingsViewModel : ViewModelBase
         }
     }
 
+    /// <summary>Non-essential UI motion master toggle (U1). OS animations are honored separately.</summary>
+    public bool MotionEnabled
+    {
+        get => _settings.Ui.MotionEnabled;
+        set
+        {
+            if (_settings.Ui.MotionEnabled != value)
+            {
+                _appearanceSettingsService.SetMotionEnabled(value);
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    /// <summary>Acrylic backdrop on the fullscreen Now Playing surface (U4, default off).</summary>
+    public bool FullscreenAcrylic
+    {
+        get => _settings.Ui.FullscreenAcrylic;
+        set
+        {
+            if (_settings.Ui.FullscreenAcrylic != value)
+            {
+                _settings.Ui.FullscreenAcrylic = value;
+                SettingsWriter.Schedule(_settings);
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    /// <summary>List density preset (U3): index into <see cref="DensityModes.All"/>.</summary>
+    public int DensityIndex
+    {
+        get => Array.IndexOf(DensityModes.All, DensityModes.Normalize(_settings.Ui.DensityMode));
+        set
+        {
+            var mode = value >= 0 && value < DensityModes.All.Length ? DensityModes.All[value] : DensityModes.Cozy;
+            if (_settings.Ui.DensityMode != mode)
+            {
+                _appearanceSettingsService.SetDensityMode(mode);
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public AccentColorPreset AccentPreset
     {
         get => _settings.Ui.AccentColor;
@@ -205,7 +249,8 @@ public sealed class AppearanceSettingsViewModel : ViewModelBase
             AccentColorPreset.CatppuccinMocha => 8,
             AccentColorPreset.RosePine => 9,
             AccentColorPreset.SunsetViolet => 10,
-            AccentColorPreset.Custom => 11,
+            AccentColorPreset.PlayGreen => 11,
+            AccentColorPreset.Custom => 12,
             _ => 0
         };
         set
@@ -222,7 +267,8 @@ public sealed class AppearanceSettingsViewModel : ViewModelBase
                 8 => AccentColorPreset.CatppuccinMocha,
                 9 => AccentColorPreset.RosePine,
                 10 => AccentColorPreset.SunsetViolet,
-                11 => AccentColorPreset.Custom,
+                11 => AccentColorPreset.PlayGreen,
+                12 => AccentColorPreset.Custom,
                 _ => AccentColorPreset.EoleAmber
             };
             if (_settings.Ui.AccentColor != preset)

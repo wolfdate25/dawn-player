@@ -8,6 +8,23 @@
 
     <Grid Background="{ThemeResource PanelBrush}" Padding="18,2,18,6" SizeChanged="OnRootSizeChanged"
           BorderBrush="{ThemeResource SeparatorBrush}" BorderThickness="0,1,0,0">
+        <VisualStateManager.VisualStateGroups>
+            <!-- U3 responsive bar (skill WinUI guideline: AdaptiveTrigger breakpoints): below
+                 640px the secondary info drops out so transport controls keep room. -->
+            <VisualStateGroup x:Name="WidthStates">
+                <VisualState x:Name="Wide"/>
+                <VisualState x:Name="Compact">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="0"/>
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="FormatBadge.Visibility" Value="Collapsed"/>
+                        <Setter Target="OutputBadge.Visibility" Value="Collapsed"/>
+                        <Setter Target="TrackArtist.Visibility" Value="Collapsed"/>
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -28,7 +45,6 @@
             </Grid>
 
             <Slider Grid.Column="1" x:Uid="NowPlaying_SeekSlider" x:Name="SeekSlider" Style="{StaticResource EoleSlimSliderStyle}"
-                    AutomationProperties.Name="재생 위치"
                     Minimum="0" Maximum="100" StepFrequency="1" MinWidth="40"
                     VerticalAlignment="Center" Margin="10,0"/>
 
@@ -56,7 +72,7 @@
                 <!-- Album Art Card with subtle border and zoom-on-click flyout -->
                 <Button x:Uid="NowPlaying_AlbumArtButton" Grid.Column="0" Width="56" Height="56" Padding="0" CornerRadius="6"
                         Background="{ThemeResource CardBrush}" BorderBrush="{ThemeResource BorderSubtleBrush}"
-                        BorderThickness="1" AutomationProperties.Name="앨범 커버 크게 보기"
+                        BorderThickness="1"
                         ToolTipService.ToolTip="앨범 커버 크게 보기">
                     <Grid>
                         <FontIcon x:Name="ArtPlaceholder" Glyph="&#xE90B;" FontSize="22"
@@ -106,39 +122,36 @@
             <!-- 2b. Transport Controls (Center) -->
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="6">
                 <ToggleButton x:Uid="NowPlaying_ShuffleButton" x:Name="ShuffleButton" Style="{StaticResource TransportToggleButton}"
-                              AutomationProperties.Name="무작위 재생"
                               Click="OnShuffleClick" ToolTipService.ToolTip="무작위 재생">
                     <FontIcon x:Name="ShuffleIcon" Glyph="&#xE8B1;" FontSize="13"/>
                 </ToggleButton>
 
-                <Button x:Uid="NowPlaying_PreviousButton" x:Name="PreviousButton" AutomationProperties.Name="이전 트랙"
+                <Button x:Uid="NowPlaying_PreviousButton" x:Name="PreviousButton"
                         Style="{StaticResource TransportButton}" Click="OnPreviousClick" ToolTipService.ToolTip="이전 트랙">
                     <FontIcon Glyph="&#xE76B;" FontSize="13"/>
                 </Button>
 
                 <Button x:Uid="NowPlaying_PlayButton" x:Name="PlayButton" Style="{StaticResource PlayPauseButton}" Click="OnPlayClick"
-                        AutomationProperties.Name="재생" ToolTipService.ToolTip="재생/일시정지">
+ ToolTipService.ToolTip="재생/일시정지">
                     <FontIcon x:Name="PlayIcon" Glyph="&#xE768;" FontSize="15" Foreground="#141414"/>
                 </Button>
 
-                <Button x:Uid="NowPlaying_NextButton" x:Name="NextButton" AutomationProperties.Name="다음 트랙"
+                <Button x:Uid="NowPlaying_NextButton" x:Name="NextButton"
                         Style="{StaticResource TransportButton}" Click="OnNextClick" ToolTipService.ToolTip="다음 트랙">
                     <FontIcon Glyph="&#xE76C;" FontSize="13"/>
                 </Button>
 
-                <Button x:Uid="NowPlaying_StopButton" x:Name="StopButton" AutomationProperties.Name="정지"
+                <Button x:Uid="NowPlaying_StopButton" x:Name="StopButton"
                         Style="{StaticResource TransportButton}" Click="OnStopClick" ToolTipService.ToolTip="정지">
                     <FontIcon Glyph="&#xE71A;" FontSize="12"/>
                 </Button>
 
                 <ToggleButton x:Uid="NowPlaying_RepeatButton" x:Name="RepeatButton" Style="{StaticResource TransportToggleButton}"
-                              AutomationProperties.Name="반복"
                               Click="OnRepeatClick" ToolTipService.ToolTip="반복 (끔 / 전체 / 한 곡)">
                     <FontIcon x:Name="RepeatIcon" Glyph="&#xE8EE;" FontSize="13"/>
                 </ToggleButton>
 
                 <ToggleButton x:Uid="NowPlaying_ABRepeatButton" x:Name="ABRepeatButton" Style="{StaticResource TransportToggleButton}"
-                              AutomationProperties.Name="A-B 반복"
                               Click="OnABRepeatClick" ToolTipService.ToolTip="A-B 반복">
                     <TextBlock x:Name="ABRepeatLabel" Text="A–B" FontSize="11" FontWeight="SemiBold"/>
                 </ToggleButton>
@@ -148,18 +161,16 @@
             <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Spacing="6">
                 <!-- Mute & Volume Slider -->
                 <Button x:Uid="NowPlaying_MuteButton" x:Name="MuteButton" Style="{StaticResource TransportButton}" Click="OnMuteClick"
-                        AutomationProperties.Name="음소거" ToolTipService.ToolTip="음소거">
+ ToolTipService.ToolTip="음소거">
                     <FontIcon x:Name="VolumeIcon" Glyph="&#xE767;" FontSize="13"/>
                 </Button>
 
                 <Slider x:Uid="NowPlaying_VolumeSlider" x:Name="VolumeSlider" Width="96" Style="{StaticResource EoleSlimSliderStyle}"
                         Minimum="0" Maximum="100" StepFrequency="1"
-                        AutomationProperties.Name="볼륨"
                         ValueChanged="OnVolumeChanged" ToolTipService.ToolTip="볼륨"/>
 
                 <!-- Playback Queue Flyout Button -->
                 <Button x:Uid="NowPlaying_QueueButton" x:Name="QueueButton" Style="{StaticResource TransportButton}"
-                        AutomationProperties.Name="재생 대기열"
                         Click="OnQueueClick" ToolTipService.ToolTip="재생 대기열">
                     <Grid>
                         <FontIcon Glyph="&#xE8FD;" FontSize="13"/>
@@ -206,7 +217,6 @@
                                                 <Button x:Uid="NowPlaying_QueueRemoveButton" Grid.Column="2" Content="&#xE711;" FontFamily="Segoe Fluent Icons" FontSize="10"
                                                         Width="26" Height="26" CornerRadius="13" Background="Transparent"
                                                         BorderThickness="0" Padding="0"
-                                                        AutomationProperties.Name="대기열에서 제거"
                                                         ToolTipService.ToolTip="대기열에서 제거"
                                                         Click="OnQueueRemoveClick" Tag="{x:Bind Index}"/>
                                             </Grid>
@@ -223,7 +233,6 @@
 
                 <!-- Lyrics Pane Toggle Button (Spotify/Apple Music Style) -->
                 <ToggleButton x:Uid="NowPlaying_LyricsButton" x:Name="LyricsButton" Style="{StaticResource TransportToggleButton}"
-                              AutomationProperties.Name="가사 패널"
                               Click="OnLyricsClick" ToolTipService.ToolTip="가사 패널">
                     <FontIcon Glyph="&#xEC4F;" FontSize="13"/>
                 </ToggleButton>

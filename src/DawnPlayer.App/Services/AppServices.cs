@@ -37,6 +37,7 @@ public static class AppServices
     public static SleepTimerService SleepTimer { get; private set; } = null!;
     public static ScrobbleService Scrobbler { get; private set; } = null!;
     public static Core.Audio.Dsp.Plugins.DspPluginLoader DspPlugins { get; private set; } = null!;
+    public static MotionService Motion { get; private set; } = null!;
 
     public static DispatcherQueue? Ui { get; private set; }
     public static IntPtr MainWindowHandle { get; private set; }
@@ -143,6 +144,7 @@ public static class AppServices
         services.AddSingleton(sp => new AudioSettingsService(Settings, sp.GetRequiredService<PlaybackController>()));
         services.AddSingleton(sp => new EqSettingsService(Settings, sp.GetRequiredService<PlaybackController>()));
         services.AddSingleton(sp => new AppearanceSettingsService(Settings));
+        services.AddSingleton(sp => new MotionService(new WindowsMotionSource(), () => Settings.Ui.MotionEnabled));
         services.AddSingleton(sp => new ShortcutService(Settings));
         services.AddSingleton(sp =>
         {
@@ -151,6 +153,10 @@ public static class AppServices
             return lyricsOnline;
         });
         Container = services.BuildServiceProvider();
+
+        // U3: seed the list-density resources from the persisted preset before any page XAML
+        // realizes rows; appearance changes re-apply it (see the AppearanceChanged hook below).
+        ApplyDensity(Settings.Ui.DensityMode);
 
         Playlists = Container.GetRequiredService<PlaylistManager>();
         Playback = Container.GetRequiredService<PlaybackController>();
@@ -164,6 +170,7 @@ public static class AppServices
         AudioSettings = Container.GetRequiredService<AudioSettingsService>();
         EqSettings = Container.GetRequiredService<EqSettingsService>();
         AppearanceSettings = Container.GetRequiredService<AppearanceSettingsService>();
+        Motion = Container.GetRequiredService<MotionService>();
         Shortcuts = Container.GetRequiredService<ShortcutService>();
         var lyricsOnline = Container.GetRequiredService<LyricsOnlineService>();
         AppearanceSettings.AppearanceChanged += () => RunOnUi(() =>
@@ -172,6 +179,10 @@ public static class AppServices
             // Accent/palette changes must reach the auxiliary windows (lyrics editor/search)
             // too — they used to keep the stale accent forever.
             ThemeService.RefreshAuxiliaryWindows(Settings.Ui);
+            // U3: density preset may have changed — re-seed the row-metric resources. Rows that
+            // are already realized pick the new metrics up on their next rebuild trigger
+            // (filter/zoom/track change); brand-new realizations use them immediately.
+            ApplyDensity(Settings.Ui.DensityMode);
             // Close-to-tray may have just been toggled: keep the tray icon's lifetime in sync. A
             // disable while the window is hidden would strand the app with no visible surface, so
             // the window comes back up before the icon goes away.
@@ -604,7 +615,7 @@ public static class AppServices
                     var trackScanner = new Core.Audio.Dsp.LoudnessScanner(fmt.SampleRate, fmt.Channels);
                     var buf = new float[fmt.SampleRate * fmt.Channels]; // ~1 s slices
                     int read;
-                    while ((read = reader.Samples.Read(buf, 0, buf.Length)) > 0)
+                    while ((read = reader.Samples.Read(buf)) > 0)
                     {
                         ct.ThrowIfCancellationRequested();
                         trackScanner.ProcessSamples(buf, 0, read, fmt.Channels, weights);
@@ -693,5 +704,17 @@ public static class AppServices
         try { Playback.Dispose(); } catch { }
         try { Library.Dispose(); } catch { }
         try { Smtc.Dispose(); } catch { }
+    }
+
+    /// <summary>U3: writes the density preset's row metrics into the application resource scope.
+    /// Kept here (not in DensityScale) so the pure mapping stays linkable into the test project,
+    /// which cannot reference WinUI types.</summary>
+    private static void ApplyDensity(string mode)
+    {
+        var m = DensityScale.For(mode);
+        var resources = Microsoft.UI.Xaml.Application.Current.Resources;
+        resources[DensityScale.ResourceKeys.TrackRowMinHeight] = m.MinHeight;
+        resources[DensityScale.ResourceKeys.TrackRowSpacing] = m.Spacing;
+        resources[DensityScale.ResourceKeys.ListCoverSize] = m.CoverListSize;
     }
 }

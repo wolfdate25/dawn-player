@@ -839,4 +839,19 @@
   <data name="CoreMsg_FileOpenFailed" xml:space="preserve"><value>Could not open the file: {0}</value></data>
   <data name="CoreMsg_UnsupportedFormat" xml:space="preserve"><value>Unsupported format: {0}</value></data>
   <data name="CoreMsg_RestartFailedContinue" xml:space="preserve"><value>Could not apply the new output settings; continuing playback on the current output.</value></data>
+  <data name="Settings_Appearance_Motion_Title.Text" xml:space="preserve"><value>UI Motion</value></data>
+  <data name="Settings_Appearance_Motion_Desc.Text" xml:space="preserve"><value>Enables non-essential animations such as transitions and press feedback. Skipped regardless of this setting when Windows animation effects are off.</value></data>
+  <data name="Settings_Appearance_Density_Title.Text" xml:space="preserve"><value>List Density</value></data>
+  <data name="Settings_Appearance_Density_Desc.Text" xml:space="preserve"><value>Adjusts the padding and height of library and playlist rows.</value></data>
+  <data name="Settings_Appearance_Density_Combo.AutomationProperties.Name" xml:space="preserve"><value>List density</value></data>
+  <data name="Settings_Appearance_Density_Compact.Content" xml:space="preserve"><value>Compact</value></data>
+  <data name="Settings_Appearance_Density_Cozy.Content" xml:space="preserve"><value>Cozy (Standard)</value></data>
+  <data name="Settings_Appearance_Density_Comfortable.Content" xml:space="preserve"><value>Comfortable</value></data>
+  <data name="MainWindow_Menu_Fullscreen.Text" xml:space="preserve"><value>Full-screen Now Playing</value></data>
+  <data name="Fullscreen_WaveCanvas.AutomationProperties.Name" xml:space="preserve"><value>Waveform seekbar</value></data>
+  <data name="Fullscreen_SpectrumCanvas.AutomationProperties.Name" xml:space="preserve"><value>Spectrum</value></data>
+  <data name="Settings_Appearance_FsAcrylic_Title.Text" xml:space="preserve"><value>Full-screen Acrylic</value></data>
+  <data name="Settings_Appearance_FsAcrylic_Desc.Text" xml:space="preserve"><value>Uses an acrylic backdrop on the full-screen Now Playing surface. Off by default — it increases GPU and battery usage.</value></data>
+  <data name="Settings_Appearance_Accent_PlayGreen.Content" xml:space="preserve"><value>Play Green</value></data>
+  <data name="CoreMsg_DirectSoundUnavailableWaveOutFallback" xml:space="preserve"><value>DirectSound output could not be opened; playing through WaveOut instead.</value></data>
 </root>

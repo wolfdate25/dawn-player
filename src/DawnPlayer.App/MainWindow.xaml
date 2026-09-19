@@ -33,7 +33,7 @@
 
             <!-- Brand & Status Text -->
             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Spacing="8" Margin="0,0,24,0">
-                <Button x:Uid="MainWindow_TitleMenuButton" Style="{StaticResource TitleMenuButtonStyle}" AutomationProperties.Name="메뉴" ToolTipService.ToolTip="메뉴">
+                <Button x:Uid="MainWindow_TitleMenuButton" Style="{StaticResource TitleMenuButtonStyle}" ToolTipService.ToolTip="메뉴">
                     <FontIcon Glyph="&#xE700;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
                     <Button.Flyout>
                         <MenuFlyout Opening="OnTitleMenuOpening">
@@ -53,6 +53,9 @@
                             </MenuFlyoutSubItem>
                             <MenuFlyoutItem x:Uid="MainWindow_Menu_Mini" x:Name="MiniModeMenuItem" Text="미니 플레이어 (Mini Player)" Click="OnMenuMiniToggle">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE740;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem x:Uid="MainWindow_Menu_Fullscreen" x:Name="FullscreenMenuItem" Text="풀스크린 Now Playing (Full-screen Now Playing)" Click="OnMenuFullscreen">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE7F4;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                             <MenuFlyoutItem x:Uid="MainWindow_Menu_Report" Text="청취 리포트 (Listening Report)..." Click="OnMenuReport">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE9D9;"/></MenuFlyoutItem.Icon>
@@ -124,6 +127,8 @@
         <controls:NowPlayingBar x:Name="PlayerBar" Grid.Row="2"/>
 
         <InfoBar x:Name="NotifyBar" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                 Margin="0,0,16,12" MaxWidth="460" IsOpen="False" Severity="Informational"/>
+                 Margin="0,0,16,12" MaxWidth="460" IsOpen="False" Severity="Informational"
+                 Closed="OnNotifyBarClosed"
+                 AutomationProperties.LiveSetting="Polite"/>
     </Grid>
 </Window>

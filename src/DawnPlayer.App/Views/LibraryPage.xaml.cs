@@ -323,19 +323,26 @@ public sealed partial class LibraryPage : Page
         }
     }
 
+    private readonly Controls.LoadingGate _scanGate = new();
+
     private void OnScanProgress(DawnPlayer.Core.Library.ScanProgress p)
     {
         DispatcherQueue.TryEnqueue(() =>
         {
             if (p.Finished)
             {
+                _scanGate.End();
                 ScanProgress.Visibility = Visibility.Collapsed;
                 ScanProgress.Value = p.Total > 0 ? 100 : 0;
                 RescanButton.IsEnabled = true;
             }
             else
             {
-                ScanProgress.Visibility = Visibility.Visible;
+                // U2 loading gate: scans under the threshold (300ms) never flash the bar;
+                // longer scans show it from the threshold moment on.
+                _scanGate.Begin(Environment.TickCount64);
+                ScanProgress.Visibility = _scanGate.ShouldShow(Environment.TickCount64)
+                    ? Visibility.Visible : Visibility.Collapsed;
                 ScanProgress.Maximum = Math.Max(1, p.Total);
                 ScanProgress.Value = p.Done;
                 RescanButton.IsEnabled = false;

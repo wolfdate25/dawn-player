@@ -681,17 +681,17 @@ public class LibraryAndPlaybackConcurrencyTests
             Assert.True(seq.HasPrefetched);
 
             var buf = new byte[outFmt.AverageBytesPerSecond / 10]; // 100ms buffer
-            int read = seq.Read(buf, 0, buf.Length);
+            int read = seq.Read(buf);
             Assert.True(read > 0);
 
             // Test Pause / Resume
             seq.IsPaused = true;
-            int silenceRead = seq.Read(buf, 0, buf.Length);
+            int silenceRead = seq.Read(buf);
             Assert.Equal(buf.Length, silenceRead);
             Assert.All(buf, b => Assert.Equal(0, b));
 
             seq.IsPaused = false;
-            int resumeRead = seq.Read(buf, 0, buf.Length);
+            int resumeRead = seq.Read(buf);
             Assert.True(resumeRead > 0);
 
             // Test Seek

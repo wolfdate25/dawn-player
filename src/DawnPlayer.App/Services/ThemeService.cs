@@ -264,6 +264,16 @@ public static void ApplyTheme(Window window, UiSettings ui, Panel? rootGrid = nu
                 isLight ? "#267828C8" : "#33A78BFA",
                 isLight ? "#187828C8" : "#20A78BFA"),
 
+            // U5: the skill design system's "Dark audio + play green" accent (#22C55E family).
+            // Light-mode shade keeps the accent above the 3:1 UI threshold on the warm panel;
+            // the dark glyph (#141414) stays ≥3:1 on both fills.
+            AccentColorPreset.PlayGreen => (
+                isLight ? "#FF15803D" : "#FF22C55E",
+                isLight ? "#FF166534" : "#FF4ADE80",
+                isLight ? "#FF14532D" : "#FF16A34A",
+                isLight ? "#2615803D" : "#3322C55E",
+                isLight ? "#1815803D" : "#1A22C55E"),
+
             AccentColorPreset.Custom => DerivePaletteFromCustomHex(ui.CustomAccentHex, isLight),
 
             _ => ( // EoleAmber (Default)

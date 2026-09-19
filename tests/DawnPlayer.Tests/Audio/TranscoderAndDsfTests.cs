@@ -85,7 +85,7 @@ public sealed class TranscoderAndDsfTests
                 var buf = new float[44100];
                 float peak = 0;
                 int read;
-                while ((read = r.Samples.Read(buf, 0, buf.Length)) > 0)
+                while ((read = r.Samples.Read(buf)) > 0)
                 {
                     for (int i = 0; i < read; i++) peak = Math.Max(peak, Math.Abs(buf[i]));
                 }
@@ -157,7 +157,7 @@ public sealed class TranscoderAndDsfTests
 
             var buf = new float[44100];
             int total = 0, read;
-            while ((read = reader.Samples.Read(buf, 0, buf.Length)) > 0)
+            while ((read = reader.Samples.Read(buf)) > 0)
             {
                 // all-ones half decimates to +1.0; 0x55 half (0101...) to ≈0 after ×2−1 scaling.
                 for (int i = 0; i < read; i++)
@@ -195,7 +195,7 @@ public sealed class TranscoderAndDsfTests
                 $"seek landed at {reader.CurrentTime}");
 
             var buf = new float[100];
-            int got = reader.Samples.Read(buf, 0, 100);
+            int got = reader.Samples.Read(buf);
             Assert.Equal(100, got);
             Assert.All(buf, v => Assert.True(v > 0.99f, $"sample after seek {v}"));
         }

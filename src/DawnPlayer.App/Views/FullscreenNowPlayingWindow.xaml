@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="DawnPlayer.App.Views.FullscreenNowPlayingWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:DawnPlayer.App.Views">
+
+    <!-- U4 fullscreen Now Playing: immersive cover hero + waveform seek canvas + spectrum.
+         Contrast note (skill glassmorphism risk:conditional): text and bars always sit on the
+         dim overlay or the glass panel fill, never directly on the acrylic backdrop. -->
+    <Grid x:Name="Root" Background="{ThemeResource LayerBgBrush}" KeyDown="OnKeyDown">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Cover hero -->
+        <Image x:Name="CoverImage" Grid.Row="0" Stretch="Uniform" Margin="48,32,48,8"
+               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+        <!-- Bottom info panel -->
+        <Border Grid.Row="1" Background="{ThemeResource GlassFillBrush}"
+                BorderBrush="{ThemeResource GlassBorderBrush}" BorderThickness="0,1,0,0"
+                Padding="48,18,48,22">
+            <StackPanel Spacing="{StaticResource SpaceM}" MaxWidth="1100" HorizontalAlignment="Stretch">
+                <TextBlock x:Name="TrackTitle" Text="" FontSize="{StaticResource FontTitle}"
+                           FontWeight="SemiBold" Foreground="{ThemeResource TextPrimaryBrush}"
+                           TextTrimming="CharacterEllipsis"/>
+                <TextBlock x:Name="TrackArtist" Text="" FontSize="{StaticResource FontBody}"
+                           Foreground="{ThemeResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
+
+                <!-- Waveform seek canvas: full envelope (muted) + played clip (accent) -->
+                <Canvas x:Name="WaveCanvas" x:Uid="Fullscreen_WaveCanvas" Height="72" Background="Transparent"
+                        PointerPressed="OnWavePointerPressed"
+                        PointerMoved="OnWavePointerMoved"
+                        PointerReleased="OnWavePointerReleased"
+                        AutomationProperties.LiveSetting="Polite">
+                    <Polygon x:Name="WaveUnplayed" Fill="{ThemeResource SeparatorBrush}" Opacity="0.9"/>
+                    <Polygon x:Name="WavePlayed" Fill="{ThemeResource DawnAccentBrush}"/>
+                    <Canvas.Clip>
+                        <RectangleGeometry x:Name="WaveClip" Rect="0,0,0,72"/>
+                    </Canvas.Clip>
+                </Canvas>
+                <Grid>
+                    <TextBlock x:Name="ElapsedText" Text="0:00" FontSize="{StaticResource FontCaption}"
+                               Foreground="{ThemeResource TextSecondaryBrush}" HorizontalAlignment="Left"/>
+                    <TextBlock x:Name="RemainingText" Text="-0:00" FontSize="{StaticResource FontCaption}"
+                               Foreground="{ThemeResource TextSecondaryBrush}" HorizontalAlignment="Right"/>
+                </Grid>
+
+                <!-- 28-band spectrum (same tap the removed bottom-bar strip once used) -->
+                <Canvas x:Name="SpectrumCanvas" x:Uid="Fullscreen_SpectrumCanvas" Height="56"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

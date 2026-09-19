@@ -64,6 +64,18 @@ public sealed class AppearanceSettingsService : IAppearanceSettingsService
         SaveAndNotify();
     }
 
+    public void SetMotionEnabled(bool enabled)
+    {
+        _settings.Ui.MotionEnabled = enabled;
+        SaveAndNotify();
+    }
+
+    public void SetDensityMode(string mode)
+    {
+        _settings.Ui.DensityMode = DensityModes.Normalize(mode);
+        SaveAndNotify();
+    }
+
     public void RefreshAppearance()
     {
         AppearanceChanged?.Invoke();

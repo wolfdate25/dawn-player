@@ -371,11 +371,11 @@ public class PcmConvertAndSampleProviderTests
             _samples = samples;
         }
 
-        public int Read(float[] buffer, int offset, int count)
+        public int Read(Span<float> buffer)
         {
-            int available = Math.Min(count, _samples.Length - _position);
+            int available = Math.Min(buffer.Length, _samples.Length - _position);
             if (available <= 0) return 0;
-            Array.Copy(_samples, _position, buffer, offset, available);
+            _samples.AsSpan(_position, available).CopyTo(buffer);
             _position += available;
             return available;
         }
@@ -392,7 +392,7 @@ public class PcmConvertAndSampleProviderTests
         Assert.Equal(44100, converter.WaveFormat.SampleRate);
 
         float[] buffer = new float[8];
-        int read = converter.Read(buffer, 0, buffer.Length);
+        int read = converter.Read(buffer);
 
         Assert.Equal(8, read);
         // Each mono sample is duplicated to (L, R)
@@ -417,7 +417,7 @@ public class PcmConvertAndSampleProviderTests
         Assert.Equal(48000, conv.WaveFormat.SampleRate);
 
         float[] output = new float[4];
-        int read = conv.Read(output, 0, output.Length);
+        int read = conv.Read(output);
 
         Assert.Equal(4, read);
         Assert.Equal(1.0f, output[0], precision: 5);
@@ -434,7 +434,7 @@ public class PcmConvertAndSampleProviderTests
         var converter = new ChannelConverterSampleProvider(source, 2);
 
         float[] buffer = new float[4];
-        int read = converter.Read(buffer, 0, buffer.Length);
+        int read = converter.Read(buffer);
 
         Assert.Equal(4, read);
         Assert.Equal(stereoSamples, buffer);
@@ -453,7 +453,7 @@ public class PcmConvertAndSampleProviderTests
         var conv = new ChannelConverterSampleProvider(src, 2);
 
         float[] output = new float[frameCount * 2];
-        int read = conv.Read(output, 0, output.Length);
+        int read = conv.Read(output);
 
         Assert.Equal(frameCount * 2, read);
         for (int i = 0; i < frameCount; i++)
@@ -471,7 +471,7 @@ public class PcmConvertAndSampleProviderTests
         var converter = new ChannelConverterSampleProvider(source, 2);
 
         float[] buffer = new float[16];
-        int read = converter.Read(buffer, 0, buffer.Length);
+        int read = converter.Read(buffer);
 
         Assert.Equal(0, read);
     }

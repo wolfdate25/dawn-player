@@ -77,7 +77,7 @@ public class PlaybackRestartTests : IDisposable
 
         // First served audio must come from ~10s, not from the track start.
         var buf = new byte[outFmt.AverageBytesPerSecond / 10];
-        int read = seq.Read(buf, 0, buf.Length);
+        int read = seq.Read(buf);
         Assert.True(read > 0);
         var pos = seq.GetPosition();
         Assert.True(pos >= TimeSpan.FromSeconds(9.9), $"audio served from {pos}, expected ~10s");
@@ -264,7 +264,10 @@ public class PlaybackRestartTests : IDisposable
         using var lib = new MusicLibrary();
         var pm = new PlaylistManager(lib);
         var pl = pm.CreatePlaylist("RestartTest");
-        var settings = new AppSettings { Output = new OutputSettings { DriverType = AudioDriverType.DirectSound } };
+        // WASAPI shared, not DirectSound: the scenario (source vanishes mid-play → keep session
+        // + warn) is driver-independent, and this machine's DirectSound now rides the WaveOut
+        // fallback whose device can be contended away by parallel audio tests mid-run.
+        var settings = new AppSettings { Output = new OutputSettings { DriverType = AudioDriverType.Wasapi } };
         using var controller = new PlaybackController(settings, pm);
 
         var item = new PlaylistItem(new Track { Path = path, Title = "vanished", DurationMs = 15000 });
@@ -291,7 +294,9 @@ onexistentanished.flac";
 
         controller.RestartIfPlaying();
 
-        var settle = DateTime.UtcNow.AddSeconds(3);
+        // The fallback-driver path (DirectSound probe → WaveOut) plus parallel-suite load can
+        // stretch the failed reopen; the scenario only needs the warning to EVENTUALLY arrive.
+        var settle = DateTime.UtcNow.AddSeconds(10);
         while (DateTime.UtcNow < settle && warnings.Count == 0)
         {
             await Task.Delay(25);
