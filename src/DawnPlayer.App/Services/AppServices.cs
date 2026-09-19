@@ -174,7 +174,14 @@ public static class AppServices
         });
         Playback.AbRepeatChanged += () => RunOnUi(() => AbRepeatChanged?.Invoke());
         Playback.TrackLeft += OnPlaybackTrackLeft;
-        Playback.Warning += msg => { App.Log($"[Playback] {msg}"); RunOnUi(() => WarningRaised?.Invoke(msg)); };
+        Playback.Warning += msg =>
+        {
+            // Core emits keyed sentences (it has no resource catalog); translate here so the
+            // InfoBar shows the UI language while the log keeps the raw wire format.
+            var localized = Localization.AppStrings.LocalizeCoreMessage(msg);
+            App.Log($"[Playback] {msg}");
+            RunOnUi(() => WarningRaised?.Invoke(localized));
+        };
         Playback.SessionStarted += info =>
         {
             App.Log($"[Session] {info.DeviceName} exclusive={info.Exclusive} {info.FormatDescription}");

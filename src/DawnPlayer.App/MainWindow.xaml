@@ -77,7 +77,6 @@
                         DoubleTapped="OnTabDoubleTapped">
                 <RadioButton x:Name="TabLibrary" GroupName="TopNavGroup" IsChecked="True"
                              AutomationProperties.AutomationId="TabLibrary"
-                             AutomationProperties.Name="Library"
                              Style="{StaticResource EoleNavTabStyle}" Click="OnTabLibraryClick"
                              DoubleTapped="OnTabDoubleTapped">
                     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
@@ -87,7 +86,6 @@
                 </RadioButton>
                 <RadioButton x:Name="TabPlaylists" GroupName="TopNavGroup"
                              AutomationProperties.AutomationId="TabPlaylists"
-                             AutomationProperties.Name="Playlists"
                              Style="{StaticResource EoleNavTabStyle}" Click="OnTabPlaylistsClick"
                              DoubleTapped="OnTabDoubleTapped">
                     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">

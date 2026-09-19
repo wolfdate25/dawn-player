@@ -827,4 +827,15 @@
   <data name="LyricsEditor_MoveLineDownBtn.AutomationProperties.Name" xml:space="preserve"><value>選択行を下へ</value></data>
   <data name="LyricsEditor_PasteClipboardBtn.AutomationProperties.Name" xml:space="preserve"><value>クリップボードから歌詞を取得</value></data>
   <data name="LyricsEditor_SeekToLineBtn.AutomationProperties.Name" xml:space="preserve"><value>この位置から再生</value></data>
+  <data name="CoreMsg_NextTrackMissing" xml:space="preserve"><value>次のトラックがありません。</value></data>
+  <data name="CoreMsg_PlayStartFailed" xml:space="preserve"><value>再生の開始に失敗しました: {0}</value></data>
+  <data name="CoreMsg_NextTrackFailed" xml:space="preserve"><value>次のトラックの再生に失敗しました: {0}</value></data>
+  <data name="CoreMsg_PlaybackError" xml:space="preserve"><value>再生エラー: {0}</value></data>
+  <data name="CoreMsg_DirectSoundDeviceMissing" xml:space="preserve"><value>設定された DirectSound デバイスが見つからないため、既定のデバイスで再生します。</value></data>
+  <data name="CoreMsg_WaveOutDeviceMissing" xml:space="preserve"><value>設定された WaveOut デバイスが見つからないため、既定のサウンド マッパーで再生します。</value></data>
+  <data name="CoreMsg_ExclusiveFallbackShared" xml:space="preserve"><value>WASAPI排他モードを開けません（他のプログラムがデバイス使用中）。共有モードで再生します。</value></data>
+  <data name="CoreMsg_OutputDeviceNotFound" xml:space="preserve"><value>オーディオ出力デバイスが見つかりません。</value></data>
+  <data name="CoreMsg_DoPUnsupportedFallback" xml:space="preserve"><value>このデバイスではDoP再生が不可のため、DSDをPCMに変換します（設定で変更可能）。</value></data>
+  <data name="CoreMsg_FileOpenFailed" xml:space="preserve"><value>ファイルを開けません: {0}</value></data>
+  <data name="CoreMsg_UnsupportedFormat" xml:space="preserve"><value>サポートされていない形式です: {0}</value></data>
 </root>

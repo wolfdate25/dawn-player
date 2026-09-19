@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using DawnPlayer.Core.Models;
 using DawnPlayer.Core.Persistence;
+using DawnPlayer.Core.Util;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
 
@@ -56,7 +57,7 @@ public sealed class WasapiOutputDriver : IOutputDriver
 
         var device = WasapiDeviceService.OpenDevice(_settings.Output.DeviceId);
         if (device == null)
-            throw new InvalidOperationException("오디오 출력 장치를 찾을 수 없습니다.");
+            throw new InvalidOperationException(CoreMessages.Encode(CoreMessageKey.OutputDeviceNotFound));
 
         bool exclusive = _settings.Output.UseExclusiveMode;
 
@@ -74,7 +75,7 @@ public sealed class WasapiOutputDriver : IOutputDriver
                 if (!DsdSupport.IsDoPBlocked)
                 {
                     DsdSupport.BlockDoP();
-                    request.Warn("이 장치에서 DoP 재생이 불가능해 DSD를 PCM으로 변환합니다 (설정에서 다시 선택 가능).");
+                    request.Warn(CoreMessages.Encode(CoreMessageKey.DoPUnsupportedFallback));
                 }
                 first = request.ReopenPendingAsPcm(first);
             }
@@ -142,7 +143,7 @@ public sealed class WasapiOutputDriver : IOutputDriver
             }
 
             // Only now is the claim true.
-            request.Warn("WASAPI 배타 모드를 열 수 없습니다 (다른 프로그램이 장치 사용 중). 공유 모드로 재생합니다.");
+            request.Warn(CoreMessages.Encode(CoreMessageKey.ExclusiveFallbackShared));
         }
 
         var info = new SessionInfo(
@@ -169,7 +170,7 @@ public sealed class DirectSoundOutputDriver : IOutputDriver
         if (!string.IsNullOrEmpty(_settings.Output.DeviceId)
             && (!Guid.TryParse(_settings.Output.DeviceId, out var configuredGuid) || configuredGuid != dsGuid))
         {
-            request.Warn("설정된 DirectSound 장치를 찾을 수 없어 기본 장치로 재생합니다.");
+            request.Warn(CoreMessages.Encode(CoreMessageKey.DirectSoundDeviceMissing));
         }
 
         var rate = first.Reader.SourceFormat.SampleRate > 0 ? first.Reader.SourceFormat.SampleRate : 44100;
@@ -209,7 +210,7 @@ public sealed class WaveOutOutputDriver : IOutputDriver
         if (!string.IsNullOrEmpty(_settings.Output.DeviceId)
             && (!int.TryParse(_settings.Output.DeviceId, out var configuredNum) || configuredNum != devNum))
         {
-            request.Warn("설정된 WaveOut 장치를 찾을 수 없어 기본 사운드 매퍼로 재생합니다.");
+            request.Warn(CoreMessages.Encode(CoreMessageKey.WaveOutDeviceMissing));
         }
 
         var rate = first.Reader.SourceFormat.SampleRate > 0 ? first.Reader.SourceFormat.SampleRate : 44100;

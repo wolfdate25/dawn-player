@@ -142,7 +142,7 @@ public static class AudioFileReaderFactory
         if (chosen == null)
         {
             throw new AudioOpenException(
-                $"지원하지 않는 형식입니다: {System.IO.Path.GetFileName(path)}",
+                CoreMessages.Encode(CoreMessageKey.UnsupportedFormat, System.IO.Path.GetFileName(path)),
                 new InvalidOperationException($"no track reader provider accepts '{ext}'"));
         }
 
@@ -156,7 +156,8 @@ public static class AudioFileReaderFactory
         }
         catch (Exception ex)
         {
-            throw new AudioOpenException($"파일을 열 수 없습니다: {System.IO.Path.GetFileName(path)}", ex);
+            throw new AudioOpenException(
+                CoreMessages.Encode(CoreMessageKey.FileOpenFailed, System.IO.Path.GetFileName(path)), ex);
         }
     }
 }

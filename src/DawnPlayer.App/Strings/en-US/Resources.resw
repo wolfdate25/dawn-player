@@ -827,4 +827,15 @@
   <data name="LyricsEditor_MoveLineDownBtn.AutomationProperties.Name" xml:space="preserve"><value>Move line down</value></data>
   <data name="LyricsEditor_PasteClipboardBtn.AutomationProperties.Name" xml:space="preserve"><value>Import lyrics from clipboard</value></data>
   <data name="LyricsEditor_SeekToLineBtn.AutomationProperties.Name" xml:space="preserve"><value>Play audio from this position</value></data>
+  <data name="CoreMsg_NextTrackMissing" xml:space="preserve"><value>No next track.</value></data>
+  <data name="CoreMsg_PlayStartFailed" xml:space="preserve"><value>Playback failed to start: {0}</value></data>
+  <data name="CoreMsg_NextTrackFailed" xml:space="preserve"><value>Failed to play the next track: {0}</value></data>
+  <data name="CoreMsg_PlaybackError" xml:space="preserve"><value>Playback error: {0}</value></data>
+  <data name="CoreMsg_DirectSoundDeviceMissing" xml:space="preserve"><value>The configured DirectSound device was not found; playing on the default device.</value></data>
+  <data name="CoreMsg_WaveOutDeviceMissing" xml:space="preserve"><value>The configured WaveOut device was not found; playing on the default sound mapper.</value></data>
+  <data name="CoreMsg_ExclusiveFallbackShared" xml:space="preserve"><value>WASAPI exclusive mode could not be opened (the device is in use by another program). Playing in shared mode.</value></data>
+  <data name="CoreMsg_OutputDeviceNotFound" xml:space="preserve"><value>No audio output device was found.</value></data>
+  <data name="CoreMsg_DoPUnsupportedFallback" xml:space="preserve"><value>This device cannot play DoP; converting DSD to PCM (you can change this in Settings).</value></data>
+  <data name="CoreMsg_FileOpenFailed" xml:space="preserve"><value>Could not open the file: {0}</value></data>
+  <data name="CoreMsg_UnsupportedFormat" xml:space="preserve"><value>Unsupported format: {0}</value></data>
 </root>

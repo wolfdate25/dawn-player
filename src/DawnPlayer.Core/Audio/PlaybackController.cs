@@ -279,7 +279,7 @@ public sealed partial class PlaybackController : IPlaybackController
             .ConfigureAwait(false);
         if (pending == null)
         {
-            Warning?.Invoke("다음 트랙이 없습니다.");
+            Warning?.Invoke(CoreMessages.Encode(CoreMessageKey.NextTrackMissing));
             return;
         }
 
@@ -632,7 +632,8 @@ public sealed partial class PlaybackController : IPlaybackController
             {
                 TeardownSessionLocked();
                 State = PlaybackState.Stopped;
-                Warning?.Invoke($"재생 시작 실패: {(ex is AudioSessionStartException ? ex.Message : AudioErrorMessages.DescribeStartFailure(ex))}");
+                Warning?.Invoke(CoreMessages.Encode(CoreMessageKey.PlayStartFailed,
+                    ex is AudioSessionStartException ? ex.Message : AudioErrorMessages.DescribeStartFailure(ex)));
             }
             finally
             {
@@ -985,7 +986,8 @@ public sealed partial class PlaybackController : IPlaybackController
                     TeardownSessionLocked();
                     State = PlaybackState.Stopped;
                     Log.Warn($"[playback] natural advance failed: {ex}");
-                    Warning?.Invoke($"다음 트랙 재생 실패: {(ex is AudioSessionStartException ? ex.Message : AudioErrorMessages.DescribeStartFailure(ex))}");
+                    Warning?.Invoke(CoreMessages.Encode(CoreMessageKey.NextTrackFailed,
+                        ex is AudioSessionStartException ? ex.Message : AudioErrorMessages.DescribeStartFailure(ex)));
                 }
             }
             StateChanged?.Invoke();
@@ -995,7 +997,7 @@ public sealed partial class PlaybackController : IPlaybackController
         ThreadPool.QueueUserWorkItem(_ =>
         {
             if (!ReferenceEquals(Sequencer, raiser)) return;
-            Warning?.Invoke($"재생 오류: {ex.Message}");
+            Warning?.Invoke(CoreMessages.Encode(CoreMessageKey.PlaybackError, ex.Message));
             Stop();
         });
 

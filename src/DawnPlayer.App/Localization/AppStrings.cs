@@ -54,6 +54,22 @@ public static class AppStrings
     /// </summary>
     public static string Format(string key, string fallbackFormat, params object[] args) => _instance.Format(key, fallbackFormat, args);
 
+    /// <summary>
+    /// Translates a keyed Core message (<c>coremsg:&lt;Key&gt;args…</c>, see
+    /// <c>DawnPlayer.Core.Util.CoreMessages</c>) into the UI language via the
+    /// <c>CoreMsg_&lt;Key&gt;</c> resw entries. Raw strings pass through untouched, so
+    /// App-originated warnings are unaffected.
+    /// </summary>
+    public static string LocalizeCoreMessage(string raw)
+    {
+        if (!DawnPlayer.Core.Util.CoreMessages.TryDecode(raw, out var key, out var args))
+        {
+            return raw;
+        }
+
+        return Format("CoreMsg_" + key, DawnPlayer.Core.Util.CoreMessages.Localize(key, args), args);
+    }
+
     /// <summary>Plural-form helper. Reads <c>{baseKey}_{suffix}</c> where suffix is one of
     /// <c>Zero</c>, <c>One</c>, <c>Other</c>; falls back to <c>{baseKey}_Other</c> when the
     /// specific key is missing (e.g. only Other is defined for the language).</summary>

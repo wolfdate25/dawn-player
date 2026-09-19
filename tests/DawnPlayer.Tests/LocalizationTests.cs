@@ -286,7 +286,63 @@ public class LocalizationTests
             + string.Join("\n", offenders));
     }
 
+    [Fact]
+    public void Xaml_AutomationNames_CarryReswKeys()
+    {
+        // M6-5 gate: a hardcoded AutomationProperties.Name is only a compile-time fallback; the
+        // screen-reader-facing text must come from the resw pipeline so non-Korean users get
+        // localized names. Every element that hardcodes an automation name therefore needs an
+        // x:Uid and a matching '<uid>.AutomationProperties.Name' key.
+        var root = FindRepoRoot();
+        Assert.True(root != null, "Repository root not found; see ReswFiles_HaveValidXml_AndIdenticalKeySets.");
+        var keys = ReswKeySet();
+
+        var offenders = new List<string>();
+        foreach (var file in Directory.EnumerateFiles(AppSourceDir(root!), "*.xaml", SearchOption.AllDirectories))
+        {
+            var sep = System.IO.Path.DirectorySeparatorChar;
+            if (file.Contains($"{sep}bin{sep}") || file.Contains($"{sep}obj{sep}"))
+            {
+                continue;
+            }
+
+            var text = File.ReadAllText(file);
+            // Opening tags can span lines; attribute values in this codebase never contain '>'.
+            foreach (Match tag in ElementTagPattern.Matches(text))
+            {
+                var uid = UidValuePattern.Match(tag.Value);
+                var auto = AutoNameValuePattern.Match(tag.Value);
+                // Bindings supply the name at runtime from (already localized) view data.
+                if (!auto.Success || auto.Groups[1].Value.TrimStart().StartsWith("{"))
+                {
+                    continue;
+                }
+
+                int line = 1;
+                for (int i = 0; i < tag.Index; i++)
+                {
+                    if (text[i] == '\n') line++;
+                }
+
+                if (!uid.Success)
+                {
+                    offenders.Add($"  {System.IO.Path.GetRelativePath(root!.FullName, file)}:{line} '{auto.Groups[1].Value}' has no x:Uid");
+                }
+                else if (!keys.Contains(uid.Groups[1].Value + ".AutomationProperties.Name"))
+                {
+                    offenders.Add($"  {System.IO.Path.GetRelativePath(root!.FullName, file)}:{line} '{uid.Groups[1].Value}.AutomationProperties.Name' missing from resw");
+                }
+            }
+        }
+
+        Assert.True(offenders.Count == 0,
+            "Automation names must be keyed for localization:\n" + string.Join("\n", offenders));
+    }
+
     private static readonly Regex XUidPattern = new("x:Uid=\"([^\"]+)\"", RegexOptions.Compiled);
+    private static readonly Regex ElementTagPattern = new(@"<[A-Za-z][A-Za-z0-9_.:]*(?:\s[^<>]*?)?>", RegexOptions.Compiled | RegexOptions.Singleline);
+    private static readonly Regex UidValuePattern = new("x:Uid=\"([^\"]+)\"");
+    private static readonly Regex AutoNameValuePattern = new("AutomationProperties.Name=\"([^\"]+)\"");
     private static readonly Regex WindowOpeningTagPattern = new(@"<Window\b[^>]*>", RegexOptions.Compiled);
     private static readonly Regex LiteralKeyPattern =
         new("AppStrings\\.(?:Get|GetString|Format|GetPlural)\\(\\s*\"([^\"]+)\"", RegexOptions.Compiled);

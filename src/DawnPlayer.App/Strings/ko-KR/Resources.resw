@@ -827,4 +827,15 @@
   <data name="LyricsEditor_MoveLineDownBtn.AutomationProperties.Name" xml:space="preserve"><value>선택 줄 아래로</value></data>
   <data name="LyricsEditor_PasteClipboardBtn.AutomationProperties.Name" xml:space="preserve"><value>클립보드에서 가사 텍스트 가져오기</value></data>
   <data name="LyricsEditor_SeekToLineBtn.AutomationProperties.Name" xml:space="preserve"><value>이 위치로 오디오 재생</value></data>
+  <data name="CoreMsg_NextTrackMissing" xml:space="preserve"><value>다음 트랙이 없습니다.</value></data>
+  <data name="CoreMsg_PlayStartFailed" xml:space="preserve"><value>재생 시작 실패: {0}</value></data>
+  <data name="CoreMsg_NextTrackFailed" xml:space="preserve"><value>다음 트랙 재생 실패: {0}</value></data>
+  <data name="CoreMsg_PlaybackError" xml:space="preserve"><value>재생 오류: {0}</value></data>
+  <data name="CoreMsg_DirectSoundDeviceMissing" xml:space="preserve"><value>설정된 DirectSound 장치를 찾을 수 없어 기본 장치로 재생합니다.</value></data>
+  <data name="CoreMsg_WaveOutDeviceMissing" xml:space="preserve"><value>설정된 WaveOut 장치를 찾을 수 없어 기본 사운드 매퍼로 재생합니다.</value></data>
+  <data name="CoreMsg_ExclusiveFallbackShared" xml:space="preserve"><value>WASAPI 배타 모드를 열 수 없습니다 (다른 프로그램이 장치 사용 중). 공유 모드로 재생합니다.</value></data>
+  <data name="CoreMsg_OutputDeviceNotFound" xml:space="preserve"><value>오디오 출력 장치를 찾을 수 없습니다.</value></data>
+  <data name="CoreMsg_DoPUnsupportedFallback" xml:space="preserve"><value>이 장치에서 DoP 재생이 불가능해 DSD를 PCM으로 변환합니다 (설정에서 다시 선택 가능).</value></data>
+  <data name="CoreMsg_FileOpenFailed" xml:space="preserve"><value>파일을 열 수 없습니다: {0}</value></data>
+  <data name="CoreMsg_UnsupportedFormat" xml:space="preserve"><value>지원하지 않는 형식입니다: {0}</value></data>
 </root>
