@@ -17,6 +17,7 @@ public enum CoreMessageKey
     DoPUnsupportedFallback,
     FileOpenFailed,
     UnsupportedFormat,
+    RestartFailedContinue,
 }
 
 /// <summary>Encoder/decoder for keyed Core messages. Wire format:
@@ -65,6 +66,7 @@ public static class CoreMessages
         CoreMessageKey.DoPUnsupportedFallback => "이 장치에서 DoP 재생이 불가능해 DSD를 PCM으로 변환합니다 (설정에서 다시 선택 가능).",
         CoreMessageKey.FileOpenFailed => Format("파일을 열 수 없습니다: {0}", args),
         CoreMessageKey.UnsupportedFormat => Format("지원하지 않는 형식입니다: {0}", args),
+        CoreMessageKey.RestartFailedContinue => "새 출력 설정을 적용할 수 없어 기존 출력으로 계속 재생합니다.",
         _ => key.ToString(),
     };
 

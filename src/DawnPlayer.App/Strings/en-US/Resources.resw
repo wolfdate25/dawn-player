@@ -838,4 +838,5 @@
   <data name="CoreMsg_DoPUnsupportedFallback" xml:space="preserve"><value>This device cannot play DoP; converting DSD to PCM (you can change this in Settings).</value></data>
   <data name="CoreMsg_FileOpenFailed" xml:space="preserve"><value>Could not open the file: {0}</value></data>
   <data name="CoreMsg_UnsupportedFormat" xml:space="preserve"><value>Unsupported format: {0}</value></data>
+  <data name="CoreMsg_RestartFailedContinue" xml:space="preserve"><value>Could not apply the new output settings; continuing playback on the current output.</value></data>
 </root>

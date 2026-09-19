@@ -232,4 +232,98 @@ public class PlaybackRestartTests : IDisposable
         Assert.Equal(DawnPlayer.Core.Audio.PlaybackState.Stopped, controller.State);
         Assert.Equal(TimeSpan.Zero, controller.Position);
     }
+
+    /// <summary>
+    /// M6-4-era mismatch guard: a decoder that cannot seek (a live radio stream's reconnect is
+    /// the shipped case) must not be reported at the REQUESTED position. The sequencer used to
+    /// publish the requested offset while the decoder served from its own place — the seekbar
+    /// flowed from a stale offset while the audio played something else.
+    /// </summary>
+    [Fact]
+    public void SwitchTo_NoSeekReader_ReportsTheDecoderPosition_NotTheRequestedOne()
+    {
+        var path = CreateWav("noseek.wav", 30);
+        var outFmt = WaveFormat.CreateIeeeFloatWaveFormat(44100, 2);
+        var seq = new SequencerStream(outFmt, applyVolume: false, _ => 1f, latencyMs: 50);
+
+        var pl = new Playlist("RestartTest");
+        var item = new PlaylistItem(new Track { Path = path, Title = "noseek" });
+        using var reader = AudioFileReaderFactory.Open(path);
+        using var noSeek = new NoSeekReaderWrapper(reader);
+
+        seq.SwitchTo(MakePending(pl, item, noSeek, TimeSpan.FromSeconds(10)));
+
+        Assert.True(seq.GetPosition() < TimeSpan.FromSeconds(0.5),
+            $"reported position {seq.GetPosition()} must follow the decoder (which cannot seek), not the requested 10s");
+    }
+
+    [Fact]
+    public async Task RestartIfPlaying_WhenTheSourceBecameUnreadable_KeepsTheSessionAndWarns()
+    {
+        var path = CreateWav("vanished.wav", 15);
+        using var lib = new MusicLibrary();
+        var pm = new PlaylistManager(lib);
+        var pl = pm.CreatePlaylist("RestartTest");
+        var settings = new AppSettings { Output = new OutputSettings { DriverType = AudioDriverType.DirectSound } };
+        using var controller = new PlaybackController(settings, pm);
+
+        var item = new PlaylistItem(new Track { Path = path, Title = "vanished", DurationMs = 15000 });
+        pl.Items.Add(item);
+
+        await controller.PlayAsync(pl, item);
+
+        var timeout = DateTime.UtcNow.AddSeconds(5);
+        while (controller.Position < TimeSpan.FromSeconds(1.0) && DateTime.UtcNow < timeout)
+        {
+            await Task.Delay(50);
+        }
+
+        if (controller.State != DawnPlayer.Core.Audio.PlaybackState.Playing || controller.Position < TimeSpan.FromSeconds(0.8))
+        {
+            return; // DirectSound output unavailable in headless environment
+        }
+
+        // The source vanishes (network share drops, file is removed elsewhere) BEFORE the reopen.
+        var warnings = new List<string>();
+        controller.Warning += m => warnings.Add(m);
+        item.Track.Path = @"Z:
+onexistentanished.flac";
+
+        controller.RestartIfPlaying();
+
+        var settle = DateTime.UtcNow.AddSeconds(3);
+        while (DateTime.UtcNow < settle && warnings.Count == 0)
+        {
+            await Task.Delay(25);
+        }
+
+        Assert.True(warnings.Count > 0, "an unreadable source must surface a warning");
+        Assert.Contains("coremsg:RestartFailedContinue", warnings[0]);
+        // The live session was never torn down: playback and the reported position keep flowing.
+        Assert.Equal(DawnPlayer.Core.Audio.PlaybackState.Playing, controller.State);
+        Assert.True(controller.Position > TimeSpan.Zero, "the untouched session keeps playing");
+    }
+}
+
+
+/// <summary>Wraps a seekable reader as one that silently ignores seeks — the contract shape of
+/// RadioStreamReader, where a live stream cannot be repositioned.</summary>
+public sealed class NoSeekReaderWrapper : ITrackReader
+{
+    private readonly ITrackReader _inner;
+
+    public NoSeekReaderWrapper(ITrackReader inner) => _inner = inner;
+
+    public ISampleProvider Samples => _inner.Samples;
+    public WaveFormat SourceFormat => _inner.SourceFormat;
+    public TimeSpan TotalTime => _inner.TotalTime;
+
+    public TimeSpan CurrentTime
+    {
+        get => TimeSpan.Zero; // the decoder never moves to the requested offset
+        set { /* no-op, like the live-radio reader */ }
+    }
+
+    public string Path => _inner.Path;
+    public void Dispose() => _inner.Dispose();
 }

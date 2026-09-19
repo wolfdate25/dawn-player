@@ -838,4 +838,5 @@
   <data name="CoreMsg_DoPUnsupportedFallback" xml:space="preserve"><value>이 장치에서 DoP 재생이 불가능해 DSD를 PCM으로 변환합니다 (설정에서 다시 선택 가능).</value></data>
   <data name="CoreMsg_FileOpenFailed" xml:space="preserve"><value>파일을 열 수 없습니다: {0}</value></data>
   <data name="CoreMsg_UnsupportedFormat" xml:space="preserve"><value>지원하지 않는 형식입니다: {0}</value></data>
+  <data name="CoreMsg_RestartFailedContinue" xml:space="preserve"><value>새 출력 설정을 적용할 수 없어 기존 출력으로 계속 재생합니다.</value></data>
 </root>

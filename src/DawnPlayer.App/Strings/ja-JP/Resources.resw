@@ -838,4 +838,5 @@
   <data name="CoreMsg_DoPUnsupportedFallback" xml:space="preserve"><value>このデバイスではDoP再生が不可のため、DSDをPCMに変換します（設定で変更可能）。</value></data>
   <data name="CoreMsg_FileOpenFailed" xml:space="preserve"><value>ファイルを開けません: {0}</value></data>
   <data name="CoreMsg_UnsupportedFormat" xml:space="preserve"><value>サポートされていない形式です: {0}</value></data>
+  <data name="CoreMsg_RestartFailedContinue" xml:space="preserve"><value>新しい出力設定を適用できず、現在の出力で再生を続けます。</value></data>
 </root>

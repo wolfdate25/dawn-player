@@ -217,6 +217,17 @@ public sealed class SequencerStream : IWaveProvider
         var total = _current.Track.Reader.TotalTime;
         if (position > total) position = total;
         _current.Track.Reader.CurrentTime = position;
+
+        // Trust the decoder over the request. A decoder that cannot seek (a live radio stream's
+        // reconnect) or one that clamps reports where it actually is; publishing the requested
+        // position anyway made the seekbar flow from a stale offset while the audio served from
+        // somewhere else — the output-settings restart mismatch.
+        var actual = _current.Track.Reader.CurrentTime;
+        if (actual >= TimeSpan.Zero)
+        {
+            position = actual;
+        }
+
         Volatile.Write(ref _bytesServed, MfTrackReader.TimeToBytes(_outFormat, position));
         // The normalizer's converged gain stays valid across a seek within the track; resetting
         // it made the volume pump after every scrub. Delay-line/convolution/limiter state IS

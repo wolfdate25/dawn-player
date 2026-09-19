@@ -572,7 +572,14 @@ public sealed partial class PlaybackController : IPlaybackController
                     StateChanged?.Invoke();
                 }
             }
-            catch (AudioOpenException ex) { Log.Debug($"[playback] restart open failed: {ex.Message}"); }
+            catch (AudioOpenException ex)
+            {
+                // The reopen failed before anything was torn down: the old session is alive and
+                // keeps playing. Stop would throw away working audio, silence would strand the
+                // user — say what happened and continue on the current output.
+                Log.Warn($"[playback] restart aborted, keeping the current session: {ex.Message}");
+                Warning?.Invoke(CoreMessages.Encode(CoreMessageKey.RestartFailedContinue, ex.Message));
+            }
         });
     }
 
