@@ -100,8 +100,8 @@ HTTP/WS 원격 제어, PLS/XSPF, 풀스크린 Now Playing(`WaveformPeaks` 보존
 |---|---|---|---|
 | ~~M0–M3~~ | ~~완료~~ | ~~위 표 참조~~ | — |
 | M4 | DSD 고도화 (DoP + DFF) | ✅ 완료 `cfe4cd8` — `DopTrackReader`(WASAPI 배타 DoP), `DffRawReader`, PCM 폴백 체계, 정책 공존 | M–L |
-| M5 | App 구조 개선 | ✅ 1차 완료 `8a6dac1` — Lastfm VM+토큰 서비스화, SplitterChrome 통합, 타이머 게이팅. 잔여: DI 전면 전환, Library/Playlist 전체 VM화, 큐 델타 갱신 (아래 진행 기록 참조) | L |
-| M6 | 접근성·테마·i18n 사각지대 | ✅ 부분 완료 `79ef494` — 가사 창 테마 연결+액센트 전파, AutomationProperties i18n(3개 국어), 하이컨트라스트 가드. 잔여: Core 하드코딩 한국어의 리소스 키화(M6-4), XAML 자동화 속성 키 누락 검사 추가(M6-5) | S–M |
+| M5 | App 구조 개선 | ✅ 대부분 완료 `8a6dac1`+`3848e94`+후속 — DI 컨테이너 도입, 큐 델타 갱신, RechunkAlbumRows 무변경 고속경로, IUiDispatcher 헤드리스 경계, Playlist/Library VM(결정 로직+테스트 7종). **미달: code-behind LOC 50% 절감 기준** — 실측 PlaylistPage 741→727, LibraryPage 1149→1180(고속경로 헬퍼 포함). 50% 절감은 XAML 이벤트→커맨드 전환을 수반하는 대형 UI 리팩터링으로 별도 착수 필요 | L |
+| M6 | 접근성·테마·i18n 사각지대 | ✅ 완료 `79ef494`+`83be8f7` — 가사 창 테마 연결+액센트 전파, AutomationProperties i18n, 하이컨트라스트 가드, Core 메시지 키화(CoreMessageKey→App 레이어 변환, 11 resw 키×3개 국어, 테스트 8종), XAML 자동화 키 누락 게이트(실제 위반 2건 적발·수정) | S–M |
 | M7+ | 파워유저 기능 (선택) | 파일 정리, undo/redo, AcoustID, 원격 API 등 — 미착수 | 개별 L |
 
 순서 논리: M4는 M2의 `ITrackReaderProvider`/`IOutputDriver` 위에 얹는 순수 기능 마일스톤이고,

@@ -47,6 +47,8 @@ public sealed partial class LibraryPage : Page
     private TreeGroupMode _treeMode = TreeGroupMode.ArtistAlbum;
     private LibraryTreeNode? _selectedNode;
     private string _search = "";
+    private readonly DawnPlayer.App.ViewModels.Playlist.LibraryViewModel _libraryVm =
+        new(AppServices.Settings ?? new AppSettings());
     private List<Track> _visible = new();
     private readonly DispatcherTimer _rebuildDebounce = new() { Interval = TimeSpan.FromMilliseconds(250) };
     private readonly DispatcherTimer _resizeDebounce = new() { Interval = TimeSpan.FromMilliseconds(60) };
@@ -127,7 +129,7 @@ public sealed partial class LibraryPage : Page
             () => ColLeft.ActualWidth,
             w => ColLeft.Width = new GridLength(w),
             cursor => ProtectedCursor = cursor,
-            w => { if (AppServices.Settings != null) { AppServices.Settings.Ui.LeftSidebarWidth = w; SettingsWriter.Schedule(AppServices.Settings); } });
+            w => _libraryVm.SaveSidebarWidth(w, AppServices.Settings.Ui.LeftSidebarWidth, min: 140, max: 400));
 
         _rightResizer = new SplitterResizer(
             MainLayoutGrid, RightSplitterLine, 180, 500, invertDelta: true,
@@ -422,6 +424,15 @@ public sealed partial class LibraryPage : Page
         int cols = Math.Max(1, (int)((width - 28) / itemWidth));
         _lastColumnCount = cols;
 
+        // Fast path: when the card sequence and column count are unchanged, the chunking is
+        // identical by construction — keep the existing row objects instead of ReplaceAll,
+        // which re-realized every visible card for a no-op change (filter ticks, drawer
+        // refreshes). The open-drawer state lives on the kept rows and survives untouched.
+        if (AlbumRows.Count > 0 && RowsMatchCurrentChunking(cols))
+        {
+            return;
+        }
+
         var openAlbum = AlbumRows.FirstOrDefault(r => r.IsDrawerOpen)?.SelectedAlbum;
         var currentPath = AppServices.Playback?.CurrentItem?.Track?.Path;
 
@@ -449,6 +460,26 @@ public sealed partial class LibraryPage : Page
         }
 
         AlbumRows.ReplaceAll(newRows);
+    }
+
+    /// <summary>Whether the built cards, chunked into <paramref name="cols"/> columns, would
+    /// produce exactly the rows already held.</summary>
+    private bool RowsMatchCurrentChunking(int cols)
+    {
+        int expectedRows = (_allBuiltCards.Count + cols - 1) / cols;
+        if (AlbumRows.Count != expectedRows) return false;
+        for (int r = 0; r < AlbumRows.Count; r++)
+        {
+            var row = AlbumRows[r];
+            int start = r * cols;
+            int end = Math.Min(start + cols, _allBuiltCards.Count);
+            if (row.Cards.Count != end - start) return false;
+            for (int j = start; j < end; j++)
+            {
+                if (!ReferenceEquals(row.Cards[j - start], _allBuiltCards[j])) return false;
+            }
+        }
+        return true;
     }
 
     private void OnCoverGridSizeChanged(object sender, SizeChangedEventArgs e)

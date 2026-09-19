@@ -18,7 +18,8 @@ namespace DawnPlayer.App.Views;
 public sealed partial class PlaylistPage : Page
 {
     private Playlist? _playlist;
-    private bool _grouped = true;
+    private readonly DawnPlayer.App.ViewModels.Playlist.PlaylistViewModel _vm =
+        new(AppServices.Settings ?? new AppSettings());
     private readonly DispatcherTimer _rebuildDebounce = new() { Interval = TimeSpan.FromMilliseconds(200) };
 
     private SplitterResizer? _leftResizer;
@@ -52,8 +53,7 @@ public sealed partial class PlaylistPage : Page
                        ?? AppServices.Playlists.Current;
 
         PlaylistsSidebarList.SelectedItem = targetPl;
-        _grouped = AppServices.Settings.Ui.PlaylistGroupedView;
-        if (GroupToggleMenuItem != null) GroupToggleMenuItem.IsChecked = _grouped;
+        if (GroupToggleMenuItem != null) GroupToggleMenuItem.IsChecked = _vm.Grouped;
 
         AppServices.LibraryChanged += OnLibraryChanged;
         AppServices.CurrentTrackChanged += OnCurrentTrackChangedForLyrics;
@@ -234,7 +234,7 @@ public sealed partial class PlaylistPage : Page
     private void RateSelected(int stars)
     {
         var sel = SelectedItems();
-        if (sel.Count == 0) return;
+        if (!_vm.CanRate(sel)) return;
         AppServices.RateTracks(sel.Select(i => i.Track).ToList(), stars);
     }
 
@@ -550,7 +550,7 @@ public sealed partial class PlaylistPage : Page
 
             if (isEmpty) return;
 
-            if (_grouped)
+            if (_vm.Grouped)
             {
                 PlaylistList.CanReorderItems = false;
                 var groups = PlaylistGroupBuilder.BuildGroups(pl);
@@ -575,10 +575,7 @@ public sealed partial class PlaylistPage : Page
 
     private void OnGroupToggle(object sender, RoutedEventArgs e)
     {
-        _grouped = GroupToggleMenuItem?.IsChecked == true;
-        AppServices.Settings.Ui.PlaylistGroupedView = _grouped;
-        SettingsWriter.Schedule(AppServices.Settings);
-        Rebuild();
+        if (_vm.SetGrouped(GroupToggleMenuItem?.IsChecked == true)) Rebuild();
     }
 
     private void OnSortTitle(object sender, RoutedEventArgs e) => Sort(PlaylistSort.Title);
@@ -591,8 +588,7 @@ public sealed partial class PlaylistPage : Page
 
     private void Sort(PlaylistSort mode)
     {
-        if (Current.Items.Count > 1)
-            AppServices.Playlists.Sort(Current, mode);
+        if (_vm.CanSort(Current)) AppServices.Playlists.Sort(Current, mode);
     }
 
     private void OnRemoveDuplicates(object sender, RoutedEventArgs e) =>
@@ -603,13 +599,11 @@ public sealed partial class PlaylistPage : Page
         try
         {
             int removed = await AppServices.Playlists.RemoveDeadItemsAsync(Current);
-            if (removed > 0)
+            var note = _vm.DescribeDeadItemSweepOutcome(removed);
+            if (note != null)
             {
-                AppServices.RaiseWarning(AppStrings.Format("Msg_RemovedMissingFiles", "존재하지 않는 파일 {0}곡을 재생목록에서 제거했습니다.", removed));
-            }
-            else
-            {
-                AppServices.RaiseWarning(AppStrings.Get("Msg_NoMissingFiles", "제거할 누락된 파일이 없습니다."));
+                var (key, fallback, args) = note.Value;
+                AppServices.RaiseWarning(AppStrings.Format(key, fallback, args));
             }
         }
         catch (Exception ex)
@@ -632,8 +626,8 @@ public sealed partial class PlaylistPage : Page
     private void SyncStopAfterCurrentMenuItem()
     {
         if (StopAfterCurrentMenuItem == null || AppServices.Playback == null) return;
-        var flag = AppServices.Playback.StopAfterCurrent;
-        if (StopAfterCurrentMenuItem.IsChecked != flag) StopAfterCurrentMenuItem.IsChecked = flag;
+        StopAfterCurrentMenuItem.IsChecked =
+            _vm.SyncStopAfterCurrentMenu(AppServices.Playback.StopAfterCurrent, StopAfterCurrentMenuItem.IsChecked);
     }
 
     private void OnClearPlaylist(object sender, RoutedEventArgs e) =>

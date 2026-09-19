@@ -75,7 +75,8 @@
     <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\ShortcutGroupViewModel.cs" Link="ViewModels\Settings\ShortcutGroupViewModel.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\ShortcutSettingsViewModel.cs" Link="ViewModels\Settings\ShortcutSettingsViewModel.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\SettingsViewModel.cs" Link="ViewModels\Settings\SettingsViewModel.cs" />
-    <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\LastfmSettingsViewModel.cs" Link="ViewModels\Settings\LastfmSettingsViewModel.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Playlist\PlaylistViewModel.cs" Link="ViewModels\Playlist\PlaylistViewModel.cs" />
+        <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\LastfmSettingsViewModel.cs" Link="ViewModels\Settings\LastfmSettingsViewModel.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Views\NavigationStateCalculator.cs" Link="Views\NavigationStateCalculator.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Views\Library\LibraryTreeNode.cs" Link="Views\Library\LibraryTreeNode.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Views\Library\LibraryTreeModelBuilder.cs" Link="Views\Library\LibraryTreeModelBuilder.cs" />
