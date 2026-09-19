@@ -49,7 +49,6 @@
   <data name="MainWindow_Menu_Sleep_60" xml:space="preserve"><value>1 hour</value></data>
   <data name="MainWindow_Menu_Sleep_Track" xml:space="preserve"><value>After current track</value></data>
   <data name="MainWindow_Menu_Sleep_RemainingFormat" xml:space="preserve"><value>{0} ({1:mm\:ss})</value></data>
-  <data name="MainWindow_Menu_Settings.Text" xml:space="preserve"><value>Preferences</value></data>
   <data name="MainWindow_Menu_Exit.Text" xml:space="preserve"><value>Exit</value></data>
   <data name="MainWindow_TitleBarTrack.Text" xml:space="preserve"><value>No sound — Nothing played</value></data>
   <data name="MainWindow_Tab_Library.Text" xml:space="preserve"><value>Library</value></data>
@@ -97,8 +96,6 @@
   <data name="NowPlaying_QueueEmptyText.Text" xml:space="preserve"><value>The queue is empty. Right-click a track and select 'Add to queue'.</value></data>
   <data name="NowPlaying_LyricsButton.AutomationProperties.Name" xml:space="preserve"><value>Lyrics pane</value></data>
   <data name="NowPlaying_LyricsButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Lyrics pane</value></data>
-  <data name="NowPlaying_SettingsButton.AutomationProperties.Name" xml:space="preserve"><value>Preferences</value></data>
-  <data name="NowPlaying_SettingsButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Preferences</value></data>
 
   <!-- Module 1: LyricsPane -->
   <data name="LyricsPane_HeaderTitle.Text" xml:space="preserve"><value>Lyrics</value></data>
@@ -245,7 +242,6 @@
   <data name="Playlist_EmptyDesc.Text" xml:space="preserve"><value>Drag and drop music files or folders into the window, or use [Add Files]·[Add Folder] from the top right menu.&#x0a;You can also add tracks from the Library.</value></data>
 
   <!-- Module 4: Lyrics Tools & Windows (LyricsEditor) -->
-  <data name="LyricsEditor_Window.Title" xml:space="preserve"><value>Lyrics Editor — Dawn Player</value></data>
   <data name="LyricsEditor_WindowTitle" xml:space="preserve"><value>Lyrics Editor — Dawn Player</value></data>
   <data name="LyricsEditor_TrackHeaderTitle.Text" xml:space="preserve"><value>Track Title</value></data>
   <data name="LyricsEditor_TrackHeaderArtist.Text" xml:space="preserve"><value>— Artist</value></data>
@@ -282,7 +278,6 @@
   <data name="LyricsEditor_Status_SaveFailed" xml:space="preserve"><value>Failed to save: {0}</value></data>
 
   <!-- Module 4: Lyrics Tools & Windows (LyricsSearch) -->
-  <data name="LyricsSearch_Window.Title" xml:space="preserve"><value>Search Lyrics Online — Dawn Player</value></data>
   <data name="LyricsSearch_WindowTitle" xml:space="preserve"><value>Search Lyrics Online — Dawn Player</value></data>
   <data name="LyricsSearch_TrackHeaderTitle.Text" xml:space="preserve"><value>Track Title</value></data>
   <data name="LyricsSearch_TrackHeaderArtist.Text" xml:space="preserve"><value>— Artist</value></data>
@@ -739,6 +734,7 @@
   <data name="Settings_About_AudioEngine.Text" xml:space="preserve"><value>Audio Engine: NAudio 2.3 · NAudio.Vorbis (NVorbis) · Windows Media Foundation (WASAPI Exclusive Bit-Perfect)</value></data>
   <data name="Settings_About_Metadata.Text" xml:space="preserve"><value>Tagging &amp; Metadata: TagLib# (ID3v2, Vorbis Comment, MP4, APE)</value></data>
   <data name="Settings_About_Database.Text" xml:space="preserve"><value>Database: Microsoft.Data.Sqlite (SQLite)</value></data>
+  <data name="Settings_About_GitHub.Content" xml:space="preserve"><value>GitHub repository</value></data>
 
   <!-- Common Dialogs -->
   <data name="Common_Close" xml:space="preserve"><value>Close</value></data>
@@ -789,18 +785,28 @@
   <data name="MainWindow_Menu_OpenUrl.Text" xml:space="preserve"><value>Open network stream (radio)...</value></data>
   <data name="OpenUrl_Title" xml:space="preserve"><value>Open network stream</value></data>
   <data name="OpenUrl_Header" xml:space="preserve"><value>Stream URL (Icecast/Shoutcast MP3)</value></data>
-  <data name="MainWindow_Menu_Lastfm.Text" xml:space="preserve"><value>Last.fm scrobbling...</value></data>
-  <data name="Lastfm_Title" xml:space="preserve"><value>Last.fm scrobbling</value></data>
   <data name="Lastfm_StatusNeedKeys" xml:space="preserve"><value>Enter your Last.fm API key and secret (create them at last.fm/api).</value></data>
   <data name="Lastfm_StatusAuthed" xml:space="preserve"><value>Authenticated as {0} · {1} scrobbles queued</value></data>
   <data name="Lastfm_StatusNotAuthed" xml:space="preserve"><value>Authorize in the browser to enable scrobbling.</value></data>
   <data name="Lastfm_StartAuth" xml:space="preserve"><value>Authorize in browser</value></data>
+  <data name="Lastfm_ConfirmAuth" xml:space="preserve"><value>Finish auth</value></data>
   <data name="Lastfm_Reauth" xml:space="preserve"><value>Re-authorize</value></data>
   <data name="Lastfm_AuthPending" xml:space="preserve"><value>Allow access in the browser, then press [Finish auth].</value></data>
   <data name="Lastfm_AuthDone" xml:space="preserve"><value>Authenticated as {0}. Scrobbling is on.</value></data>
   <data name="Lastfm_AuthFailed" xml:space="preserve"><value>Auth failed: {0}</value></data>
-  <data name="Lastfm_EnabledOn" xml:space="preserve"><value>Scrobbling on</value></data>
-  <data name="Lastfm_EnabledOff" xml:space="preserve"><value>Off</value></data>
+  <data name="Settings_Nav_Lastfm.Text" xml:space="preserve"><value>Last.fm</value></data>
+  <data name="Settings_Lastfm_Header.Text" xml:space="preserve"><value>Last.fm Scrobbling</value></data>
+  <data name="Settings_Lastfm_Enable_Title.Text" xml:space="preserve"><value>Scrobbling</value></data>
+  <data name="Settings_Lastfm_Enable_Desc.Text" xml:space="preserve"><value>Record played tracks to your Last.fm profile and send now-playing updates</value></data>
+  <data name="Settings_Lastfm_Enable_Toggle.OnContent" xml:space="preserve"><value>On</value></data>
+  <data name="Settings_Lastfm_Enable_Toggle.OffContent" xml:space="preserve"><value>Off</value></data>
+  <data name="Settings_Lastfm_Credentials_Title.Text" xml:space="preserve"><value>API credentials</value></data>
+  <data name="Settings_Lastfm_Credentials_Desc.Text" xml:space="preserve"><value>Enter the API key and secret you created at last.fm/api. Changing them invalidates the stored session.</value></data>
+  <data name="Settings_Lastfm_ApiKeyBox.PlaceholderText" xml:space="preserve"><value>api key</value></data>
+  <data name="Settings_Lastfm_ApiKeyBox.AutomationProperties.Name" xml:space="preserve"><value>Last.fm API key</value></data>
+  <data name="Settings_Lastfm_ApiSecretBox.PlaceholderText" xml:space="preserve"><value>shared secret</value></data>
+  <data name="Settings_Lastfm_ApiSecretBox.AutomationProperties.Name" xml:space="preserve"><value>Last.fm shared secret</value></data>
+  <data name="Settings_Lastfm_Auth_Title.Text" xml:space="preserve"><value>Account</value></data>
   <data name="Settings_Plugins_Dsp_Title.Text" xml:space="preserve"><value>DSP plugins</value></data>
   <data name="Settings_Plugins_Dsp_Desc.Text" xml:space="preserve"><value>Applies DSP effects from the plugins folder at the end of the playback chain. Newly added plugins are picked up after an app restart.</value></data>
   <data name="Settings_Plugins_Dsp_Toggle.OnContent" xml:space="preserve"><value>On</value></data>

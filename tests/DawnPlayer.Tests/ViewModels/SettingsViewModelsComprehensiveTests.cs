@@ -58,15 +58,18 @@ public sealed class SettingsViewModelsComprehensiveTests
         Assert.True(master.IsOnlineLyricsCategorySelected);
 
         master.SelectedCategoryIndex = 6;
-        Assert.True(master.IsAppearanceCategorySelected);
+        Assert.True(master.IsLastfmCategorySelected);
 
         master.SelectedCategoryIndex = 7;
-        Assert.True(master.IsLayoutCategorySelected);
+        Assert.True(master.IsAppearanceCategorySelected);
 
         master.SelectedCategoryIndex = 8;
-        Assert.True(master.IsShortcutsCategorySelected);
+        Assert.True(master.IsLayoutCategorySelected);
 
         master.SelectedCategoryIndex = 9;
+        Assert.True(master.IsShortcutsCategorySelected);
+
+        master.SelectedCategoryIndex = 10;
         Assert.True(master.IsAboutCategorySelected);
     }
 

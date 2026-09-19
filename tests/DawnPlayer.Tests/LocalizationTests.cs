@@ -244,7 +244,50 @@ public class LocalizationTests
             "AppStrings interpolated prefixes with no resw key under them:\n" + FormatHits(missing));
     }
 
+    [Fact]
+    public void Xaml_WindowRoots_DoNotCarry_XUid()
+    {
+        // x:Uid on a Window root makes InitializeComponent throw XamlParseException as soon as a
+        // resw key (e.g. '<uid>.Title') tries to localize it: Window is not a FrameworkElement
+        // and Title is not a dependency property, so the deferred resource pass fails to assign
+        // ("Failed to assign to property 'Microsoft.UI.Xaml.Window.Title'"). This made both the
+        // lyrics editor and the lyrics search window die on open (v1.1.0) — the exception was
+        // swallowed by the global handler, so nothing visible happened. Window titles are set
+        // from code-behind via AppStrings instead; keep that convention.
+        var root = FindRepoRoot();
+        Assert.True(root != null, "Repository root not found; see ReswFiles_HaveValidXml_AndIdenticalKeySets.");
+
+        var offenders = new List<string>();
+        foreach (var file in Directory.EnumerateFiles(AppSourceDir(root!), "*.xaml", SearchOption.AllDirectories))
+        {
+            var sep = System.IO.Path.DirectorySeparatorChar;
+            if (file.Contains($"{sep}bin{sep}") || file.Contains($"{sep}obj{sep}"))
+            {
+                continue;
+            }
+
+            // The root tag spans several lines; match from '<Window' to its closing '>'.
+            var openingTag = WindowOpeningTagPattern.Match(System.IO.File.ReadAllText(file));
+            if (!openingTag.Success)
+            {
+                continue;
+            }
+
+            var uid = XUidPattern.Match(openingTag.Value);
+            if (uid.Success)
+            {
+                offenders.Add($"  {System.IO.Path.GetRelativePath(root!.FullName, file)} -> {uid.Groups[1].Value}");
+            }
+        }
+
+        Assert.True(offenders.Count == 0,
+            "Window root elements must not carry x:Uid — a resw '<uid>.Title' entry crashes the window at parse time.\n"
+            + "Set window titles from code-behind with AppStrings.Get instead.\n"
+            + string.Join("\n", offenders));
+    }
+
     private static readonly Regex XUidPattern = new("x:Uid=\"([^\"]+)\"", RegexOptions.Compiled);
+    private static readonly Regex WindowOpeningTagPattern = new(@"<Window\b[^>]*>", RegexOptions.Compiled);
     private static readonly Regex LiteralKeyPattern =
         new("AppStrings\\.(?:Get|GetString|Format|GetPlural)\\(\\s*\"([^\"]+)\"", RegexOptions.Compiled);
     private static readonly Regex InterpolatedPrefixPattern =

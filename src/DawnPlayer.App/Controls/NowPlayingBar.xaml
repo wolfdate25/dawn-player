@@ -227,13 +227,6 @@
                               Click="OnLyricsClick" ToolTipService.ToolTip="가사 패널">
                     <FontIcon Glyph="&#xEC4F;" FontSize="13"/>
                 </ToggleButton>
-
-                <!-- Settings Button -->
-                <Button x:Uid="NowPlaying_SettingsButton" x:Name="SettingsButton" Style="{StaticResource TransportButton}"
-                        AutomationProperties.Name="환경설정"
-                        Click="OnSettingsClick" ToolTipService.ToolTip="환경설정">
-                    <FontIcon Glyph="&#xE713;" FontSize="13"/>
-                </Button>
             </StackPanel>
         </Grid>
     </Grid>

@@ -77,6 +77,7 @@ public sealed partial class SettingsPage : Page
         ViewModel.RefreshAll();
         UpdateLyricsPreview();
         RenderVisualizer();
+        InitializeLastfmSection();
 
         if (AppServices.Settings != null)
         {
@@ -90,6 +91,112 @@ public sealed partial class SettingsPage : Page
         AppServices.Settings.Plugins.DspEnabled = DspPluginsToggle.IsOn;
         SettingsWriter.Schedule(AppServices.Settings);
         AppServices.Playback?.ApplyPluginDsp();
+    }
+
+    // ---------------- last.fm scrobbling ----------------
+
+    // Token issued by StartAuthAsync and held until the user confirms the browser approval,
+    // mirroring the flow of the removed LastfmDialog (token → browser approval → session exchange).
+    private string? _pendingLastfmToken;
+
+    private void InitializeLastfmSection()
+    {
+        var settings = AppServices.Settings.Lastfm;
+        LastfmApiKeyBox.Text = settings.ApiKey ?? string.Empty;
+        LastfmApiSecretBox.Text = settings.ApiSecret ?? string.Empty;
+        LastfmToggle.IsOn = settings.Enabled;
+        RefreshLastfmStatus();
+    }
+
+    private void RefreshLastfmStatus()
+    {
+        var scrobbler = AppServices.Scrobbler;
+
+        if (!scrobbler.IsConfigured)
+        {
+            LastfmStatusText.Text = AppStrings.Get("Lastfm_StatusNeedKeys", "Last.fm API 키와 비밀을 입력하세요 (last.fm/api 에서 생성).");
+            LastfmAuthButton.Visibility = Visibility.Collapsed;
+            LastfmConfirmButton.Visibility = Visibility.Collapsed;
+        }
+        else if (scrobbler.IsAuthenticated)
+        {
+            LastfmStatusText.Text = AppStrings.Format(
+                "Lastfm_StatusAuthed", "{0} 로 인증됨 · 대기 중인 스러블 {1}개",
+                string.IsNullOrEmpty(scrobbler.Username) ? "?" : scrobbler.Username, scrobbler.QueuedCount);
+            LastfmAuthButton.Content = AppStrings.Get("Lastfm_Reauth", "다시 인증");
+            LastfmAuthButton.Visibility = Visibility.Visible;
+            LastfmConfirmButton.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            LastfmStatusText.Text = AppStrings.Get("Lastfm_StatusNotAuthed", "브라우저에서 인증하면 스러블이 켜집니다.");
+            LastfmAuthButton.Content = AppStrings.Get("Lastfm_StartAuth", "브라우저에서 인증");
+            LastfmAuthButton.Visibility = Visibility.Visible;
+            LastfmConfirmButton.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void OnLastfmToggleToggled(object sender, RoutedEventArgs e)
+    {
+        var scrobbler = AppServices.Scrobbler;
+        scrobbler.SetCredentials(LastfmApiKeyBox.Text, LastfmApiSecretBox.Text);
+        scrobbler.SetEnabled(LastfmToggle.IsOn);
+    }
+
+    private void OnLastfmCredentialsLostFocus(object sender, RoutedEventArgs e)
+    {
+        AppServices.Scrobbler.SetCredentials(LastfmApiKeyBox.Text, LastfmApiSecretBox.Text);
+        RefreshLastfmStatus();
+    }
+
+    private async void OnLastfmAuthClick(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var scrobbler = AppServices.Scrobbler;
+            scrobbler.SetCredentials(LastfmApiKeyBox.Text, LastfmApiSecretBox.Text);
+            LastfmAuthButton.IsEnabled = false;
+            _pendingLastfmToken = await scrobbler.StartAuthAsync();
+            var psi = new System.Diagnostics.ProcessStartInfo(
+                LastfmClient.BuildAuthPageUrl(AppServices.Settings.Lastfm.ApiKey, _pendingLastfmToken))
+            {
+                UseShellExecute = true,
+            };
+            System.Diagnostics.Process.Start(psi);
+            LastfmStatusText.Text = AppStrings.Get("Lastfm_AuthPending", "브라우저에서 권한을 허용한 뒤 [인증 완료]를 누르세요.");
+            LastfmConfirmButton.Content = AppStrings.Get("Lastfm_ConfirmAuth", "인증 완료");
+            LastfmConfirmButton.Visibility = Visibility.Visible;
+        }
+        catch (Exception ex)
+        {
+            LastfmStatusText.Text = AppStrings.Format("Lastfm_AuthFailed", "인증 실패: {0}", ex.Message);
+        }
+        finally
+        {
+            LastfmAuthButton.IsEnabled = true;
+        }
+    }
+
+    private async void OnLastfmConfirmClick(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(_pendingLastfmToken)) return;
+        try
+        {
+            LastfmConfirmButton.IsEnabled = false;
+            string username = await AppServices.Scrobbler.CompleteAuthAsync(_pendingLastfmToken);
+            _pendingLastfmToken = null;
+            LastfmStatusText.Text = AppStrings.Format(
+                "Lastfm_AuthDone", "{0} 로 인증되었습니다. 스러블이 켜졌습니다.", username);
+        }
+        catch (Exception ex)
+        {
+            LastfmStatusText.Text = AppStrings.Format("Lastfm_AuthFailed", "인증 실패: {0}", ex.Message);
+        }
+        finally
+        {
+            LastfmConfirmButton.IsEnabled = true;
+            RefreshLastfmStatus();
+        }
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
@@ -140,6 +247,11 @@ public sealed partial class SettingsPage : Page
         else if (ViewModel.IsLyricsCategorySelected)
         {
             UpdateLyricsPreview();
+        }
+        else if (ViewModel.IsLastfmCategorySelected)
+        {
+            // The queued-scrobble count in the status line changes while the page is open.
+            RefreshLastfmStatus();
         }
     }
 

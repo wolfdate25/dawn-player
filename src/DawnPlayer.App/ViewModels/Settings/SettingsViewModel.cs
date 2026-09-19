@@ -98,6 +98,7 @@ public sealed class SettingsViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsLibraryCategorySelected));
                 OnPropertyChanged(nameof(IsLyricsCategorySelected));
                 OnPropertyChanged(nameof(IsOnlineLyricsCategorySelected));
+                OnPropertyChanged(nameof(IsLastfmCategorySelected));
                 OnPropertyChanged(nameof(IsAppearanceCategorySelected));
                 OnPropertyChanged(nameof(IsLayoutCategorySelected));
                 OnPropertyChanged(nameof(IsShortcutsCategorySelected));
@@ -121,10 +122,11 @@ public sealed class SettingsViewModel : ViewModelBase
     public bool IsLibraryCategorySelected => _selectedCategoryIndex == 3;
     public bool IsLyricsCategorySelected => _selectedCategoryIndex == 4;
     public bool IsOnlineLyricsCategorySelected => _selectedCategoryIndex == 5;
-    public bool IsAppearanceCategorySelected => _selectedCategoryIndex == 6;
-    public bool IsLayoutCategorySelected => _selectedCategoryIndex == 7;
-    public bool IsShortcutsCategorySelected => _selectedCategoryIndex == 8;
-    public bool IsAboutCategorySelected => _selectedCategoryIndex == 9;
+    public bool IsLastfmCategorySelected => _selectedCategoryIndex == 6;
+    public bool IsAppearanceCategorySelected => _selectedCategoryIndex == 7;
+    public bool IsLayoutCategorySelected => _selectedCategoryIndex == 8;
+    public bool IsShortcutsCategorySelected => _selectedCategoryIndex == 9;
+    public bool IsAboutCategorySelected => _selectedCategoryIndex == 10;
 
     public void HandleSessionChanged(SessionInfo info)
     {

@@ -363,18 +363,6 @@ public sealed partial class MainWindow : Window
         NavigateToSettings();
     }
 
-    private async void OnMenuLastfm(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            await Views.LastfmDialog.ShowAsync(Content.XamlRoot);
-        }
-        catch (Exception ex)
-        {
-            App.Log($"[lastfm-dialog] {ex}");
-        }
-    }
-
     private async void OnMenuReport(object sender, RoutedEventArgs e)
     {
         try
@@ -629,18 +617,13 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Pushes the current chords into the two places the shortcut used to be spelled out by hand,
-    /// so rebinding Ctrl+P does not leave the menu and the title-bar gear advertising the old key.
+    /// Pushes the current chord into the title-bar gear tooltip, so rebinding Ctrl+P does not
+    /// leave the gear advertising the old key.
     /// </summary>
     private void RefreshShortcutHints()
     {
         var preferences = AppServices.Shortcuts.Map.GetChord(DawnPlayer.App.Shortcuts.ShortcutCommand.OpenPreferences);
         var text = preferences?.ToDisplayString();
-
-        if (PreferencesMenuItem != null)
-        {
-            PreferencesMenuItem.KeyboardAcceleratorTextOverride = text ?? string.Empty;
-        }
 
         if (SettingsGearButton != null)
         {

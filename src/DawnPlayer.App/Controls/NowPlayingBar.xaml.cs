@@ -513,11 +513,9 @@ public sealed partial class NowPlayingBar : UserControl
         }
     }
 
-    // ---------- lyrics & settings ----------
+    // ---------- lyrics ----------
 
     private void OnLyricsClick(object sender, RoutedEventArgs e) => LyricsToggleRequested?.Invoke();
-
-    private void OnSettingsClick(object sender, RoutedEventArgs e) => App.MainWin?.NavigateToSettings();
 
     public void SetLyricsToggle(bool show)
     {
@@ -545,7 +543,6 @@ public sealed partial class NowPlayingBar : UserControl
         SetHint(RepeatButton, CommandName(Shortcuts.ShortcutCommand.RepeatCycle, "반복 (끔 / 전체 / 한 곡)"), map.GetChord(Shortcuts.ShortcutCommand.RepeatCycle));
         SetHint(MuteButton, CommandName(Shortcuts.ShortcutCommand.MuteToggle, "음소거"), map.GetChord(Shortcuts.ShortcutCommand.MuteToggle));
         SetHint(LyricsButton, CommandName(Shortcuts.ShortcutCommand.ToggleLyrics, "가사 패널"), map.GetChord(Shortcuts.ShortcutCommand.ToggleLyrics));
-        SetHint(SettingsButton, CommandName(Shortcuts.ShortcutCommand.OpenPreferences, "환경설정"), map.GetChord(Shortcuts.ShortcutCommand.OpenPreferences));
     }
 
     private static string CommandName(Shortcuts.ShortcutCommand command, string fallback) =>

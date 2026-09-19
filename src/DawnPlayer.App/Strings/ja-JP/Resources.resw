@@ -49,7 +49,6 @@
   <data name="MainWindow_Menu_Sleep_60" xml:space="preserve"><value>1時間</value></data>
   <data name="MainWindow_Menu_Sleep_Track" xml:space="preserve"><value>現在の曲の後</value></data>
   <data name="MainWindow_Menu_Sleep_RemainingFormat" xml:space="preserve"><value>{0} ({1:mm\:ss})</value></data>
-  <data name="MainWindow_Menu_Settings.Text" xml:space="preserve"><value>設定</value></data>
   <data name="MainWindow_Menu_Exit.Text" xml:space="preserve"><value>終了</value></data>
   <data name="MainWindow_TitleBarTrack.Text" xml:space="preserve"><value>再生中の曲はありません</value></data>
   <data name="MainWindow_Tab_Library.Text" xml:space="preserve"><value>ライブラリ</value></data>
@@ -97,8 +96,6 @@
   <data name="NowPlaying_QueueEmptyText.Text" xml:space="preserve"><value>キューは空です。トラックを右クリックして「キューに追加」を選択してください。</value></data>
   <data name="NowPlaying_LyricsButton.AutomationProperties.Name" xml:space="preserve"><value>歌詞パネル</value></data>
   <data name="NowPlaying_LyricsButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>歌詞パネル</value></data>
-  <data name="NowPlaying_SettingsButton.AutomationProperties.Name" xml:space="preserve"><value>設定</value></data>
-  <data name="NowPlaying_SettingsButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>設定</value></data>
 
   <!-- Module 1: LyricsPane -->
   <data name="LyricsPane_HeaderTitle.Text" xml:space="preserve"><value>歌詞</value></data>
@@ -245,7 +242,6 @@
   <data name="Playlist_EmptyDesc.Text" xml:space="preserve"><value>音楽ファイルやフォルダーをウィンドウにドラッグ＆ドロップするか、右上のメニューから[ファイルを追加]・[フォルダーを追加]を使用してください。&#x0a;ライブラリからトラックを追加することもできます。</value></data>
 
   <!-- Module 4: Lyrics Tools & Windows (LyricsEditor) -->
-  <data name="LyricsEditor_Window.Title" xml:space="preserve"><value>歌詞エディター — Dawn Player</value></data>
   <data name="LyricsEditor_WindowTitle" xml:space="preserve"><value>歌詞エディター — Dawn Player</value></data>
   <data name="LyricsEditor_TrackHeaderTitle.Text" xml:space="preserve"><value>曲名</value></data>
   <data name="LyricsEditor_TrackHeaderArtist.Text" xml:space="preserve"><value>— アーティスト</value></data>
@@ -282,7 +278,6 @@
   <data name="LyricsEditor_Status_SaveFailed" xml:space="preserve"><value>保存に失敗しました: {0}</value></data>
 
   <!-- Module 4: Lyrics Tools & Windows (LyricsSearch) -->
-  <data name="LyricsSearch_Window.Title" xml:space="preserve"><value>オンライン歌詞検索 — Dawn Player</value></data>
   <data name="LyricsSearch_WindowTitle" xml:space="preserve"><value>オンライン歌詞検索 — Dawn Player</value></data>
   <data name="LyricsSearch_TrackHeaderTitle.Text" xml:space="preserve"><value>曲名</value></data>
   <data name="LyricsSearch_TrackHeaderArtist.Text" xml:space="preserve"><value>— アーティスト</value></data>
@@ -739,6 +734,7 @@
   <data name="Settings_About_AudioEngine.Text" xml:space="preserve"><value>オーディオエンジン: NAudio 2.3 · NAudio.Vorbis (NVorbis) · Windows Media Foundation (WASAPI Exclusive Bit-Perfect)</value></data>
   <data name="Settings_About_Metadata.Text" xml:space="preserve"><value>タグ＆メタデータ: TagLib# (ID3v2, Vorbis Comment, MP4, APE)</value></data>
   <data name="Settings_About_Database.Text" xml:space="preserve"><value>データベース: Microsoft.Data.Sqlite (SQLite)</value></data>
+  <data name="Settings_About_GitHub.Content" xml:space="preserve"><value>GitHub リポジトリ</value></data>
 
   <!-- Common Dialogs -->
   <data name="Common_Close" xml:space="preserve"><value>閉じる</value></data>
@@ -789,18 +785,28 @@
   <data name="MainWindow_Menu_OpenUrl.Text" xml:space="preserve"><value>ネットワークストリームを開く (ラジオ)...</value></data>
   <data name="OpenUrl_Title" xml:space="preserve"><value>ネットワークストリームを開く</value></data>
   <data name="OpenUrl_Header" xml:space="preserve"><value>ストリーム URL (Icecast/Shoutcast MP3)</value></data>
-  <data name="MainWindow_Menu_Lastfm.Text" xml:space="preserve"><value>Last.fm スクログブル...</value></data>
-  <data name="Lastfm_Title" xml:space="preserve"><value>Last.fm スクログブル</value></data>
   <data name="Lastfm_StatusNeedKeys" xml:space="preserve"><value>Last.fm の API キーとシークレットを入力してください (last.fm/api で作成)。</value></data>
   <data name="Lastfm_StatusAuthed" xml:space="preserve"><value>{0} として認証済み · 送信待ち {1} 件</value></data>
   <data name="Lastfm_StatusNotAuthed" xml:space="preserve"><value>ブラウザで認証するとスクログブルが有効になります。</value></data>
   <data name="Lastfm_StartAuth" xml:space="preserve"><value>ブラウザで認証</value></data>
+  <data name="Lastfm_ConfirmAuth" xml:space="preserve"><value>認証を完了</value></data>
   <data name="Lastfm_Reauth" xml:space="preserve"><value>再認証</value></data>
   <data name="Lastfm_AuthPending" xml:space="preserve"><value>ブラウザで許可した後、[認証を完了] を押してください。</value></data>
   <data name="Lastfm_AuthDone" xml:space="preserve"><value>{0} として認証しました。スクログブルが有効です。</value></data>
   <data name="Lastfm_AuthFailed" xml:space="preserve"><value>認証に失敗: {0}</value></data>
-  <data name="Lastfm_EnabledOn" xml:space="preserve"><value>スクログブル オン</value></data>
-  <data name="Lastfm_EnabledOff" xml:space="preserve"><value>オフ</value></data>
+  <data name="Settings_Nav_Lastfm.Text" xml:space="preserve"><value>Last.fm</value></data>
+  <data name="Settings_Lastfm_Header.Text" xml:space="preserve"><value>Last.fm スクロブリング</value></data>
+  <data name="Settings_Lastfm_Enable_Title.Text" xml:space="preserve"><value>スクロブリング</value></data>
+  <data name="Settings_Lastfm_Enable_Desc.Text" xml:space="preserve"><value>再生した曲を Last.fm プロフィールに記録し、再生中の曲は Now Playing として送信します</value></data>
+  <data name="Settings_Lastfm_Enable_Toggle.OnContent" xml:space="preserve"><value>オン</value></data>
+  <data name="Settings_Lastfm_Enable_Toggle.OffContent" xml:space="preserve"><value>オフ</value></data>
+  <data name="Settings_Lastfm_Credentials_Title.Text" xml:space="preserve"><value>API 資格情報</value></data>
+  <data name="Settings_Lastfm_Credentials_Desc.Text" xml:space="preserve"><value>last.fm/api で作成したキーを入力してください。変更すると保存済みのセッションは無効になります。</value></data>
+  <data name="Settings_Lastfm_ApiKeyBox.PlaceholderText" xml:space="preserve"><value>api key</value></data>
+  <data name="Settings_Lastfm_ApiKeyBox.AutomationProperties.Name" xml:space="preserve"><value>Last.fm APIキー</value></data>
+  <data name="Settings_Lastfm_ApiSecretBox.PlaceholderText" xml:space="preserve"><value>shared secret</value></data>
+  <data name="Settings_Lastfm_ApiSecretBox.AutomationProperties.Name" xml:space="preserve"><value>Last.fm 共有シークレット</value></data>
+  <data name="Settings_Lastfm_Auth_Title.Text" xml:space="preserve"><value>アカウント連携</value></data>
   <data name="Settings_Plugins_Dsp_Title.Text" xml:space="preserve"><value>DSP プラグインを使用</value></data>
   <data name="Settings_Plugins_Dsp_Desc.Text" xml:space="preserve"><value>プラグインフォルダーの DSP エフェクトを再生チェーンの末尾に適用します。追加したプラグインはアプリ再起動後に認識されます。</value></data>
   <data name="Settings_Plugins_Dsp_Toggle.OnContent" xml:space="preserve"><value>オン</value></data>

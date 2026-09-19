@@ -64,15 +64,18 @@ public sealed class SettingsViewModelTests
         Assert.True(vm.IsOnlineLyricsCategorySelected);
 
         vm.SelectedCategoryIndex = 6;
-        Assert.True(vm.IsAppearanceCategorySelected);
+        Assert.True(vm.IsLastfmCategorySelected);
 
         vm.SelectedCategoryIndex = 7;
-        Assert.True(vm.IsLayoutCategorySelected);
+        Assert.True(vm.IsAppearanceCategorySelected);
 
         vm.SelectedCategoryIndex = 8;
-        Assert.True(vm.IsShortcutsCategorySelected);
+        Assert.True(vm.IsLayoutCategorySelected);
 
         vm.SelectedCategoryIndex = 9;
+        Assert.True(vm.IsShortcutsCategorySelected);
+
+        vm.SelectedCategoryIndex = 10;
         Assert.True(vm.IsAboutCategorySelected);
     }
 
