@@ -11,7 +11,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NAudio" Version="3.1.0" />
+    <!-- 3.1.1-directsoundfix.1 = 로컬 패치 빌드 (naudio/NAudio#1456, DirectSoundOut WAVEFORMATEX 마샬링 수정).
+         nuget.config 의 local-naudio-fix 피드에서만 해석됨. 업스트림 3.1.1 릴리스 시 되돌릴 것. -->
+    <PackageReference Include="NAudio" Version="3.1.1-directsoundfix.1" />
     <PackageReference Include="NAudio.Vorbis" Version="3.0.0" />
     <PackageReference Include="TagLibSharp" Version="2.3.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11" />

@@ -54,10 +54,10 @@ internal static class Program
             return 1;
         }
         Console.WriteLine($"장치: {device.FriendlyName}");
-        // NAudio >= 2.3.0 returns a NEW IAudioClient from MMDevice.AudioClient on every get, so
-        // the per-call `using` below (and the ones in the probe loops) is correct. Under 2.2.x it
-        // returned a cached instance and this pattern would dispose the device's only client.
-        using (var client = device.AudioClient)
+        // NAudio 3: MMDevice.CreateAudioClient() returns a NEW IAudioClient per call, so the
+        // per-call `using` below (and the ones in the probe loops) is correct. (The old
+        // AudioClient property is obsolete for exactly this "new instance every access" reason.)
+        using (var client = device.CreateAudioClient())
         {
             var mix = client.MixFormat;
             Console.WriteLine($"공유 모드 믹스 포맷: {WasapiDeviceService.Describe(mix)} (encoding={mix.Encoding})");
@@ -110,7 +110,7 @@ internal static class Program
                 string result;
                 try
                 {
-                    using var c = device.AudioClient;
+                    using var c = device.CreateAudioClient();
                     result = c.IsFormatSupported(AudioClientShareMode.Exclusive, fmt, out _) ? "OK" : "no";
                 }
                 catch (Exception ex)
@@ -136,7 +136,7 @@ internal static class Program
             {
                 try
                 {
-                    using var c = device.AudioClient;
+                    using var c = device.CreateAudioClient();
                     c.Initialize(AudioClientShareMode.Exclusive, AudioClientStreamFlags.EventCallback,
                         ms * 10000L, 0, fmt, Guid.Empty);
                     Console.WriteLine($"    {rate}Hz {bits}bit 2ch buffer={ms}ms → Initialize 성공!");
@@ -217,7 +217,7 @@ internal static class Program
                             bool ok;
                             try
                             {
-                                using var c = device.AudioClient;
+                                using var c = device.CreateAudioClient();
                                 ok = c.IsFormatSupported(AudioClientShareMode.Exclusive, fmt, out _);
                             }
                             catch { ok = false; }
