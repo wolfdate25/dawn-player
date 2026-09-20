@@ -1,0 +1,68 @@
+.zcode/
+tools/compare-env.ps1
+tools/test-run-app.ps1
+
+# Build output
+**/bin/
+**/obj/
+
+# Test results
+tests/**/TestResults/
+
+# Installer / distribution output
+dist/
+
+# Local-only ZCode plugins & dev test marketplace (installed via Plugin Marketplace UI)
+plugins/
+
+# Diagnostic logs
+*.log
+
+# AI assistant caches (Claude/Codex/etc. session stores)
+.agents/
+.claude/
+.aider*
+.continue/
+.cody/
+.cursor/
+.gemini/
+
+# Outdated agent docs (superseded by docs/ and README.md)
+GEMINI.md
+ORIGINAL_REQUEST.md
+THIRD-PARTY-NOTICES.md
+
+# Local-only agent pointers (canonical work rules live in tracked AGENTS.md)
+CLAUDE.md
+
+# ===== ↑ 以上同步自 .gitignore（「从 .gitignore 同步」只重写以上部分）=====
+.git/
+.hg/
+.svn/
+node_modules/
+bower_components/
+jspm_packages/
+__pycache__/
+site-packages/
+venv/
+coverage/
+htmlcov/
+lcov-report/
+cmakefiles/
+cmake-build-*/
+bazel-*/
+pods/
+deriveddata/
+storybook-static/
+playwright-report/
+test-results/
+allure-results/
+allure-report/
+cdk.out/
+*.egg-info/
+*.dist-info/
+eggs/
+pip-wheel-metadata/
+wheels/
+# ----- ↑ 以上为 ZCode 默认排除规则（自定义规则请写在本行下方，不会被同步/恢复改动）-----
+# 自定义规则写在下方（本行提示可删除）
