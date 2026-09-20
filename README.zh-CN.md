@@ -9,6 +9,20 @@
 
 ![Dawn Player Screenshot](docs/screenshot.png)
 
+## 下载
+
+可从 [GitHub Releases](https://github.com/wolfdate25/dawn-player/releases/latest) 下载最新的
+安装程序或便携 ZIP（SHA256 校验和一并发布）。需要 Windows 10 19041 或更高版本。
+
+- **安装程序（`.exe`）** — 支持按用户（默认）或按机器安装；自动注册快捷方式、开机启动、
+  音频文件关联（.mp3、.flac、.wav、.m4a 等）和资源管理器右键播放菜单；会检测正在运行的
+  实例并安全地升级/卸载
+- **便携包（`.zip`）** — 解压即用，无需安装
+
+数据保存在 `%AppData%\DawnPlayer`（settings.json、library.db、playlists/、artcache/、
+dawnplayer.log）。**便携模式**：exe 旁存在 `portable.dat` 标记时，使用运行目录下的 `data\`
+而非 `%AppData%`（便携 ZIP 自带此标记）。
+
 ## 主要功能
 
 ### 音频引擎
@@ -68,17 +82,16 @@
 ### 歌词
 - **.lrc 同步歌词** — 自动查找（`音频文件名.lrc`、`艺术家 - 标题.lrc`、`标题.lrc` 及自定义模式），
   当前行高亮 + 自动滚动、点击行跳转、±0.5 秒偏移调整
-- **在线歌词插件** — 通过 .NET DLL 插件支持各站点的歌词搜索（开发指南：
-  `docs/plugin-development.md`）。可配置插件优先级、播放中自动搜索（离线歌词优先）、
-  标题/艺术家/专辑搜索窗口、预览后应用，并可将在线歌词保存为离线 .lrc — 支持保存位置
-  （源文件目录/自定义目录）与文件名模板（`%title%` 等变量）
+- **在线歌词插件** — 通过 .NET DLL 插件支持各站点的歌词搜索。可配置插件优先级、
+  播放中自动搜索（离线歌词优先）、标题/艺术家/专辑搜索窗口、预览后应用，并可将在线歌词
+  保存为离线 .lrc — 支持保存位置（源文件目录/自定义目录）与文件名模板（`%title%` 等变量）
 - 支持标准/多时间戳/`[offset:]`/扩展（逐字）LRC，自动识别 UTF-8/ANSI
 - **LRC 歌词编辑器** — 逐行时间戳编辑/同步、行顺序调整、从剪贴板导入歌词
 
 ### 界面（Eole 风格 × WinUI 3）
 - 深色优先配色 + Mica 背景、琥珀色强调色，可切换浅色主题
 - 多语言界面 — 한국어 / English / 日本語。在 设置 → 外观与主题 中选择语言（支持跟随系统），
-  重启后整个界面将以该语言显示（`Strings/<culture>/Resources.resw` + MRT Core）
+  重启后整个界面将以该语言显示
 - 带专辑分组头（封面 + 元数据）的播放列表 — Eole 的标志性布局
 - 底部播放栏：封面、进度、控制、音量、队列徽标、歌词开关
 - SMTC 集成 — 媒体键 / 系统媒体浮层 / 音量弹窗控制
@@ -96,85 +109,6 @@
 - **系统托盘集成** — 开启"关闭到托盘"后，关闭按钮将隐藏窗口并保持播放；托盘菜单可控制
   播放/打开窗口/退出；任务栏缩略图工具栏（上一首/播放/下一首）
 - 拖放文件/文件夹到播放列表
-
-## 构建与运行
-
-要求：.NET SDK 10（由 `global.json` 固定 — `.slnx` 解决方案格式需要 SDK 9.0.2xx 或更高），
-Windows 10 19041 或更高
-
-```powershell
-dotnet build DawnPlayer.slnx -c Debug
-# 运行
-src/DawnPlayer.App/bin/Debug/net10.0-windows10.0.19041.0/win-x64/DawnPlayer.App.exe
-```
-
-以非打包（非 MSIX）+ Windows App SDK 自包含方式构建，无需安装额外运行时即可直接运行 exe。
-
-### 部署包与安装程序
-
-可自动构建基于 Inno Setup 6 的安装程序（`Setup.exe`）与免安装便携 ZIP 包。
-
-```powershell
-# 安装 Inno Setup 6（首次）
-winget install --id JRSoftware.InnoSetup
-
-# 自动构建安装程序与便携 ZIP（指定版本）
-pwsh -File tools/build-installer.ps1 -Version "1.0.0"
-```
-
-- **安装程序（`.exe`）**：`dist/installer/DawnPlayer-Setup-v1.0.0-x64.exe`
-  - 支持非管理员（默认）与管理员模式安装
-  - 快捷方式、开机启动、音频文件关联（.mp3、.flac、.wav、.m4a 等）、右键播放菜单自动注册
-  - 自动检测正在运行的进程，支持安全升级/卸载
-- **便携包（`.zip`）**：`dist/DawnPlayer-v1.0.0-portable-win-x64.zip`
-  - 解压即用，无需安装
-
-### GitHub 部署与 CI/CD
-
-代码验证与发布部署通过 GitHub Actions 完全自动化。
-
-- **CI（`.github/workflows/ci.yml`）**：对 `main` 的 Push/PR 执行 Debug/Release 构建、全量
-  测试与覆盖率收集，并 dry-run 验证安装程序打包。
-- **CodeQL（`.github/workflows/codeql.yml`）**：C# 静态分析（Push/PR 及每周计划）。
-- **CD 发布（`.github/workflows/release.yml`）**：
-  - 由 Git 标签推送（`git tag v1.0.0 && git push origin v1.0.0`）或在 Actions 页面手动触发。
-  - 单元测试通过后，构建 Inno Setup 安装程序、便携 ZIP 与 `SHA256SUMS.txt`，自动发布到
-    GitHub Releases。
-
-数据位置：`%AppData%\DawnPlayer`（settings.json、library.db、playlists/、artcache/、
-dawnplayer.log）。**便携模式**：exe 旁存在 `portable.dat` 时，使用运行目录下的 `data\` 而非
-`%AppData%`（便携 ZIP 包含此标记，安装程序构建则不包含）。
-
-## 架构
-
-```
-src/
-├── DawnPlayer.Core/            # 音频/数据引擎（不依赖 UI）
-│   ├── Audio/                  # WASAPI 输出、无缝序列器、解码器、格式协商
-│   ├── Playlists/              # 播放列表、播放队列、m3u8 持久化
-│   ├── Library/                # SQLite 媒体库、标签/ReplayGain/封面扫描器
-│   ├── Lyrics/                 # LRC 解析/查找
-│   └── Persistence/            # 设置（JSON）
-└── DawnPlayer.App/             # WinUI 3 UI
-    ├── Controls/               # NowPlayingBar、LyricsPane
-    ├── Views/                  # Library / Playlist / Settings 页面
-    └── Services/               # 组合根、SMTC、线程调度
-tests/DawnPlayer.Tests/         # 核心/服务/视图模型单元测试、并发与对抗性测试、
-                                # 基于 FlaUI 的 E2E UI 自动化
-```
-
-播放管线：`文件 → 解码器 (MF/Vorbis) → float → [音量·ReplayGain] → [重采样] → [声道转换]
-→ [均衡器（按设备/公共）] → [DynamicNormalizer] → [SoftLimiter] → PCM 转换
-→ SequencerStream（无缝链） → WasapiOut (Exclusive/Shared)`
-
-## 路线图
-
-- DSP 链扩展 — 串扰补偿、单声道下混、频谱：已完成
-- 转换器（格式转换/抓轨）
-- 播放列表间拖放（智能播放列表：已完成）
-- 标签编辑器 — 已完成（含 ReplayGain 批量分析）
-- 艺人简介/在线歌词查询
-- 多语言资源拆分 — 已完成（MRT Core resw，三种语言）
 
 ## 致谢
 

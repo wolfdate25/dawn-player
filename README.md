@@ -9,6 +9,22 @@ and the design of the [Eole theme](https://github.com/Ottodix/Eole-foobar-theme)
 
 ![Dawn Player Screenshot](docs/screenshot.png)
 
+## Download
+
+Get the latest installer or portable ZIP from
+[GitHub Releases](https://github.com/wolfdate25/dawn-player/releases/latest)
+(SHA256 checksums are published alongside). Requires Windows 10 19041 or later.
+
+- **Installer (`.exe`)** — per-user (default) or per-machine installation. Registers shortcuts,
+  a startup entry, audio file associations (.mp3, .flac, .wav, .m4a etc.) and the Explorer
+  "play with" context menu; detects a running instance and upgrades/uninstalls safely
+- **Portable (`.zip`)** — unzip and run, no installation needed
+
+Data lives in `%AppData%\DawnPlayer` (settings.json, library.db, playlists/, artcache/,
+dawnplayer.log). **Portable mode**: with a `portable.dat` marker next to the exe, the app uses
+a `data\` folder beside the executable instead of `%AppData%` (the portable ZIP ships with
+this marker).
+
 ## Features
 
 ### Audio engine
@@ -82,11 +98,10 @@ and the design of the [Eole theme](https://github.com/Ottodix/Eole-foobar-theme)
 - **.lrc synced lyrics** — automatic lookup (`<filename>.lrc`, `artist - title.lrc`, `title.lrc`
   and custom patterns), current-line highlight + auto-scroll, click-to-seek, ±0.5 s offset
   adjustment
-- **Online lyrics plugins** — per-site lyric search via .NET DLL plugins (dev guide:
-  `docs/plugin-development.md`). Plugin priorities, auto-search during playback (offline lyrics
-  first), title/artist/album search window, preview before apply, saving online lyrics as
-  offline .lrc — with save location (source folder/custom folder) and file-name templates
-  (`%title%` etc.)
+- **Online lyrics plugins** — per-site lyric search via .NET DLL plugins. Plugin priorities,
+  auto-search during playback (offline lyrics first), title/artist/album search window,
+  preview before apply, saving online lyrics as offline .lrc — with save location (source
+  folder/custom folder) and file-name templates (`%title%` etc.)
 - Standard/multi-timestamp/`[offset:]`/extended (word-level) LRC support, UTF-8/ANSI auto
   detection
 - **LRC lyrics editor** — per-line timestamp editing/syncing, line reordering, clipboard import
@@ -95,7 +110,6 @@ and the design of the [Eole theme](https://github.com/Ottodix/Eole-foobar-theme)
 - Dark-first palette + Mica backdrop, amber accent, light theme toggle
 - Multilingual UI — Korean / English / 日本語. Pick the language in Settings → Appearance & theme
   (system default supported); the whole UI shows it after a restart
-  (`Strings/<culture>/Resources.resw` + MRT Core)
 - Playlists with album group headers (art + metadata) — Eole's signature layout
 - Bottom player bar: album art, seek, transport, volume, queue badge, lyrics toggle
 - SMTC integration — media keys / OS media overlay / volume popup control
@@ -116,90 +130,6 @@ and the design of the [Eole theme](https://github.com/Ottodix/Eole-foobar-theme)
 - **System tray integration** — "close to tray" hides the window and keeps playing; tray menu
   for playback/window/exit; taskbar thumbnail toolbar (previous/play/next)
 - Drag & drop files/folders onto the playlist
-
-## Build and run
-
-Requirements: .NET SDK 10 (pinned by `global.json` — the `.slnx` solution format needs SDK
-9.0.2xx or later), Windows 10 19041+
-
-```powershell
-dotnet build DawnPlayer.slnx -c Debug
-# run
-src/DawnPlayer.App/bin/Debug/net10.0-windows10.0.19041.0/win-x64/DawnPlayer.App.exe
-```
-
-Builds unpackaged (non-MSIX) with the Windows App SDK self-contained, so the exe runs without
-installing a separate runtime.
-
-### Deployment packages and installer
-
-The Inno Setup 6 based installer (`Setup.exe`) and a portable ZIP archive are built
-automatically.
-
-```powershell
-# install Inno Setup 6 (once)
-winget install --id JRSoftware.InnoSetup
-
-# build the installer and portable ZIP (with a version)
-pwsh -File tools/build-installer.ps1 -Version "1.0.0"
-```
-
-- **Installer (`.exe`)**: `dist/installer/DawnPlayer-Setup-v1.0.0-x64.exe`
-  - Per-user (default) and per-machine installation
-  - Shortcuts, startup entry, audio file associations (.mp3, .flac, .wav, .m4a etc.), Explorer
-    "play with" context menu
-  - Detects running processes and supports safe upgrades/uninstalls
-- **Portable archive (`.zip`)**: `dist/DawnPlayer-v1.0.0-portable-win-x64.zip`
-  - Unzip and run — no installation needed
-
-### CI/CD
-
-Verification and release deployment are fully automated with GitHub Actions.
-
-- **CI (`.github/workflows/ci.yml`)**: Debug/Release builds, full tests with coverage, and an
-  installer-packaging dry run on pushes/PRs to `main`.
-- **CodeQL (`.github/workflows/codeql.yml`)**: C# static analysis (push/PR and weekly).
-- **CD release (`.github/workflows/release.yml`)**:
-  - Triggered by a git tag push (`git tag v1.0.0 && git push origin v1.0.0`) or manually from
-    the Actions UI.
-  - After tests pass, builds the Inno Setup installer, portable ZIP and `SHA256SUMS.txt`, and
-    publishes them to GitHub Releases.
-
-Data location: `%AppData%\DawnPlayer` (settings.json, library.db, playlists/, artcache/,
-dawnplayer.log). **Portable mode**: with a `portable.dat` next to the exe, the app uses a
-`data\` folder beside the executable instead of `%AppData%` (the portable ZIP includes this
-marker; installer builds do not).
-
-## Architecture
-
-```
-src/
-├── DawnPlayer.Core/            # audio/data engine (UI-independent)
-│   ├── Audio/                  # WASAPI output, gapless sequencer, decoders, format negotiation
-│   ├── Playlists/              # playlists, playback queue, m3u8 persistence
-│   ├── Library/                # SQLite library, tags/ReplayGain/art scanners
-│   ├── Lyrics/                 # LRC parser/finder
-│   └── Persistence/            # settings (JSON)
-└── DawnPlayer.App/             # WinUI 3 UI
-    ├── Controls/               # NowPlayingBar, LyricsPane
-    ├── Views/                  # Library / Playlist / Settings pages
-    └── Services/               # composition root, SMTC, thread marshaling
-tests/DawnPlayer.Tests/         # core/service/view-model unit tests, concurrency & adversarial
-                                # tests, FlaUI-based E2E UI automation
-```
-
-Playback pipeline: `file → decoder (MF/Vorbis) → float → [volume·ReplayGain] → [resample] →
-[channel conversion] → [Equalizer (per-device/common)] → [DynamicNormalizer] → [SoftLimiter] →
-PCM conversion → SequencerStream (gapless chain) → WasapiOut (Exclusive/Shared)`
-
-## Roadmap
-
-- DSP chain extensions — crossfeed, mono downmix, spectrum: done
-- Converter (format conversion/ripping)
-- Drag & drop between playlists (smart playlists: done)
-- Tag editor — done (including ReplayGain batch analysis)
-- Biography/online lyrics lookup
-- Multilingual resources — done (MRT Core resw, three languages)
 
 ## Credits
 
