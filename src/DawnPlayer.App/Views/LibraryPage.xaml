@@ -186,7 +186,7 @@
                             <RadioButton x:Uid="Library_ViewListBtn" x:Name="ViewListBtn" GroupName="ViewModeGroup"
                                          Style="{StaticResource SegmentedTabStyle}" Click="OnViewListClick"
  ToolTipService.ToolTip="목록 테이블 뷰">
-                                <FontIcon Glyph="&#xE8D2;" FontSize="11"/>
+                                <FontIcon Glyph="&#xEA37;" FontSize="11"/>
                             </RadioButton>
                         </StackPanel>
                     </Border>
@@ -194,7 +194,7 @@
                     <!-- Cover Zoom Flyout Button -->
                     <Button x:Uid="Library_Zoom_Button" Style="{StaticResource TransportButton}" Width="28" Height="28"
  ToolTipService.ToolTip="커버 크기 조절 (Ctrl+마우스 휠)">
-                        <FontIcon Glyph="&#xE71E;" FontSize="11"/>
+                        <FontIcon Glyph="&#xE741;" FontSize="11"/>
                         <Button.Flyout>
                             <Flyout Placement="Bottom" Opened="OnCoverZoomFlyoutOpened">
                                 <StackPanel Width="190" Spacing="8" Padding="6">

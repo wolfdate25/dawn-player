@@ -6,13 +6,17 @@
     xmlns:local="using:DawnPlayer.App.Controls"
     MinHeight="96">
 
-    <Grid Background="{ThemeResource PanelBrush}" Padding="18,2,18,6" SizeChanged="OnRootSizeChanged"
+    <Grid x:Name="RootLayout" Background="{ThemeResource PanelBrush}" Padding="18,2,18,6" SizeChanged="OnRootSizeChanged"
           BorderBrush="{ThemeResource SeparatorBrush}" BorderThickness="0,1,0,0">
         <VisualStateManager.VisualStateGroups>
             <!-- U3 responsive bar (skill WinUI guideline: AdaptiveTrigger breakpoints): below
                  640px the secondary info drops out so transport controls keep room. -->
             <VisualStateGroup x:Name="WidthStates">
-                <VisualState x:Name="Wide"/>
+                <VisualState x:Name="Wide">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="640"/>
+                    </VisualState.StateTriggers>
+                </VisualState>
                 <VisualState x:Name="Compact">
                     <VisualState.StateTriggers>
                         <AdaptiveTrigger MinWindowWidth="0"/>
@@ -21,6 +25,13 @@
                         <Setter Target="FormatBadge.Visibility" Value="Collapsed"/>
                         <Setter Target="OutputBadge.Visibility" Value="Collapsed"/>
                         <Setter Target="TrackArtist.Visibility" Value="Collapsed"/>
+                        <Setter Target="VolumeSlider.Visibility" Value="Collapsed"/>
+                        <Setter Target="ArtButton.Width" Value="40"/>
+                        <Setter Target="ArtButton.Height" Value="40"/>
+                        <Setter Target="ArtPlaceholder.FontSize" Value="16"/>
+                        <Setter Target="RootLayout.Padding" Value="12,2,12,6"/>
+                        <Setter Target="TransportPanel.Spacing" Value="4"/>
+                        <Setter Target="ToolsPanel.Spacing" Value="4"/>
                     </VisualState.Setters>
                 </VisualState>
             </VisualStateGroup>
@@ -70,7 +81,7 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Album Art Card with subtle border and zoom-on-click flyout -->
-                <Button x:Uid="NowPlaying_AlbumArtButton" Grid.Column="0" Width="56" Height="56" Padding="0" CornerRadius="6"
+                <Button x:Uid="NowPlaying_AlbumArtButton" x:Name="ArtButton" Grid.Column="0" Width="56" Height="56" Padding="0" CornerRadius="6"
                         Background="{ThemeResource CardBrush}" BorderBrush="{ThemeResource BorderSubtleBrush}"
                         BorderThickness="1"
                         ToolTipService.ToolTip="앨범 커버 크게 보기">
@@ -120,7 +131,7 @@
             </Grid>
 
             <!-- 2b. Transport Controls (Center) -->
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="6">
+            <StackPanel x:Name="TransportPanel" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="6">
                 <ToggleButton x:Uid="NowPlaying_ShuffleButton" x:Name="ShuffleButton" Style="{StaticResource TransportToggleButton}"
                               Click="OnShuffleClick" ToolTipService.ToolTip="무작위 재생">
                     <FontIcon x:Name="ShuffleIcon" Glyph="&#xE8B1;" FontSize="13"/>
@@ -158,7 +169,7 @@
             </StackPanel>
 
             <!-- 2c. Volume / Queue / Lyrics (Right) -->
-            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Spacing="6">
+            <StackPanel x:Name="ToolsPanel" Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Spacing="6">
                 <!-- Mute & Volume Slider -->
                 <Button x:Uid="NowPlaying_MuteButton" x:Name="MuteButton" Style="{StaticResource TransportButton}" Click="OnMuteClick"
  ToolTipService.ToolTip="음소거">
