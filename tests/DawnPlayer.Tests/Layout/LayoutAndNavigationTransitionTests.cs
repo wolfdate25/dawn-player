@@ -17,6 +17,9 @@ public sealed class LayoutAndNavigationTransitionTests
     [InlineData("playlists", "Playlists")]
     [InlineData("Library", "Library")]
     [InlineData("library", "Library")]
+    [InlineData("Network", "Network")]
+    [InlineData("network", "Network")]
+    [InlineData("NETWORK", "Network")]
     [InlineData("Nonsense", "Library")]
     [InlineData("", "Library")]
     [InlineData(null, "Library")]
@@ -32,8 +35,10 @@ public sealed class LayoutAndNavigationTransitionTests
 
         Assert.True(state.TabLibraryChecked);
         Assert.False(state.TabPlaylistsChecked);
+        Assert.False(state.TabNetworkChecked);
         Assert.True(state.LibraryVisible);
         Assert.False(state.PlaylistsVisible);
+        Assert.False(state.NetworkVisible);
         Assert.False(state.SettingsVisible);
         Assert.True(state.LibraryLyricsVisible);
         Assert.False(state.PlaylistLyricsVisible);
@@ -46,11 +51,31 @@ public sealed class LayoutAndNavigationTransitionTests
 
         Assert.False(state.TabLibraryChecked);
         Assert.True(state.TabPlaylistsChecked);
+        Assert.False(state.TabNetworkChecked);
         Assert.False(state.LibraryVisible);
         Assert.True(state.PlaylistsVisible);
+        Assert.False(state.NetworkVisible);
         Assert.False(state.SettingsVisible);
         Assert.False(state.LibraryLyricsVisible);
         Assert.True(state.PlaylistLyricsVisible);
+    }
+
+    [Fact]
+    public void NetworkTab_ShowsOnlyTheNetworkPageAndNoLyricsPane()
+    {
+        // The lyrics pane belongs to the local content pages; the Network page owns none even when
+        // the preference is on, so the toggle must not leak a pane into it.
+        var state = NavigationStateCalculator.ForTab("Network", showLyricsPane: true);
+
+        Assert.False(state.TabLibraryChecked);
+        Assert.False(state.TabPlaylistsChecked);
+        Assert.True(state.TabNetworkChecked);
+        Assert.False(state.LibraryVisible);
+        Assert.False(state.PlaylistsVisible);
+        Assert.True(state.NetworkVisible);
+        Assert.False(state.SettingsVisible);
+        Assert.False(state.LibraryLyricsVisible);
+        Assert.False(state.PlaylistLyricsVisible);
     }
 
     [Fact]
@@ -72,9 +97,22 @@ public sealed class LayoutAndNavigationTransitionTests
 
         Assert.False(state.TabLibraryChecked);
         Assert.False(state.TabPlaylistsChecked);
+        Assert.False(state.TabNetworkChecked);
         Assert.False(state.LibraryVisible);
         Assert.False(state.PlaylistsVisible);
+        Assert.False(state.NetworkVisible);
         Assert.True(state.SettingsVisible);
+        Assert.False(state.LibraryLyricsVisible);
+        Assert.False(state.PlaylistLyricsVisible);
+    }
+
+    [Fact]
+    public void LyricsToggle_OnNetworkPage_HasNoPaneToShow()
+    {
+        var state = NavigationStateCalculator.ForLyricsToggle(
+            NavigationStateCalculator.ForTab("Network", showLyricsPane: false), showLyricsPane: true);
+
+        Assert.True(state.NetworkVisible);
         Assert.False(state.LibraryLyricsVisible);
         Assert.False(state.PlaylistLyricsVisible);
     }
@@ -136,5 +174,17 @@ public sealed class LayoutAndNavigationTransitionTests
         Assert.True(back.LibraryVisible);
         Assert.True(back.LibraryLyricsVisible);
         Assert.Equal("Library", settings.Ui.LastNavTab);
+
+        // The network tab persists like any other, and settings still must not lose it.
+        Navigate("Network");
+        var network = NavigationStateCalculator.ForTab(settings.Ui.LastNavTab, settings.Ui.ShowLyricsPane);
+        Assert.True(network.NetworkVisible);
+        Assert.False(network.LibraryVisible);
+        Assert.False(network.PlaylistsVisible);
+        Assert.Equal("Network", settings.Ui.LastNavTab);
+
+        var onSettingsFromNetwork = NavigationStateCalculator.ForSettings();
+        Assert.True(onSettingsFromNetwork.SettingsVisible);
+        Assert.Equal("Network", settings.Ui.LastNavTab);
     }
 }

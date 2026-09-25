@@ -74,6 +74,8 @@ public static class AppPaths
     public static string LogFile => LogFileIn(BaseDir);
     public static string PluginsDir => PluginsDirIn(BaseDir);
     public static string PluginsDataDir => PluginsDataDirIn(BaseDir);
+    public static string NetworkStationsFile => NetworkStationsFileIn(BaseDir);
+    public static string HttpSpoolDir => HttpSpoolDirIn(BaseDir);
 
     // Pure composition helpers. The layout of a data directory is worth asserting on its own,
     // and going through these keeps such checks from having to redirect the process-wide base
@@ -85,6 +87,9 @@ public static class AppPaths
     public static string LogFileIn(string baseDir) => Path.Combine(baseDir, "dawnplayer.log");
     public static string PluginsDirIn(string baseDir) => Path.Combine(baseDir, "plugins");
     public static string PluginsDataDirIn(string baseDir) => Path.Combine(baseDir, "plugins-data");
+    public static string NetworkStationsFileIn(string baseDir) => Path.Combine(baseDir, "network-stations.json");
+    /// <summary>Temp files for remote-track spooling; created on demand, swept of day-old leftovers.</summary>
+    public static string HttpSpoolDirIn(string baseDir) => Path.Combine(baseDir, "http-spool");
 
     /// <summary>
     /// Guards changes to the process-wide base directory. Redirecting it affects every thread, so

@@ -43,6 +43,48 @@ public sealed class RadioStreamTrackReaderProvider : ITrackReaderProvider
     }
 }
 
+/// <summary>
+/// Finite remote audio files over HTTP (DLNA today). Selected by the factory only for
+/// file-over-http source kinds — the radio provider outbids it for every other http URL, which is
+/// what keeps bare stream URLs behaving like live radio.
+/// </summary>
+public sealed class HttpFileTrackReaderProvider : ITrackReaderProvider
+{
+    private static bool _staleSweepDone;
+
+    public int Order => 280;
+
+    public bool CanOpen(string path, string extension) =>
+        path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
+
+    public ITrackReader Open(string path)
+    {
+        SweepStaleSpoolFiles();
+        var reader = new HttpProgressiveTrackReader(path);
+        reader.Connect();
+        return reader;
+    }
+
+    /// <summary>Removes spool files left by a crashed process (older than a day). Best effort.</summary>
+    private static void SweepStaleSpoolFiles()
+    {
+        if (_staleSweepDone) return;
+        _staleSweepDone = true;
+        try
+        {
+            var dir = new DirectoryInfo(Util.AppPaths.HttpSpoolDir);
+            if (!dir.Exists) return;
+            var cutoff = DateTime.UtcNow.AddDays(-1);
+            foreach (var file in dir.EnumerateFiles())
+            {
+                try { if (file.LastWriteTimeUtc < cutoff) file.Delete(); } catch { }
+            }
+        }
+        catch { }
+    }
+}
+
 /// <summary>DSD Stream File: boxcar-decimated PCM by default, DoP packing when the DSD
 /// playback setting prefers it and no device has rejected DoP this session.</summary>
 public sealed class DsfTrackReaderProvider : ITrackReaderProvider

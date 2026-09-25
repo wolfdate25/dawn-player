@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="DawnPlayer.App.Views.NetworkPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:network="using:DawnPlayer.App.Views.Network"
+    NavigationCacheMode="Enabled">
+
+    <!-- Network sources live as sections inside one page; adding a source (DLNA, YouTube) adds a
+         section here without touching the shell's tab calculator again. -->
+    <Grid Background="{ThemeResource LayerBgBrush}" Padding="24,16,24,12" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock x:Uid="Network_PageHeader" Text="Network" FontSize="17" FontWeight="SemiBold"
+                   Foreground="{ThemeResource TextPrimaryBrush}"/>
+
+        <!-- Section switcher (same pattern as the shell's top tabs) -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="2">
+            <RadioButton x:Name="SectionRadio" GroupName="NetworkSectionGroup" IsChecked="True"
+                         Style="{StaticResource EoleNavTabStyle}" Click="OnSectionRadioClick">
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <FontIcon Glyph="&#xE968;" FontSize="12"/>
+                    <TextBlock x:Uid="Network_Section_Radio" Text="라디오" FontSize="12.5"/>
+                </StackPanel>
+            </RadioButton>
+            <RadioButton x:Name="SectionDlna" GroupName="NetworkSectionGroup"
+                         Style="{StaticResource EoleNavTabStyle}" Click="OnSectionDlnaClick">
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <FontIcon Glyph="&#xE8F1;" FontSize="12"/>
+                    <TextBlock x:Uid="Network_Section_Dlna" Text="DLNA" FontSize="12.5"/>
+                </StackPanel>
+            </RadioButton>
+        </StackPanel>
+
+        <Grid Grid.Row="2">
+            <network:RadioSection x:Name="RadioSectionControl"/>
+            <network:DlnaSection x:Name="DlnaSectionControl" Visibility="Collapsed"/>
+        </Grid>
+    </Grid>
+</Page>

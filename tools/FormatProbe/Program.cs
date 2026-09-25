@@ -27,6 +27,21 @@ internal static class Program
 
     private static int Run(string[] args)
     {
+        // N1 spike: measure Media Foundation over an HTTP URL directly (bypassing the factory
+        // chain, whose radio provider currently intercepts every http path). Usage:
+        //   FormatProbe --http <url> [--http <url2> ...]
+        int httpIdx = Array.IndexOf(args, "--http");
+        if (httpIdx >= 0)
+        {
+            var urls = new List<string>();
+            for (int i = httpIdx + 1; i < args.Length; i++)
+            {
+                if (args[i].StartsWith("--", StringComparison.Ordinal)) break;
+                urls.Add(args[i]);
+            }
+            return HttpProbe(urls);
+        }
+
         // device: from settings, or default
         var settingsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DawnPlayer", "settings.json");
         string? deviceId = null;
@@ -228,6 +243,86 @@ internal static class Program
             }
         }
 
+        return 0;
+    }
+
+    /// <summary>
+    /// N1 spike: can the MF source reader open file-like audio over plain HTTP with a usable
+    /// open latency and seek? Decides between "MF-over-URL" and "spool then local reader" for
+    /// HttpProgressiveTrackReader. Purely diagnostic — no audio is played.
+    /// </summary>
+    private static int HttpProbe(List<string> urls)
+    {
+        foreach (var url in urls)
+        {
+            Console.WriteLine($"=== HTTP probe: {url} ===");
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            MediaFoundationReader reader;
+            try
+            {
+                reader = new MediaFoundationReader(url);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"  open FAILED after {sw.ElapsedMilliseconds} ms: {ex.Message.Split('\n')[0]} (0x{ex.HResult:X8})");
+                Console.WriteLine();
+                continue;
+            }
+            sw.Stop();
+            using (reader)
+            {
+                Console.WriteLine($"  open: {sw.ElapsedMilliseconds} ms");
+                Console.WriteLine($"  format: {reader.WaveFormat}");
+                Console.WriteLine($"  length: {reader.TotalTime} ({reader.Length:N0} bytes)");
+
+                // 1-second read throughput
+                var samples = reader.ToSampleProvider();
+                var buffer = new float[reader.WaveFormat.SampleRate * reader.WaveFormat.Channels];
+                sw.Restart();
+                int read = 0, totalRead = 0;
+                do
+                {
+                    read = samples.Read(buffer.AsSpan(0, buffer.Length));
+                    totalRead += read;
+                } while (read > 0 && totalRead < buffer.Length);
+                sw.Stop();
+                Console.WriteLine($"  read ~1s: {sw.ElapsedMilliseconds} ms ({totalRead / (double)reader.WaveFormat.Channels / reader.WaveFormat.SampleRate:0.00}s decoded)");
+
+                // mid-track seek + re-read
+                sw.Restart();
+                long target = reader.Length / 2;
+                target -= target % reader.WaveFormat.BlockAlign;
+                reader.Position = Math.Max(0, target);
+                sw.Stop();
+                long afterSeek = reader.Position;
+                int seekMs = (int)sw.ElapsedMilliseconds;
+                sw.Restart();
+                totalRead = 0;
+                do
+                {
+                    read = samples.Read(buffer.AsSpan(0, buffer.Length));
+                    totalRead += read;
+                } while (read > 0 && totalRead < buffer.Length);
+                sw.Stop();
+                Console.WriteLine($"  seek→middle: {seekMs} ms (position {afterSeek:N0}), re-read 1s: {sw.ElapsedMilliseconds} ms ({totalRead / (double)reader.WaveFormat.Channels / reader.WaveFormat.SampleRate:0.00}s decoded)");
+            }
+            Console.WriteLine();
+        }
+
+        // Document what the CURRENT factory chain does with the same URLs (expected: the radio
+        // provider intercepts and fails non-MP3 streams — the N1 routing-redesign motivation).
+        foreach (var url in urls)
+        {
+            try
+            {
+                using var viaFactory = AudioFileReaderFactory.Open(url);
+                Console.WriteLine($"factory chain: {url} → opened as {viaFactory.GetType().Name}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"factory chain: {url} → {ex.GetType().Name}: {ex.Message.Split('\n')[0]}");
+            }
+        }
         return 0;
     }
 }

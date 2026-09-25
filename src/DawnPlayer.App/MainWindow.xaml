@@ -75,7 +75,7 @@
                            MaxWidth="320" TextTrimming="CharacterEllipsis"/>
             </StackPanel>
 
-            <!-- Eole Horizontal Navigation Tabs (Library / Playlists) -->
+            <!-- Eole Horizontal Navigation Tabs (Library / Playlists / Network) -->
             <StackPanel x:Name="TopNavPanel" Grid.Column="1" Orientation="Horizontal" Spacing="2" VerticalAlignment="Stretch"
                         DoubleTapped="OnTabDoubleTapped">
                 <RadioButton x:Name="TabLibrary" GroupName="TopNavGroup" IsChecked="True"
@@ -94,6 +94,15 @@
                     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                         <FontIcon Glyph="&#xE90B;" FontSize="12"/>
                         <TextBlock x:Uid="MainWindow_Tab_Playlists" Text="Playlists" FontSize="12.5"/>
+                    </StackPanel>
+                </RadioButton>
+                <RadioButton x:Name="TabNetwork" GroupName="TopNavGroup"
+                             AutomationProperties.AutomationId="TabNetwork"
+                             Style="{StaticResource EoleNavTabStyle}" Click="OnTabNetworkClick"
+                             DoubleTapped="OnTabDoubleTapped">
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <FontIcon Glyph="&#xE777;" FontSize="12"/>
+                        <TextBlock x:Uid="MainWindow_Tab_Network" Text="Network" FontSize="12.5"/>
                     </StackPanel>
                 </RadioButton>
             </StackPanel>
@@ -120,6 +129,7 @@
         <Grid x:Name="ContentHost" Grid.Row="1">
             <views:LibraryPage x:Name="LibraryPageView" Visibility="Visible"/>
             <views:PlaylistPage x:Name="PlaylistPageView" Visibility="Collapsed"/>
+            <views:NetworkPage x:Name="NetworkPageView" Visibility="Collapsed"/>
             <Frame x:Name="ContentFrame" Visibility="Collapsed"/>
         </Grid>
 

@@ -33,7 +33,11 @@ dawnplayer.log）。**便携模式**：exe 旁存在 `portable.dat` 标记时，
 - 独占模式的采样率不匹配策略 — 可选择在曲目边界重建输出会话（位完美），或保持会话运行并
   重采样（无缝衔接）
 - **网络电台** — 播放 Icecast/Shoutcast MP3 流（通过 ICY 元数据显示电台/曲目信息）。
+  位于网络标签页：收藏电台、添加流 URL，播放栏和 SMTC 显示实时电台/曲目信息。
   标题菜单 → 打开网络流；M3U8 播放列表中的 URL 也可直接使用
+- **DLNA 浏览** — 自动发现网络中的 UPnP 媒体服务器，通过常规引擎播放其音乐（无缝衔接、EQ、
+  WASAPI 独占输出全部保留）：选择服务器 → 浏览文件夹 → 立即播放/加入 Now Playing，专辑封面本地
+  缓存。优先原始格式（FLAC/WAV/MP3/AAC…）
 - **支持的格式**：MP3、AAC/ALAC (m4a)、FLAC、Ogg Vorbis、Opus、WAV、DSF/DSD、DFF (DSDIFF) —
   Media Foundation + NVorbis 解码。DSD 通过箱形抽取转换为 44.1k/48k 系列 PCM 播放，或以
   DoP（DSD over PCM）打包，经 WASAPI 独占模式发送至支持 DSD 的 DAC
@@ -85,6 +89,7 @@ dawnplayer.log）。**便携模式**：exe 旁存在 `portable.dat` 标记时，
 - **在线歌词插件** — 通过 .NET DLL 插件支持各站点的歌词搜索。可配置插件优先级、
   播放中自动搜索（离线歌词优先）、标题/艺术家/专辑搜索窗口、预览后应用，并可将在线歌词
   保存为离线 .lrc — 支持保存位置（源文件目录/自定义目录）与文件名模板（`%title%` 等变量）
+- 自带站点插件（samples 参考实现）：LRCLIB + Alsong — 将构建好的 DLL 复制到插件目录后重新扫描即可启用
 - 支持标准/多时间戳/`[offset:]`/扩展（逐字）LRC，自动识别 UTF-8/ANSI
 - **LRC 歌词编辑器** — 逐行时间戳编辑/同步、行顺序调整、从剪贴板导入歌词
 

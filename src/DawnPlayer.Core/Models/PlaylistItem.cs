@@ -102,6 +102,25 @@ public sealed class PlaylistItem : INotifyPropertyChanged
         }
     }
 
+    private string _nowPlayingSubtitle = "";
+    /// <summary>
+    /// Live secondary line for remote sources (radio: "station · song" from ICY). Written from the
+    /// UI thread by the app's relay; empty for local tracks, in which case views fall back to the
+    /// track's own artist/album.
+    /// </summary>
+    public string NowPlayingSubtitle
+    {
+        get => Volatile.Read(ref _nowPlayingSubtitle);
+        set
+        {
+            if (!string.Equals(Volatile.Read(ref _nowPlayingSubtitle), value, StringComparison.Ordinal))
+            {
+                Volatile.Write(ref _nowPlayingSubtitle, value);
+                OnPropertyChanged();
+            }
+        }
+    }
+
     /// <summary>Dynamic duration display string: shows "-m:ss" remaining time when playing, or "m:ss" duration otherwise.</summary>
     public string DurationDisplay
     {

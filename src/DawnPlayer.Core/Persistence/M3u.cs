@@ -10,7 +10,9 @@ using DawnPlayer.Core.Util;
 
 namespace DawnPlayer.Core.Persistence;
 
-public sealed record M3uEntry(string Path, string? Title, double? DurationSeconds);
+/// <summary>One playlist line. <see cref="DpTrackDirective"/> carries the preceding
+/// <c>#DPTRACK:</c> payload verbatim when present (remote tracks with metadata).</summary>
+public sealed record M3uEntry(string Path, string? Title, double? DurationSeconds, string? DpTrackDirective = null);
 
 /// <summary>High-performance streaming M3U / M3U8 reader &amp; atomic writer.</summary>
 public static class M3u
@@ -87,6 +89,7 @@ public static class M3u
         var entries = new List<M3uEntry>();
         string? pendingTitle = null;
         double? pendingDuration = null;
+        string? pendingDirective = null;
 
         var dir = Path.GetDirectoryName(Path.GetFullPath(file)) ?? "";
         using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
@@ -98,6 +101,11 @@ public static class M3u
             var line = raw.Trim().TrimStart('\uFEFF');
             if (line.Length == 0) continue;
 
+            if (line.StartsWith("#DPTRACK:", StringComparison.OrdinalIgnoreCase))
+            {
+                pendingDirective = line[9..].Trim();
+                continue;
+            }
             if (line.StartsWith("#EXTINF:", StringComparison.OrdinalIgnoreCase))
             {
                 var body = line[8..];
@@ -115,11 +123,15 @@ public static class M3u
             if (line.StartsWith('#')) continue; // #EXTM3U, #PLAYLIST:, comments
 
             var path = line;
-            if (!Path.IsPathRooted(path))
+            // Stream URLs must never go through the relative-path join: GetFullPath mangles
+            // "http://host/x" into "<dir>\\http:\\host\\x", which silently broke radio (and now
+            // remote-track) round-trips on reload. They are always stored absolute.
+            if (!Audio.RadioTrack.IsStreamUrl(path) && !Path.IsPathRooted(path))
                 path = Path.GetFullPath(Path.Combine(dir, path));
-            entries.Add(new M3uEntry(path, pendingTitle, pendingDuration));
+            entries.Add(new M3uEntry(path, pendingTitle, pendingDuration, pendingDirective));
             pendingTitle = null;
             pendingDuration = null;
+            pendingDirective = null;
         }
         return entries;
     }
@@ -148,6 +160,21 @@ public static class M3u
                 var item = items[i];
                 if (item?.Track == null) continue;
                 var t = item.Track;
+
+                // Remote tracks persist their identity + display metadata in one directive line
+                // so a reload does not degrade them to a bare URL (and lose names/kind).
+                if (t.SourceKind != Models.TrackSourceKind.File)
+                {
+                    var meta = new DpTrackMeta(
+                        (int)t.SourceKind,
+                        string.IsNullOrEmpty(t.Title) ? null : t.Title,
+                        string.IsNullOrEmpty(t.Artist) ? null : t.Artist,
+                        string.IsNullOrEmpty(t.Album) ? null : t.Album,
+                        t.DurationMs > 0 ? t.DurationMs / 1000.0 : null,
+                        null);
+                    writer.WriteLine("#DPTRACK:" + meta.Encode());
+                }
+
                 var title = string.IsNullOrEmpty(t.Artist) ? t.Title : $"{t.Artist} - {t.Title}";
                 writer.Write("#EXTINF:");
                 writer.Write((t.DurationMs / 1000.0).ToString("0.###", CultureInfo.InvariantCulture));

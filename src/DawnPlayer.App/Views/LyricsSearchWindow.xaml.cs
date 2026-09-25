@@ -3,14 +3,17 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using DawnPlayer.App.Helpers;
 using DawnPlayer.App.Localization;
 using DawnPlayer.App.Services;
 using DawnPlayer.Core.Lyrics;
 using DawnPlayer.Core.Lyrics.Online;
 using DawnPlayer.Core.Models;
+using DawnPlayer.Core.Persistence;
 using DawnPlayer.Core.Util;
 using DawnPlayer.Plugins;
 using Microsoft.UI.Xaml;
+using WinRT.Interop;
 using Microsoft.UI.Xaml.Controls;
 
 namespace DawnPlayer.App.Views;
@@ -50,6 +53,7 @@ public sealed partial class LyricsSearchWindow : Window
     private static LyricsSearchWindow? s_activeWindow;
 
     private Track _track = null!;
+    private readonly IntPtr _hwnd;
     private readonly ObservableCollection<LyricsResultItemVm> _results = new();
     private CancellationTokenSource? _searchCts;
     private CancellationTokenSource? _previewCts;
@@ -77,6 +81,12 @@ public sealed partial class LyricsSearchWindow : Window
         win.Closed += (_, _) =>
         {
             if (s_activeWindow == win) s_activeWindow = null;
+            if (WindowPlacementHelper.TrySaveWindowSize(win, win._hwnd, out var w, out var h))
+            {
+                AppServices.Settings.Ui.LyricsSearchWidth = w;
+                AppServices.Settings.Ui.LyricsSearchHeight = h;
+                SettingsWriter.Schedule(AppServices.Settings);
+            }
             win.CancelWork();
         };
         win.Activate();
@@ -91,6 +101,8 @@ public sealed partial class LyricsSearchWindow : Window
         Services.ThemeService.ApplyTheme(this, AppServices.Settings.Ui);
         Services.ThemeService.RegisterAuxiliaryWindow(this);
         Title = AppStrings.Get("LyricsSearch_WindowTitle", "온라인 가사 검색 — Dawn Player");
+        _hwnd = WindowNative.GetWindowHandle(this);
+        WindowPlacementHelper.TryRestoreWindowSize(this, AppServices.Settings.Ui.LyricsSearchWidth, AppServices.Settings.Ui.LyricsSearchHeight, _hwnd);
         ResultsList.ItemsSource = _results;
         LoadTrack(track);
     }

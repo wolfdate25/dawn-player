@@ -11,7 +11,7 @@ namespace DawnPlayer.Core.Audio;
 /// <see cref="TotalTime"/> is zero and seeking is a no-op; buffer underruns emit silence instead
 /// of end-of-stream (the sequencer must not advance away from a live radio on a network hiccup).
 /// </summary>
-public sealed class RadioStreamReader : ITrackReader
+public sealed class RadioStreamReader : ITrackReader, ILiveMetadataSource
 {
     /// <summary>Decoded seconds to buffer before reporting the reader as open.</summary>
     private const double PrebufferSeconds = 1.5;
@@ -24,6 +24,9 @@ public sealed class RadioStreamReader : ITrackReader
     private volatile string _streamTitle = "";
 
     public event Action<string>? StreamTitleChanged;
+
+    /// <summary>Station name announced via the ICY <c>icy-name</c> header; empty when absent.</summary>
+    public string StationName { get; private set; } = "";
 
     public RadioStreamReader(string url)
     {
@@ -76,9 +79,11 @@ public sealed class RadioStreamReader : ITrackReader
 
         string contentType = response.Content.Headers.ContentType?.MediaType ?? "";
         var icyName = response.Headers.TryGetValues("icy-name", out var names) ? names.FirstOrDefault() : null;
-        if (!string.IsNullOrWhiteSpace(icyName) && _streamTitle.Length == 0)
+        if (!string.IsNullOrWhiteSpace(icyName))
         {
-            _streamTitle = icyName;
+            // Station identity lives in its own slot; StreamTitle stays empty until the stream
+            // actually sends now-playing metadata.
+            StationName = icyName.Trim();
         }
 
         Stream audio = stream;

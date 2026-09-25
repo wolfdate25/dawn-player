@@ -5,6 +5,7 @@
     <Project Path="src/DawnPlayer.Plugin.Abstractions/DawnPlayer.Plugin.Abstractions.csproj" />
   </Folder>
   <Folder Name="/samples/">
+    <Project Path="samples/AlsongLyricsPlugin/AlsongLyricsPlugin.csproj" />
     <Project Path="samples/LrclibLyricsPlugin/LrclibLyricsPlugin.csproj" />
     <Project Path="samples/SampleDspPlugin/SampleDspPlugin.csproj" />
   </Folder>

@@ -78,6 +78,7 @@ public static class AudioFileReaderFactory
     private static ITrackReaderProvider[] _providers =
     {
         new RadioStreamTrackReaderProvider(),
+        new HttpFileTrackReaderProvider(),
         new DsfTrackReaderProvider(),
         new DffTrackReaderProvider(),
         new VorbisTrackReaderProvider(),
@@ -112,32 +113,28 @@ public static class AudioFileReaderFactory
     }
 
     /// <summary>Opens a supported audio file. Throws <see cref="AudioOpenException"/> on failure.</summary>
-    public static ITrackReader Open(string path)
+    public static ITrackReader Open(string path) => Open(path, Models.TrackSourceKind.File);
+
+    /// <summary>
+    /// Opens a track with its source kind. The kind only reroutes http(s) URLs: <see cref="Models.TrackSourceKind.Radio"/>
+    /// and the legacy default (a bare stream URL, kept radio for compatibility) stay on the live-stream
+    /// reader, <see cref="Models.TrackSourceKind.Dlna"/> goes to the spooling file reader, and local
+    /// files ignore the kind entirely.
+    /// </summary>
+    public static ITrackReader Open(string path, Models.TrackSourceKind sourceKind)
     {
         // A cue-sheet virtual track addresses a range inside a physical file; open the parent and
         // wrap it in a range reader that the sequencer can chain gaplessly.
         if (AppPaths.TryDecodeCuePath(path, out var physical, out var startMs, out var endMs))
         {
-            var inner = Open(physical);
+            var inner = Open(physical, sourceKind);
             return new CueTrackReader(inner,
                 TimeSpan.FromMilliseconds(startMs),
                 TimeSpan.FromMilliseconds(endMs));
         }
 
         var ext = System.IO.Path.GetExtension(path).ToLowerInvariant();
-
-        ITrackReaderProvider? chosen = null;
-        lock (_gate)
-        {
-            foreach (var provider in _providers)
-            {
-                if (provider.CanOpen(path, ext))
-                {
-                    chosen = provider;
-                    break;
-                }
-            }
-        }
+        var chosen = SelectProvider(path, ext, sourceKind);
 
         if (chosen == null)
         {
@@ -159,6 +156,28 @@ public static class AudioFileReaderFactory
             throw new AudioOpenException(
                 CoreMessages.Encode(CoreMessageKey.FileOpenFailed, System.IO.Path.GetFileName(path)), ex);
         }
+    }
+
+    /// <summary>Picks the provider for a path under the source-kind routing rules. Public for the
+    /// routing contract tests — selection must stay observable without opening anything.</summary>
+    public static ITrackReaderProvider? SelectProvider(string path, string extension, Models.TrackSourceKind sourceKind)
+    {
+        // Remote file sources are pinned to the spooling reader; everything else keeps the
+        // historical chain (radio first, which is exactly why the legacy bare-URL case still
+        // behaves like a live stream).
+        bool fileOverHttp = sourceKind == Models.TrackSourceKind.Dlna
+            || sourceKind == Models.TrackSourceKind.YouTube;
+
+        lock (_gate)
+        {
+            foreach (var provider in _providers)
+            {
+                if (!provider.CanOpen(path, extension)) continue;
+                if (provider is HttpFileTrackReaderProvider != fileOverHttp) continue;
+                return provider;
+            }
+        }
+        return null;
     }
 }
 

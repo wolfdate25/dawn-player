@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>AlsongLyricsPlugin</RootNamespace>
+    <AssemblyName>AlsongLyricsPlugin</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DawnPlayer.Plugin.Abstractions\DawnPlayer.Plugin.Abstractions.csproj" />
+    <!-- No external packages: HttpClient + XDocument + WebUtility cover the whole protocol. -->
+  </ItemGroup>
+
+</Project>

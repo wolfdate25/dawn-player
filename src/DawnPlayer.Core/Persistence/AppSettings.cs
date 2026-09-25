@@ -256,6 +256,12 @@ public sealed class UiSettings
     public double LeftSidebarWidth { get; set; } = 220;
     public double RightSidebarWidth { get; set; } = 300;
     public double LyricsSidebarWidth { get; set; } = 300;
+    /// <summary>User-resized size of the lyrics search window (DIPs, null = never resized).</summary>
+    public double? LyricsSearchWidth { get; set; }
+    public double? LyricsSearchHeight { get; set; }
+    /// <summary>User-resized size of the lyrics editor window (DIPs, null = never resized).</summary>
+    public double? LyricsEditorWidth { get; set; }
+    public double? LyricsEditorHeight { get; set; }
     public double AlbumCoverSize { get; set; } = 144;
 
     // Library View & Tree State Persistence

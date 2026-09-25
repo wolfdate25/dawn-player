@@ -47,6 +47,25 @@ public static class SmtcMapping
 
         return (title, artist, album, albumArtist, trackNumber);
     }
+
+    /// <summary>
+    /// Formats live-source metadata (radio ICY): the StreamTitle becomes the SMTC title and the
+    /// station name the artist; both fall back to the track's own fields when the source did not
+    /// report them.
+    /// </summary>
+    public static (string Title, string Artist, string Album, string AlbumArtist, uint TrackNumber) FormatLiveMetadata(
+        Track? track, string? stationName, string? streamTitle)
+    {
+        var basis = FormatMetadata(track);
+        var title = (streamTitle ?? string.Empty).Trim();
+        var station = (stationName ?? string.Empty).Trim();
+        return (
+            title.Length > 0 ? title : basis.Title,
+            station.Length > 0 ? station : basis.Artist,
+            basis.Album,
+            basis.AlbumArtist,
+            basis.TrackNumber);
+    }
 }
 
 /// <summary>
@@ -93,6 +112,7 @@ public sealed class SmtcService : ISmtcService
 
             _playback.CurrentChanged += OnPlaybackCurrentChanged;
             _playback.StateChanged += OnPlaybackStateChanged;
+            _playback.StreamTitleChanged += OnStreamTitle;
 
             _isInitialized = true;
             UpdateTrack(_playback.CurrentItem);
@@ -113,6 +133,45 @@ public sealed class SmtcService : ISmtcService
     private void OnPlaybackCurrentChanged(PlaylistItem? item) => UpdateTrack(item);
 
     private void OnPlaybackStateChanged() => UpdateState(_playback.State);
+
+    /// <summary>Raised on the reader's fill thread. Only the still-current item updates: a title
+    /// racing a track change must not overwrite the next track's metadata.</summary>
+    private void OnStreamTitle(Core.Audio.LiveStreamMetadata m)
+    {
+        if (_smtc == null || _isDisposed) return;
+        if (!ReferenceEquals(_playback.CurrentItem, m.Item)) return;
+        _ = UpdateLiveMetadataAsync(m);
+    }
+
+    /// <summary>Lightweight metadata-only SMTC refresh for live sources; the thumbnail is left
+    /// untouched and the monotonic version guard drops out-of-order updates.</summary>
+    private async Task UpdateLiveMetadataAsync(Core.Audio.LiveStreamMetadata m)
+    {
+        int targetVersion = Interlocked.Increment(ref _currentUpdateVersion);
+        if (_smtc == null || _isDisposed) return;
+
+        try
+        {
+            var updater = _smtc.DisplayUpdater;
+            updater.Type = MediaPlaybackType.Music;
+
+            var meta = SmtcMapping.FormatLiveMetadata(m.Item?.Track, m.StationName, m.StreamTitle);
+            updater.MusicProperties.Title = meta.Title;
+            updater.MusicProperties.Artist = meta.Artist;
+            updater.MusicProperties.AlbumTitle = meta.Album;
+            updater.MusicProperties.AlbumArtist = meta.AlbumArtist;
+            updater.MusicProperties.TrackNumber = meta.TrackNumber;
+
+            if (targetVersion == Volatile.Read(ref _currentUpdateVersion) && !_isDisposed)
+            {
+                updater.Update();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SMTC] update live metadata failed: {ex.Message}");
+        }
+    }
 
     private async void OnButtonPressed(SystemMediaTransportControls sender, SystemMediaTransportControlsButtonPressedEventArgs args)
     {
@@ -236,6 +295,7 @@ public sealed class SmtcService : ISmtcService
         {
             _playback.CurrentChanged -= OnPlaybackCurrentChanged;
             _playback.StateChanged -= OnPlaybackStateChanged;
+            _playback.StreamTitleChanged -= OnStreamTitle;
         }
         catch { }
 

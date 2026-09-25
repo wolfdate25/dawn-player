@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="DawnPlayer.App.Views.Network.RadioSection"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:core="using:DawnPlayer.Core.Models">
+
+    <Grid RowSpacing="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Section header -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <FontIcon Glyph="&#xE968;" FontSize="14" Foreground="{ThemeResource DawnAccentBrush}" VerticalAlignment="Center"/>
+            <TextBlock x:Uid="Network_Radio_Title" Grid.Column="1" Text="라디오" FontSize="13.5" FontWeight="SemiBold"
+                       Foreground="{ThemeResource TextPrimaryBrush}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+            <TextBlock x:Name="StationCountText" Grid.Column="2" Text="0" FontSize="11.5"
+                       Foreground="{ThemeResource TextTertiaryBrush}" Margin="0,0,12,0" VerticalAlignment="Center"/>
+            <Button x:Uid="Network_Radio_Add" x:Name="AddStationButton" Grid.Column="3" Click="OnAddStationClick"
+                    Padding="10,5" CornerRadius="4">
+                <StackPanel Orientation="Horizontal" Spacing="7">
+                    <FontIcon Glyph="&#xE710;" FontSize="12" Foreground="{ThemeResource DawnAccentBrush}"/>
+                    <TextBlock x:Uid="Network_Radio_AddText" Text="방송국 추가" FontSize="12"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- Station list -->
+        <ListView x:Name="StationList" Grid.Row="1" SelectionMode="Single"
+                  DoubleTapped="OnStationDoubleTapped"
+                  Background="{ThemeResource PanelSubtleBrush}"
+                  BorderBrush="{ThemeResource SeparatorSubtleBrush}" BorderThickness="1" CornerRadius="6">
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="core:RadioStation">
+                    <Grid Padding="12,9" Background="Transparent">
+                        <Grid.ContextFlyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem x:Uid="Network_Radio_Play" Text="재생" Click="OnPlayStationClick">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE768;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem x:Uid="Network_Radio_Edit" Text="편집" Click="OnEditStationClick">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE70F;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem x:Uid="Network_Radio_Remove" Text="삭제" Click="OnRemoveStationClick">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74D;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </Grid.ContextFlyout>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{x:Bind Name}" FontSize="12.5" FontWeight="SemiBold"
+                                       Foreground="{ThemeResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Text="{x:Bind Url}" FontSize="11"
+                                       Foreground="{ThemeResource TextTertiaryBrush}" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <!-- Empty state (U2 pattern: message, no action — the header's add button is the action) -->
+        <StackPanel x:Name="EmptyState" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+            <FontIcon Glyph="&#xE968;" FontSize="22" Foreground="{ThemeResource TextTertiaryBrush}" HorizontalAlignment="Center"/>
+            <TextBlock x:Uid="Network_Radio_Empty" Text="저장된 방송국이 없습니다. '방송국 추가'로 Icecast/Shoutcast MP3 스트림 URL을 등록하세요."
+                       FontSize="12" Foreground="{ThemeResource TextTertiaryBrush}" HorizontalAlignment="Center"
+                       TextWrapping="Wrap" MaxWidth="380" TextAlignment="Center"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

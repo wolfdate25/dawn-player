@@ -14,7 +14,9 @@ using DawnPlayer.App.Services;
 using DawnPlayer.Core.Audio;
 using DawnPlayer.Core.Lyrics;
 using DawnPlayer.Core.Models;
+using DawnPlayer.Core.Persistence;
 using Microsoft.UI.Xaml;
+using WinRT.Interop;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Windows.ApplicationModel.DataTransfer;
@@ -104,6 +106,7 @@ public sealed partial class LyricsEditorWindow : Window
     private static LyricsEditorWindow? s_activeWindow;
 
     private Track _track;
+    private readonly IntPtr _hwnd;
     // 100 ms is plenty for a position label; 50 ms meant 20 dispatcher wake-ups a second per window.
     private readonly DispatcherTimer _pollTimer = new() { Interval = TimeSpan.FromMilliseconds(100) };
     private bool _closed;
@@ -147,6 +150,8 @@ public sealed partial class LyricsEditorWindow : Window
         Services.ThemeService.ApplyTheme(this, AppServices.Settings.Ui);
         Services.ThemeService.RegisterAuxiliaryWindow(this);
         Title = AppStrings.Get("LyricsEditor_WindowTitle", "가사 편집기 — Dawn Player");
+        _hwnd = WindowNative.GetWindowHandle(this);
+        WindowPlacementHelper.TryRestoreWindowSize(this, AppServices.Settings.Ui.LyricsEditorWidth, AppServices.Settings.Ui.LyricsEditorHeight, _hwnd);
         _track = track;
 
         _stepMs = AppServices.Settings.Lyrics.DefaultOffsetStepMs > 0 ? AppServices.Settings.Lyrics.DefaultOffsetStepMs : 0.5;
@@ -188,6 +193,12 @@ public sealed partial class LyricsEditorWindow : Window
     {
         // The timer kept ticking after close, pinning this window, its line collection and its
         // track for the rest of the session — once per editor the user ever opened.
+        if (WindowPlacementHelper.TrySaveWindowSize(this, _hwnd, out var w, out var h))
+        {
+            AppServices.Settings.Ui.LyricsEditorWidth = w;
+            AppServices.Settings.Ui.LyricsEditorHeight = h;
+            SettingsWriter.Schedule(AppServices.Settings);
+        }
         _closed = true;
         _pollTimer.Stop();
         _pollTimer.Tick -= OnPollTimerTick;

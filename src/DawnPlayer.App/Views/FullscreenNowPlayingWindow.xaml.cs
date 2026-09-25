@@ -64,10 +64,12 @@ public sealed partial class FullscreenNowPlayingWindow : Window
         {
             _timer.Stop();
             AppServices.CurrentTrackChanged -= OnTrackChanged;
+            AppServices.LiveStreamTitleChanged -= OnLiveStreamTitle;
         };
 
         BuildSpectrumBars();
         AppServices.CurrentTrackChanged += OnTrackChanged;
+        AppServices.LiveStreamTitleChanged += OnLiveStreamTitle;
 
         _timer.Start();
         OnTrackChanged(AppServices.Playback.CurrentItem);
@@ -101,6 +103,16 @@ public sealed partial class FullscreenNowPlayingWindow : Window
     // ---------- track + waveform ----------
 
     private void OnTrackChanged(PlaylistItem? item) => DispatcherQueue.TryEnqueue(() => LoadTrack(item));
+
+    /// <summary>Already on the UI thread via the AppServices relay; guards against a metadata
+    /// racing a track change the same way the bar does.</summary>
+    private void OnLiveStreamTitle(Core.Audio.LiveStreamMetadata m)
+    {
+        if (!ReferenceEquals(AppServices.Playback?.CurrentItem, m.Item)) return;
+        var subtitle = m.Item.NowPlayingSubtitle;
+        TrackArtist.Text = subtitle.Length > 0 ? subtitle : TrackArtist.Text;
+        Title = subtitle.Length > 0 ? $"{m.Item.Track.Title} — {subtitle}" : Title;
+    }
 
     private void LoadTrack(PlaylistItem? item)
     {

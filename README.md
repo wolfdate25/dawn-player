@@ -36,7 +36,12 @@ this marker).
 - Exclusive-mode sample-rate mismatch policy — rebuild the output session at the track boundary
   (bit-perfect) or keep the session running and resample (seamless), as you prefer
 - **Internet radio** — Icecast/Shoutcast MP3 streaming with station/song info from ICY metadata.
-  Title menu → Open network stream; URLs inside M3U8 playlists work as-is
+  Lives in the Network tab: save stations as favorites, add a stream URL, and see the live
+  station/song line in the player bar and SMTC. Title menu → Open network stream; URLs inside
+  M3U8 playlists work as-is
+- **DLNA browsing** — discover UPnP media servers on your network and play their music through the
+  regular engine (gapless, EQ, exclusive WASAPI): pick a server, walk folders, play or queue
+  tracks; album art is cached locally. Original formats preferred (FLAC/WAV/MP3/AAC…)
 - **Supported formats**: MP3, AAC/ALAC (m4a), FLAC, Ogg Vorbis, Opus, WAV, DSF/DSD, DFF (DSDIFF)
   — Media Foundation + NVorbis decoding. DSD plays as boxcar-decimated 44.1k/48k-family PCM, or
   as DoP (DSD over PCM) packing to a DSD-capable DAC over WASAPI exclusive
@@ -102,6 +107,8 @@ this marker).
   auto-search during playback (offline lyrics first), title/artist/album search window,
   preview before apply, saving online lyrics as offline .lrc — with save location (source
   folder/custom folder) and file-name templates (`%title%` etc.)
+- Bundled site plugins (samples): LRCLIB + Alsong — copy the built DLL into the plugins
+  folder and rescan to enable
 - Standard/multi-timestamp/`[offset:]`/extended (word-level) LRC support, UTF-8/ANSI auto
   detection
 - **LRC lyrics editor** — per-line timestamp editing/syncing, line reordering, clipboard import

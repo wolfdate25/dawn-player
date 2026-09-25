@@ -136,6 +136,12 @@ public sealed partial class PlaybackController : IPlaybackController
     public event Action<string>? Warning;
     public event Action<SessionInfo>? SessionStarted;
 
+    /// <summary>
+    /// Raised on the reader's fill thread when a live source (radio ICY today) reports a new
+    /// now-playing title for the item it is playing. UI must marshal.
+    /// </summary>
+    public event Action<LiveStreamMetadata>? StreamTitleChanged;
+
     public bool IsExclusiveSession => Volatile.Read(ref _session)?.Exclusive ?? false;
     public SessionInfo? CurrentSessionInfo { get; private set; }
 
@@ -198,7 +204,7 @@ public sealed partial class PlaybackController : IPlaybackController
         PendingTrack pending;
         try
         {
-            var reader = await Task.Run(() => AudioFileReaderFactory.Open(item.Track.Path));
+            var reader = await Task.Run(() => AudioFileReaderFactory.Open(item.Track.Path, item.Track.SourceKind));
             if (Volatile.Read(ref _commandGeneration) != cmdId)
             {
                 reader.Dispose();
@@ -337,7 +343,7 @@ public sealed partial class PlaybackController : IPlaybackController
         PendingTrack pending;
         try
         {
-            var reader = await Task.Run(() => AudioFileReaderFactory.Open(target.Value.item.Track.Path));
+            var reader = await Task.Run(() => AudioFileReaderFactory.Open(target.Value.item.Track.Path, target.Value.item.Track.SourceKind));
             if (Volatile.Read(ref _commandGeneration) != cmdId)
             {
                 reader.Dispose();
@@ -568,7 +574,7 @@ public sealed partial class PlaybackController : IPlaybackController
         {
             try
             {
-                var reader = AudioFileReaderFactory.Open(item.Track.Path);
+                var reader = AudioFileReaderFactory.Open(item.Track.Path, item.Track.SourceKind);
                 await PlayPendingAsync(BuildPending(pl, item, reader, startPosition: pos), pushHistory: false, restartCmdId, recordLeave: false);
                 if (Volatile.Read(ref _commandGeneration) != restartCmdId) return;
                 if (resumePaused)
@@ -1025,13 +1031,36 @@ public sealed partial class PlaybackController : IPlaybackController
 
     // ---------------- next/previous resolution ----------------
 
-    private static PendingTrack BuildPending(Playlist playlist, PlaylistItem item, ITrackReader reader, TimeSpan? startPosition = null) => new()
+    // Instance method (was static): it wires the live-metadata relay, which raises this
+    // controller's events and detaches itself from TrackLeft.
+    private PendingTrack BuildPending(Playlist playlist, PlaylistItem item, ITrackReader reader, TimeSpan? startPosition = null)
     {
-        Playlist = playlist,
-        Item = item,
-        Reader = reader,
-        StartPosition = startPosition
-    };
+        var pending = new PendingTrack
+        {
+            Playlist = playlist,
+            Item = item,
+            Reader = reader,
+            StartPosition = startPosition
+        };
+
+        if (reader is ILiveMetadataSource live)
+        {
+            var detach = LiveMetadataRelay.Attach(live, item, m => StreamTitleChanged?.Invoke(m));
+
+            // Leave is the one funnel every real play passes through (manual switch, stop, natural
+            // end). A pending that never starts (superseded while opening) has no live raise left
+            // after its reader is disposed — the relay dies with the reader, unhooked or not.
+            void OnLeftForDetach(PlaylistItem left, TimeSpan _, PlaybackLeaveReason __)
+            {
+                if (!ReferenceEquals(left, item)) return;
+                TrackLeft -= OnLeftForDetach;
+                detach();
+            }
+            TrackLeft += OnLeftForDetach;
+        }
+
+        return pending;
+    }
 
     /// <summary>
     /// Resolves the next item in play order and opens it, skipping unreadable files. Runs without
@@ -1047,7 +1076,7 @@ public sealed partial class PlaybackController : IPlaybackController
             if (target == null) return null;
             try
             {
-                var reader = AudioFileReaderFactory.Open(target.Value.Item.Track.Path);
+                var reader = AudioFileReaderFactory.Open(target.Value.Item.Track.Path, target.Value.Item.Track.SourceKind);
                 bool restart = false;
                 if (session is { Exclusive: true, Device: not null })
                 {

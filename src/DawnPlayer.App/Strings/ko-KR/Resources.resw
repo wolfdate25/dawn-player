@@ -53,6 +53,7 @@
   <data name="MainWindow_TitleBarTrack.Text" xml:space="preserve"><value>재생 중인 곡 없음</value></data>
   <data name="MainWindow_Tab_Library.Text" xml:space="preserve"><value>라이브러리</value></data>
   <data name="MainWindow_Tab_Playlists.Text" xml:space="preserve"><value>재생목록</value></data>
+  <data name="MainWindow_Tab_Network.Text" xml:space="preserve"><value>네트워크</value></data>
   <data name="MainWindow_SettingsGearButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>환경설정</value></data>
 
   <!-- Module 1: NowPlayingBar -->
@@ -791,8 +792,32 @@
   <data name="Settings_Playback_Convolution_Clear.Content" xml:space="preserve"><value>해제</value></data>
   <data name="Settings_Playback_Convolution_Empty" xml:space="preserve"><value>(임펄스 없음)</value></data>
   <data name="MainWindow_Menu_OpenUrl.Text" xml:space="preserve"><value>네트워크 스트림 열기 (라디오)...</value></data>
-  <data name="OpenUrl_Title" xml:space="preserve"><value>네트워크 스트림 열기</value></data>
-  <data name="OpenUrl_Header" xml:space="preserve"><value>스트림 URL (Icecast/Shoutcast MP3)</value></data>
+  <data name="Network_PageHeader.Text" xml:space="preserve"><value>네트워크</value></data>
+  <data name="Network_Radio_Title.Text" xml:space="preserve"><value>라디오</value></data>
+  <data name="Network_Radio_Add.AutomationProperties.Name" xml:space="preserve"><value>방송국 추가</value></data>
+  <data name="Network_Radio_AddText.Text" xml:space="preserve"><value>방송국 추가</value></data>
+  <data name="Network_Radio_Empty.Text" xml:space="preserve"><value>저장된 방송국이 없습니다. '방송국 추가'로 Icecast/Shoutcast MP3 스트림 URL을 등록하세요.</value></data>
+  <data name="Network_Radio_Play.Text" xml:space="preserve"><value>재생</value></data>
+  <data name="Network_Radio_Edit.Text" xml:space="preserve"><value>편집</value></data>
+  <data name="Network_Radio_Remove.Text" xml:space="preserve"><value>삭제</value></data>
+  <data name="Network_Radio_Dialog_AddTitle" xml:space="preserve"><value>방송국 추가</value></data>
+  <data name="Network_Radio_Dialog_EditTitle" xml:space="preserve"><value>방송국 편집</value></data>
+  <data name="Network_Radio_Dialog_Name" xml:space="preserve"><value>이름</value></data>
+  <data name="Network_Radio_Dialog_Url" xml:space="preserve"><value>스트림 URL (Icecast/Shoutcast MP3)</value></data>
+  <data name="Network_Radio_Dialog_Genre" xml:space="preserve"><value>장르 (선택)</value></data>
+  <data name="Network_Section_Radio.Text" xml:space="preserve"><value>라디오</value></data>
+  <data name="Network_Section_Dlna.Text" xml:space="preserve"><value>DLNA</value></data>
+  <data name="Network_Dlna_Refresh.AutomationProperties.Name" xml:space="preserve"><value>DLNA 서버 새로고침</value></data>
+  <data name="Network_Dlna_RefreshText.Text" xml:space="preserve"><value>서버 새로고침</value></data>
+  <data name="Network_Dlna_LoadMore.Content" xml:space="preserve"><value>더 불러오기…</value></data>
+  <data name="Network_Dlna_Play.Text" xml:space="preserve"><value>지금 재생</value></data>
+  <data name="Network_Dlna_Add.Text" xml:space="preserve"><value>Now Playing에 추가</value></data>
+  <data name="Network_Dlna_NoServers.Text" xml:space="preserve"><value>네트워크에서 DLNA 서버를 찾지 못했습니다. DLNA 서버(예: MinimServer, Windows 미디어 스트리밍)가 켜져 있고 같은 네트워크에 있는지 확인한 뒤 '서버 새로고침'을 누르세요.</value></data>
+  <data name="Network_Dlna_Root" xml:space="preserve"><value>루트</value></data>
+  <data name="Network_Dlna_ChildCountFormat" xml:space="preserve"><value>{0}개</value></data>
+  <data name="Network_Dlna_BrowseFailed" xml:space="preserve"><value>항목을 불러오지 못했습니다: {0}</value></data>
+  <data name="Network_Dlna_Unplayable" xml:space="preserve"><value>재생할 수 있는 오디오 형식이 없습니다.</value></data>
+  <data name="Network_Radio_InvalidUrl" xml:space="preserve"><value>http:// 또는 https:// 스트림 URL을 입력하세요.</value></data>
   <data name="Lastfm_StatusNeedKeys" xml:space="preserve"><value>Last.fm API 키와 비밀을 입력하세요 (last.fm/api 에서 생성).</value></data>
   <data name="Lastfm_StatusAuthed" xml:space="preserve"><value>{0} 로 인증됨 · 대기 중인 스러블 {1}개</value></data>
   <data name="Lastfm_StatusNotAuthed" xml:space="preserve"><value>브라우저에서 인증하면 스러블이 켜집니다.</value></data>

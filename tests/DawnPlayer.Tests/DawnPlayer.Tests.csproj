@@ -27,6 +27,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\DawnPlayer.Core\DawnPlayer.Core.csproj" />
     <!-- Compiled ALC-loading fixture for LyricsPluginHost tests (samples/LrclibLyricsPlugin). -->
+    <ProjectReference Include="..\..\samples\AlsongLyricsPlugin\AlsongLyricsPlugin.csproj" />
     <ProjectReference Include="..\..\samples\LrclibLyricsPlugin\LrclibLyricsPlugin.csproj" />
     <ProjectReference Include="..\..\samples\SampleDspPlugin\SampleDspPlugin.csproj" />
   </ItemGroup>
@@ -78,6 +79,8 @@
     <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Playlist\PlaylistViewModel.cs" Link="ViewModels\Playlist\PlaylistViewModel.cs" />
         <Compile Include="..\..\src\DawnPlayer.App\ViewModels\Settings\LastfmSettingsViewModel.cs" Link="ViewModels\Settings\LastfmSettingsViewModel.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Views\NavigationStateCalculator.cs" Link="Views\NavigationStateCalculator.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Views\Network\RadioStationCommands.cs" Link="Views\Network\RadioStationCommands.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Controls\RadioSubtitleFormatter.cs" Link="Controls\RadioSubtitleFormatter.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Views\Library\LibraryTreeNode.cs" Link="Views\Library\LibraryTreeNode.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Views\Library\LibraryTreeModelBuilder.cs" Link="Views\Library\LibraryTreeModelBuilder.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Views\Library\LibraryFilterService.cs" Link="Views\Library\LibraryFilterService.cs" />

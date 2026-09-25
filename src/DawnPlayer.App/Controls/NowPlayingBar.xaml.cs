@@ -44,6 +44,18 @@ public sealed partial class NowPlayingBar : UserControl
         QueueList.ItemsSource = _queueController.Entries;
 
         AppServices.OutputSessionChanged += OnOutputSession;
+        AppServices.LiveStreamTitleChanged += OnLiveStreamTitle;
+    }
+
+    /// <summary>Runs on the UI thread (AppServices relay): refreshes the artist line while the
+    /// metadata's item is still the one being shown — a title racing a track change must not
+    /// overwrite the new track's text.</summary>
+    private void OnLiveStreamTitle(Core.Audio.LiveStreamMetadata m)
+    {
+        if (ReferenceEquals(AppServices.Playback?.CurrentItem, m.Item))
+        {
+            TrackArtist.Text = m.Item.NowPlayingSubtitle;
+        }
     }
 
     private void CompleteSeek()
@@ -100,7 +112,11 @@ public sealed partial class NowPlayingBar : UserControl
 
         var t = item.Track;
         TrackTitle.Text = t.Title;
-        TrackArtist.Text = string.IsNullOrEmpty(t.Artist) ? t.Album : t.Artist;
+        // A live source's subtitle (radio "station · song") outranks the track's own empty artist
+        // fields; it keeps updating through OnLiveStreamTitle while the item plays.
+        var liveSubtitle = item.NowPlayingSubtitle;
+        TrackArtist.Text = liveSubtitle.Length > 0 ? liveSubtitle
+            : (string.IsNullOrEmpty(t.Artist) ? t.Album : t.Artist);
 
         // format badge
         _formatBadgeText = AudioFormatBadgeFormatter.FormatTrackBadgeText(t);

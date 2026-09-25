@@ -53,6 +53,7 @@
   <data name="MainWindow_TitleBarTrack.Text" xml:space="preserve"><value>No sound — Nothing played</value></data>
   <data name="MainWindow_Tab_Library.Text" xml:space="preserve"><value>Library</value></data>
   <data name="MainWindow_Tab_Playlists.Text" xml:space="preserve"><value>Playlists</value></data>
+  <data name="MainWindow_Tab_Network.Text" xml:space="preserve"><value>Network</value></data>
   <data name="MainWindow_SettingsGearButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Preferences</value></data>
 
   <!-- Module 1: NowPlayingBar -->
@@ -791,8 +792,32 @@
   <data name="Settings_Playback_Convolution_Clear.Content" xml:space="preserve"><value>Clear</value></data>
   <data name="Settings_Playback_Convolution_Empty" xml:space="preserve"><value>(no impulse)</value></data>
   <data name="MainWindow_Menu_OpenUrl.Text" xml:space="preserve"><value>Open network stream (radio)...</value></data>
-  <data name="OpenUrl_Title" xml:space="preserve"><value>Open network stream</value></data>
-  <data name="OpenUrl_Header" xml:space="preserve"><value>Stream URL (Icecast/Shoutcast MP3)</value></data>
+  <data name="Network_PageHeader.Text" xml:space="preserve"><value>Network</value></data>
+  <data name="Network_Radio_Title.Text" xml:space="preserve"><value>Radio</value></data>
+  <data name="Network_Radio_Add.AutomationProperties.Name" xml:space="preserve"><value>Add station</value></data>
+  <data name="Network_Radio_AddText.Text" xml:space="preserve"><value>Add station</value></data>
+  <data name="Network_Radio_Empty.Text" xml:space="preserve"><value>No saved stations yet. Use "Add station" to register an Icecast/Shoutcast MP3 stream URL.</value></data>
+  <data name="Network_Radio_Play.Text" xml:space="preserve"><value>Play</value></data>
+  <data name="Network_Radio_Edit.Text" xml:space="preserve"><value>Edit</value></data>
+  <data name="Network_Radio_Remove.Text" xml:space="preserve"><value>Remove</value></data>
+  <data name="Network_Radio_Dialog_AddTitle" xml:space="preserve"><value>Add station</value></data>
+  <data name="Network_Radio_Dialog_EditTitle" xml:space="preserve"><value>Edit station</value></data>
+  <data name="Network_Radio_Dialog_Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Network_Radio_Dialog_Url" xml:space="preserve"><value>Stream URL (Icecast/Shoutcast MP3)</value></data>
+  <data name="Network_Radio_Dialog_Genre" xml:space="preserve"><value>Genre (optional)</value></data>
+  <data name="Network_Section_Radio.Text" xml:space="preserve"><value>Radio</value></data>
+  <data name="Network_Section_Dlna.Text" xml:space="preserve"><value>DLNA</value></data>
+  <data name="Network_Dlna_Refresh.AutomationProperties.Name" xml:space="preserve"><value>Refresh DLNA servers</value></data>
+  <data name="Network_Dlna_RefreshText.Text" xml:space="preserve"><value>Refresh servers</value></data>
+  <data name="Network_Dlna_LoadMore.Content" xml:space="preserve"><value>Load more…</value></data>
+  <data name="Network_Dlna_Play.Text" xml:space="preserve"><value>Play now</value></data>
+  <data name="Network_Dlna_Add.Text" xml:space="preserve"><value>Add to Now Playing</value></data>
+  <data name="Network_Dlna_NoServers.Text" xml:space="preserve"><value>No DLNA server found on the network. Make sure a DLNA server (e.g. MinimServer or Windows media streaming) is running on the same network, then press "Refresh servers".</value></data>
+  <data name="Network_Dlna_Root" xml:space="preserve"><value>Root</value></data>
+  <data name="Network_Dlna_ChildCountFormat" xml:space="preserve"><value>{0} items</value></data>
+  <data name="Network_Dlna_BrowseFailed" xml:space="preserve"><value>Could not load items: {0}</value></data>
+  <data name="Network_Dlna_Unplayable" xml:space="preserve"><value>No playable audio format available.</value></data>
+  <data name="Network_Radio_InvalidUrl" xml:space="preserve"><value>Enter an http:// or https:// stream URL.</value></data>
   <data name="Lastfm_StatusNeedKeys" xml:space="preserve"><value>Enter your Last.fm API key and secret (create them at last.fm/api).</value></data>
   <data name="Lastfm_StatusAuthed" xml:space="preserve"><value>Authenticated as {0} · {1} scrobbles queued</value></data>
   <data name="Lastfm_StatusNotAuthed" xml:space="preserve"><value>Authorize in the browser to enable scrobbling.</value></data>

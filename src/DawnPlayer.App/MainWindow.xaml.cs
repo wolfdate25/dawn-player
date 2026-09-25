@@ -289,6 +289,11 @@ public sealed partial class MainWindow : Window
         NavigateToTab("Playlists");
     }
 
+    private void OnTabNetworkClick(object sender, RoutedEventArgs e)
+    {
+        NavigateToTab("Network");
+    }
+
     public void NavigateToTab(string tabName)
     {
         var normalized = NavigationStateCalculator.NormalizeTab(tabName);
@@ -300,6 +305,7 @@ public sealed partial class MainWindow : Window
 
         // Activation is a side effect the calculator has no business knowing about.
         if (state.PlaylistsVisible) PlaylistPageView?.ActivatePage();
+        else if (state.NetworkVisible) NetworkPageView?.ActivatePage();
         else if (state.LibraryVisible) LibraryPageView?.ActivatePage();
     }
 
@@ -308,6 +314,7 @@ public sealed partial class MainWindow : Window
     {
         if (TabLibrary != null) TabLibrary.IsChecked = state.TabLibraryChecked;
         if (TabPlaylists != null) TabPlaylists.IsChecked = state.TabPlaylistsChecked;
+        if (TabNetwork != null) TabNetwork.IsChecked = state.TabNetworkChecked;
 
         // Incoming surfaces fade in (U1); MotionHelper sets the final state instantly when the
         // motion gate is off, so reduced-motion users get a plain visibility flip.
@@ -324,6 +331,12 @@ public sealed partial class MainWindow : Window
             var wasHidden = PlaylistPageView.Visibility != Visibility.Visible;
             PlaylistPageView.Visibility = state.PlaylistsVisible ? Visibility.Visible : Visibility.Collapsed;
             if (wasHidden && state.PlaylistsVisible) Helpers.MotionHelper.FadeIn(PlaylistPageView, motion);
+        }
+        if (NetworkPageView != null)
+        {
+            var wasHidden = NetworkPageView.Visibility != Visibility.Visible;
+            NetworkPageView.Visibility = state.NetworkVisible ? Visibility.Visible : Visibility.Collapsed;
+            if (wasHidden && state.NetworkVisible) Helpers.MotionHelper.FadeIn(NetworkPageView, motion);
         }
         if (ContentFrame != null)
         {
@@ -410,37 +423,18 @@ public sealed partial class MainWindow : Window
     {
         try
         {
-            var box = new TextBox
-            {
-                PlaceholderText = "http://stream.example.com:8000/stream",
-                Header = AppStrings.Get("OpenUrl_Header", "스트림 URL (Icecast/Shoutcast MP3)"),
-            };
-            var dialog = new ContentDialog
-            {
-                Title = AppStrings.Get("OpenUrl_Title", "네트워크 스트림 열기"),
-                Content = box,
-                PrimaryButtonText = AppStrings.Get("Common_OK", "확인"),
-                CloseButtonText = AppStrings.Get("Common_Cancel", "취소"),
-                DefaultButton = ContentDialogButton.Primary,
-                XamlRoot = Content.XamlRoot,
-            };
-            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
-            var url = box.Text.Trim();
-            if (url.Length == 0) return;
-
-            var playlists = AppServices.Playlists;
-            var playlist = playlists.NowPlaying;
-            var item = playlists.AddTracks(playlist, new[] { Core.Audio.RadioTrack.Create(url) }).FirstOrDefault();
-            if (item != null && AppServices.Playback != null)
-            {
-                await Controls.PlaybackUiHelper.PlayItemAsync(AppServices.Playback, playlist, item);
-            }
+            // The play flow lives in the Network tab's radio section now; the menu only routes
+            // there (N0: one implementation, no duplicated open logic).
+            NavigateToTab("Network");
+            NetworkPageView?.ActivatePage();
+            if (NetworkPageView != null)
+                await NetworkPageView.OpenRadioAddDialogAsync();
         }
-            catch (Exception ex)
-            {
-                App.Log($"[open-url] {ex}");
-                ShowWarning(ex.Message);
-            }
+        catch (Exception ex)
+        {
+            App.Log($"[open-url] {ex}");
+            ShowWarning(ex.Message);
+        }
     }
 
     // ---------------- mini player mode ----------------
@@ -675,6 +669,7 @@ public sealed partial class MainWindow : Window
         {
             if (TabLibrary != null) TabLibrary.IsChecked = false;
             if (TabPlaylists != null) TabPlaylists.IsChecked = false;
+            if (TabNetwork != null) TabNetwork.IsChecked = false;
         }
     }
 

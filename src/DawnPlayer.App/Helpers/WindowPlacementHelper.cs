@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using DawnPlayer.App.Services;
 using DawnPlayer.Core.Persistence;
+using DawnPlayer.Core.Util;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Windows.Graphics;
@@ -76,5 +77,42 @@ public static class WindowPlacementHelper
             SettingsWriter.Schedule(AppServices.Settings);
         }
         catch { }
+    }
+
+    /// <summary>
+    /// Restores a user-resized auxiliary window size (DIPs). No-op when never resized.
+    /// Position and maximized state are intentionally untouched (size-only request).
+    /// </summary>
+    public static bool TryRestoreWindowSize(Window window, double? widthDip, double? heightDip, IntPtr hwnd)
+    {
+        try
+        {
+            if (!AuxWindowSize.HasValidSize(widthDip, heightDip)) return false;
+            double scale = GetDpiScale(hwnd, window.Content?.XamlRoot);
+            var (w, h) = AuxWindowSize.ToPhysical(widthDip!.Value, heightDip!.Value, scale);
+            window.AppWindow.ResizeClient(new SizeInt32(w, h));
+            return true;
+        }
+        catch { return false; }
+    }
+
+    /// <summary>
+    /// Captures the current auxiliary window size in DIPs. Skipped (false) when maximized —
+    /// persisting the fullscreen size as the restored normal size would be wrong.
+    /// </summary>
+    public static bool TrySaveWindowSize(Window window, IntPtr hwnd, out double widthDip, out double heightDip)
+    {
+        widthDip = 0;
+        heightDip = 0;
+        try
+        {
+            if (window.AppWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Maximized })
+                return false;
+            double scale = GetDpiScale(hwnd, window.Content?.XamlRoot);
+            var client = window.AppWindow.ClientSize;
+            (widthDip, heightDip) = AuxWindowSize.ToDip(client.Width, client.Height, scale);
+            return AuxWindowSize.HasValidSize(widthDip, heightDip);
+        }
+        catch { return false; }
     }
 }

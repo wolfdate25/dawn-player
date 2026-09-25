@@ -38,6 +38,7 @@ public static class AppServices
     public static ScrobbleService Scrobbler { get; private set; } = null!;
     public static Core.Audio.Dsp.Plugins.DspPluginLoader DspPlugins { get; private set; } = null!;
     public static MotionService Motion { get; private set; } = null!;
+    public static Core.Persistence.RadioStationStore Stations { get; private set; } = null!;
 
     public static DispatcherQueue? Ui { get; private set; }
     public static IntPtr MainWindowHandle { get; private set; }
@@ -52,6 +53,9 @@ public static class AppServices
     public static event Action<SessionInfo>? OutputSessionChanged;
     public static event Action? LyricsSettingsChanged;
     public static event Action<Track?>? LyricsChanged;
+    /// <summary>Live now-playing metadata (radio ICY station/song), already marshaled to the UI
+    /// thread and with <see cref="PlaylistItem.NowPlayingSubtitle"/> already applied.</summary>
+    public static event Action<Core.Audio.LiveStreamMetadata>? LiveStreamTitleChanged;
 
     public static void RaiseLyricsSettingsChanged() => RunOnUi(() => LyricsSettingsChanged?.Invoke());
     public static void RaiseLyricsChanged(Track? track) => RunOnUi(() => LyricsChanged?.Invoke(track));
@@ -152,6 +156,7 @@ public static class AppServices
             lyricsOnline.Initialize();
             return lyricsOnline;
         });
+        services.AddSingleton(sp => new Core.Persistence.RadioStationStore());
         Container = services.BuildServiceProvider();
 
         // U3: seed the list-density resources from the persisted preset before any page XAML
@@ -172,7 +177,9 @@ public static class AppServices
         AppearanceSettings = Container.GetRequiredService<AppearanceSettingsService>();
         Motion = Container.GetRequiredService<MotionService>();
         Shortcuts = Container.GetRequiredService<ShortcutService>();
+        Stations = Container.GetRequiredService<Core.Persistence.RadioStationStore>();
         var lyricsOnline = Container.GetRequiredService<LyricsOnlineService>();
+        LyricsOnline = lyricsOnline;
         AppearanceSettings.AppearanceChanged += () => RunOnUi(() =>
         {
             App.MainWin?.ApplyTheme();
@@ -215,6 +222,12 @@ public static class AppServices
             {
                 Scrobbler.NotifyTrackStarted(Playback.CurrentItem.Track);
             }
+        });
+        // Radio ICY: format and store the live subtitle on the item, then broadcast for views/SMTC.
+        Playback.StreamTitleChanged += m => RunOnUi(() =>
+        {
+            m.Item.NowPlayingSubtitle = Controls.RadioSubtitleFormatter.Format(m.StationName, m.StreamTitle);
+            LiveStreamTitleChanged?.Invoke(m);
         });
         Playback.StateChanged += () => RunOnUi(() => PlaybackStateChanged?.Invoke());
         Playback.StopAfterCurrentChanged += () => RunOnUi(() =>
@@ -698,6 +711,7 @@ public static class AppServices
         try
         {
             Playlists.SaveAll();
+            Stations?.Save();
             SettingsWriter.FlushNow(Settings);
         }
         catch { }

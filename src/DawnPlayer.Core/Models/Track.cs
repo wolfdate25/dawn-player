@@ -32,6 +32,12 @@ public sealed record Track
     public bool HasLrc { get; set; }
     public string? ArtPath { get; set; }
 
+    /// <summary>Where this track's bytes come from. Defaults to a local file; remote kinds route
+    /// to their reader chain at open time (see <see cref="Audio.AudioFileReaderFactory"/>). Never
+    /// participates in <see cref="AlbumKey"/> or the library schema — remote tracks are playlist
+    /// residents only.</summary>
+    public TrackSourceKind SourceKind { get; set; } = TrackSourceKind.File;
+
     // ReplayGain (dB / linear peak), null when not tagged
     public double? RgTrackGainDb { get; set; }
     public double? RgTrackPeak { get; set; }

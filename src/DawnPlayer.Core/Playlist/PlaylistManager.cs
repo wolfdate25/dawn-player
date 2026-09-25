@@ -1154,7 +1154,11 @@ public sealed class PlaylistManager : IPlaylistManager
                     foreach (var entry in entries)
                     {
                         Track? track = null;
-                        if (Audio.RadioTrack.IsStreamUrl(entry.Path))
+                        if (DpTrackMeta.TryDecode(entry.DpTrackDirective) is { } meta)
+                        {
+                            track = Persistence.RemoteTrackCodec.ToTrack(entry.Path, meta);
+                        }
+                        else if (Audio.RadioTrack.IsStreamUrl(entry.Path))
                         {
                             track = Audio.RadioTrack.Create(entry.Path);
                         }
