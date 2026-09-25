@@ -4,35 +4,17 @@ using Xunit;
 namespace DawnPlayer.Tests;
 
 /// <summary>
-/// Library toolbar icon gate. The cover-size button used the Segoe MDL2 "Zoom"
-/// glyph (E71E, a magnifier) directly next to the search box (QueryIcon="Find",
-/// also a magnifier), so search and cover-size were visually indistinguishable.
-/// The track-list view toggle used E8D2 ("Font"), not a list icon at all.
-/// Rule: the zoom button glyph must not belong to the magnifier family and must
-/// not duplicate a neighboring toolbar glyph; the list toggle must use EA37
-/// (List). The accessible names stay sourced from resw via x:Uid
-/// (see <see cref="AutomationNameGateTests"/>).
+/// Library toolbar icon gate. The cover-size button went through two misleading
+/// font glyphs (E71E magnifier, then E741 resize-arrows reading as "go") next to
+/// the search box, so it now draws its own nested-squares size mark as a PathIcon
+/// (deterministic geometry, no font lookup). The track-list view toggle used E8D2
+/// ("Font"), not a list icon at all.
+/// Rule: the zoom button draws the custom PathIcon and no font glyph; the list
+/// toggle must use EA37 (List). The accessible names stay sourced from resw via
+/// x:Uid (see <see cref="AutomationNameGateTests"/>).
 /// </summary>
 public class LibraryToolbarIconTests
 {
-    // Segoe MDL2 Assets magnifier family (official code chart): all read as "search".
-    private static readonly HashSet<string> MagnifierGlyphs = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "E71E", // Zoom
-        "E71F", // ZoomOut
-        "E8A3", // ZoomIn
-        "ECE8", // ZoomMode
-    };
-
-    // Glyphs of the adjacent LibraryPage header controls: grid/list view toggle
-    // and rescan. Reusing one of them would trade one confusion for another.
-    private static readonly HashSet<string> NeighborGlyphs = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "E80A", // view-grid toggle
-        "EA37", // view-list toggle (List)
-        "E72C", // rescan
-    };
-
     private static DirectoryInfo? FindRepoRoot()
     {
         for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir != null; dir = dir.Parent)
@@ -52,38 +34,34 @@ public class LibraryToolbarIconTests
     }
 
     /// <summary>
-    /// Extracts the FontIcon glyph of the cover-size (zoom) toolbar button.
-    /// Returns null when the button or its glyph is missing.
+    /// Extracts the cover-size (zoom) toolbar button block. Returns null when missing.
     /// </summary>
-    internal static string? FindZoomButtonGlyph(string xaml)
+    internal static string? FindZoomButtonBlock(string xaml)
     {
         var buttonAt = xaml.IndexOf("x:Uid=\"Library_Zoom_Button\"", StringComparison.Ordinal);
         if (buttonAt < 0) return null;
         var blockStart = xaml.LastIndexOf("<Button", buttonAt, StringComparison.Ordinal);
         var blockEnd = xaml.IndexOf("</Button>", buttonAt, StringComparison.Ordinal);
         if (blockStart < 0 || blockEnd < 0) return null;
-        var block = xaml.Substring(blockStart, blockEnd - blockStart);
-        var m = Regex.Match(block, @"Glyph=""&#x([0-9A-Fa-f]+);""");
-        return m.Success ? m.Groups[1].Value : null;
+        return xaml.Substring(blockStart, blockEnd - blockStart);
     }
 
     [Fact]
-    public void ZoomButton_UsesNonMagnifierGlyph()
+    public void ZoomButton_UsesCustomSizeIcon()
     {
-        var glyph = FindZoomButtonGlyph(ReadLibraryPageXaml());
-        Assert.True(glyph != null, "cover-size button glyph not found — scan scope broken");
-        Assert.False(MagnifierGlyphs.Contains(glyph!),
-            "Cover-size button uses a magnifier glyph next to the search box — " +
-            "pick a non-magnifier size/resize glyph (e.g. E741 ResizeTouchLarger).");
+        var block = FindZoomButtonBlock(ReadLibraryPageXaml());
+        Assert.True(block != null, "cover-size button not found — scan scope broken");
+        Assert.Contains("<PathIcon", block!, StringComparison.Ordinal);
+        Assert.Contains("M1,1", block!, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void ZoomButton_Glyph_DistinctFromToolbarNeighbors()
+    public void ZoomButton_HasNoFontGlyph()
     {
-        var glyph = FindZoomButtonGlyph(ReadLibraryPageXaml());
-        Assert.True(glyph != null, "cover-size button glyph not found — scan scope broken");
-        Assert.False(NeighborGlyphs.Contains(glyph!),
-            "Cover-size button duplicates a neighboring toolbar glyph — pick a distinct one.");
+        var block = FindZoomButtonBlock(ReadLibraryPageXaml());
+        Assert.True(block != null, "cover-size button not found — scan scope broken");
+        Assert.DoesNotContain("FontIcon", block!, StringComparison.Ordinal);
+        Assert.DoesNotContain("Glyph=\"&#x", block!, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -126,17 +104,11 @@ public class LibraryToolbarIconTests
     }
 
     [Theory]
-    [InlineData("<Button x:Uid=\"Library_Zoom_Button\"><FontIcon Glyph=\"&#xE71E;\"/></Button>", "E71E")]
-    [InlineData("<Button x:Uid=\"Library_Zoom_Button\"><FontIcon Glyph=\"&#xE741;\"/></Button>", "E741")]
-    [InlineData("<Button x:Uid=\"Other\"><FontIcon Glyph=\"&#xE741;\"/></Button>", null)]
-    [InlineData("<Button x:Uid=\"Library_Zoom_Button\"></Button>", null)]
-    public void Extractor_FindsZoomButtonGlyph(string xaml, string? expected)
+    [InlineData("<Button x:Uid=\"Library_Zoom_Button\"><PathIcon Data=\"M1,1\"/></Button>", true)]
+    [InlineData("<Button x:Uid=\"Other\"><PathIcon Data=\"M1,1\"/></Button>", false)]
+    [InlineData("<Button x:Uid=\"Library_Zoom_Button\">", false)]
+    public void Extractor_FindsZoomButtonBlock(string xaml, bool found)
     {
-        Assert.Equal(expected, FindZoomButtonGlyph(xaml));
-        if (expected != null)
-        {
-            var isMagnifier = MagnifierGlyphs.Contains(expected);
-            Assert.Equal(expected == "E71E", isMagnifier);
-        }
+        Assert.Equal(found, FindZoomButtonBlock(xaml) != null);
     }
 }

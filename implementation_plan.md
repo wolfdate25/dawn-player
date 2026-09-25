@@ -460,7 +460,7 @@ kind=Dlna — 인프라 그대로), 재생목록 편집 무결성, 콜드 리빌
 
 | 항목 | 내용 | 검증 |
 |---|---|---|
-| 수정 | `LibraryPage.xaml` 2줄: 크기 `E71E`→`E741`(ResizeTouchLarger), 목록 `E8D2`→`EA37`(List). 툴팁·자동화 이름 resw 원천 유지 | 콜드 리빌드 **0경고 0오류** |
+| 수정 | `LibraryPage.xaml` 2줄: 크기 `E71E`→`E741`(ResizeTouchLarger)→확정형 `PathIcon` 중첩사각(폰트 룰렛 종료), 목록 `E8D2`→`EA37`(List). 툴팁·자동화 이름 resw 원천 유지 | App 빌드 **0경고 0오류** + E2E 포함 전체 **1961/1961**(PathIcon 파싱은 페이지 로드로 검증) |
 | 게이트 | `LibraryToolbarIconTests` 9종(돋보기계열 금지·이웃글리프 중복금지·목록=EA37 고정·추출기 이론) — 수정 전 RED(3종 실패) → 후 GREEN | 포함 전체 1941종 중 1940 통과, 1 실패는 `PlaybackUiHelperTests` 동시성 건 → 격리 재실행 통과로 병렬부하 플레이크 판정(규약 §4) |
 
 ### L4. 미니 플레이어 레이아웃 (2026-09-26 지시·구현)
@@ -474,3 +474,20 @@ kind=Dlna — 인프라 그대로), 재생목록 편집 무결성, 콜드 리빌
 | 수정 | `NowPlayingBar.xaml`만: `Wide`에 `MinWindowWidth="640"` 트리거, `Compact`에 고정폭 다이어트(`VolumeSlider` 숨김·아트 56→40·패딩 18→12·양 묶음 Spacing 6→4, 절약 ≈148px). C# 변경 없음, 음소거 유지 | 콜드 리빌드 **0경고 0오류** |
 | 게이트 | `MiniPlayerLayoutTests` 7종(Wide=640 고정·Compact 세터 존재·추출기 이론) — 수정 전 RED(3종 실패) → 후 GREEN | 포함 전체 **1948/1948 통과** |
 | 미확인 | 실기 렌더 육안(환경에 GUI 없음 — 수치 근거+게이트로 보증, 사용자 육안 확인 요망) | — |
+
+### L5. 라이브러리 폴더 트리 고도화 P0 (2026-09-26 지시·구현)
+
+> 사전 검토 판정: GO(음악 플레이어 용도에 적합 — 기본 `아티스트/앨범` 유지, 폴더 모드는
+> opt-in 파워도구). 원격 트랙은 재생목록에만 들어가 라이브러리 혼입 없음 실측.
+
+| 항목 | 내용 | 검증 |
+|---|---|---|
+| A1 지연 확장 | 폴더 모드만 UI 노드 지연 실체화(`DeferChildren`+더미→`Expanding` 실체화, 자식은 재지연). 선택 복원은 실체화하며 탐색(`FindNodeRecursiveMaterialized`) | `TreeLazyExpansionGateTests` 2종 RED→GREEN |
+| A2 체인 압축 | 중첩 단일-자식(무트랙) 전 구간 `A / B` 병합. 트랙 보유 폴더에서 정지, `FilterValue`=리프 전체경로라 필터 불변 | `LibraryFolderTreeAdvancedTests` 5종 RED→GREEN |
+| A0 경로 가드 | 비루트 경로 스킵(N1 M3U 결함 등급 — CWD 결합 방지) | 상기 테스트 포함 |
+| 빌드 | 콜드 1회전서 CA1822 1건 포착 → 저장소 관례 pragma(인스턴스 요구 주석) → App 콜드 재빌드 **0경고 0오류** | 전체 **1955/1955 통과** |
+| A 컨테이너 다이어트 | 셰브런 열은 템플릿 고정이라 `ItemContainerStyle`로 행 높이 26·수평 거터만 제거(`TreeRowDensityGateTests` 2종 RED→GREEN). B(컴팩트 템플릿)는 미승인·보류 | 포함 전체 **1957/1957 통과**(E2E 2종 포함) |
+| E2E 오판 방지 기록 | 앱 실행 중 전체 스위트를 돌리자 E2E 하네스(프로세스 정리 설계)가 실행 중 앱을 종료 + 부분 삭제된 bin에서 구동 실패 → 2종 실패. 제품 회귀 아님. 교훈: 앱 실행 중에는 전체 스위트 금지, 필터 실행만 | 클린 필드 재실행 **1957/1957** |
+| 미확인 | TreeView 실체화 타이밍·키보드·Narrator·셰브런 육안 실기 스모크(WinUI 바인딩은 단위테스트 불가 — 수동 체크리스트로 이월) | — |
+| V1 폴더 아이콘 숨김 | 폴더 모드에서 행 폴더 아이콘 숨김(`IsFolder`+역변환, 간격 마진 이관). `TreeFolderIconGateTests` 5종 RED→GREEN | 콜드 **0경고 0오류**, 전체 1961/1962 → `PlaybackRestartTests` 재시작 타이밍 1건 실패는 격리 재실행 통과로 플레이크 판정 |
+| bin 파손 사고 기록 | 앱 실행 중 `bin` 삭제로 runtimeconfig·PRI 등 소실 → exe 구동 불가. 원인 제공 후 프로세스 종료 확인 → 전체 클린·콜드 리빌드로 복원. 교훈: 실행 중 프로세스 확인 없이 `bin` 삭제 금지 | 복원 후 exe·runtimeconfig·PRI 존재 확인 |

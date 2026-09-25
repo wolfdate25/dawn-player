@@ -288,6 +288,9 @@ public static class LibraryTreeModelBuilder
 
         foreach (var track in tracks)
         {
+            // A0: relative paths would resolve against the process working directory
+            // (the N1 M3U defect class) — folder mode only indexes rooted paths.
+            if (!System.IO.Path.IsPathRooted(track.Path)) continue;
             var dir = System.IO.Path.GetDirectoryName(track.Path);
             if (string.IsNullOrEmpty(dir)) continue;
 
@@ -365,20 +368,39 @@ public static class LibraryTreeModelBuilder
 
         static LibraryTreeNode CreateNode(FolderDirNode dirNode, bool isRoot)
         {
+            // A2: fold nested single-child chains that hold no tracks themselves into one
+            // "A / B" node (file-explorer style). The top root keeps its full-path title
+            // via SimplifyRoot above. Selection keeps working: FilterValue is the merged
+            // leaf's full path, so the path-prefix filter is unchanged.
+            var display = dirNode;
+            var names = new List<string>();
+            if (!isRoot)
+            {
+                names.Add(dirNode.Name);
+                while (display.DirectCount == 0 && display.Subfolders.Count == 1)
+                {
+                    display = display.Subfolders.Values.First();
+                    names.Add(display.Name);
+                }
+            }
+
             var node = new LibraryTreeNode
             {
-                Title = isRoot ? dirNode.FullPath : dirNode.Name,
+                Title = isRoot ? dirNode.FullPath : string.Join(" / ", names),
                 Glyph = "\uE838",
                 FilterType = "Folder",
-                FilterValue = dirNode.FullPath,
-                Count = dirNode.TotalCount,
+                FilterValue = display.FullPath,
+                Count = display.TotalCount,
                 DefaultExpanded = isRoot
             };
 
-            foreach (var sub in dirNode.Subfolders.Values.OrderBy(s => s.Name, StringComparer.CurrentCultureIgnoreCase))
+            foreach (var sub in display.Subfolders.Values.OrderBy(s => s.Name, StringComparer.CurrentCultureIgnoreCase))
             {
                 node.Children.Add(CreateNode(sub, isRoot: false));
             }
+
+            // A1: children exist in the model but the view may create UI nodes on demand.
+            node.DeferChildren = node.Children.Count > 0;
 
             return node;
         }

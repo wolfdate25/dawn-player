@@ -381,7 +381,7 @@ public sealed partial class LibraryPage : Page
 
         if (!string.IsNullOrEmpty(savedType))
         {
-            matchingNode = LibraryTreeBuilder.FindNodeRecursive(LibraryTree.RootNodes, savedType, savedVal, savedExtra);
+            matchingNode = LibraryTreeBuilder.FindNodeRecursiveMaterialized(LibraryTree.RootNodes, savedType, savedVal, savedExtra);
         }
 
         if (matchingNode != null)
@@ -516,6 +516,15 @@ public sealed partial class LibraryPage : Page
         RebuildTree();
         ApplyFilters();
     }
+
+    /// <summary>P0 lazy expansion: materialize deferred folder children on first expand.</summary>
+    // Wired from XAML (Expanding="OnTreeExpanding"), which requires an instance member.
+#pragma warning disable CA1822
+    private void OnTreeExpanding(TreeView sender, TreeViewExpandingEventArgs args)
+    {
+        if (args.Node != null) LibraryTreeBuilder.EnsureChildrenLoaded(args.Node);
+    }
+#pragma warning restore CA1822
 
     private void SelectTreeNode(LibraryTreeNode? node)
     {

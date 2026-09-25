@@ -17,6 +17,7 @@
         <services:BoolToVisibilityConverter x:Key="BoolToVis"/>
         <services:BoolToVisibilityConverter x:Key="PlayingVis"/>
         <services:InverseBoolToVisibilityConverter x:Key="NotPlayingVis"/>
+        <services:InverseBoolToVisibilityConverter x:Key="NotFolderVis"/>
         <services:IsPlayingToBrushConverter x:Key="PlayingBrush"/>
         <services:IsPlayingToFontWeightConverter x:Key="PlayingFontWeight"/>
 
@@ -99,10 +100,20 @@
             <TreeView x:Name="LibraryTree" Grid.Row="2" SelectionMode="Single"
                       ItemInvoked="OnTreeItemInvoked"
                       SelectionChanged="OnTreeSelectionChanged"
+                      Expanding="OnTreeExpanding"
                       Padding="0,0,4,16">
+                <!-- A: container diet — rows draw their own 26px template, so the
+                     TreeViewItem adds no extra height or horizontal gutter.
+                     Chevron column and indent stay template-owned. -->
+                <TreeView.ItemContainerStyle>
+                    <Style TargetType="TreeViewItem">
+                        <Setter Property="MinHeight" Value="26"/>
+                        <Setter Property="Padding" Value="0,2"/>
+                    </Style>
+                </TreeView.ItemContainerStyle>
                 <TreeView.ItemTemplate>
                     <DataTemplate>
-                        <Grid Height="26" ColumnSpacing="6" Background="Transparent" DoubleTapped="OnTreeItemDoubleTapped"
+                        <Grid Height="26" ColumnSpacing="0" Background="Transparent" DoubleTapped="OnTreeItemDoubleTapped"
                               AutomationProperties.Name="{Binding Content.Title}">
                             <Grid.ContextFlyout>
                                 <MenuFlyout Opening="OnTreeContextMenuOpening">
@@ -125,14 +136,15 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <FontIcon Grid.Column="0" Glyph="{Binding Content.Glyph}" FontSize="11"
+                            <FontIcon Grid.Column="0" Glyph="{Binding Content.Glyph}" FontSize="11" Margin="0,0,6,0"
+                                      Visibility="{Binding Content.IsFolder, Converter={StaticResource NotFolderVis}}"
                                       Foreground="{ThemeResource TextTertiaryBrush}"/>
                             <TextBlock Grid.Column="1" Text="{Binding Content.Title}" FontSize="12"
                                        VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                                        Foreground="{ThemeResource TextPrimaryBrush}"/>
                             <TextBlock Grid.Column="2" Text="{Binding Content.CountText}" FontSize="10"
                                        Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"
-                                       Margin="2,0,6,0"/>
+                                       Margin="6,0,6,0"/>
                         </Grid>
                     </DataTemplate>
                 </TreeView.ItemTemplate>
@@ -194,7 +206,11 @@
                     <!-- Cover Zoom Flyout Button -->
                     <Button x:Uid="Library_Zoom_Button" Style="{StaticResource TransportButton}" Width="28" Height="28"
  ToolTipService.ToolTip="커버 크기 조절 (Ctrl+마우스 휠)">
-                        <FontIcon Glyph="&#xE741;" FontSize="11"/>
+                        <!-- Custom nested-squares size mark: deterministic geometry instead of a
+                             font glyph (E71E read as search, E741 as "go"). PathGeometry
+                             defaults to EvenOdd: outer ring + small solid square. -->
+                        <PathIcon Width="11" Height="11"
+                                  Data="M1,1 L15,1 L15,15 L1,15 Z M3.5,3.5 L3.5,12.5 L12.5,12.5 L12.5,3.5 Z M8,8 L12,8 L12,12 L8,12 Z"/>
                         <Button.Flyout>
                             <Flyout Placement="Bottom" Opened="OnCoverZoomFlyoutOpened">
                                 <StackPanel Width="190" Spacing="8" Padding="6">
