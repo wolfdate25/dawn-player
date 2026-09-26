@@ -60,6 +60,15 @@ public sealed class DlnaDeviceDescriptionParserTests
     }
 
     [Fact]
+    public void DisplayName_AppendsHost_SoSameNameServersStayDistinct()
+    {
+        var server = DlnaDeviceDescriptionParser.TryParse(MinimalServer, DescriptionAt);
+
+        // Two servers on the LAN advertising the same friendly name must stay distinguishable.
+        Assert.Equal("MinimServer (192.168.0.10)", server!.DisplayName);
+    }
+
+    [Fact]
     public void UrlBase_Element_OverridesDescriptionUrlAsBase()
     {
         var xml = MinimalServer.Replace(

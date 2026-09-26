@@ -239,6 +239,7 @@ public static class AppServices
         });
         Playback.AbRepeatChanged += () => RunOnUi(() => AbRepeatChanged?.Invoke());
         Playback.AbRepeatRejected += reason => RunOnUi(() => AbRepeatRejected?.Invoke(reason));
+        Playback.RemoteArtResolved += track => RunOnUi(() => RemoteArtResolved?.Invoke(track));
         Playback.TrackLeft += OnPlaybackTrackLeft;
         Playback.Warning += msg =>
         {
@@ -277,6 +278,9 @@ public static class AppServices
 
     /// <summary>Raised on the UI thread when an A-B repeat press was refused (see PlaybackController).</summary>
     public static event Action<Core.Audio.AbRepeatRejectionReason>? AbRepeatRejected;
+
+    /// <summary>Raised on the UI thread when a remote track's art finished resolving (see PlaybackController).</summary>
+    public static event Action<Core.Models.Track>? RemoteArtResolved;
 
     // Play-count heuristics, shared by every leave reason: a track counts as played when it
     // drained on its own or was left past 75% of its length, and as skipped only for an early

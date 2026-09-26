@@ -5,8 +5,9 @@ namespace DawnPlayer.Core.Network.Dlna;
 /// <summary>
 /// Maps a DIDL item to a playable <see cref="Track"/>: picks the best res by native-format
 /// preference (the server's original encoding outranks anything it would transcode to), resolves
-/// relative res URLs, and fills the display metadata. Art is deliberately not touched here — the
-/// caller caches <see cref="DidlItemEntry.AlbumArtUri"/> into a local ArtPath.
+/// relative res URLs, and fills the display metadata. The remote art URL is carried in
+/// <see cref="Track.ArtUrl"/> (persisted with the track, resolved lazily); the caller may resolve
+/// it into a local ArtPath up front via <see cref="DlnaArtCache"/>.
 /// </summary>
 public static class DlnaTrackFactory
 {
@@ -56,6 +57,7 @@ public static class DlnaTrackFactory
             Codec = best.Match!.Value.Codec,
             DurationMs = (long)(item.Duration?.TotalMilliseconds ?? 0),
             SourceKind = TrackSourceKind.Dlna,
+            ArtUrl = item.AlbumArtUri?.AbsoluteUri,
         };
         return track;
     }

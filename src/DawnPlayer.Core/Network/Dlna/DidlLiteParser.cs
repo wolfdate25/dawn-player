@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Xml.Linq;
+using DawnPlayer.Core.Util;
 
 namespace DawnPlayer.Core.Network.Dlna;
 
@@ -49,9 +50,11 @@ public static class DidlLiteParser
                 if (element.Name.LocalName == "container") entry = ParseContainer(element);
                 else if (element.Name.LocalName == "item") entry = ParseItem(element);
             }
-            catch
+            catch (Exception ex)
             {
-                // One bad row must not take the browsing session down.
+                // One bad row must not take the browsing session down. Logged so a server with
+                // systematic DIDL quirks shows what it is silently truncating.
+                Log.Debug($"[dlna] skipped malformed DIDL object ({element.Name.LocalName}): {ex.Message}");
             }
             if (entry != null) entries.Add(entry);
         }

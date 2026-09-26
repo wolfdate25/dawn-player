@@ -35,8 +35,16 @@ public static class RemoteTrackCodec
         if (!string.IsNullOrWhiteSpace(meta.Artist)) track.Artist = meta.Artist;
         if (!string.IsNullOrWhiteSpace(meta.Album)) track.Album = meta.Album;
         if (meta.DurationSeconds is > 0) track.DurationMs = (long)(meta.DurationSeconds.Value * 1000);
-        // ArtUrl stays unparsed for now: the art pipeline is local-file based; N2 adds the
-        // remote-art download that turns it into an ArtPath.
+        // Restored art URLs are re-validated against the schemes the art cache can actually fetch:
+        // a playlist file is user-editable, so "file://"-style payloads must not reach the loader.
+        track.ArtUrl = ValidateRemoteArtUrl(meta.ArtUrl);
         return track;
+    }
+
+    private static string? ValidateRemoteArtUrl(string? artUrl)
+    {
+        if (string.IsNullOrWhiteSpace(artUrl)) return null;
+        if (!Uri.TryCreate(artUrl, UriKind.Absolute, out var uri)) return null;
+        return uri.Scheme is "http" or "https" ? uri.AbsoluteUri : null;
     }
 }

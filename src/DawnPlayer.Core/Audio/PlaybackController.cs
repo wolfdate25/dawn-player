@@ -1,5 +1,6 @@
 using System.Globalization;
 using DawnPlayer.Core.Models;
+using DawnPlayer.Core.Network.Dlna;
 using DawnPlayer.Core.Persistence;
 using DawnPlayer.Core.Playlists;
 using DawnPlayer.Core.Util;
@@ -88,6 +89,11 @@ public sealed partial class PlaybackController : IPlaybackController
     // An enum cannot be volatile, so the backing int is what gets published (same pattern as _state).
     private int _abStage;
 
+    // Lazy art resolution for remote tracks (Track.ArtUrl → ArtPath at session start). The cache
+    // dedupes concurrent calls per URL, so a fresh DlnaSection play that already awaited the
+    // download makes this a no-op.
+    private readonly DlnaArtCache _remoteArt = new();
+
     // An enum cannot be volatile, so the backing int is what gets published. State is written from
     // command paths (no lock) and from session paths (under _sessionLock) alike.
     private int _state;
@@ -148,6 +154,13 @@ public sealed partial class PlaybackController : IPlaybackController
     /// now-playing title for the item it is playing. UI must marshal.
     /// </summary>
     public event Action<LiveStreamMetadata>? StreamTitleChanged;
+
+    /// <summary>
+    /// Raised on a background thread when a remote track's art finished downloading and
+    /// <see cref="Models.Track.ArtPath"/> was set (see <see cref="ResolveRemoteArt"/>).
+    /// UI must marshal.
+    /// </summary>
+    public event Action<Models.Track>? RemoteArtResolved;
 
     public bool IsExclusiveSession => Volatile.Read(ref _session)?.Exclusive ?? false;
     public SessionInfo? CurrentSessionInfo { get; private set; }
@@ -733,6 +746,35 @@ public sealed partial class PlaybackController : IPlaybackController
             }
         }
         StateChanged?.Invoke();
+        if (started) ResolveRemoteArt(pending.Item.Track);
+    }
+
+    /// <summary>
+    /// Restores art for remote tracks whose ArtPath did not survive an M3U8 reload: the albumArtURI
+    /// rides along in the directive (<see cref="Models.Track.ArtUrl"/>) and the cache download runs
+    /// here — at session start, where the audio spool gives it a head start over the first UI/SMTC
+    /// paint. Fresh DlnaSection plays have already awaited the download, so the cache turns the
+    /// duplicate into a no-op. Fire-and-forget on purpose: art is optional and must never delay or
+    /// fail a start.
+    /// </summary>
+    private void ResolveRemoteArt(Models.Track? track)
+    {
+        if (track?.ArtUrl == null || !string.IsNullOrEmpty(track.ArtPath)) return;
+        if (!Uri.TryCreate(track.ArtUrl, UriKind.Absolute, out var url)) return;
+
+        var cache = _remoteArt;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var path = await cache.GetOrDownloadAsync(url);
+                if (path == null) return;
+                track.ArtPath = path;
+                RemoteArtResolved?.Invoke(track);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex) { Log.Debug($"[dlna-art] lazy resolve failed for '{url}': {ex.Message}"); }
+        });
     }
 
     private void StartOrSwitchLocked(PendingTrack pending)

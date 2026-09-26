@@ -87,4 +87,16 @@ public sealed class DlnaTrackFactoryTests
         // Empty DIDL titles happen; the playlist row should not be blank.
         Assert.Equal("http://h/song.flac", track!.Title);
     }
+
+    [Fact]
+    public void AlbumArtUri_FlowsIntoTrackArtUrl_AndAbsentsWhenMissing()
+    {
+        var withArt = new DidlItemEntry("i1", "p", "Song", "object.item.audioItem", null, null, null, null,
+            new Uri("http://h/cover.jpg"), [Res("http-get:*:audio/flac:*", "http://h/song.flac")]);
+
+        Assert.Equal("http://h/cover.jpg", DlnaTrackFactory.TryCreate(withArt, Base)!.ArtUrl);
+
+        var withoutArt = Item(Res("http-get:*:audio/flac:*", "http://h/song.flac"));
+        Assert.Null(DlnaTrackFactory.TryCreate(withoutArt, Base)!.ArtUrl);
+    }
 }

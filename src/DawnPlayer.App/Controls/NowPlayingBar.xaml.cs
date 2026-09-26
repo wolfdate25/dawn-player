@@ -52,6 +52,17 @@ public sealed partial class NowPlayingBar : UserControl
 
         AppServices.OutputSessionChanged += OnOutputSession;
         AppServices.LiveStreamTitleChanged += OnLiveStreamTitle;
+        AppServices.RemoteArtResolved += OnRemoteArtResolved;
+    }
+
+    /// <summary>Runs on the UI thread (AppServices relay): a remote track's art finished
+    /// downloading after playback started (M3U8-restored tracks). Re-runs the art pipeline only
+    /// while this is still the displayed track; UpdateArt's generation guard absorbs any race.
+    /// Public — MainWindow wires AppServices.RemoteArtResolved to it, like the other relays.</summary>
+    public void OnRemoteArtResolved(Core.Models.Track track)
+    {
+        if (ReferenceEquals(AppServices.Playback?.CurrentItem?.Track, track))
+            UpdateArt(track);
     }
 
     /// <summary>Runs on the UI thread (AppServices relay): refreshes the artist line while the

@@ -123,7 +123,13 @@ DlnaArtCache→AppPaths 제외), AppServices 등록 없음 — DlnaSection 코�
 - **D3** 계획 문서 내부 불일치: §1.2 301행 "FLAC>WAV>ALAC>MP3>AAC>OGG" vs 116행 "…MP3>AAC…" — **코드는 ALAC(80)>AAC(70)>MP3(60) 단일 순서로 정합**. plan §1.2 표기 정정 권장.
 - **D4** 모델 명칭: `DlnaBrowsePage.Objects`→`Entries`, `DidlItem`→`DidlItemEntry`(+Genre), `DlnaServer`+`ServiceType`.
 
-## 7. 잔여 갭 구현 상세 (**승인 대기** — AGENTS.md §1; 착수 시 이 절이 곧 작업 범위)
+## 7. 잔여 갭 구현 상세 (**→ 2026-09-26 L10으로 구현 완료** — 아래는 착수 시 명세 기록)
+
+> 적대적 검토로 확정된 변경: (1) G1 주입 지점은 `PlaybackController.StartPending` 훅 +
+> `RemoteArtResolved` 릴레이 + NowPlayingBar `UpdateArt` 재실행 — "아트 파이프라인"이란 중앙
+> 서비스는 없음이 확인됐기 때문. (2) G2는 UI 래퍼 대신 `DlnaServer.DisplayName` Core 계산
+> 프로퍼티(테스트 가능성·캐스팅 무변경). (3) 신규 방어: 복원 ArtUrl은 http(s) 절대 URI만 허용.
+> 실행 기록·게이트 실측은 plan 문서 L10.
 
 ### G1 (P1) 복원된 DLNA 트랙의 아트 상실 + stale 주석
 

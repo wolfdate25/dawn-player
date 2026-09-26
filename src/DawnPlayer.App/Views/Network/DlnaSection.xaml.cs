@@ -73,6 +73,10 @@ public sealed partial class DlnaSection : UserControl
 {
     private static readonly HttpClient DescriptionHttp = new() { Timeout = TimeSpan.FromSeconds(10) };
 
+    /// <summary>RequestedCount sent for every browse page — owned here so the pagination UI's
+    /// arithmetic (Loaded vs TotalMatches) rests on a value this layer controls.</summary>
+    private const int BrowsePageSize = 500;
+
     private readonly ContentDirectoryClient _cds = new();
     private readonly DlnaArtCache _artCache = new();    private readonly ObservableCollection<DlnaCrumb> _crumbs = [];
     private readonly List<(string Id, string Title)> _path = [];
@@ -167,7 +171,7 @@ public sealed partial class DlnaSection : UserControl
         SetBusy(true);
         try
         {
-            var page = await _cds.BrowseAsync(serverSnapshot, containerSnapshot, startIndex);
+            var page = await _cds.BrowseAsync(serverSnapshot, containerSnapshot, startIndex, BrowsePageSize);
             // Anything that changed the browse target since the request went out invalidates this.
             if (generation != _browseGeneration) return;
 

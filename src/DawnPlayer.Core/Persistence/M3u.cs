@@ -171,7 +171,7 @@ public static class M3u
                         string.IsNullOrEmpty(t.Artist) ? null : t.Artist,
                         string.IsNullOrEmpty(t.Album) ? null : t.Album,
                         t.DurationMs > 0 ? t.DurationMs / 1000.0 : null,
-                        null);
+                        string.IsNullOrWhiteSpace(t.ArtUrl) ? null : t.ArtUrl);
                     writer.WriteLine("#DPTRACK:" + meta.Encode());
                 }
 

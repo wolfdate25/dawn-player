@@ -71,6 +71,43 @@ public sealed class M3uDpTrackTests : IDisposable
     }
 
     [Fact]
+    public void DlnaArtUrl_SurvivesRoundTrip_AndRestoresToTrack()
+    {
+        var dlna = new PlaylistItem(new Track
+        {
+            Path = "http://nas.example/audio/song.flac",
+            Title = "Song",
+            SourceKind = TrackSourceKind.Dlna,
+            ArtUrl = "http://nas.example/art/cover.jpg",
+        });
+
+        var file = WriteAndReadBack(dlna);
+        var meta = DpTrackMeta.TryDecode(M3u.Read(file)[0].DpTrackDirective);
+
+        Assert.NotNull(meta);
+        Assert.Equal("http://nas.example/art/cover.jpg", meta!.ArtUrl);
+
+        var track = RemoteTrackCodec.ToTrack("http://nas.example/audio/song.flac", meta!);
+        Assert.NotNull(track);
+        Assert.Equal("http://nas.example/art/cover.jpg", track!.ArtUrl);
+    }
+
+    [Theory]
+    [InlineData("file:///C:/Users/x/cover.jpg")]    // a playlist file is user-editable; local-resource
+    [InlineData("ftp://nas.example/cover.jpg")]     // schemes must never reach the art loader
+    [InlineData("not an absolute uri")]
+    [InlineData("")]
+    public void RemoteArtUrl_NonHttpSchemes_AreDroppedOnRestore(string artUrl)
+    {
+        var meta = new DpTrackMeta((int)TrackSourceKind.Dlna, "T", null, null, null, artUrl);
+
+        var track = RemoteTrackCodec.ToTrack("http://nas.example/audio/song.flac", meta);
+
+        Assert.NotNull(track);
+        Assert.Null(track!.ArtUrl);
+    }
+
+    [Fact]
     public void LocalTracks_DoNotGrowADirective()
     {
         var local = new PlaylistItem(new Track { Path = Path.Combine(_dir, "a.flac"), Title = "A" });

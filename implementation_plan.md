@@ -302,7 +302,8 @@ ILiveMetadataSource 리더를 고순위 테스트 provider로 Register), `NowPla
    upnp:artist, upnp:album, res@protocolInfo/size/duration, upnp:albumArtURI), duration
    "H:MM:SS.frac" 파싱, 비정규 자식은 스킵+로그하고 계속(서버별 비표준 편차 대응).
 7. **`DlnaTrackFactory.cs`** (순수) — item → `Track{SourceKind.Dlna}`. `res@protocolInfo`의
-   원본 오디오 우선(FLAC>WAV>ALAC>MP3>AAC>OGG), 서버 트랜스코드(LPCM/L16)는 원본이 없을 때만,
+   원본 오디오 우선(FLAC>WAV>ALAC>AAC>MP3>OGG — 2026-09-26 코드 대조로 정정, 실제 구현 순서),
+   서버 트랜스코드(LPCM/L16)는 원본이 없을 때만,
    비디오/이미지 res 제외. mime→스풀 확장자 매핑, Path=절대 res URI, 메타데이터 매핑.
 8. **`DlnaArtCache.cs`** — `GetOrDownloadAsync(url)` → 기존 `ArtCacheDir`에 URL 해시 파일명으로
    다운로드/재사용, 총 용량 상한(64MB) 초과 시 오래된 파일 제거. HttpClient 주입 가능(테스트).
@@ -553,3 +554,25 @@ kind=Dlna — 인프라 그대로), 재생목록 편집 무결성, 콜드 리빌
 | 불변식 | 오버레이 밴드 가장자리 = 해당 시각의 thumb 중심 x(그려진 윈도우 = 강제 윈도우). 퇴화 입력(길이 0·B≤A·thumb 이하 폭·재생 위치 초과)에서 NaN·음수 폭·슬라이더 이탈 금지 | `AbRepeatTests` 기하 12종 |
 | 게이트 | 클린 리빌드 **0경고 0오류**, 전체 스위트 **1,997 통과** | 2026-09-26 실측 |
 | 미확인 | 오버레이 실렌더링(thumb 정렬 육안 확인)은 Windows 실기기 청음과 함께 확인 필요 | — |
+
+### L10. N2 잔여 갭 구현 (2026-09-26 구현서 적대적 검토 후 착수·구현 — 커밋 대기)
+
+> 구현서 [docs/n2-dlna-implementation.md](docs/n2-dlna-implementation.md) §7 G1–G4를 사용자 승인
+> ("기존 작업 커밋 후 구현서 적대적 검토, 이상 없으면 구현")으로 착수. 검토 결과: 구현서의 하중
+> 사실 전부 실증, 확정 3건 — (1) **G1 주입 지점**: 중앙 아트 파이프라인이 없음(각 UI가
+> `Track.ArtPath` 직접 구독)이 확인돼, 세션 시작 단일 진입점 `PlaybackController.StartPending`에서
+> fire-and-forget 다운로드 → `RemoteArtResolved` 이벤트 → AppServices 릴레이 →
+> NowPlayingBar `UpdateArt` 재실행(세대 가드 재사용)으로 확정. 스풀 다운로드가 해드 스타트를 주므로
+> 첫 페인트 전 도착이 일반적. (2) **G2 표시명**: 구현서의 "UI 래퍼" 대신 `DlnaServer.DisplayName`
+> 계산 프로퍼티(테스트 가능성·단순성 — ComboBox 캐스팅 무변경). (3) **신규 방어**: 복원 ArtUrl은
+> http(s) 절대 URI만 허용 — 사용자 편집 M3U8에서 `file://`·ftp 등 로컬 자원 지시 유입 차단
+> (구현서에 없던 항목).
+
+| 항목 | 내용 | 검증 |
+|---|---|---|
+| G1 아트 복원 | `Track.ArtUrl` 신설(AlbumKey·library 스키마 비참여), `DlnaTrackFactory`가 albumArtURI 전달, `M3u.Write`가 ArtUrl 영속(기존 null 고정 해소), `RemoteTrackCodec` 복원+스킴 검증(stale 주석 해소), 컨트롤러 훅(`ResolveRemoteArt` — ArtUrl 절대 URI 재검증·ArtPath 이미 있으면 스킵·캐시가 동일 URL 중복 흡수·실패 무음) | `M3uDpTrackTests` +2(왕복·스킴 Theory 4케이스), `DlnaTrackFactoryTests` +1 |
+| G2 동명 서버 | `DlnaServer.DisplayName`("FriendlyName (host)") + ComboBox `DisplayMemberPath` 교체(선택 캐스팅 무변경) | `DlnaDeviceDescriptionParserTests` +1 |
+| G3 DIDL 스킵 로그 | per-object catch에 `Log.Debug`(스킵-계속 계약 불변, 시스템적 서버 편차 관측화) | 기존 `DidlLiteParserTests` 회귀 |
+| G4 소각 | `DlnaSection.BrowsePageSize = 500` 상수 소유 + 요청에 명시 전달(페이지네이션 산술의 값 소유), `requestedCount` 암묵 의존 해소 | 코드 리뷰 |
+| 게이트 | 클린 리빌드 **0경고 0오류**, 전체 스위트 **2,004/2,004 통과**(신규 7종) | 2026-09-26 실측 |
+| 미확인 | 복원 트랙 재생 시 아트가 SMTC 첫 페인트 이후 도착하면 SMTC 아트는 다음 갱신까지 비음(드묾 — 스풀 지연이 해드 스타트); 실기기 수동 매트릭스(M1)·Narrator 스모크(M2)는 구현서 그대로 대기 | — |

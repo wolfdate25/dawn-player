@@ -21,7 +21,7 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <ComboBox x:Name="ServerList" Grid.Column="0" HorizontalAlignment="Left" MinWidth="240"
-                      DisplayMemberPath="FriendlyName" SelectionChanged="OnServerSelected"/>
+                      DisplayMemberPath="DisplayName" SelectionChanged="OnServerSelected"/>
             <Button x:Uid="Network_Dlna_Refresh" Grid.Column="1" Click="OnRefreshServersClick" Padding="10,5" CornerRadius="4">
                 <StackPanel Orientation="Horizontal" Spacing="7">
                     <FontIcon Glyph="&#xE72C;" FontSize="12" Foreground="{ThemeResource DawnAccentBrush}"/>

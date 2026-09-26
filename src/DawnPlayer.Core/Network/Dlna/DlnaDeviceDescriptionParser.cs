@@ -3,13 +3,18 @@ using System.Xml.Linq;
 namespace DawnPlayer.Core.Network.Dlna;
 
 /// <summary>A UPnP media server we can actually browse: identity plus its ContentDirectory control
-/// endpoint. <see cref="ServiceType"/> is the full URN and drives the SOAPACTION header.</summary>
+/// endpoint. <see cref="ServiceType"/> is the full URN and drives the SOAPACTION header.
+/// <see cref="DisplayName"/> appends the host so two servers advertising the same friendly name
+/// stay distinguishable in the picker.</summary>
 public sealed record DlnaServer(
     Uri DescriptionUrl,
     string FriendlyName,
     string Udn,
     Uri ControlUrl,
-    string ServiceType);
+    string ServiceType)
+{
+    public string DisplayName => $"{FriendlyName} ({DescriptionUrl.Host})";
+}
 
 /// <summary>
 /// Extracts the ContentDirectory service from a UPnP device description document. Local-name

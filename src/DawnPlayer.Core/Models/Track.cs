@@ -32,6 +32,12 @@ public sealed record Track
     public bool HasLrc { get; set; }
     public string? ArtPath { get; set; }
 
+    /// <summary>Absolute remote art URL for remote-source tracks (DLNA's upnp:albumArtURI today).
+    /// Persisted in M3U8 #DPTRACK payloads and resolved into a local <see cref="ArtPath"/> by the
+    /// playback controller's lazy download. Like <see cref="SourceKind"/>, never participates in
+    /// <see cref="AlbumKey"/> or the library schema — remote tracks are playlist residents only.</summary>
+    public string? ArtUrl { get; set; }
+
     /// <summary>Where this track's bytes come from. Defaults to a local file; remote kinds route
     /// to their reader chain at open time (see <see cref="Audio.AudioFileReaderFactory"/>). Never
     /// participates in <see cref="AlbumKey"/> or the library schema — remote tracks are playlist
