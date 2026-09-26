@@ -107,6 +107,11 @@ README 3개 국어 라디오 항목 갱신(Network 탭·즐겨찾기·실시간 
 
 ### N2 실행 기록 (2026-09-23, 개정 5판 — 커밋 대기)
 
+> **as-built 세부 구현서**: [docs/n2-dlna-implementation.md](docs/n2-dlna-implementation.md)
+> (2026-09-26 작성 — 완료 기준 6건 대조, 계획 대비 편차 4건, 잔여 갭 G1–G4 파일 수준 명세+
+> 수동 매트릭스 체크리스트 M1·M2. 아래 기록 표에 누락됐던 "M3U8 저장·복원 왕복"은
+> `M3uDpTrackTests.RemoteTracks_RoundTripWithKindAndMetadata`로 실제 충족 확인.)
+
 | 항목 | 내용 | 검증 |
 |---|---|---|
 | SSDP | `SsdpDiscovery`(static M-SEARCH 4 ST·USN 중복 제거·3초 타임아웃, 네트워크 실패는 빈 목록) + `SsdpResponseParser`(순수) | `SsdpResponseParserTests` 9종 |
@@ -519,3 +524,32 @@ kind=Dlna — 인프라 그대로), 재생목록 편집 무결성, 콜드 리빌
 | 파급 | 인터페이스 멤버 추가에 맞춘 테스트 페이크 2건(`FakeOnlineService`, `FakeLyricsOnlineService`) 갱신 — 콜드 게이트가 포착(CS0535) | Core+Tests 콜드 리빌드 **0경고 0오류** |
 | 미확인 | App 본체(WinUI: pane·window·service impl) 컴파일, `dotnet test` 실러너, 전체 스위트, LocalizationTests는 Windows 전용 → Windows에서 확인 필요. Linux 경로 가정 기존 테스트 3종 실패는 수정 전후 동일(환경 요인, CI Windows에서 통과 대상) | — |
 | 후속(릴리스 실패) | v1.3.2 첫 태그 CI에서 `LyricsCandidateBuilderTests` 2종 실패(무조건 후보 추가가 기존 정확-목록 단언과 충돌 — F2 설계 미스, 테스트는 계약대로 정상). 커스텀 저장 설정일 때만 후보 추가로 수정 + `DefaultSaveSettings_AddsNoExtraCandidate` 가드 추가. 동시성 1건 실패는 2차 시도 통과로 플레이크 판정. 태그를 수정 커밋으로 이동 후 CI 재실행 | — |
+
+### L8. 수동 Save 덮어쓰기 확인 (2026-09-26 승인·구현 — Linux 검증 완료, App 대화상자는 Windows 확인)
+
+> 요청: 스킵 대신 "파일 있음" 경고 + 확인 버튼으로 덮어쓸 수 있게. 자동저장은 비대화형이라 스킵 정책 유지가 맞고, 수동 Save만 그 자리에서 확인한다는 설계에 합의.
+
+| 항목 | 내용 | 검증 |
+|---|---|---|
+| 1회성 덮어쓰기 | 리졸버·서비스·인터페이스에 `overwriteOnce` 오버로드 추가. 전역 `OverwriteExisting` 설정은 untouched(자동저장 보호 유지). 확인 시에만 1회 교체 후 기존 `Saved` 경로(오버라이드 해제·새로고침) | `Save_OverwriteOnce_ReplacesExistingWithoutChangingSetting` (원본 대비 컴파일-RED CS1739 → 통과) |
+| 확인창 | `SkippedExisting`일 때만 ContentDialog(제목·경로 포함 메시지·덮어쓰기/취소, 3개 국어 키 패리티). 취소 시 기존 스킵 안내 유지 | 코드 리뷰 + 빌드 |
+| 파급 | 인터페이스 멤버 추가에 맞춘 테스트 페이크 2건 갱신 | Core+Tests 콜드 리빌드 **0경고 0오류** |
+| 미확인 | 검색창 대화상자 실동작은 WinUI라 Windows에서 확인 필요 | — |
+
+### L9. A-B 반복 UX 고도화 (2026-09-26 제안·적대적 검토 통과·구현)
+
+> 제안 범위: P0(시크바 구간 오버레이·버튼 상태 라벨·툴팁 구간 시간) + P1(취소 경로·B<A 침묵 제거·
+> 기본 단축키). 적대적 검토 결과: (1) Escape는 `ShortcutKeyNames` 허용 목록에서 의도적 제외
+> (포커스 이동/다이얼로그 닫기 전용) → 취소를 **버튼 우클릭**으로 대체. (2) Ctrl+L 미사용 확인,
+> 단축키는 델타 영속화라 기본값 추가가 기존 사용자 설정 무손상. (3) **기존 결함 동시 수정** —
+> 라디오 등 라이브 소스는 `RadioStreamReader.CurrentTime` 세터가 no-op + `TotalTime=0`인데
+> `CycleAbRepeat`가 이를 가드하지 않아, UI가 "반복 중"을 보고해도 점프가 일어나지 않는 가짜
+> 루프 상태(보고 ≠ 실제 불일치)가 됨.
+
+| 항목 | 내용 | 검증 |
+|---|---|---|
+| 코어 | `AbRepeatSupport.cs` 신설(`AbRepeatRejectionReason`·`AbRepeatGate.CanMark`·`AbRepeatWindow` 스냅샷), `CycleAbRepeat` 라이브 가드 + `AbRepeatRejected` 이벤트, B≤A 거부 통보, `CancelAbRepeat`, 바이트→시간 윈도우 스냅샷 | `AbRepeatTests` 컨트롤러 4종 + 게이트 1종 |
+| UI | 시크바 A-B 오버레이(구간 밴드·A/B 마커·WaitingForB 플레이헤드 프리뷰, `AbRepeatOverlayCalculator`로 thumb 이동거리 미러), 버튼 라벨 상태화(A–B/A…/A→B), 툴팁에 구간 시간·길이, 우클릭 해제, 거부 시 라벨 플래시(B<A·LIVE)+안내 툴팁(1.4초 복원), Ctrl+L 기본 바인딩, resw 3개 국어 갱신·추가 | 오버레이 기하 10종 + `ShortcutBindingTests` 110 회귀 통과 |
+| 불변식 | 오버레이 밴드 가장자리 = 해당 시각의 thumb 중심 x(그려진 윈도우 = 강제 윈도우). 퇴화 입력(길이 0·B≤A·thumb 이하 폭·재생 위치 초과)에서 NaN·음수 폭·슬라이더 이탈 금지 | `AbRepeatTests` 기하 12종 |
+| 게이트 | 클린 리빌드 **0경고 0오류**, 전체 스위트 **1,997 통과** | 2026-09-26 실측 |
+| 미확인 | 오버레이 실렌더링(thumb 정렬 육안 확인)은 Windows 실기기 청음과 함께 확인 필요 | — |
