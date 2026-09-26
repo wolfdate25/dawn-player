@@ -123,7 +123,11 @@ public sealed partial class LyricsPane : UserControl
             return;
         }
 
-        var doc = LyricsFinder.LoadLyrics(item.Track, AppServices.Settings);
+        // An explicit search-window pick outranks everything (see ApplyResult): without this,
+        // Apply re-showed the stale offline document the user opened search to replace.
+        var applied = AppServices.LyricsOnline?.GetAppliedResult(item.Track.Path);
+        var doc = applied is { Document.HasLines: true } ? applied.Document : null;
+        if (doc == null) doc = LyricsFinder.LoadLyrics(item.Track, AppServices.Settings);
         string? onlineSource = null;
 
         // Online fallback: lyrics fetched by a plugin earlier this session (auto lookup or the
@@ -138,6 +142,12 @@ public sealed partial class LyricsPane : UserControl
                     ? AppStrings.Format("LyricsPane_SourceOnlineFormat", "온라인 · {0}", online.PluginName)
                     : AppStrings.Format("LyricsPane_SourceOnlineUnsyncedFormat", "온라인 · {0} · 비동기", online.PluginName);
             }
+        }
+        if (applied is { Document.HasLines: true })
+        {
+            onlineSource = applied.IsSynced
+                ? AppStrings.Format("LyricsPane_SourceOnlineFormat", "온라인 · {0}", applied.PluginName)
+                : AppStrings.Format("LyricsPane_SourceOnlineUnsyncedFormat", "온라인 · {0} · 비동기", applied.PluginName);
         }
         SetSourceBadge(onlineSource);
 

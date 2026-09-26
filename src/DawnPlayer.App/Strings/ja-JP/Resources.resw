@@ -311,6 +311,7 @@
   <data name="LyricsSearch_FetchError" xml:space="preserve"><value>読み込み失敗: {0}</value></data>
   <data name="LyricsSearch_ApplyFailed_NoLyrics" xml:space="preserve"><value>歌詞を取得できなかったため適用できませんでした。</value></data>
   <data name="LyricsSearch_ApplySuccess" xml:space="preserve"><value>'{0}' の歌詞を適用しました。</value></data>
+  <data name="LyricsSearch_StaleTrackNote" xml:space="preserve"><value>注意:「{0}」は再生中の曲と異なります。</value></data>
   <data name="LyricsSearch_SaveFailed_NoLyrics" xml:space="preserve"><value>歌詞を取得できなかったため保存できませんでした。</value></data>
   <data name="LyricsSearch_SaveResult_Saved" xml:space="preserve"><value>保存しました: {0}</value></data>
   <data name="LyricsSearch_SaveResult_Skipped" xml:space="preserve"><value>ファイルが既に存在するためスキップしました: {0}</value></data>

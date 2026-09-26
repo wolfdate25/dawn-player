@@ -22,6 +22,10 @@ public sealed class FakeLyricsOnlineService : ILyricsOnlineService
 
     public OnlineLyricsResult? GetSessionLyrics(string trackPath) => null;
 
+    public OnlineLyricsResult? GetAppliedResult(string trackPath) => null;
+
+    public void ClearAppliedResult(string trackPath) { }
+
     public Task<IReadOnlyList<PluginSearchOutcome>> SearchAsync(LyricsSearchQuery query, CancellationToken cancellationToken)
         => Task.FromResult<IReadOnlyList<PluginSearchOutcome>>(Array.Empty<PluginSearchOutcome>());
 

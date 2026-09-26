@@ -22,6 +22,12 @@ public interface ILyricsOnlineService
     /// <summary>Lyrics fetched online this session for a track, if any (does not touch the network).</summary>
     OnlineLyricsResult? GetSessionLyrics(string trackPath);
 
+    /// <summary>The search window's explicit pick for the track, if any (no network).</summary>
+    OnlineLyricsResult? GetAppliedResult(string trackPath);
+
+    /// <summary>Drops the explicit pick (a file save makes it permanent); display falls back.</summary>
+    void ClearAppliedResult(string trackPath);
+
     /// <summary>Manual search across every enabled plugin, in parallel. Errors come back per plugin.</summary>
     Task<IReadOnlyList<PluginSearchOutcome>> SearchAsync(LyricsSearchQuery query, CancellationToken cancellationToken);
 

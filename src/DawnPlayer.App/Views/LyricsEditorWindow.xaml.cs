@@ -547,6 +547,9 @@ public sealed partial class LyricsEditorWindow : Window
             var content = LrcParser.Format(doc);
             LrcParser.SaveToFile(_targetLrcPath, content);
 
+            // The edited file is authoritative now; drop any search-window pick for this track.
+            AppServices.LyricsOnline?.ClearAppliedResult(_track.Path);
+
             AppServices.RaiseLyricsChanged(_track);
             StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_SaveSuccess", "성공적으로 저장됨: {0} ({1})", DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture), _targetLrcPath);
         }

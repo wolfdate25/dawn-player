@@ -1,3 +1,4 @@
+using DawnPlayer.Core.Lyrics;
 using DawnPlayer.Core.Lyrics.Online;
 using DawnPlayer.Core.Models;
 using DawnPlayer.Core.Persistence;
@@ -366,5 +367,59 @@ public class OnlineLyricsServiceTests
 
         public Task<LyricsContent?> GetAsync(LyricsSearchResult result, CancellationToken cancellationToken)
             => Task.FromResult<LyricsContent?>(null);
+    }
+
+    // ---------------- applied override (search-window Apply) ----------------
+
+    private static OnlineLyricsService OverrideService(AppSettings settings) =>
+        new(new LyricsPluginHost(() => settings), () => settings);
+
+    private static OnlineLyricsResult Picked(string lrc = "[00:01.00]hello") =>
+        new(LrcParser.Parse(lrc), "alpha", "Alpha", true, Result("Song", "Artist"));
+
+    [Fact]
+    public void AppliedOverride_SetThenGet_ReturnsPickAndPopulatesSession()
+    {
+        var settings = SettingsWith();
+        var service = OverrideService(settings);
+        var picked = Picked();
+
+        service.SetAppliedOverride(@"C:\Music\song.flac", picked);
+
+        Assert.Same(picked, service.GetAppliedOverride(@"C:\Music\song.flac"));
+        // Case-insensitive like the session cache: the pane looks up by track path.
+        Assert.Same(picked, service.GetAppliedOverride(@"c:\music\SONG.flac"));
+        // The pick is displayable through the normal session path as well.
+        Assert.Same(picked, service.GetSessionLyrics(@"C:\Music\song.flac"));
+        Assert.Null(service.GetAppliedOverride(@"C:\Music\other.flac"));
+    }
+
+    [Fact]
+    public void AppliedOverride_Clear_RemovesOverrideKeepsSession()
+    {
+        var settings = SettingsWith();
+        var service = OverrideService(settings);
+        var picked = Picked();
+        service.SetAppliedOverride(@"C:\Music\song.flac", picked);
+
+        Assert.True(service.ClearAppliedOverride(@"C:\Music\song.flac"));
+
+        Assert.Null(service.GetAppliedOverride(@"C:\Music\song.flac"));
+        // Clearing the override falls back to session/offline instead of going blank.
+        Assert.Same(picked, service.GetSessionLyrics(@"C:\Music\song.flac"));
+        Assert.False(service.ClearAppliedOverride(@"C:\Music\song.flac"));
+    }
+
+    [Fact]
+    public void AppliedOverride_SecondApplyWins()
+    {
+        var settings = SettingsWith();
+        var service = OverrideService(settings);
+        service.SetAppliedOverride(@"C:\Music\song.flac", Picked("[00:01.00]first"));
+        var second = Picked("[00:01.00]second");
+
+        service.SetAppliedOverride(@"C:\Music\song.flac", second);
+
+        Assert.Same(second, service.GetAppliedOverride(@"C:\Music\song.flac"));
     }
 }

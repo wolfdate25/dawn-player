@@ -62,15 +62,30 @@ public sealed class LyricsOnlineService : ILyricsOnlineService
         return await _core.FetchAsync(loaded, result, track.Path, cancellationToken).ConfigureAwait(false);
     }
 
-    public void ApplyResult(OnlineLyricsResult result, Track track) =>
+    public OnlineLyricsResult? GetAppliedResult(string trackPath) => _core.GetAppliedOverride(trackPath);
+
+    public void ClearAppliedResult(string trackPath) => _core.ClearAppliedOverride(trackPath);
+
+    public void ApplyResult(OnlineLyricsResult result, Track track)
+    {
+        // The pick must land in the session cache AND as an override: raising the event alone
+        // re-showed the stale offline document the user opened search to replace.
+        _core.SetAppliedOverride(track.Path, result);
         AppServices.RaiseLyricsChanged(track);
+    }
 
     public LyricsSaveOutcome SaveResult(OnlineLyricsResult result, Track track)
     {
         var outcome = LyricsSavePathResolver.Save(track, result.Document, _settings().LyricsOnline);
+        if (outcome.Result != LyricsSaveResult.Failed)
+            // Keep the pick visible even when the file lands outside every search path.
+            _core.StoreSessionLyrics(track.Path, result);
         if (outcome.Result == LyricsSaveResult.Saved)
-            // The file now exists offline; make panes reload from disk.
+        {
+            // The file now exists offline and carries the pick; it becomes authoritative.
+            _core.ClearAppliedOverride(track.Path);
             AppServices.RaiseLyricsChanged(track);
+        }
         return outcome;
     }
 
@@ -119,6 +134,11 @@ public sealed class LyricsOnlineService : ILyricsOnlineService
         // Offline wins: embedded tags and .lrc files keep priority over the network.
         var offline = LyricsFinder.LoadLyrics(track, settings);
         if (offline is { HasLines: true })
+            return;
+
+        // The user's explicit pick wins over a fresh lookup: refetching here would clobber
+        // the session cache entry Apply just stored (and AutoSave could write over it).
+        if (_core.GetAppliedOverride(track.Path) is not null)
             return;
 
         if (Volatile.Read(ref _fetchGeneration) != generation || token.IsCancellationRequested)

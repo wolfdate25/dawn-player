@@ -311,6 +311,7 @@
   <data name="LyricsSearch_FetchError" xml:space="preserve"><value>Fetch failed: {0}</value></data>
   <data name="LyricsSearch_ApplyFailed_NoLyrics" xml:space="preserve"><value>Could not apply lyrics because they could not be fetched.</value></data>
   <data name="LyricsSearch_ApplySuccess" xml:space="preserve"><value>Applied '{0}' lyrics.</value></data>
+  <data name="LyricsSearch_StaleTrackNote" xml:space="preserve"><value>Note: '{0}' is not the now-playing track.</value></data>
   <data name="LyricsSearch_SaveFailed_NoLyrics" xml:space="preserve"><value>Could not save lyrics because they could not be fetched.</value></data>
   <data name="LyricsSearch_SaveResult_Saved" xml:space="preserve"><value>Saved: {0}</value></data>
   <data name="LyricsSearch_SaveResult_Skipped" xml:space="preserve"><value>Skipped because file already exists: {0}</value></data>

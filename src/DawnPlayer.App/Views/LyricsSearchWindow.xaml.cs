@@ -275,7 +275,7 @@ public sealed partial class LyricsSearchWindow : Window
             return;
         }
         AppServices.LyricsOnline!.ApplyResult(fetched, _track);
-        StatusText.Text = AppStrings.Format("LyricsSearch_ApplySuccess", "'{0}' 가사를 적용했습니다.", fetched.PluginName);
+        StatusText.Text = AppStrings.Format("LyricsSearch_ApplySuccess", "'{0}' 가사를 적용했습니다.", fetched.PluginName) + StaleTrackNote();
     }
 
     private async void OnSaveClick(object sender, RoutedEventArgs e)
@@ -291,10 +291,23 @@ public sealed partial class LyricsSearchWindow : Window
         var outcome = AppServices.LyricsOnline!.SaveResult(fetched, _track);
         StatusText.Text = outcome.Result switch
         {
-            LyricsSaveResult.Saved => AppStrings.Format("LyricsSearch_SaveResult_Saved", "저장했습니다: {0}", outcome.Path ?? ""),
-            LyricsSaveResult.SkippedExisting => AppStrings.Format("LyricsSearch_SaveResult_Skipped", "이미 파일이 있어 건너뛰었습니다: {0}", outcome.Path ?? ""),
+            LyricsSaveResult.Saved => AppStrings.Format("LyricsSearch_SaveResult_Saved", "저장했습니다: {0}", outcome.Path ?? "") + StaleTrackNote(),
+            LyricsSaveResult.SkippedExisting => AppStrings.Format("LyricsSearch_SaveResult_Skipped", "이미 파일이 있어 건너뛰었습니다: {0}", outcome.Path ?? "") + StaleTrackNote(),
             _ => outcome.Error ?? AppStrings.Get("LyricsSearch_SaveResult_Failed", "저장에 실패했습니다.")
         };
+    }
+
+    /// <summary>
+    /// Suffix for Apply/Save status text when the window's track is no longer the playing one:
+    /// the action still targets the window's track, so say so instead of failing silently.
+    /// </summary>
+    private string StaleTrackNote()
+    {
+        var nowPlaying = AppServices.Playback?.CurrentItem?.Track;
+        if (nowPlaying != null && _track != null && !string.IsNullOrEmpty(_track.Path) &&
+            !string.Equals(nowPlaying.Path, _track.Path, StringComparison.OrdinalIgnoreCase))
+            return " " + AppStrings.Format("LyricsSearch_StaleTrackNote", "참고: '{0}' 곡은 재생 중인 곡과 다릅니다.", _track.Title);
+        return "";
     }
 
     private async Task<OnlineLyricsResult?> FetchSelectedAsync(LyricsResultItemVm vm)

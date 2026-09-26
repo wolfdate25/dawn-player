@@ -157,6 +157,63 @@ public class LyricsSavePathResolverTests : IDisposable
         Assert.NotNull(outcome.Error);
     }
 
+    // ---------------- save -> find round-trip ----------------
+
+    private static AppSettings SettingsWithOnline(Action<LyricsOnlineSettings> mutate)
+    {
+        var settings = AppSettings.CreateDefault();
+        mutate(settings.LyricsOnline);
+        return settings;
+    }
+
+    [Fact]
+    public void SaveThenFind_CustomFolder_IsDiscoverable()
+    {
+        var settings = SettingsWithOnline(s =>
+        {
+            s.SaveLocation = LyricsSaveLocation.CustomFolder;
+            s.CustomSaveFolder = Path.Combine(_root, "lyrics");
+        });
+        var track = Track();
+        var doc = LrcParser.Parse("[00:01.00]hello");
+
+        var outcome = LyricsSavePathResolver.Save(track, doc, settings.LyricsOnline);
+
+        Assert.Equal(LyricsSaveResult.Saved, outcome.Result);
+        Assert.Equal(outcome.Path, LyricsFinder.FindLrcPath(track, settings));
+    }
+
+    [Fact]
+    public void SaveThenFind_SubfolderTemplate_IsDiscoverable()
+    {
+        var settings = SettingsWithOnline(s =>
+            s.SaveFileNameTemplate = "%album%/%title%.lrc");
+        var track = Track();
+        var doc = LrcParser.Parse("[00:01.00]hello");
+
+        var outcome = LyricsSavePathResolver.Save(track, doc, settings.LyricsOnline);
+
+        Assert.Equal(LyricsSaveResult.Saved, outcome.Result);
+        Assert.Equal(Path.Combine(_root, "music", "Album", "Song.lrc"), outcome.Path);
+        Assert.Equal(outcome.Path, LyricsFinder.FindLrcPath(track, settings));
+    }
+
+    [Fact]
+    public void BuildCandidates_AlwaysContainsExactSavePath()
+    {
+        var settings = SettingsWithOnline(s =>
+        {
+            s.SaveLocation = LyricsSaveLocation.CustomFolder;
+            s.CustomSaveFolder = Path.Combine(_root, "lyrics");
+            s.SaveFileNameTemplate = "%album%/%title%.lrc";
+        });
+        var track = Track();
+
+        var expected = LyricsSavePathResolver.ResolveSavePath(track, settings.LyricsOnline);
+
+        Assert.Contains(expected, LyricsFinder.BuildCandidates(track, settings), StringComparer.OrdinalIgnoreCase);
+    }
+
     public void Dispose()
     {
         try { Directory.Delete(_root, recursive: true); } catch { }

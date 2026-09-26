@@ -1,3 +1,4 @@
+using DawnPlayer.Core.Lyrics.Online;
 using DawnPlayer.Core.Models;
 using DawnPlayer.Core.Persistence;
 using DawnPlayer.Core.Util;
@@ -72,6 +73,18 @@ public static class LyricsFinder
             foreach (var name in names)
                 paths.Add(Path.Combine(root, name));
         }
+
+        // Round-trip: the configured online save destination is always a candidate, so a file
+        // just saved there (custom folder, subfolder template) is discoverable with the same
+        // settings. Appended last to preserve existing precedence whenever an older file was
+        // already found.
+        try
+        {
+            var savePath = LyricsSavePathResolver.ResolveSavePath(track, settings.LyricsOnline);
+            if (!paths.Contains(savePath, StringComparer.OrdinalIgnoreCase))
+                paths.Add(savePath);
+        }
+        catch (Exception ex) { Log.Debug($"[lyrics] save-path candidate failed for '{track.Path}': {ex.Message}"); }
         return paths;
     }
 }

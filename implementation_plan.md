@@ -491,3 +491,30 @@ kind=Dlna — 인프라 그대로), 재생목록 편집 무결성, 콜드 리빌
 | 미확인 | TreeView 실체화 타이밍·키보드·Narrator·셰브런 육안 실기 스모크(WinUI 바인딩은 단위테스트 불가 — 수동 체크리스트로 이월) | — |
 | V1 폴더 아이콘 숨김 | 폴더 모드에서 행 폴더 아이콘 숨김(`IsFolder`+역변환, 간격 마진 이관). `TreeFolderIconGateTests` 5종 RED→GREEN | 콜드 **0경고 0오류**, 전체 1961/1962 → `PlaybackRestartTests` 재시작 타이밍 1건 실패는 격리 재실행 통과로 플레이크 판정 |
 | bin 파손 사고 기록 | 앱 실행 중 `bin` 삭제로 runtimeconfig·PRI 등 소실 → exe 구동 불가. 원인 제공 후 프로세스 종료 확인 → 전체 클린·콜드 리빌드로 복원. 교훈: 실행 중 프로세스 확인 없이 `bin` 삭제 금지 | 복원 후 exe·runtimeconfig·PRI 존재 확인 |
+
+### L6. 앨범 셔플 결함 수정 (2026-09-26 지시·구현 — Linux 검증 완료, Windows 잔여 게이트 있음)
+
+> 증상: 앨범 셔플이 한 곡만 재생하고 다른 앨범으로 뛰거나, 같은 앨범만 반복.
+> 원인: `PlayOrderResolver` 3a 블록의 인접-인덱스 의존 + 연속-구간 그룹핑 + 무상태 균등 추첨
+> (기존 테스트가 `A,A,B,B` 연속 배치만 다뤄 결함을 가림). 활성화 경로(UI 순환·단축키·설정 저장)는 정상.
+
+| 항목 | 내용 | 검증 |
+|---|---|---|
+| R1 인접-인덱스 의존 | 앨범 내 다음 곡을 `curIdx+1` 한 칸만 검사 → 비앨범순 목록에서 1곡 만에 앨범 탈출. 이후 항목 전방 스캔(`FirstInAlbum`)으로 수정 | `AlbumShuffle_FragmentedPlaylist_StaysInsideTheAlbum` |
+| R2 연속-구간 그룹핑 | 추첨에 `PlaylistGroupBuilder`(연속 기준) 사용 → 조각난 앨범 편향·중간 시작. distinct `AlbumKey` 단위로 변경 | `AlbumShuffle_HopStartsAtTheChosenAlbumsFirstTrack` |
+| R3 무상태 균등 추첨 | 매 경계 독립 추첨 → 중복·미방문. Fisher-Yates 앨범 덱(주기당 전수 1회 방문) 도입, 목록·앨범 집합 변경 시 재생성 | `AlbumShuffle_VisitsEveryAlbumOncePerCycle` |
+| R4 Repeat=Off 무시 | 덱 소진 + `Repeat=Off` → 정지(`null`)로 명세화(단일 앨범 1회 재생 후 정지 포함) | `AlbumShuffle_RepeatOff_StopsAfterFullCoverage` 등 2종 |
+| R5 수동 Next (승인안) | 앨범 즉시 탈출 → 앨범 내 이동으로 변경. 기존 테스트 1건 기대값 갱신(승인된 스펙 변경이므로 삭제·완화가 아님) | `AlbumShuffle_ManualAdvance_StaysInsideTheCurrentAlbum` |
+| 미확인 | ~~빌드·테스트 미실행~~ → Linux에서 .NET 10.0.401 설치 후 검증: Core+Tests 콜드 리빌드 **0경고 0오류**, 커밋 테스트 본문 그대로 실행해 원본 16/21(실패 5종=R1~R5) → 수정본 **21/21** (RED→GREEN). 단 `dotnet test` 실러너는 Linux에 없는 `Microsoft.WindowsDesktop.App`를 요구해 스크래치 콘솔 러너(`/tmp/run-fixed`, `/tmp/run-orig`)로 실행 | RED→GREEN 실측 |
+
+### L7. 가사 검색 Apply·Save 불량 수정 (2026-09-26 승인·구현 — Linux 검증 완료, App 컴파일은 Windows 게이트)
+
+> 증상: 미리보기로 불러온 가사가 Apply·Save 후에도 화면에 반영되지 않음.
+
+| 항목 | 내용 | 검증 |
+|---|---|---|
+| CLICK-01 Apply 미적용 | Apply가 새로고침 신호만 보내고 선택을 어디에도 저장하지 않아, 오프라인 가사가 있으면 기존 문서가 다시 표시(상태줄은 거짓 성공). 세션 한정 사용자 오버라이드 도입 + 팬 조회 순서(선택→오프라인→세션). `StoreSessionLyrics` 무호출(호출자 0건)이 미완성 증거 | 오버라이드 3종: 원본 대비 컴파일-RED(CS1061) → 수정본 통과 |
+| CLICK-02 Save 왕복 단절 | 커스텀 폴더·하위폴더 템플릿 저장 후 파인더가 못 찾음. 설정된 저장 경로를 탐색 후보에 항상 포함(맨 뒤 추가, 기존 우선순위 유지) | 왕복 3종 RED(저장됨↔null)→GREEN 실측 |
+| CLICK-03 stale·덮어쓰기 | 재생 이동 시 무음 무동작 → 상태줄 경고 문구(3개 국어 키 패리티 유지). 자동조회가 적용 선택을 덮지 않도록 스킵, 에디터·파일 저장 시 오버라이드 해제 | 코드 리뷰 + 빌드 |
+| 파급 | 인터페이스 멤버 추가에 맞춘 테스트 페이크 2건(`FakeOnlineService`, `FakeLyricsOnlineService`) 갱신 — 콜드 게이트가 포착(CS0535) | Core+Tests 콜드 리빌드 **0경고 0오류** |
+| 미확인 | App 본체(WinUI: pane·window·service impl) 컴파일, `dotnet test` 실러너, 전체 스위트, LocalizationTests는 Windows 전용 → Windows에서 확인 필요. Linux 경로 가정 기존 테스트 3종 실패는 수정 전후 동일(환경 요인, CI Windows에서 통과 대상) | — |

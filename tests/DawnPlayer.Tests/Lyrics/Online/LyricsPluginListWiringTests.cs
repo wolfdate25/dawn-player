@@ -26,6 +26,8 @@ public class LyricsPluginListWiringTests
         public Task<IReadOnlyList<PluginSearchOutcome>> SearchAsync(LyricsSearchQuery query, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<PluginSearchOutcome>>(Array.Empty<PluginSearchOutcome>());
         public OnlineLyricsResult? GetSessionLyrics(string trackPath) => null;
+        public OnlineLyricsResult? GetAppliedResult(string trackPath) => null;
+        public void ClearAppliedResult(string trackPath) { }
         public Task<OnlineLyricsResult?> FetchAsync(LyricsPluginInfo plugin, LyricsSearchResult result, Track track, CancellationToken cancellationToken) =>
             Task.FromResult<OnlineLyricsResult?>(null);
         public void ApplyResult(OnlineLyricsResult result, Track track) { }

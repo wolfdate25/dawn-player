@@ -311,6 +311,7 @@
   <data name="LyricsSearch_FetchError" xml:space="preserve"><value>불러오기 실패: {0}</value></data>
   <data name="LyricsSearch_ApplyFailed_NoLyrics" xml:space="preserve"><value>가사를 가져올 수 없어 적용하지 못했습니다.</value></data>
   <data name="LyricsSearch_ApplySuccess" xml:space="preserve"><value>'{0}' 가사를 적용했습니다.</value></data>
+  <data name="LyricsSearch_StaleTrackNote" xml:space="preserve"><value>참고: '{0}' 곡은 재생 중인 곡과 다릅니다.</value></data>
   <data name="LyricsSearch_SaveFailed_NoLyrics" xml:space="preserve"><value>가사를 가져올 수 없어 저장하지 못했습니다.</value></data>
   <data name="LyricsSearch_SaveResult_Saved" xml:space="preserve"><value>저장했습니다: {0}</value></data>
   <data name="LyricsSearch_SaveResult_Skipped" xml:space="preserve"><value>이미 파일이 있어 건너뛰었습니다: {0}</value></data>

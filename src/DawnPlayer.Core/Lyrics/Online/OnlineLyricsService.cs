@@ -27,6 +27,7 @@ public sealed class OnlineLyricsService
     private readonly Func<AppSettings> _settings;
     private readonly Action<string>? _log;
     private readonly ConcurrentDictionary<string, OnlineLyricsResult> _sessionLyrics = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, OnlineLyricsResult> _appliedOverrides = new(StringComparer.OrdinalIgnoreCase);
 
     public OnlineLyricsService(LyricsPluginHost host, Func<AppSettings> settings, Action<string>? log = null)
     {
@@ -160,6 +161,26 @@ public sealed class OnlineLyricsService
 
     public void StoreSessionLyrics(string trackPath, OnlineLyricsResult result) =>
         _sessionLyrics[trackPath] = result;
+
+    /// <summary>
+    /// Records the user's explicit pick from the search window and makes it visible through
+    /// the session cache too. The pick outranks offline files until replaced or cleared (a
+    /// file save makes it permanent and clears it). Without this, Apply only raised a refresh
+    /// event and the pane re-showed the stale offline document the user opened search to replace.
+    /// </summary>
+    public void SetAppliedOverride(string trackPath, OnlineLyricsResult result)
+    {
+        _sessionLyrics[trackPath] = result;
+        _appliedOverrides[trackPath] = result;
+    }
+
+    /// <summary>The explicit user pick for the track, if any (does not touch the network).</summary>
+    public OnlineLyricsResult? GetAppliedOverride(string trackPath) =>
+        _appliedOverrides.TryGetValue(trackPath, out var result) ? result : null;
+
+    /// <summary>Drops the explicit pick; display falls back to offline/session lyrics.</summary>
+    public bool ClearAppliedOverride(string trackPath) =>
+        _appliedOverrides.TryRemove(trackPath, out _);
 
     /// <summary>
     /// Pure candidate scoring. Title agreement dominates; artist/album/duration refine; a synced
