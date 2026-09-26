@@ -18,6 +18,7 @@ namespace DawnPlayer.App.Controls;
 public sealed partial class NowPlayingBar : UserControl
 {
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(200) };
+    private readonly DispatcherTimer _abRejectionTimer = new() { Interval = TimeSpan.FromMilliseconds(1400) };
     private readonly QueuePopupController _queueController = new();
     private readonly SeekbarScrubbingCalculator _seekCalculator = new();
 
@@ -40,7 +41,13 @@ public sealed partial class NowPlayingBar : UserControl
         SeekSlider.AddHandler(UIElement.PointerCaptureLostEvent, new PointerEventHandler((_, _) => CompleteSeek()), true);
         SeekSlider.AddHandler(UIElement.PointerCanceledEvent, new PointerEventHandler((_, _) => CompleteSeek()), true);
         SeekSlider.ValueChanged += OnSeekChanged;
+        SeekSlider.SizeChanged += (_, _) => UpdateAbRepeatOverlay();
         _timer.Tick += (_, _) => OnTimer();
+        _abRejectionTimer.Tick += (_, _) =>
+        {
+            _abRejectionTimer.Stop();
+            UpdateAbRepeatVisual();
+        };
         QueueList.ItemsSource = _queueController.Entries;
 
         AppServices.OutputSessionChanged += OnOutputSession;
@@ -333,6 +340,11 @@ public sealed partial class NowPlayingBar : UserControl
         ElapsedText.Text = SeekbarScrubbingCalculator.FormatTime(position);
         RemainingText.Text = SeekbarScrubbingCalculator.FormatRemaining(position, duration);
 
+        // WaitingForB's preview band tracks the live playhead; the Looping band is static but
+        // redrawing it is a couple of double writes, so one path serves both.
+        if (AbRepeatOverlay.Visibility == Visibility.Visible)
+            UpdateAbRepeatOverlay();
+
         if (playback.CurrentItem != null)
         {
             var rem = duration - position;
@@ -387,25 +399,89 @@ public sealed partial class NowPlayingBar : UserControl
 
     private void OnABRepeatClick(object sender, RoutedEventArgs e) => AppServices.Playback?.CycleAbRepeat();
 
+    /// <summary>Right-click clears the A-B window outright. The three-stage cycle has no quick
+    /// exit from WaitingForB (a click there would either re-mark A or start the loop), and Escape
+    /// is deliberately not bindable in this app, so the button's own right-click is the cancel.</summary>
+    private void OnABRepeatRightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        AppServices.Playback?.CancelAbRepeat();
+        e.Handled = true;
+    }
+
+    /// <summary>Runs on the UI thread (AppServices relay): a press was refused — say why on the
+    /// label instead of failing silently, then restore the stage label via the one-shot timer.</summary>
+    public void OnAbRepeatRejected(Core.Audio.AbRepeatRejectionReason reason)
+    {
+        ABRepeatLabel.Text = reason == AbRepeatRejectionReason.BBeforeA ? "B<A" : "LIVE";
+        ABRepeatLabel.Foreground = ThemeResourceHelper.GetBrush("TextSecondaryBrush");
+        ToolTipService.SetToolTip(ABRepeatButton, reason == AbRepeatRejectionReason.BBeforeA
+            ? AppStrings.Format("NowPlaying_ABRepeat_Reject_BBeforeA", "B 지점은 A 지점보다 뒤에 있어야 합니다")
+            : AppStrings.Format("NowPlaying_ABRepeat_Reject_Live", "라이브 스트림에서는 A-B 반복을 사용할 수 없습니다"));
+        _abRejectionTimer.Stop();
+        _abRejectionTimer.Start();
+    }
+
     /// <summary>Refreshes the A-B affordance from the controller stage. Called by MainWindow on
     /// AppServices.AbRepeatChanged (already on the UI thread).</summary>
     public void UpdateAbRepeatVisual()
     {
-        var stage = AppServices.Playback?.AbRepeat ?? AbRepeatStage.Off;
+        var window = AppServices.Playback?.AbRepeatWindow ?? Core.Audio.AbRepeatWindow.Off;
+        var stage = window.Stage;
         ABRepeatButton.IsChecked = stage == AbRepeatStage.Looping;
         ABRepeatLabel.Foreground = stage == AbRepeatStage.Off
             ? ThemeResourceHelper.GetBrush("TextSecondaryBrush")
             : ThemeResourceHelper.GetBrush("DawnAccentBrush");
+        ABRepeatLabel.Text = stage switch
+        {
+            AbRepeatStage.WaitingForB => "A…",
+            AbRepeatStage.Looping => "A→B",
+            _ => "A–B"
+        };
         string tooltip = stage switch
         {
-            AbRepeatStage.WaitingForB => AppStrings.Get("NowPlaying_ABRepeat_Tooltip_Marking",
-                "A-B 반복: A 지점 설정됨 — 다시 눌러 B 지점 설정"),
-            AbRepeatStage.Looping => AppStrings.Get("NowPlaying_ABRepeat_Tooltip_Looping",
-                "A-B 반복 반복 중 — 눌러서 해제"),
+            AbRepeatStage.WaitingForB => AppStrings.Format("NowPlaying_ABRepeat_Tooltip_Marking",
+                "A-B 반복: A 지점({0}) 설정됨 — 다시 눌러 B 지점 설정, 우클릭으로 해제",
+                SeekbarScrubbingCalculator.FormatTime(window.Start)),
+            AbRepeatStage.Looping => AppStrings.Format("NowPlaying_ABRepeat_Tooltip_Looping",
+                "A-B 반복 중 {0}–{1} ({2}) — 눌러서 해제",
+                SeekbarScrubbingCalculator.FormatTime(window.Start),
+                SeekbarScrubbingCalculator.FormatTime(window.End),
+                AbRepeatOverlayCalculator.FormatLoopLength(window.End - window.Start)),
             _ => AppStrings.Get("NowPlaying_ABRepeat_Tooltip_Off",
-                "A-B 반복: 눌러서 현재 위치를 A 지점으로 설정")
+                "A-B 반복: 눌러서 현재 위치를 A 지점으로 설정 (Ctrl+L)")
         };
         ToolTipService.SetToolTip(ABRepeatButton, tooltip);
+        UpdateAbRepeatOverlay();
+    }
+
+    /// <summary>Recomputes the seekbar overlay from the current A-B window. Cheap enough for the
+    /// 200 ms timer (the WaitingForB preview follows the playhead); also wired to slider
+    /// SizeChanged so a window resize can never leave the band lying about where the loop is.</summary>
+    private void UpdateAbRepeatOverlay()
+    {
+        var playback = AppServices.Playback;
+        var window = playback?.AbRepeatWindow ?? Core.Audio.AbRepeatWindow.Off;
+        var geo = AbRepeatOverlayCalculator.Compute(window.Stage, window.Start, window.End,
+            playback?.Position ?? TimeSpan.Zero, playback?.Duration ?? TimeSpan.Zero, SeekSlider.ActualWidth);
+
+        AbRepeatOverlay.Visibility = geo.Visible ? Visibility.Visible : Visibility.Collapsed;
+        if (!geo.Visible) return;
+
+        var band = geo.BandIsPreview ? (FrameworkElement)AbLoopBandPreview : AbLoopBand;
+        var other = geo.BandIsPreview ? (FrameworkElement)AbLoopBand : AbLoopBandPreview;
+        other.Visibility = Visibility.Collapsed;
+        band.Visibility = geo.ShowBand ? Visibility.Visible : Visibility.Collapsed;
+        if (geo.ShowBand)
+        {
+            band.Visibility = Visibility.Visible;
+            Canvas.SetLeft(band, geo.BandLeft);
+            band.Width = geo.BandWidth;
+        }
+
+        AbMarkerA.Visibility = Visibility.Visible;
+        Canvas.SetLeft(AbMarkerA, geo.MarkerALeft);
+        AbMarkerB.Visibility = window.HasEnd ? Visibility.Visible : Visibility.Collapsed;
+        if (window.HasEnd) Canvas.SetLeft(AbMarkerB, geo.MarkerBLeft);
     }
 
     /// <summary>

@@ -238,6 +238,7 @@ public static class AppServices
             StopAfterCurrentChanged?.Invoke();
         });
         Playback.AbRepeatChanged += () => RunOnUi(() => AbRepeatChanged?.Invoke());
+        Playback.AbRepeatRejected += reason => RunOnUi(() => AbRepeatRejected?.Invoke(reason));
         Playback.TrackLeft += OnPlaybackTrackLeft;
         Playback.Warning += msg =>
         {
@@ -273,6 +274,9 @@ public static class AppServices
 
     /// <summary>Raised on the UI thread after the A-B repeat stage changed (see PlaybackController).</summary>
     public static event Action? AbRepeatChanged;
+
+    /// <summary>Raised on the UI thread when an A-B repeat press was refused (see PlaybackController).</summary>
+    public static event Action<Core.Audio.AbRepeatRejectionReason>? AbRepeatRejected;
 
     // Play-count heuristics, shared by every leave reason: a track counts as played when it
     // drained on its own or was left past 75% of its length, and as skipped only for an early

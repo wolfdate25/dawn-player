@@ -78,7 +78,8 @@ this marker).
 - **Playback queue** — add/add-next per track, queue-centered playback then return to the
   original order. Q1, Q2… badges on list rows
 - Shuffle, repeat (off/all/one), previous-track history, **A-B repeat** (sample-tight loop on the
-  audio thread, keybindable)
+  audio thread; loop region drawn on the seekbar, right-click the button to cancel, Ctrl+L by
+  default)
 - Sorting (title/artist/album·track/path/random/reverse), duplicate removal, group-by toggle +
   drag reordering in flat mode
 

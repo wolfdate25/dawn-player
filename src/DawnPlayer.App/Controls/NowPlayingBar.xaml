@@ -55,9 +55,25 @@
                            FontSize="11" HorizontalAlignment="Left" VerticalAlignment="Center"/>
             </Grid>
 
-            <Slider Grid.Column="1" x:Uid="NowPlaying_SeekSlider" x:Name="SeekSlider" Style="{StaticResource EoleSlimSliderStyle}"
-                    Minimum="0" Maximum="100" StepFrequency="1" MinWidth="40"
-                    VerticalAlignment="Center" Margin="10,0"/>
+            <Grid Grid.Column="1" Margin="10,0" MinHeight="20" VerticalAlignment="Center">
+                <Slider x:Uid="NowPlaying_SeekSlider" x:Name="SeekSlider" Style="{StaticResource EoleSlimSliderStyle}"
+                        Minimum="0" Maximum="100" StepFrequency="1" MinWidth="40"
+                        VerticalAlignment="Center"/>
+
+                <!-- A-B loop overlay: drawn over the slider's own box so the band edges line up
+                     with the thumb positions (AbRepeatOverlayCalculator), never intercepts input. -->
+                <Canvas x:Name="AbRepeatOverlay" IsHitTestVisible="False" Visibility="Collapsed"
+                        Height="20" VerticalAlignment="Center">
+                    <Rectangle x:Name="AbLoopBandPreview" Canvas.Top="7" Height="6" RadiusX="2" RadiusY="2"
+                               Fill="{StaticResource DawnAccentBrush}" Opacity="0.22"/>
+                    <Rectangle x:Name="AbLoopBand" Canvas.Top="6" Height="8" RadiusX="2" RadiusY="2"
+                               Fill="{StaticResource DawnAccentBrush}" Opacity="0.38"/>
+                    <Rectangle x:Name="AbMarkerA" Canvas.Top="3" Width="2" Height="14" RadiusX="1" RadiusY="1"
+                               Fill="{StaticResource DawnAccentBrush}"/>
+                    <Rectangle x:Name="AbMarkerB" Canvas.Top="3" Width="2" Height="14" RadiusX="1" RadiusY="1"
+                               Fill="{StaticResource DawnAccentBrush}"/>
+                </Canvas>
+            </Grid>
 
             <Grid Grid.Column="2" Height="20" VerticalAlignment="Top">
                 <TextBlock x:Name="RemainingText" Text="-0:00" Style="{StaticResource TrackDurationText}"
@@ -163,7 +179,7 @@
                 </ToggleButton>
 
                 <ToggleButton x:Uid="NowPlaying_ABRepeatButton" x:Name="ABRepeatButton" Style="{StaticResource TransportToggleButton}"
-                              Click="OnABRepeatClick" ToolTipService.ToolTip="A-B 반복">
+                              Click="OnABRepeatClick" RightTapped="OnABRepeatRightTapped" ToolTipService.ToolTip="A-B 반복">
                     <TextBlock x:Name="ABRepeatLabel" Text="A–B" FontSize="11" FontWeight="SemiBold"/>
                 </ToggleButton>
             </StackPanel>

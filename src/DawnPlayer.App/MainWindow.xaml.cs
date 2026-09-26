@@ -83,6 +83,7 @@ public sealed partial class MainWindow : Window
 
         AppServices.PlaybackStateChanged += PlayerBar.OnStateChanged;
         AppServices.AbRepeatChanged += PlayerBar.UpdateAbRepeatVisual;
+        AppServices.AbRepeatRejected += PlayerBar.OnAbRepeatRejected;
         AppServices.CurrentTrackChanged += PlayerBar.OnTrackChanged;
         AppServices.QueueChanged += PlayerBar.OnQueueChanged;
         PlayerBar.LyricsToggleRequested += () => ToggleLyrics();

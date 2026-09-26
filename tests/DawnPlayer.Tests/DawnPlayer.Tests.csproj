@@ -47,6 +47,7 @@
     <Compile Include="..\..\src\DawnPlayer.App\Services\AppearanceSettingsService.cs" Link="Services\AppearanceSettingsService.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Controls\QueuePopupController.cs" Link="Controls\QueuePopupController.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Controls\SeekbarScrubbingCalculator.cs" Link="Controls\SeekbarScrubbingCalculator.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Controls\AbRepeatOverlayCalculator.cs" Link="Controls\AbRepeatOverlayCalculator.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Controls\AudioFormatBadgeFormatter.cs" Link="Controls\AudioFormatBadgeFormatter.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Controls\LyricsScrollSynchronizer.cs" Link="Controls\LyricsScrollSynchronizer.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Controls\PlaybackUiHelper.cs" Link="Controls\PlaybackUiHelper.cs" />

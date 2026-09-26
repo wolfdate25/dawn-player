@@ -62,9 +62,11 @@
   <data name="NowPlaying_AlbumArtButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>アルバムアートを拡大</value></data>
   <data name="NowPlaying_TrackTitle_Empty.Text" xml:space="preserve"><value>再生中の曲はありません</value></data>
   <data name="NowPlaying_ABRepeatButton.AutomationProperties.Name" xml:space="preserve"><value>A-Bリピート</value></data>
-  <data name="NowPlaying_ABRepeat_Tooltip_Off" xml:space="preserve"><value>A-Bリピート: クリックで現在位置をA地点に設定</value></data>
-  <data name="NowPlaying_ABRepeat_Tooltip_Marking" xml:space="preserve"><value>A-Bリピート: A地点設定済み — もう一度クリックでB地点を設定</value></data>
-  <data name="NowPlaying_ABRepeat_Tooltip_Looping" xml:space="preserve"><value>A-Bリピート中 — クリックで解除</value></data>
+  <data name="NowPlaying_ABRepeat_Tooltip_Off" xml:space="preserve"><value>A-Bリピート: クリックで現在位置をA地点に設定 (Ctrl+L)</value></data>
+  <data name="NowPlaying_ABRepeat_Tooltip_Marking" xml:space="preserve"><value>A-Bリピート: A地点({0})設定済み — もう一度クリックでB地点を設定、右クリックで解除</value></data>
+  <data name="NowPlaying_ABRepeat_Tooltip_Looping" xml:space="preserve"><value>A-Bリピート中 {0}–{1} ({2}) — クリックで解除</value></data>
+  <data name="NowPlaying_ABRepeat_Reject_BBeforeA" xml:space="preserve"><value>B地点はA地点より後である必要があります</value></data>
+  <data name="NowPlaying_ABRepeat_Reject_Live" xml:space="preserve"><value>ライブストリームではA-Bリピートを使用できません</value></data>
   <data name="NowPlaying_ShuffleTip_Tracks" xml:space="preserve"><value>シャッフル: トラック (ランダム再生)</value></data>
   <data name="NowPlaying_ShuffleTip_Albums" xml:space="preserve"><value>シャッフル: アルバム (アルバムを順に再生し、次のアルバムをランダム選曲)</value></data>
   <data name="NowPlaying_ShuffleTip_Off" xml:space="preserve"><value>シャッフルオフ (順次再生)</value></data>
@@ -312,6 +314,9 @@
   <data name="LyricsSearch_ApplyFailed_NoLyrics" xml:space="preserve"><value>歌詞を取得できなかったため適用できませんでした。</value></data>
   <data name="LyricsSearch_ApplySuccess" xml:space="preserve"><value>'{0}' の歌詞を適用しました。</value></data>
   <data name="LyricsSearch_StaleTrackNote" xml:space="preserve"><value>注意:「{0}」は再生中の曲と異なります。</value></data>
+  <data name="LyricsSearch_OverwriteTitle" xml:space="preserve"><value>歌詞ファイルの上書き</value></data>
+  <data name="LyricsSearch_OverwriteMessage" xml:space="preserve"><value>歌詞ファイルが既に存在します。&#x0a;{0}&#x0a;選択した歌詞で上書きしますか?</value></data>
+  <data name="LyricsSearch_OverwriteConfirm" xml:space="preserve"><value>上書き</value></data>
   <data name="LyricsSearch_SaveFailed_NoLyrics" xml:space="preserve"><value>歌詞を取得できなかったため保存できませんでした。</value></data>
   <data name="LyricsSearch_SaveResult_Saved" xml:space="preserve"><value>保存しました: {0}</value></data>
   <data name="LyricsSearch_SaveResult_Skipped" xml:space="preserve"><value>ファイルが既に存在するためスキップしました: {0}</value></data>

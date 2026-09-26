@@ -132,6 +132,13 @@ public sealed partial class PlaybackController : IPlaybackController
 
     /// <summary>Raised when the A-B repeat stage changes (user cycle or per-track reset).</summary>
     public event Action? AbRepeatChanged;
+
+    /// <summary>
+    /// Raised on the caller's thread when a CycleAbRepeat press was refused (B before A, or a
+    /// live/unseekable source) and the stage did not advance. UI relays it so the press fails
+    /// with an explanation instead of silently doing nothing.
+    /// </summary>
+    public event Action<AbRepeatRejectionReason>? AbRepeatRejected;
     public event Action? StopAfterCurrentChanged;
     public event Action<string>? Warning;
     public event Action<SessionInfo>? SessionStarted;
@@ -398,8 +405,18 @@ public sealed partial class PlaybackController : IPlaybackController
             return AbRepeatStage.Off;
         }
 
+        var stage = AbRepeat;
+        // Clearing is always allowed; marking is refused on live sources, whose readers report
+        // TotalTime zero and no-op seeks — a marked loop could never be enforced while the UI
+        // reported one (RadioStreamReader.CurrentTime's setter is a deliberate no-op).
+        if (stage != AbRepeatStage.Looping && !AbRepeatGate.CanMark(Duration))
+        {
+            AbRepeatRejected?.Invoke(AbRepeatRejectionReason.UnseekableSource);
+            return stage;
+        }
+
         var pos = seq.GetPosition();
-        switch (AbRepeat)
+        switch (stage)
         {
             case AbRepeatStage.Off:
                 Volatile.Write(ref seq.AbLoopEndBytes, 0);
@@ -418,6 +435,11 @@ public sealed partial class PlaybackController : IPlaybackController
                         Volatile.Write(ref seq.AbLoopEndBytes, end);
                         SetAbStage(AbRepeatStage.Looping);
                     }
+                    else
+                    {
+                        // A silent refusal here left the user's press seemingly ignored; report why.
+                        AbRepeatRejected?.Invoke(AbRepeatRejectionReason.BBeforeA);
+                    }
                 }
                 else
                 {
@@ -426,13 +448,49 @@ public sealed partial class PlaybackController : IPlaybackController
                 break;
 
             default:
-                Volatile.Write(ref seq.AbLoopStartBytes, 0);
-                Volatile.Write(ref seq.AbLoopEndBytes, 0);
-                SetAbStage(AbRepeatStage.Off);
+                CancelAbRepeat();
                 break;
         }
 
         return AbRepeat;
+    }
+
+    /// <summary>
+    /// Clears the A-B window unconditionally (button right-click and the cycle's clear step share
+    /// this path). Returns true when a window was actually active, so callers can distinguish a
+    /// real cancel from a no-op.
+    /// </summary>
+    public bool CancelAbRepeat()
+    {
+        if (AbRepeat == AbRepeatStage.Off) return false;
+        var seq = Sequencer;
+        if (seq != null)
+        {
+            Volatile.Write(ref seq.AbLoopStartBytes, 0);
+            Volatile.Write(ref seq.AbLoopEndBytes, 0);
+        }
+        SetAbStage(AbRepeatStage.Off);
+        return true;
+    }
+
+    /// <summary>
+    /// Time-domain snapshot of the A-B window for UI affordances (seekbar overlay, tooltip).
+    /// Converted with the sequencer's current WaveFormat, so what the UI draws is exactly the
+    /// region the audio thread enforces.
+    /// </summary>
+    public AbRepeatWindow AbRepeatWindow
+    {
+        get
+        {
+            var seq = Sequencer;
+            var stage = AbRepeat;
+            if (seq == null || stage == AbRepeatStage.Off) return AbRepeatWindow.Off;
+            var start = AbBytesToTime(seq, Volatile.Read(ref seq.AbLoopStartBytes));
+            var end = stage == AbRepeatStage.Looping
+                ? AbBytesToTime(seq, Volatile.Read(ref seq.AbLoopEndBytes))
+                : TimeSpan.Zero;
+            return new AbRepeatWindow(stage, start, end);
+        }
     }
 
     private static TimeSpan AbBytesToTime(SequencerStream seq, long bytes) =>

@@ -62,9 +62,11 @@
   <data name="NowPlaying_AlbumArtButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Expand album cover</value></data>
   <data name="NowPlaying_TrackTitle_Empty.Text" xml:space="preserve"><value>No track playing</value></data>
   <data name="NowPlaying_ABRepeatButton.AutomationProperties.Name" xml:space="preserve"><value>A-B repeat</value></data>
-  <data name="NowPlaying_ABRepeat_Tooltip_Off" xml:space="preserve"><value>A-B repeat: click to mark point A here</value></data>
-  <data name="NowPlaying_ABRepeat_Tooltip_Marking" xml:space="preserve"><value>A-B repeat: A marked — click again to mark B</value></data>
-  <data name="NowPlaying_ABRepeat_Tooltip_Looping" xml:space="preserve"><value>A-B repeat looping — click to clear</value></data>
+  <data name="NowPlaying_ABRepeat_Tooltip_Off" xml:space="preserve"><value>A-B repeat: click to mark point A here (Ctrl+L)</value></data>
+  <data name="NowPlaying_ABRepeat_Tooltip_Marking" xml:space="preserve"><value>A-B repeat: A marked at {0} — click again to mark B, right-click to cancel</value></data>
+  <data name="NowPlaying_ABRepeat_Tooltip_Looping" xml:space="preserve"><value>A-B repeat looping {0}–{1} ({2}) — click to clear</value></data>
+  <data name="NowPlaying_ABRepeat_Reject_BBeforeA" xml:space="preserve"><value>Point B must come after point A</value></data>
+  <data name="NowPlaying_ABRepeat_Reject_Live" xml:space="preserve"><value>A-B repeat is unavailable on live streams</value></data>
   <data name="NowPlaying_ShuffleTip_Tracks" xml:space="preserve"><value>Shuffle: Tracks (play random tracks)</value></data>
   <data name="NowPlaying_ShuffleTip_Albums" xml:space="preserve"><value>Shuffle: Albums (album in order, then a random next album)</value></data>
   <data name="NowPlaying_ShuffleTip_Off" xml:space="preserve"><value>Shuffle off (sequential playback)</value></data>
@@ -312,6 +314,9 @@
   <data name="LyricsSearch_ApplyFailed_NoLyrics" xml:space="preserve"><value>Could not apply lyrics because they could not be fetched.</value></data>
   <data name="LyricsSearch_ApplySuccess" xml:space="preserve"><value>Applied '{0}' lyrics.</value></data>
   <data name="LyricsSearch_StaleTrackNote" xml:space="preserve"><value>Note: '{0}' is not the now-playing track.</value></data>
+  <data name="LyricsSearch_OverwriteTitle" xml:space="preserve"><value>Overwrite lyrics file</value></data>
+  <data name="LyricsSearch_OverwriteMessage" xml:space="preserve"><value>A lyrics file already exists.&#x0a;{0}&#x0a;Overwrite it with the selected lyrics?</value></data>
+  <data name="LyricsSearch_OverwriteConfirm" xml:space="preserve"><value>Overwrite</value></data>
   <data name="LyricsSearch_SaveFailed_NoLyrics" xml:space="preserve"><value>Could not save lyrics because they could not be fetched.</value></data>
   <data name="LyricsSearch_SaveResult_Saved" xml:space="preserve"><value>Saved: {0}</value></data>
   <data name="LyricsSearch_SaveResult_Skipped" xml:space="preserve"><value>Skipped because file already exists: {0}</value></data>
