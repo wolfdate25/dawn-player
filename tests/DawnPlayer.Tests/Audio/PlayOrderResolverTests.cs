@@ -231,7 +231,10 @@ public sealed class PlayOrderResolverTests
     }
 
     [Fact]
-    public void AlbumShuffle_ManualAdvance_LeavesTheCurrentAlbumImmediately()
+    // Spec change (approved): manual Next moves within the album like natural advance
+    // (it only escapes repeat-one looping and ignores stop-after-current). The previous
+    // expectation - manual Next abandoning the album immediately - is superseded.
+    public void AlbumShuffle_ManualAdvance_StaysInsideTheCurrentAlbum()
     {
         var a1 = Item(@"C:\m\a1.flac", "Artist A", "Album A");
         var a2 = Item(@"C:\m\a2.flac", "Artist A", "Album A");
@@ -241,7 +244,100 @@ public sealed class PlayOrderResolverTests
         var next = Resolver(Settings(shuffle: ShuffleMode.Albums), new PlaybackQueue(), pl, Draws(0))
             .PeekNext(new PlayOrderContext(pl, a1, false, ManualAdvance: true), new HashSet<PlaylistItem>());
 
+        Assert.Same(a2, next!.Value.Item);
+    }
+
+    [Fact]
+    public void AlbumShuffle_FragmentedPlaylist_StaysInsideTheAlbum()
+    {
+        // The playlist is NOT album-ordered (title sort, library insertion order, ...): the
+        // next track of the current album is not adjacent, so adjacency-only advance would
+        // abandon the album after a single track.
+        var a1 = Item(@"C:\m\a1.flac", "Artist A", "Album A");
+        var b1 = Item(@"C:\m\b1.flac", "Artist B", "Album B");
+        var a2 = Item(@"C:\m\a2.flac", "Artist A", "Album A");
+        var b2 = Item(@"C:\m\b2.flac", "Artist B", "Album B");
+        var pl = PlaylistOf("Main", a1, b1, a2, b2);
+
+        var next = Resolver(Settings(shuffle: ShuffleMode.Albums), new PlaybackQueue(), pl, Draws(0))
+            .PeekNext(new PlayOrderContext(pl, a1, false, false), new HashSet<PlaylistItem>());
+
+        Assert.Same(a2, next!.Value.Item);
+    }
+
+    [Fact]
+    public void AlbumShuffle_HopStartsAtTheChosenAlbumsFirstTrack()
+    {
+        // Hopping to the next album starts at its first track in list order, not mid-album.
+        var a1 = Item(@"C:\m\a1.flac", "Artist A", "Album A");
+        var a2 = Item(@"C:\m\a2.flac", "Artist A", "Album A");
+        var b1 = Item(@"C:\m\b1.flac", "Artist B", "Album B");
+        var b2 = Item(@"C:\m\b2.flac", "Artist B", "Album B");
+        var c1 = Item(@"C:\m\c1.flac", "Artist C", "Album C");
+        var pl = PlaylistOf("Main", a1, a2, b1, b2, c1);
+
+        // Draws(1) keeps the Fisher-Yates order [B, C], so B is hopped to first.
+        var next = Resolver(Settings(RepeatMode.All, ShuffleMode.Albums), new PlaybackQueue(), pl, Draws(1))
+            .PeekNext(new PlayOrderContext(pl, a2, false, false), new HashSet<PlaylistItem>());
+
         Assert.Same(b1, next!.Value.Item);
+    }
+
+    [Fact]
+    public void AlbumShuffle_VisitsEveryAlbumOncePerCycle()
+    {
+        // A shuffled per-cycle deck over distinct albums: one full coverage without repeating
+        // an album, instead of the old memoryless hop (which could replay one album while
+        // starving another). Draws(0) fixes the Fisher-Yates order deterministically:
+        // candidates [B, C] -> swap(1, 0) -> [C, B], so C comes first.
+        var a1 = Item(@"C:\m\a1.flac", "Artist A", "Album A");
+        var a2 = Item(@"C:\m\a2.flac", "Artist A", "Album A");
+        var b1 = Item(@"C:\m\b1.flac", "Artist B", "Album B");
+        var c1 = Item(@"C:\m\c1.flac", "Artist C", "Album C");
+        var pl = PlaylistOf("Main", a1, a2, b1, c1);
+
+        var resolver = Resolver(Settings(RepeatMode.All, ShuffleMode.Albums), new PlaybackQueue(), pl, Draws(0));
+        var skip = new HashSet<PlaylistItem>();
+
+        Assert.Same(a2, resolver.PeekNext(new PlayOrderContext(pl, a1, false, false), skip)!.Value.Item);
+        Assert.Same(c1, resolver.PeekNext(new PlayOrderContext(pl, a2, false, false), skip)!.Value.Item);
+        Assert.Same(b1, resolver.PeekNext(new PlayOrderContext(pl, c1, false, false), skip)!.Value.Item);
+
+        // Deck exhausted -> a new cycle starts (Repeat.All), landing on a different album
+        // than the just-finished one rather than replaying it.
+        var cycleRestart = resolver.PeekNext(new PlayOrderContext(pl, b1, false, false), skip);
+        Assert.NotNull(cycleRestart);
+        Assert.NotEqual(b1.Track.AlbumKey, cycleRestart!.Value.Item.Track.AlbumKey);
+    }
+
+    [Fact]
+    public void AlbumShuffle_RepeatOff_StopsAfterFullCoverage()
+    {
+        var a1 = Item(@"C:\m\a1.flac", "Artist A", "Album A");
+        var a2 = Item(@"C:\m\a2.flac", "Artist A", "Album A");
+        var b1 = Item(@"C:\m\b1.flac", "Artist B", "Album B");
+        var pl = PlaylistOf("Main", a1, a2, b1);
+
+        var resolver = Resolver(Settings(RepeatMode.Off, ShuffleMode.Albums), new PlaybackQueue(), pl, Draws(0));
+        var skip = new HashSet<PlaylistItem>();
+
+        Assert.Same(a2, resolver.PeekNext(new PlayOrderContext(pl, a1, false, false), skip)!.Value.Item);
+        Assert.Same(b1, resolver.PeekNext(new PlayOrderContext(pl, a2, false, false), skip)!.Value.Item);
+        Assert.Null(resolver.PeekNext(new PlayOrderContext(pl, b1, false, false), skip));
+    }
+
+    [Fact]
+    public void AlbumShuffle_SingleAlbumRepeatOff_PlaysThroughOnceThenStops()
+    {
+        var a1 = Item(@"C:\m\a1.flac", "Artist A", "Album A");
+        var a2 = Item(@"C:\m\a2.flac", "Artist A", "Album A");
+        var pl = PlaylistOf("Main", a1, a2);
+
+        var resolver = Resolver(Settings(RepeatMode.Off, ShuffleMode.Albums), new PlaybackQueue(), pl, Draws(0));
+        var skip = new HashSet<PlaylistItem>();
+
+        Assert.Same(a2, resolver.PeekNext(new PlayOrderContext(pl, a1, false, false), skip)!.Value.Item);
+        Assert.Null(resolver.PeekNext(new PlayOrderContext(pl, a2, false, false), skip));
     }
 
     // ---------------- track shuffle ----------------
