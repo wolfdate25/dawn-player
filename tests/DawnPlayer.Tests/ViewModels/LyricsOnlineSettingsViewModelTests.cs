@@ -36,6 +36,9 @@ public sealed class FakeLyricsOnlineService : ILyricsOnlineService
 
     public LyricsSaveOutcome SaveResult(OnlineLyricsResult result, Track track)
         => LyricsSaveOutcome.Fail("not in tests");
+
+    public LyricsSaveOutcome SaveResult(OnlineLyricsResult result, Track track, bool overwriteOnce)
+        => LyricsSaveOutcome.Fail("not in tests");
 }
 
 public class LyricsOnlineSettingsViewModelTests

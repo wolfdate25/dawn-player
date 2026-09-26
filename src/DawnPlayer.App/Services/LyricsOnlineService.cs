@@ -74,9 +74,12 @@ public sealed class LyricsOnlineService : ILyricsOnlineService
         AppServices.RaiseLyricsChanged(track);
     }
 
-    public LyricsSaveOutcome SaveResult(OnlineLyricsResult result, Track track)
+    public LyricsSaveOutcome SaveResult(OnlineLyricsResult result, Track track) =>
+        SaveResult(result, track, overwriteOnce: false);
+
+    public LyricsSaveOutcome SaveResult(OnlineLyricsResult result, Track track, bool overwriteOnce)
     {
-        var outcome = LyricsSavePathResolver.Save(track, result.Document, _settings().LyricsOnline);
+        var outcome = LyricsSavePathResolver.Save(track, result.Document, _settings().LyricsOnline, overwriteOnce);
         if (outcome.Result != LyricsSaveResult.Failed)
             // Keep the pick visible even when the file lands outside every search path.
             _core.StoreSessionLyrics(track.Path, result);

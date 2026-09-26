@@ -42,7 +42,16 @@ public static class LyricsSavePathResolver
     }
 
     /// <summary>Saves <paramref name="document"/> to the resolved path unless it exists and overwrite is off.</summary>
-    public static LyricsSaveOutcome Save(Track track, LyricsDocument document, LyricsOnlineSettings settings)
+    public static LyricsSaveOutcome Save(Track track, LyricsDocument document, LyricsOnlineSettings settings) =>
+        Save(track, document, settings, overwriteOnce: false);
+
+    /// <summary>
+    /// Saves <paramref name="document"/> to the resolved path. A one-shot
+    /// <paramref name="overwriteOnce"/> replaces an existing file for an explicit manual Save
+    /// without flipping the configured <see cref="LyricsOnlineSettings.OverwriteExisting"/>
+    /// policy that protects curated files from background auto-save.
+    /// </summary>
+    public static LyricsSaveOutcome Save(Track track, LyricsDocument document, LyricsOnlineSettings settings, bool overwriteOnce)
     {
         string path;
         try
@@ -54,7 +63,7 @@ public static class LyricsSavePathResolver
             return LyricsSaveOutcome.Fail($"경로 계산 실패: {ex.Message}");
         }
 
-        if (File.Exists(path) && !settings.OverwriteExisting)
+        if (File.Exists(path) && !overwriteOnce && !settings.OverwriteExisting)
             return LyricsSaveOutcome.Skipped(path);
 
         try

@@ -42,4 +42,10 @@ public interface ILyricsOnlineService
 
     /// <summary>Writes an online result to disk using the configured save location/template.</summary>
     LyricsSaveOutcome SaveResult(OnlineLyricsResult result, Track track);
+
+    /// <summary>
+    /// Writes an online result to disk, replacing an existing file for this one explicit
+    /// manual Save without changing the configured overwrite policy.
+    /// </summary>
+    LyricsSaveOutcome SaveResult(OnlineLyricsResult result, Track track, bool overwriteOnce);
 }

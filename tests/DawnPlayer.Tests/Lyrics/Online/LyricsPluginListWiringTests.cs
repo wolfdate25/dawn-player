@@ -32,6 +32,7 @@ public class LyricsPluginListWiringTests
             Task.FromResult<OnlineLyricsResult?>(null);
         public void ApplyResult(OnlineLyricsResult result, Track track) { }
         public LyricsSaveOutcome SaveResult(OnlineLyricsResult result, Track track) => throw new NotImplementedException();
+        public LyricsSaveOutcome SaveResult(OnlineLyricsResult result, Track track, bool overwriteOnce) => throw new NotImplementedException();
     }
 
     private static LyricsOnlineSettingsViewModel CreateViewModel(FakeOnlineService? service, AppSettings settings) =>

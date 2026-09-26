@@ -231,6 +231,28 @@ public class LyricsSavePathResolverTests : IDisposable
             candidates);
     }
 
+    [Fact]
+    public void Save_OverwriteOnce_ReplacesExistingWithoutChangingSetting()
+    {
+        Directory.CreateDirectory(Path.Combine(_root, "music"));
+        var track = Track();
+        var settings = Online();
+
+        var first = LyricsSavePathResolver.Save(track, LrcParser.Parse("[00:01.00]hello"), settings);
+        Assert.Equal(LyricsSaveResult.Saved, first.Result);
+
+        var skipped = LyricsSavePathResolver.Save(track, LrcParser.Parse("[00:02.00]goodbye"), settings);
+        Assert.Equal(LyricsSaveResult.SkippedExisting, skipped.Result);
+
+        // One-shot overwrite for an explicit manual Save: replaces the content while the
+        // configured policy stays protective (auto-save still skips).
+        var overwritten = LyricsSavePathResolver.Save(track, LrcParser.Parse("[00:02.00]goodbye"), settings, overwriteOnce: true);
+        Assert.Equal(LyricsSaveResult.Saved, overwritten.Result);
+        Assert.False(settings.OverwriteExisting);
+        Assert.Contains("goodbye", File.ReadAllText(overwritten.Path!));
+        Assert.DoesNotContain("hello", File.ReadAllText(overwritten.Path!));
+    }
+
     public void Dispose()
     {
         try { Directory.Delete(_root, recursive: true); } catch { }

@@ -289,6 +289,8 @@ public sealed partial class LyricsSearchWindow : Window
         }
 
         var outcome = AppServices.LyricsOnline!.SaveResult(fetched, _track);
+        if (outcome.Result == LyricsSaveResult.SkippedExisting && await ConfirmOverwriteAsync(outcome.Path))
+            outcome = AppServices.LyricsOnline!.SaveResult(fetched, _track, overwriteOnce: true);
         StatusText.Text = outcome.Result switch
         {
             LyricsSaveResult.Saved => AppStrings.Format("LyricsSearch_SaveResult_Saved", "저장했습니다: {0}", outcome.Path ?? "") + StaleTrackNote(),
@@ -308,6 +310,21 @@ public sealed partial class LyricsSearchWindow : Window
             !string.Equals(nowPlaying.Path, _track.Path, StringComparison.OrdinalIgnoreCase))
             return " " + AppStrings.Format("LyricsSearch_StaleTrackNote", "참고: '{0}' 곡은 재생 중인 곡과 다릅니다.", _track.Title);
         return "";
+    }
+
+    /// <summary>Asks whether an existing lyrics file may be replaced by this one explicit Save.</summary>
+    private async Task<bool> ConfirmOverwriteAsync(string? path)
+    {
+        var dialog = new ContentDialog
+        {
+            Title = AppStrings.Get("LyricsSearch_OverwriteTitle", "가사 파일 덮어쓰기"),
+            Content = AppStrings.Format("LyricsSearch_OverwriteMessage", "이미 가사 파일이 있습니다.\n{0}\n선택한 가사로 덮어쓸까요?", path ?? ""),
+            PrimaryButtonText = AppStrings.Get("LyricsSearch_OverwriteConfirm", "덮어쓰기"),
+            CloseButtonText = AppStrings.Get("Common_Cancel", "취소"),
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = Content.XamlRoot
+        };
+        return await dialog.ShowAsync() == ContentDialogResult.Primary;
     }
 
     private async Task<OnlineLyricsResult?> FetchSelectedAsync(LyricsResultItemVm vm)
