@@ -9,6 +9,7 @@ namespace DawnPlayer.Core.Lyrics;
 public static class LyricsFinder
 {
     private static readonly char[] InvalidChars = Path.GetInvalidFileNameChars();
+    private static readonly LyricsOnlineSettings DefaultOnlineSave = new();
 
     public static bool ExistsFor(Track track, AppSettings settings)
         => FindLrcPath(track, settings) is not null;
@@ -74,15 +75,26 @@ public static class LyricsFinder
                 paths.Add(Path.Combine(root, name));
         }
 
-        // Round-trip: the configured online save destination is always a candidate, so a file
-        // just saved there (custom folder, subfolder template) is discoverable with the same
-        // settings. Appended last to preserve existing precedence whenever an older file was
-        // already found.
+        // Round-trip: a customized online save destination (custom folder or template) is
+        // always a candidate, so a file just saved there is discoverable with the same
+        // settings. Default save setups are already covered by the default file patterns, so
+        // they add nothing — this keeps default-config behavior (and its exact asserted
+        // candidate lists) byte-identical. Appended last to preserve existing precedence
+        // whenever an older file was already found.
         try
         {
-            var savePath = LyricsSavePathResolver.ResolveSavePath(track, settings.LyricsOnline);
-            if (!paths.Contains(savePath, StringComparer.OrdinalIgnoreCase))
-                paths.Add(savePath);
+            var online = settings.LyricsOnline;
+            var template = string.IsNullOrWhiteSpace(online.SaveFileNameTemplate)
+                ? DefaultOnlineSave.SaveFileNameTemplate
+                : online.SaveFileNameTemplate;
+            bool customDestination = online.SaveLocation != DefaultOnlineSave.SaveLocation
+                || !string.Equals(template, DefaultOnlineSave.SaveFileNameTemplate, StringComparison.Ordinal);
+            if (customDestination)
+            {
+                var savePath = LyricsSavePathResolver.ResolveSavePath(track, online);
+                if (!paths.Contains(savePath, StringComparer.OrdinalIgnoreCase))
+                    paths.Add(savePath);
+            }
         }
         catch (Exception ex) { Log.Debug($"[lyrics] save-path candidate failed for '{track.Path}': {ex.Message}"); }
         return paths;

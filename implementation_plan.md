@@ -518,3 +518,4 @@ kind=Dlna — 인프라 그대로), 재생목록 편집 무결성, 콜드 리빌
 | CLICK-03 stale·덮어쓰기 | 재생 이동 시 무음 무동작 → 상태줄 경고 문구(3개 국어 키 패리티 유지). 자동조회가 적용 선택을 덮지 않도록 스킵, 에디터·파일 저장 시 오버라이드 해제 | 코드 리뷰 + 빌드 |
 | 파급 | 인터페이스 멤버 추가에 맞춘 테스트 페이크 2건(`FakeOnlineService`, `FakeLyricsOnlineService`) 갱신 — 콜드 게이트가 포착(CS0535) | Core+Tests 콜드 리빌드 **0경고 0오류** |
 | 미확인 | App 본체(WinUI: pane·window·service impl) 컴파일, `dotnet test` 실러너, 전체 스위트, LocalizationTests는 Windows 전용 → Windows에서 확인 필요. Linux 경로 가정 기존 테스트 3종 실패는 수정 전후 동일(환경 요인, CI Windows에서 통과 대상) | — |
+| 후속(릴리스 실패) | v1.3.2 첫 태그 CI에서 `LyricsCandidateBuilderTests` 2종 실패(무조건 후보 추가가 기존 정확-목록 단언과 충돌 — F2 설계 미스, 테스트는 계약대로 정상). 커스텀 저장 설정일 때만 후보 추가로 수정 + `DefaultSaveSettings_AddsNoExtraCandidate` 가드 추가. 동시성 1건 실패는 2차 시도 통과로 플레이크 판정. 태그를 수정 커밋으로 이동 후 CI 재실행 | — |

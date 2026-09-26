@@ -214,6 +214,23 @@ public class LyricsSavePathResolverTests : IDisposable
         Assert.Contains(expected, LyricsFinder.BuildCandidates(track, settings), StringComparer.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public void BuildCandidates_DefaultSaveSettings_AddsNoExtraCandidate()
+    {
+        // Guard for the v1.3.2 release failure: the save destination must only extend the
+        // candidate list for customized save setups. Default setups stay exactly
+        // pattern-derived (existing exact-list assertions depend on it).
+        var settings = AppSettings.CreateDefault();
+        settings.Lyrics.FilePatterns = new List<string> { "%artist% - %title%.lrc" };
+        var track = Track();
+
+        var candidates = LyricsFinder.BuildCandidates(track, settings);
+
+        Assert.Equal(
+            new[] { Path.Combine(_root, "music", "Artist - Song.lrc") },
+            candidates);
+    }
+
     public void Dispose()
     {
         try { Directory.Delete(_root, recursive: true); } catch { }
