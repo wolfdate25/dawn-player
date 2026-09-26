@@ -6,12 +6,16 @@ namespace DawnPlayer.Tests;
 /// <summary>
 /// Library toolbar icon gate. The cover-size button went through two misleading
 /// font glyphs (E71E magnifier, then E741 resize-arrows reading as "go") next to
-/// the search box, so it now draws its own nested-squares size mark as a PathIcon
-/// (deterministic geometry, no font lookup). The track-list view toggle used E8D2
+/// the search box, then a custom diagonal-arrow PathIcon and a Lucide outline
+/// Path; the outline mark stuck out beside the solid MDL2 toolbar glyphs, so the
+/// button now uses the MDL2 Picture glyph (E91B) at the same size (11) as its
+/// neighbors. E93C was rejected (already means album nodes in the adjacent tree),
+/// E7C5 (picture+search) repeats the magnifier trap, and E8B9/E8A9 would collide
+/// with the tree header / grid toggle. The track-list view toggle used E8D2
 /// ("Font"), not a list icon at all.
-/// Rule: the zoom button draws the custom PathIcon and no font glyph; the list
-/// toggle must use EA37 (List). The accessible names stay sourced from resw via
-/// x:Uid (see <see cref="AutomationNameGateTests"/>).
+/// Rule: the zoom button uses E91B only, bans the misleading glyphs, and holds
+/// no Path/PathIcon; the list toggle must use EA37 (List). The accessible names
+/// stay sourced from resw via x:Uid (see <see cref="AutomationNameGateTests"/>).
 /// </summary>
 public class LibraryToolbarIconTests
 {
@@ -47,21 +51,25 @@ public class LibraryToolbarIconTests
     }
 
     [Fact]
-    public void ZoomButton_UsesCustomSizeIcon()
+    public void ZoomButton_UsesPictureGlyph()
     {
         var block = FindZoomButtonBlock(ReadLibraryPageXaml());
         Assert.True(block != null, "cover-size button not found — scan scope broken");
-        Assert.Contains("<PathIcon", block!, StringComparison.Ordinal);
-        Assert.Contains("M1,1", block!, StringComparison.Ordinal);
+        // Same MDL2 language as the neighboring toolbar glyphs (E80A/EA37/E72C).
+        Assert.Contains("&#xE91B;", block!, StringComparison.Ordinal);
+        Assert.DoesNotContain("<Path", block!, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void ZoomButton_HasNoFontGlyph()
+    public void ZoomButton_HasNoMisleadingGlyph()
     {
         var block = FindZoomButtonBlock(ReadLibraryPageXaml());
         Assert.True(block != null, "cover-size button not found — scan scope broken");
-        Assert.DoesNotContain("FontIcon", block!, StringComparison.Ordinal);
-        Assert.DoesNotContain("Glyph=\"&#x", block!, StringComparison.Ordinal);
+        // E71E magnifier read as search next to the search box; E741 arrows read
+        // as "go"; E8A3 is the magnifier family again.
+        Assert.DoesNotContain("&#xE71E;", block!, StringComparison.Ordinal);
+        Assert.DoesNotContain("&#xE741;", block!, StringComparison.Ordinal);
+        Assert.DoesNotContain("&#xE8A3;", block!, StringComparison.Ordinal);
     }
 
     [Fact]

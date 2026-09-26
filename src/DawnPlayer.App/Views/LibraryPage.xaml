@@ -206,11 +206,9 @@
                     <!-- Cover Zoom Flyout Button -->
                     <Button x:Uid="Library_Zoom_Button" Style="{StaticResource TransportButton}" Width="28" Height="28"
  ToolTipService.ToolTip="커버 크기 조절 (Ctrl+마우스 휠)">
-                        <!-- Custom nested-squares size mark: deterministic geometry instead of a
-                             font glyph (E71E read as search, E741 as "go"). PathGeometry
-                             defaults to EvenOdd: outer ring + small solid square. -->
-                        <PathIcon Width="11" Height="11"
-                                  Data="M1,1 L15,1 L15,15 L1,15 Z M3.5,3.5 L3.5,12.5 L12.5,12.5 L12.5,3.5 Z M8,8 L12,8 L12,12 L8,12 Z"/>
+                        <!-- Cover-size mark: MDL2 Picture (E91B), same language/weight/size
+                             as the neighboring toolbar glyphs (E80A/EA37/E72C @11). -->
+                        <FontIcon Glyph="&#xE91B;" FontSize="11"/>
                         <Button.Flyout>
                             <Flyout Placement="Bottom" Opened="OnCoverZoomFlyoutOpened">
                                 <StackPanel Width="190" Spacing="8" Padding="6">
