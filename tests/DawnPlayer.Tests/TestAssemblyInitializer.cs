@@ -26,6 +26,12 @@ public static class TestAssemblyInitializer
         // that depend on timing. Tests that exercise the writer install their own sink.
         DawnPlayer.Core.Persistence.SettingsWriter.WriteSink = _ => { };
 
+        // The suite blocks pool threads in many places (prebuffer polling loops, process waits,
+        // real-audio continuity tests). When the injection rate of new pool threads can't keep
+        // up, a freshly queued Task.Run (e.g. the YouTube pipe reader's fill loop) sits unscheduled
+        // for seconds and its test times out. Raise the floor so queued work starts immediately.
+        ThreadPool.SetMinThreads(workerThreads: 64, completionPortThreads: 32);
+
         // Register AppDomain process exit handler to clean up temp test sandbox directory
         AppDomain.CurrentDomain.ProcessExit += (_, _) =>
         {

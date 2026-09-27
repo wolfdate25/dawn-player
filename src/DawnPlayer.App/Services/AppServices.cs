@@ -39,6 +39,7 @@ public static class AppServices
     public static Core.Audio.Dsp.Plugins.DspPluginLoader DspPlugins { get; private set; } = null!;
     public static MotionService Motion { get; private set; } = null!;
     public static Core.Persistence.RadioStationStore Stations { get; private set; } = null!;
+    public static Core.Persistence.YouTubeRecentStore YouTubeRecent { get; private set; } = null!;
 
     public static DispatcherQueue? Ui { get; private set; }
     public static IntPtr MainWindowHandle { get; private set; }
@@ -93,6 +94,10 @@ public static class AppServices
             Settings = SettingsStore.Load();
             AppStrings.ApplyLanguage(Bcp47(Settings.Ui.Language));
         }
+        // The YouTube reader spawns external tools; the runner carries the user's configured
+        // binary paths (empty = PATH resolution) and can be swapped at runtime from the section.
+        Core.Network.YouTube.YouTubeProcess.Runner =
+            new Core.Network.YouTube.YouTubeProcessRunner(Settings.YouTube.YtDlpPath, Settings.YouTube.FfmpegPath);
         // Core reads the DSD playback policy through a process-wide hook (it has no settings
         // service); keep both sides in sync here and wherever the setting changes.
         Core.Audio.DsdSupport.PlaybackMode = Settings.Output.DsdPlaybackMode;
@@ -178,6 +183,7 @@ public static class AppServices
         Motion = Container.GetRequiredService<MotionService>();
         Shortcuts = Container.GetRequiredService<ShortcutService>();
         Stations = Container.GetRequiredService<Core.Persistence.RadioStationStore>();
+        YouTubeRecent = new Core.Persistence.YouTubeRecentStore();
         var lyricsOnline = Container.GetRequiredService<LyricsOnlineService>();
         LyricsOnline = lyricsOnline;
         AppearanceSettings.AppearanceChanged += () => RunOnUi(() =>
@@ -720,6 +726,7 @@ public static class AppServices
         {
             Playlists.SaveAll();
             Stations?.Save();
+            YouTubeRecent?.Save();
             SettingsWriter.FlushNow(Settings);
         }
         catch { }

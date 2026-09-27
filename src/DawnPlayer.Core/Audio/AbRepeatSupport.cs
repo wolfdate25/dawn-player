@@ -10,7 +10,11 @@ public enum AbRepeatRejectionReason
 
     /// <summary>The current source is live/unseekable (TotalTime zero), so a loop the audio
     /// thread could never enforce would be reported as active.</summary>
-    UnseekableSource
+    UnseekableSource,
+
+    /// <summary>Every loop bounce would restart the whole resolve+download chain (YouTube today):
+    /// seconds of silence per cycle. Refused with an explanation instead of a unusable loop.</summary>
+    UnsupportedSource,
 }
 
 /// <summary>

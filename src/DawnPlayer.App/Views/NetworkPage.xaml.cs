@@ -1,13 +1,14 @@
 namespace DawnPlayer.App.Views;
 
 /// <summary>
-/// The Network tab: remote sources as sections (radio favorites, DLNA browsing; YouTube later).
+/// The Network tab: remote sources as sections (radio favorites, DLNA browsing, YouTube playback).
 /// Activation is lazy like the other content pages.
 /// </summary>
 public sealed partial class NetworkPage : Microsoft.UI.Xaml.Controls.Page
 {
     private bool _pageInitialized;
     private bool _dlnaActive;
+    private bool _youTubeActive;
 
     public NetworkPage()
     {
@@ -29,6 +30,7 @@ public sealed partial class NetworkPage : Microsoft.UI.Xaml.Controls.Page
         _dlnaActive = false;
         RadioSectionControl.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
         DlnaSectionControl.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+        YouTubeSectionControl.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
     }
 
     private void OnSectionDlnaClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
@@ -40,5 +42,18 @@ public sealed partial class NetworkPage : Microsoft.UI.Xaml.Controls.Page
         }
         RadioSectionControl.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
         DlnaSectionControl.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+        YouTubeSectionControl.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+    }
+
+    private void OnSectionYouTubeClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        if (!_youTubeActive)
+        {
+            _youTubeActive = true;
+            YouTubeSectionControl.Activate();
+        }
+        RadioSectionControl.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+        DlnaSectionControl.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+        YouTubeSectionControl.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
     }
 }

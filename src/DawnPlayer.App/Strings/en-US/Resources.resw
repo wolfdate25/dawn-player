@@ -823,6 +823,46 @@
   <data name="Network_Dlna_ChildCountFormat" xml:space="preserve"><value>{0} items</value></data>
   <data name="Network_Dlna_BrowseFailed" xml:space="preserve"><value>Could not load items: {0}</value></data>
   <data name="Network_Dlna_Unplayable" xml:space="preserve"><value>No playable audio format available.</value></data>
+  <data name="Network_Radio_PlayingBadge.Text" xml:space="preserve"><value>Playing</value></data>
+  <data name="Network_Radio_Connecting" xml:space="preserve"><value>Connecting: {0}</value></data>
+  <data name="Network_Dlna_Preparing" xml:space="preserve"><value>Preparing playback… the whole file is downloaded before it plays</value></data>
+  <data name="Network_Dlna_Retry.Content" xml:space="preserve"><value>Retry</value></data>
+  <data name="Network_Section_YouTube.Text" xml:space="preserve"><value>YouTube</value></data>
+  <data name="Network_YouTube_Header.Text" xml:space="preserve"><value>YouTube playback</value></data>
+  <data name="Network_YouTube_UrlBox.PlaceholderText" xml:space="preserve"><value>https://www.youtube.com/watch?v=…</value></data>
+  <data name="Network_YouTube_Play.Content" xml:space="preserve"><value>Play</value></data>
+  <data name="Network_YouTube_Add.Content" xml:space="preserve"><value>Add to Now Playing</value></data>
+  <data name="Network_YouTube_TosNotice.Text" xml:space="preserve"><value>The YouTube source uses lossy streams (free Opus ~160k) and an unofficial route that may conflict with the YouTube Terms of Service. Personal playback only.</value></data>
+  <data name="Network_YouTube_UrlLabel.Text" xml:space="preserve"><value>YouTube URL</value></data>
+  <data name="Network_YouTube_Status_Resolving" xml:space="preserve"><value>Resolving… the first playback takes a few seconds</value></data>
+  <data name="Network_YouTube_Retry.Content" xml:space="preserve"><value>Retry</value></data>
+  <data name="Network_YouTube_ResolveFailed" xml:space="preserve"><value>Could not fetch the item: {0}</value></data>
+  <data name="Network_YouTube_RecentHeader.Text" xml:space="preserve"><value>Recent</value></data>
+  <data name="Network_YouTube_RecentEmpty.Text" xml:space="preserve"><value>Nothing here yet. Paste a YouTube URL above and play it — it will collect here.</value></data>
+  <data name="Network_YouTube_CtxPlay.Text" xml:space="preserve"><value>Play</value></data>
+  <data name="Network_YouTube_CtxAdd.Text" xml:space="preserve"><value>Add to Now Playing</value></data>
+  <data name="Network_YouTube_CtxRemove.Text" xml:space="preserve"><value>Remove from list</value></data>
+  <data name="CoreMsg_YouTubeDependencyMissing" xml:space="preserve"><value>YouTube playback needs yt-dlp and ffmpeg. Install both, add them to PATH, then re-check under Configure… on the Network tab.</value></data>
+  <data name="Network_YouTube_Status_Checking" xml:space="preserve"><value>Checking…</value></data>
+  <data name="Network_YouTube_Status_Missing" xml:space="preserve"><value>yt-dlp/ffmpeg not found</value></data>
+  <data name="Network_YouTube_Guidance_Install" xml:space="preserve"><value>Playback needs yt-dlp and ffmpeg on PATH. Install them from https://github.com/yt-dlp/yt-dlp and press Re-check.</value></data>
+  <data name="Network_YouTube_InvalidUrl" xml:space="preserve"><value>Not a YouTube video URL. Use youtube.com/watch, youtu.be or music.youtube.com links.</value></data>
+  <data name="Network_YouTube_Status_Ok" xml:space="preserve"><value>Ready ({0})</value></data>
+  <data name="Network_YouTube_NoJsRuntime" xml:space="preserve"><value>no JS runtime (some videos limited)</value></data>
+  <data name="Network_YouTube_Paths.AutomationProperties.Name" xml:space="preserve"><value>Configure YouTube tools</value></data>
+  <data name="Network_YouTube_PathsText.Text" xml:space="preserve"><value>Configure…</value></data>
+  <data name="Network_YouTube_PathsHeader.Text" xml:space="preserve"><value>yt-dlp / ffmpeg paths</value></data>
+  <data name="Network_YouTube_YtDlpLabel.Text" xml:space="preserve"><value>yt-dlp</value></data>
+  <data name="Network_YouTube_FfmpegLabel.Text" xml:space="preserve"><value>ffmpeg</value></data>
+  <data name="Network_YouTube_Browse.Content" xml:space="preserve"><value>Browse…</value></data>
+  <data name="Network_YouTube_Default.Content" xml:space="preserve"><value>Default</value></data>
+  <data name="Network_YouTube_DefaultPathDisplay" xml:space="preserve"><value>(auto-detect from PATH)</value></data>
+  <data name="Network_YouTube_PythonNote.Text" xml:space="preserve"><value>Running via "python -m yt_dlp" is not supported — pick an executable file (.exe/.cmd/.bat).</value></data>
+  <data name="Network_YouTube_PathOk" xml:space="preserve"><value>verified: version {0}</value></data>
+  <data name="Network_YouTube_PathFail" xml:space="preserve"><value>not executable</value></data>
+  <data name="Network_YouTube_Status_OverrideInvalid" xml:space="preserve"><value>Invalid tool path</value></data>
+  <data name="Network_YouTube_Guidance_OverrideInvalid" xml:space="preserve"><value>The configured yt-dlp/ffmpeg path is invalid. Re-pick it under 'Tool paths…' or use the default.</value></data>
+  <data name="Network_YouTube_Status_CustomOk" xml:space="preserve"><value>Ready (custom paths)</value></data>
   <data name="Network_Radio_InvalidUrl" xml:space="preserve"><value>Enter an http:// or https:// stream URL.</value></data>
   <data name="Lastfm_StatusNeedKeys" xml:space="preserve"><value>Enter your Last.fm API key and secret (create them at last.fm/api).</value></data>
   <data name="Lastfm_StatusAuthed" xml:space="preserve"><value>Authenticated as {0} · {1} scrobbles queued</value></data>
@@ -869,6 +909,12 @@
   <data name="CoreMsg_DoPUnsupportedFallback" xml:space="preserve"><value>This device cannot play DoP; converting DSD to PCM (you can change this in Settings).</value></data>
   <data name="CoreMsg_FileOpenFailed" xml:space="preserve"><value>Could not open the file: {0}</value></data>
   <data name="CoreMsg_UnsupportedFormat" xml:space="preserve"><value>Unsupported format: {0}</value></data>
+  <data name="CoreMsg_YouTubeResolveFailed" xml:space="preserve"><value>Could not resolve the YouTube item: {0}</value></data>
+  <data name="CoreMsg_YouTubeStreamFailed" xml:space="preserve"><value>Could not start the YouTube stream: {0}</value></data>
+  <data name="Network_YouTube_UrlBox.AutomationProperties.Name" xml:space="preserve"><value>YouTube video URL entry</value></data>
+  <data name="NowPlaying_ABRepeat_Reject_YouTube" xml:space="preserve"><value>A-B repeat is unavailable on YouTube streams</value></data>
+  <data name="CoreMsg_YouTubeEndedEarly" xml:space="preserve"><value>The YouTube stream ended earlier than expected: {0}</value></data>
+  <data name="CoreMsg_YouTubeOverrideInvalid" xml:space="preserve"><value>The configured YouTube tool path is invalid: {0}. Re-pick it in the Network tab's tool paths, or use the default (PATH).</value></data>
   <data name="CoreMsg_RestartFailedContinue" xml:space="preserve"><value>Could not apply the new output settings; continuing playback on the current output.</value></data>
   <data name="Settings_Appearance_Motion_Title.Text" xml:space="preserve"><value>UI Motion</value></data>
   <data name="Settings_Appearance_Motion_Desc.Text" xml:space="preserve"><value>Enables non-essential animations such as transitions and press feedback. Skipped regardless of this setting when Windows animation effects are off.</value></data>

@@ -477,7 +477,18 @@ public sealed class SequencerStream : IWaveProvider
                     int frames = floatsRead / _outFormat.Channels;
                     PcmConvert.ToBytes(_floatBuf.AsSpan(0, frames * _outFormat.Channels), buffer.Slice(total), _outFormat);
                     total += frames * blockAlign;
-                    served += (long)frames * blockAlign;
+                    // A streaming reader whose clock is more truthful than this counter (the
+                    // YouTube pipe reader counts only really-heard PCM) can request a one-shot
+                    // re-anchor after a seek-restart silence gap — without it the served clock
+                    // keeps the gap's silence and drifts ahead of the heard audio forever.
+                    if (_current.Track.Reader is IResyncRequestSource resync && resync.TryConsumeResync(out var resyncPos))
+                    {
+                        served = MfTrackReader.TimeToBytes(_outFormat, resyncPos);
+                    }
+                    else
+                    {
+                        served += (long)frames * blockAlign;
+                    }
                     // Published so the lock-free position getters see the progress of this pass.
                     Volatile.Write(ref _bytesServed, served);
 

@@ -1,6 +1,7 @@
 using System.Globalization;
 using DawnPlayer.Core.Models;
 using DawnPlayer.Core.Network.Dlna;
+using DawnPlayer.Core.Network.YouTube;
 using DawnPlayer.Core.Persistence;
 using DawnPlayer.Core.Playlists;
 using DawnPlayer.Core.Util;
@@ -427,6 +428,15 @@ public sealed partial class PlaybackController : IPlaybackController
             AbRepeatRejected?.Invoke(AbRepeatRejectionReason.UnseekableSource);
             return stage;
         }
+        // Every loop bounce re-seeks from the render thread, and on YouTube that means tearing
+        // down and respawning the whole yt-dlp/ffmpeg chain — seconds of silence per cycle.
+        // Refusing with an explanation beats a technically-working, unusable loop.
+        if (stage != AbRepeatStage.Looping &&
+            CurrentItem?.Track.SourceKind == Models.TrackSourceKind.YouTube)
+        {
+            AbRepeatRejected?.Invoke(AbRepeatRejectionReason.UnsupportedSource);
+            return stage;
+        }
 
         var pos = seq.GetPosition();
         switch (stage)
@@ -746,7 +756,43 @@ public sealed partial class PlaybackController : IPlaybackController
             }
         }
         StateChanged?.Invoke();
-        if (started) ResolveRemoteArt(pending.Item.Track);
+        if (started) OnRemoteTrackStarted(pending);
+    }
+
+    /// <summary>
+    /// Post-start bookkeeping for remote sources: YouTube's -J resolve metadata is copied onto the
+    /// playing track (playlists stop showing the bare URL, and the thumbnail rides the existing
+    /// remote-art hook), and a mid-stream chain death is surfaced as a warning instead of a
+    /// silent skip to the next track.
+    /// </summary>
+    private void OnRemoteTrackStarted(PendingTrack pending)
+    {
+        if (pending.Reader is YouTubeStreamReader youTube)
+        {
+            youTube.PrematureEnd += detail =>
+                Warning?.Invoke(CoreMessages.Encode(CoreMessageKey.YouTubeEndedEarly,
+                    string.IsNullOrEmpty(detail) ? pending.Item.Track.Path : detail));
+            ApplyResolvedMeta(youTube.Meta, pending.Item.Track);
+        }
+        ResolveRemoteArt(pending.Item.Track);
+    }
+
+    private static void ApplyResolvedMeta(YouTubeTrackMeta meta, Models.Track track)
+    {
+        if (!string.IsNullOrWhiteSpace(meta.Title) &&
+            (string.IsNullOrWhiteSpace(track.Title) || track.Title.StartsWith("http", StringComparison.OrdinalIgnoreCase)))
+        {
+            track.Title = meta.Title;
+        }
+        if (string.IsNullOrWhiteSpace(track.Artist) && !string.IsNullOrWhiteSpace(meta.Uploader))
+        {
+            track.Artist = meta.Uploader;
+        }
+        if (meta.DurationMs > 0) track.DurationMs = meta.DurationMs;
+        if (!string.IsNullOrWhiteSpace(meta.ThumbnailUrl) && string.IsNullOrEmpty(track.ArtUrl))
+        {
+            track.ArtUrl = meta.ThumbnailUrl;
+        }
     }
 
     /// <summary>

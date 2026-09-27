@@ -5,9 +5,9 @@ using Xunit;
 namespace DawnPlayer.Tests.Audio;
 
 /// <summary>
-/// The source-kind routing rules of the reader factory. The compatibility invariant under test:
-/// a bare http URL with no kind keeps behaving like live radio (today's playlists), while
-/// file-over-http kinds are pinned to the spooling reader — and local files ignore the kind.
+/// The source-kind routing rules of the reader factory. The compatibility invariants under test:
+/// a bare http URL with no kind keeps behaving like live radio (today's playlists), DLNA is
+/// pinned to the spooling reader, YouTube to the pipe reader — and local files ignore the kind.
 /// </summary>
 public sealed class TrackReaderFactoryRoutingTests
 {
@@ -28,13 +28,20 @@ public sealed class TrackReaderFactoryRoutingTests
             AudioFileReaderFactory.SelectProvider(Url, ".flac", TrackSourceKind.File));
     }
 
-    [Theory]
-    [InlineData(TrackSourceKind.Dlna)]
-    [InlineData(TrackSourceKind.YouTube)]
-    public void FileOverHttpKinds_RouteToSpoolingReader(TrackSourceKind kind)
+    [Fact]
+    public void DlnaKind_RoutesToSpoolingReader()
     {
         Assert.IsType<HttpFileTrackReaderProvider>(
-            AudioFileReaderFactory.SelectProvider(Url, ".flac", kind));
+            AudioFileReaderFactory.SelectProvider(Url, ".flac", TrackSourceKind.Dlna));
+    }
+
+    [Fact]
+    public void YouTubeKind_RoutesToPipeReader()
+    {
+        // N3: the YouTube kind left the spooling reader for the yt-dlp/ffmpeg pipe reader
+        // (approved spec change — the spool path cannot interpret a page URL at all).
+        Assert.IsType<YouTubeTrackReaderProvider>(
+            AudioFileReaderFactory.SelectProvider("https://www.youtube.com/watch?v=abc", ".flac", TrackSourceKind.YouTube));
     }
 
     [Fact]

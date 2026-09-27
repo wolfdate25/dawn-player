@@ -47,8 +47,18 @@ public sealed class AppSettings
     public ShortcutSettings Shortcuts { get; set; } = new();
     public LastfmSettings Lastfm { get; set; } = new();
     public PluginSettings Plugins { get; set; } = new();
+    public YouTubeSettings YouTube { get; set; } = new();
 
     public static AppSettings CreateDefault() => new();
+}
+
+public sealed class YouTubeSettings
+{
+    /// <summary>Override for the yt-dlp binary (absolute path). Empty = resolve from PATH.</summary>
+    public string YtDlpPath { get; set; } = "";
+
+    /// <summary>Override for the ffmpeg binary (absolute path). Empty = resolve from PATH.</summary>
+    public string FfmpegPath { get; set; } = "";
 }
 
 public sealed class OutputSettings

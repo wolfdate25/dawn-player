@@ -108,6 +108,32 @@ public sealed class M3uDpTrackTests : IDisposable
     }
 
     [Fact]
+    public void YouTubeTrack_RoundTripsWithKind()
+    {
+        // N3: a YouTube track persists its page URL (never the expiring media URL) and comes back
+        // with the kind intact so open-time routing reaches the pipe reader.
+        const string pageUrl = "https://www.youtube.com/watch?v=jNQXAC9IVRw";
+        var yt = new PlaylistItem(new Track
+        {
+            Path = pageUrl,
+            Title = pageUrl,
+            SourceKind = TrackSourceKind.YouTube,
+        });
+
+        var file = WriteAndReadBack(yt);
+        var meta = DpTrackMeta.TryDecode(M3u.Read(file)[0].DpTrackDirective);
+
+        Assert.NotNull(meta);
+        Assert.Equal((int)TrackSourceKind.YouTube, meta!.SourceKind);
+        Assert.Equal(pageUrl, meta.Title);
+
+        var track = RemoteTrackCodec.ToTrack(pageUrl, meta!);
+        Assert.NotNull(track);
+        Assert.Equal(TrackSourceKind.YouTube, track!.SourceKind);
+        Assert.Equal(pageUrl, track.Path);
+    }
+
+    [Fact]
     public void LocalTracks_DoNotGrowADirective()
     {
         var local = new PlaylistItem(new Track { Path = Path.Combine(_dir, "a.flac"), Title = "A" });

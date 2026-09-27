@@ -423,11 +423,22 @@ public sealed partial class NowPlayingBar : UserControl
     /// label instead of failing silently, then restore the stage label via the one-shot timer.</summary>
     public void OnAbRepeatRejected(Core.Audio.AbRepeatRejectionReason reason)
     {
-        ABRepeatLabel.Text = reason == AbRepeatRejectionReason.BBeforeA ? "B<A" : "LIVE";
+        ABRepeatLabel.Text = reason switch
+        {
+            AbRepeatRejectionReason.BBeforeA => "B<A",
+            AbRepeatRejectionReason.UnsupportedSource => "YT",
+            _ => "LIVE"
+        };
         ABRepeatLabel.Foreground = ThemeResourceHelper.GetBrush("TextSecondaryBrush");
-        ToolTipService.SetToolTip(ABRepeatButton, reason == AbRepeatRejectionReason.BBeforeA
-            ? AppStrings.Format("NowPlaying_ABRepeat_Reject_BBeforeA", "B 지점은 A 지점보다 뒤에 있어야 합니다")
-            : AppStrings.Format("NowPlaying_ABRepeat_Reject_Live", "라이브 스트림에서는 A-B 반복을 사용할 수 없습니다"));
+        ToolTipService.SetToolTip(ABRepeatButton, reason switch
+        {
+            AbRepeatRejectionReason.BBeforeA => AppStrings.Format("NowPlaying_ABRepeat_Reject_BBeforeA",
+                "B 지점은 A 지점보다 뒤에 있어야 합니다"),
+            AbRepeatRejectionReason.UnsupportedSource => AppStrings.Format("NowPlaying_ABRepeat_Reject_YouTube",
+                "YouTube 스트림에서는 A-B 반복을 사용할 수 없습니다"),
+            _ => AppStrings.Format("NowPlaying_ABRepeat_Reject_Live",
+                "라이브 스트림에서는 A-B 반복을 사용할 수 없습니다")
+        });
         _abRejectionTimer.Stop();
         _abRejectionTimer.Start();
     }

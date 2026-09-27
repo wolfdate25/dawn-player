@@ -34,11 +34,19 @@
                     <TextBlock x:Uid="Network_Section_Dlna" Text="DLNA" FontSize="12.5"/>
                 </StackPanel>
             </RadioButton>
+            <RadioButton x:Name="SectionYouTube" GroupName="NetworkSectionGroup"
+                         Style="{StaticResource EoleNavTabStyle}" Click="OnSectionYouTubeClick">
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <FontIcon Glyph="&#xE8F2;" FontSize="12"/>
+                    <TextBlock x:Uid="Network_Section_YouTube" Text="YouTube" FontSize="12.5"/>
+                </StackPanel>
+            </RadioButton>
         </StackPanel>
 
         <Grid Grid.Row="2">
             <network:RadioSection x:Name="RadioSectionControl"/>
             <network:DlnaSection x:Name="DlnaSectionControl" Visibility="Collapsed"/>
+            <network:YouTubeSection x:Name="YouTubeSectionControl" Visibility="Collapsed"/>
         </Grid>
     </Grid>
 </Page>

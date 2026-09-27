@@ -39,4 +39,13 @@
     <ProjectReference Include="..\DawnPlayer.Core\DawnPlayer.Core.csproj" />
   </ItemGroup>
 
+  <!-- Debug builds write a full crash dump (native heap corruption included) so an intermittent
+       crash can be analyzed after the fact. The directory must exist — it is created on demand by
+       tools/ensure-crash-dump-dir or manually; a missing directory silently skips the dump. -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <RuntimeHostConfigurationOption Include="System.DbgEnableMiniDump" Value="1" />
+    <RuntimeHostConfigurationOption Include="System.DbgMiniDumpName" Value="E:\coding\dawn-player\crash-dumps\DawnPlayer.dmp" />
+    <RuntimeHostConfigurationOption Include="System.DbgMiniDumpType" Value="2" />
+  </ItemGroup>
+
 </Project>

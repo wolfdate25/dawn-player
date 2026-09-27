@@ -346,6 +346,70 @@ kind=Dlna — 인프라 그대로), 재생목록 편집 무결성, 콜드 리빌
 
 **N3 — YouTube (M–L, N0–N2 완료 후 별도 승인 — 착수 시 위 수준으로 상세화)**
 
+> **2026-09-26 착수·구현 완료 + 적대적 검토·수정** — 사용자 지시("N3 작업을 진행해라")로 상세화 후,
+> §8 결정 사항 승인(D1 자연 경계 갭 수용·D3 라우팅 테스트 기대값 갱신 등)에 따라 구현:
+> **[docs/n3-youtube-implementation.md](docs/n3-youtube-implementation.md)** (파일 수준 명세 + 1차
+> 관문 스파이크 실측). 스파이크: ffmpeg 9.0.1 + yt-dlp 2026.08.19(pip 신설), Deno 없이도
+> visionos 클라이언트 폴백으로 `-J` 해석 2.5초·파이프(→s16le 48k 스테레오) 19초 트랙 종단 2.7초
+> 성공 — **A안(파이프 리더) 실측 확정**.
+> **적대적 검토(서브 에이전트 3개 — 스레딩·프로세스·UI/불변식) 결과 P0 2건·P1 4건·P2 다수 발견,
+> 전부 수정**: (1) 유한 YouTube의 A-B 바운스가 렌더 스레드에서 프로세스 킬+pump 대기(최악 ~2.5초
+> 렌더 정지) → 체인 폐기의 느린 절차를 오프스레드로, A-B 자체는 YouTube 소스 거부
+> (`UnsupportedSource` 신설+안내), 시크 재기동의 스폰만 호출 스레드에 잔존. (2) 버퍼 무한 성장
+> (긴 영상 RAM 폭증) → 30초 상한+백프레셔 페이싱. (3) 세대 게이트 비원자 RMW·Dispose∩Seek 체인
+> 누수·MarkEnded 체크-액트 창 → `Interlocked.Increment`+CAS 슬롯+BufferedPcm 세대 인자(락 내
+> 원자 판정). (4) 시크 재기동 갭의 무음이 시컨서 위치 클록을 영구 드리프트(8ebfe12 교훈 재발) →
+> `IResyncRequestSource` 원샷 재앵커("보고=청취" 복원). (5) `-J` 실패 stderr 유실(I2) → 예외
+> 메시지 부착. (6) PATHEXT 미지원(.cmd 설치 오판) → PATH+PATHEXT 해상. (7) 해석 메타 폐기 →
+> 시작 시 제목·아티스트·길이·썸네일(ArtUrl→아트 훅) 반영. (8) 조기 종료 무통보 스킵 →
+> `PrematureEnd` 경고. (9) 설정 토글 사망 코드 제거, Unknown 오 표시 제거, Play 연타 가드,
+> Open 입구 URL 재검증(cmd 인젝션 표면 봉쇄), 프로브 재진입 병합.
+> 게이트: obj/bin 삭제 콜드 리빌드 **0경고 0오류**, 전체 테스트 **2,055/2,055 통과(2회 연속)**(신규
+> 47종 + 도구 경로 선택 4종 — 순수 파서·fake seam 리더 불변식·BufferedPcm 세대 계약·.cmd shim
+> 실프로세스 통합 5종·M3U8 왕복·라우팅 갱신·리싱크 계약). **UI 정리(사용자 지시)**: Re-check·
+> Tool paths 2버튼 → **단일 'Configure…' 버튼** 통합(재검사는 플라이아웃 Open 시 수행), 플라이아웃
+> 폭 440→340으로 잘림 수정. **실기기 경로 테스트**: `H:\음악\tools`의 yt-dlp 2026.08.19·
+> ffmpeg 2026-09-24-git로 --version 검증 + 19초 트랙 파이프 종단 재측정(정확히 19.0초분 PCM) +
+> 사용자 settings.json에 두 경로 구성(재시작 시 '준비됨 (사용자 지정)' 배지 확인 대상). 테스트 결함
+> 1건 수정: ReadAll의 프레임 상한이 스레드풀 기아 상황에서 실오디오 도착 전 무음을 소진해 위치
+> 단언을 깨뜨림 → 시간 경계 방식으로 변경. 수동 이월: 실서버 장기 청음(긴 트랙·시크 체감·라이브·
+> 지역/연령 제한·Premium), Narrator 스모크.
+> **후속 정리(2026-09-27)**: Re-check·Tool paths 2버튼 → **단일 'Configure…' 버튼 통합**(재검사는
+> 플라이아웃 Open 시 자동 수행), 플라이아웃 폭 440→340 잘림 수정. `H:\음악\tools` 실기기 경로
+> 검증(yt-dlp 2026.08.19·ffmpeg 2026-09-24-git — 파이프 종단 재측정 성공) + 사용자 settings.json
+> 구성 완료. **결함 2건 추가 수정**: (1) 의존성 프로브가 구성 경로를 무시하고 맨이름만 PATH 조회 →
+> 오버라이드가 유효해도 "미설치" 판정(측정: ffmpeg `--version` exit 8, `-version`만 성공하는 플래그
+> 방언 → 폴백 추가) — 구성 경로 프로브+회귀 테스트. (2) **`xunit.runner.json`이
+> `parallelizeTestCollections: true`로 어셈블리 직렬화 어트리뷰트를 덮어써 컬렉션 병렬 실행 중 —
+> EngineSeam의 FakeProvider 등록 창이 라우팅 테스트를 오염(간헐 RadioKind 실패)하고 스레드풀 기아로
+> 실시간 테스트 부하 실패** → 직렬화로 원복(주석의 AppPaths 오염 사고와 일치하는 원 의도).
+> 게이트 재확인: 클린 리빌드 0경고 0오류, 전체 **2,058/2,058 × 3회 연속 통과**(신규 누계 50종).
+> **UX 고도화 1+2단계(2026-09-27 사용자 승인·구현, ui-ux-pro-max 근거)**: (1단계) 제출 피드백 —
+> 버튼 비활성+ProgressRing+"해석 중…" 상태, Enter 제출(WinUI 3에 Button.IsDefault가 없어 KeyDown
+> 우회), URL 라벨 추가, blur 인라인 검증, 실패 시 [다시 시도]; (2단계) **최근 항목 카드 그리드** —
+> `YouTubeRecentStore`(정규화 URL dedup·상한 20·AtomicFile+.bak, `youtube-recent.json`),
+> `YouTubeResolveCache`(페이지 URL 키·TTL 15분·상한 32)로 섹션의 -J 선해석을 Open이 재사용(이중
+> 해석 2.5s 제거), 카드 = 썸네일(공유 아트 캐시 비동기 로드)+제목·채널·길이 배지, 클릭 재생/
+> 컨텍스트 재생·추가·제거, 빈 상태 안내. 함정: WinUI 3 Button.IsDefault 부재(KeyDown 우회),
+> out var 같은 호출 후속 인자 CS0165, CA1822/CA1310. 게이트: 클린 리빌드 0경고 0오류, 전체
+> **2,069/2,069 통과**(신규 11종). 3단계(검색 통합·플레이리스트 가져오기·클립보드 감지·드래그앤드롭)
+> 는 별도 계획 승인 대기.
+> **Radio·DLNA 동일 패턴 적용(2026-09-27 사용자 지시, ui-ux-pro-max 근거)**: Radio — 현재 스트리밍
+> 중인 방송국 하이라이트(액센트 바+"재생 중" 배지, PlaybackStateChanged/CurrentTrackChanged 구독
+> 갱신), 연결 피드백(헤더 ring+"연결 중: <이름>" — connect+1.5s 프리버퍼의 무반응 제거), 추가/편집
+> 대화상자 인라인 URL 검증(Closing 취소 방식 — 잘못된 URL이 닫힌 뒤 경고로만 안내되던 문제). DLNA —
+> 트랙 행 썸네일(AlbumArtUri→공유 아트 캐시 비동기, 페이지당 40장 상한, 폴더 행은 아이콘 유지),
+> 재생 준비 피드백(스풀 전체 다운로드의 무음 수 초 간격을 ring+"재생 준비 중…"으로 설명), 브라우즈
+> 실패 [다시 시도] 버튼(실패 요청 인자 재사용). 함정: 파일 범위 namespace 재선언 CS8954, 러너
+> 잠금(실행 중 앱) 빌드 실패. 게이트: 클린 리빌드 0경고 0오류, 전체 **2,069/2,069 통과**.
+> **선존재 네이티브 크래시 기록(2026-09-27 사용자 보고·분석)**: Network 탭에서 재생 중 탭 전환 시
+> 앱 종료 1회 — 관리 예외 로그 0건(3종 핸들러 전부 무음) → 이벤트 로그 Event 1000 확인:
+> **0xC0000374(힙 손상), ntdll**. WER Archive에 **동일 버킷(StackHash_9898)이 08-19에 11회**(모든
+> N-시리즈 이전, 구 빌드) → N 계열/UX 변경과 무관한 선존재 네이티브 결함(배타 WASAPI/MF 계열
+> 추정). 조치: 디버그 빌드에 크래시 덤프 수집 상시 장착(`DawnPlayer.App.csproj`의
+> `System.DbgEnableMiniDump`/`DbgMiniDumpName`/`DbgMiniDumpType` → `crash-dumps/DawnPlayer.dmp`,
+> 디렉터 .gitignore 처리) — 재발 시 덤프로 근본 원인 분석.
+
 1. 해석: `yt-dlp -J`(제목·길이·썸네일·bestaudio 포맷) → 재생: `yt-dlp -f bestaudio -o -`를
    ffmpeg(`-f s16le` 파이프)로 PCM화 → `RadioStreamReader` 패턴의 `YouTubeStreamReader`.
    재생목록에는 만료되는 미디어 URL이 아니라 **페이지 URL**을 보관.

@@ -38,6 +38,8 @@ dawnplayer.log）。**便携模式**：exe 旁存在 `portable.dat` 标记时，
 - **DLNA 浏览** — 自动发现网络中的 UPnP 媒体服务器，通过常规引擎播放其音乐（无缝衔接、EQ、
   WASAPI 独占输出全部保留）：选择服务器 → 浏览文件夹 → 立即播放/加入 Now Playing，专辑封面本地
   缓存。优先原始格式（FLAC/WAV/MP3/AAC…）
+- **YouTube 播放**（可选）— 在网络标签粘贴视频地址，经 yt-dlp 解析、ffmpeg 管道流入同一引擎。
+  依赖检测型：PATH 需有 yt-dlp·ffmpeg。仅限有损音源，且属非官方途径，请仅作个人播放使用
 - **支持的格式**：MP3、AAC/ALAC (m4a)、FLAC、Ogg Vorbis、Opus、WAV、DSF/DSD、DFF (DSDIFF) —
   Media Foundation + NVorbis 解码。DSD 通过箱形抽取转换为 44.1k/48k 系列 PCM 播放，或以
   DoP（DSD over PCM）打包，经 WASAPI 独占模式发送至支持 DSD 的 DAC

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
@@ -12,11 +13,14 @@ using DawnPlayer.Core.Network.Dlna;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace DawnPlayer.App.Views.Network;
 
-/// <summary>One row of the browser list: either a folder or a playable track.</summary>
-public sealed class DlnaRow
+/// <summary>One row of the browser list: either a folder or a playable track. Track rows carry a
+/// thumbnail that fills in asynchronously from the shared art cache (folder rows keep the icon).</summary>
+public sealed class DlnaRow : INotifyPropertyChanged
 {
     public required bool IsTrack { get; init; }
     public required string Title { get; init; }
@@ -24,6 +28,26 @@ public sealed class DlnaRow
     public required string IconGlyph { get; init; }
     public string ContainerId { get; init; } = "";
     public DidlItemEntry? Item { get; init; }
+
+    private ImageSource? _art;
+    public ImageSource? Art
+    {
+        get => _art;
+        private set
+        {
+            if (ReferenceEquals(_art, value)) return;
+            _art = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Art)));
+        }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    /// <summary>Must run on the UI thread — creates the XAML image source.</summary>
+    public void SetArt(string localPath)
+    {
+        if (IsTrack) Art = new BitmapImage(new Uri(localPath));
+    }
 
     public static DlnaRow FromContainer(DidlContainerEntry entry, string childrenText) =>
         new()
@@ -88,6 +112,7 @@ public sealed partial class DlnaSection : UserControl
     private int _loaded;
     private int _totalMatches;
     private int _browseGeneration;
+    private (bool Reset, int StartIndex) _lastBrowse = (true, 0);
     private bool _everSearched;
 
     public ObservableCollection<DlnaCrumb> Crumbs => _crumbs;
@@ -167,6 +192,8 @@ public sealed partial class DlnaSection : UserControl
         {
             startIndex = _loaded;
         }
+        _lastBrowse = (reset, startIndex);
+        BrowseRetryButton.Visibility = Visibility.Collapsed;
 
         SetBusy(true);
         try
@@ -181,6 +208,7 @@ public sealed partial class DlnaSection : UserControl
                 _loaded = 0;
             }
             _totalMatches = page.TotalMatches;
+            var artLoads = 0;
             foreach (var entry in page.Entries)
             {
                 switch (entry)
@@ -192,7 +220,15 @@ public sealed partial class DlnaSection : UserControl
                                 : ""));
                         break;
                     case DidlItemEntry item when DlnaTrackFactory.TryCreate(item, serverSnapshot.DescriptionUrl) != null:
-                        _rows.Add(DlnaRow.FromItem(item));
+                        var row = DlnaRow.FromItem(item);
+                        _rows.Add(row);
+                        // Album art per row, capped per page — the cache dedupes repeats and a
+                        // failed download just leaves the audio icon in place.
+                        if (row.Item?.AlbumArtUri != null && artLoads < 40)
+                        {
+                            artLoads++;
+                            _ = LoadRowArtAsync(row, row.Item.AlbumArtUri);
+                        }
                         break;
                     // Non-audio items are invisible: this browser is a music browser.
                 }
@@ -207,11 +243,31 @@ public sealed partial class DlnaSection : UserControl
         {
             App.Log($"[dlna] browse failed on {serverSnapshot.FriendlyName}: {ex.Message}");
             AppServices.RaiseWarning(AppStrings.Format("Network_Dlna_BrowseFailed", "항목을 불러오지 못했습니다: {0}", ex.Message));
+            // The failed request is retryable as-is (same container, same page offset).
+            if (generation == _browseGeneration) BrowseRetryButton.Visibility = Visibility.Visible;
         }
         finally
         {
             SetBusy(false);
         }
+    }
+
+    private void OnBrowseRetryClick(object sender, RoutedEventArgs e)
+    {
+        BrowseRetryButton.Visibility = Visibility.Collapsed;
+        var (reset, startIndex) = _lastBrowse;
+        _ = BrowseAsync(reset, startIndex);
+    }
+
+    private async Task LoadRowArtAsync(DlnaRow row, Uri albumArtUri)
+    {
+        try
+        {
+            var path = await _artCache.GetOrDownloadAsync(albumArtUri);
+            if (path == null) return;
+            DispatcherQueue.TryEnqueue(() => row.SetArt(path));
+        }
+        catch { /* thumbnails are decorative — never surface a download failure */ }
     }
 
     private void RebuildCrumbs()
@@ -272,37 +328,53 @@ public sealed partial class DlnaSection : UserControl
 
     private void OnLoadMoreClick(object sender, RoutedEventArgs e) => _ = BrowseAsync(reset: false);
 
+    /// <summary>Re-entrancy guard for the play/add flow: DLNA opens download the whole file, so a
+    /// double-click or impatient second click must not queue duplicate rows.</summary>
+    private int _playPending;
+
     private async Task PlayRowAsync(DlnaRow row, bool play)
     {
         if (_server == null || row.Item == null) return;
+        if (Interlocked.Exchange(ref _playPending, 1) == 1) return;
 
-        var track = DlnaTrackFactory.TryCreate(row.Item, _server.DescriptionUrl);
-        if (track == null)
-        {
-            AppServices.RaiseWarning(AppStrings.Get("Network_Dlna_Unplayable", "재생할 수 있는 오디오 형식이 없습니다."));
-            return;
-        }
-
+        // Opening a DLNA track downloads the whole file before audio starts — tell the user
+        // instead of leaving a silent multi-second gap.
+        PlayStatusRow.Visibility = Visibility.Visible;
         try
         {
-            if (row.Item.AlbumArtUri != null)
+            var track = DlnaTrackFactory.TryCreate(row.Item, _server.DescriptionUrl);
+            if (track == null)
             {
-                var artPath = await _artCache.GetOrDownloadAsync(row.Item.AlbumArtUri);
-                if (artPath != null) track.ArtPath = artPath;
+                AppServices.RaiseWarning(AppStrings.Get("Network_Dlna_Unplayable", "재생할 수 있는 오디오 형식이 없습니다."));
+                return;
             }
 
-            var playlists = AppServices.Playlists;
-            var playlist = playlists.NowPlaying;
-            var item = playlists.AddTracks(playlist, new[] { track }).FirstOrDefault();
-            if (item != null && play)
+            try
             {
-                await Controls.PlaybackUiHelper.PlayItemAsync(AppServices.Playback, playlist, item);
+                if (row.Item.AlbumArtUri != null)
+                {
+                    var artPath = await _artCache.GetOrDownloadAsync(row.Item.AlbumArtUri);
+                    if (artPath != null) track.ArtPath = artPath;
+                }
+
+                var playlists = AppServices.Playlists;
+                var playlist = playlists.NowPlaying;
+                var item = playlists.AddTracks(playlist, new[] { track }).FirstOrDefault();
+                if (item != null && play)
+                {
+                    await Controls.PlaybackUiHelper.PlayItemAsync(AppServices.Playback, playlist, item);
+                }
+            }
+            catch (Exception ex)
+            {
+                App.Log($"[dlna] play failed for '{track.Path}': {ex.Message}");
+                AppServices.RaiseWarning(ex.Message);
             }
         }
-        catch (Exception ex)
+        finally
         {
-            App.Log($"[dlna] play failed for '{track.Path}': {ex.Message}");
-            AppServices.RaiseWarning(ex.Message);
+            Volatile.Write(ref _playPending, 0);
+            PlayStatusRow.Visibility = Visibility.Collapsed;
         }
     }
 

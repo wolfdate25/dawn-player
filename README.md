@@ -42,6 +42,9 @@ this marker).
 - **DLNA browsing** — discover UPnP media servers on your network and play their music through the
   regular engine (gapless, EQ, exclusive WASAPI): pick a server, walk folders, play or queue
   tracks; album art is cached locally. Original formats preferred (FLAC/WAV/MP3/AAC…)
+- **YouTube playback** (optional) — paste a video URL in the Network tab; it is resolved with
+  yt-dlp and streamed through an ffmpeg pipe into the same engine. Dependency-detected: yt-dlp and
+  ffmpeg must be on PATH. Lossy sources only, unofficial route — for personal use
 - **Supported formats**: MP3, AAC/ALAC (m4a), FLAC, Ogg Vorbis, Opus, WAV, DSF/DSD, DFF (DSDIFF)
   — Media Foundation + NVorbis decoding. DSD plays as boxcar-decimated 44.1k/48k-family PCM, or
   as DoP (DSD over PCM) packing to a DSD-capable DAC over WASAPI exclusive

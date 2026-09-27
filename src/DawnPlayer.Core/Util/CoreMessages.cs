@@ -19,6 +19,11 @@ public enum CoreMessageKey
     UnsupportedFormat,
     RestartFailedContinue,
     DirectSoundUnavailableWaveOutFallback,
+    YouTubeDependencyMissing,
+    YouTubeResolveFailed,
+    YouTubeStreamFailed,
+    YouTubeEndedEarly,
+    YouTubeOverrideInvalid,
 }
 
 /// <summary>Encoder/decoder for keyed Core messages. Wire format:
@@ -69,6 +74,11 @@ public static class CoreMessages
         CoreMessageKey.UnsupportedFormat => Format("지원하지 않는 형식입니다: {0}", args),
         CoreMessageKey.RestartFailedContinue => "새 출력 설정을 적용할 수 없어 기존 출력으로 계속 재생합니다.",
         CoreMessageKey.DirectSoundUnavailableWaveOutFallback => "DirectSound 출력을 열 수 없어 WaveOut으로 재생합니다.",
+        CoreMessageKey.YouTubeDependencyMissing => "YouTube 재생에는 yt-dlp와 ffmpeg가 필요합니다. 두 도구를 설치해 PATH에 추가한 뒤 네트워크 탭의 '구성…'에서 다시 검사하세요.",
+        CoreMessageKey.YouTubeResolveFailed => Format("YouTube 항목을 해석하지 못했습니다: {0}", args),
+        CoreMessageKey.YouTubeStreamFailed => Format("YouTube 스트림을 시작하지 못했습니다: {0}", args),
+        CoreMessageKey.YouTubeEndedEarly => Format("YouTube 스트림이 예상보다 일찍 끝났습니다: {0}", args),
+        CoreMessageKey.YouTubeOverrideInvalid => Format("구성된 YouTube 도구 경로가 유효하지 않습니다: {0}. 네트워크 탭의 '도구 경로'에서 다시 선택하거나 기본값을 사용하세요.", args),
         _ => key.ToString(),
     };
 

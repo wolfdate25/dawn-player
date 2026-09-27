@@ -212,70 +212,8 @@ public sealed class RadioStreamReader : ITrackReader, ILiveMetadataSource
 
     // ---------------- PCM buffering ----------------
 
-    /// <summary>Thread-safe byte queue between the network fill task and the render thread.</summary>
-    private sealed class BufferedPcm
-    {
-        private readonly object _lock = new();
-        private readonly Queue<byte[]> _chunks = new();
-        private int _headChunkOffset;
-        private long _bufferedBytes;
-        private bool _dead;
-
-        public void AddBytes(byte[] bytes, int count)
-        {
-            var copy = new byte[count];
-            Array.Copy(bytes, copy, count);
-            lock (_lock)
-            {
-                _chunks.Enqueue(copy);
-                _bufferedBytes += count;
-            }
-        }
-
-        public void MarkDead()
-        {
-            lock (_lock) _dead = true;
-        }
-
-        /// <summary>Blocks until at least <paramref name="seconds"/> of 16-bit stereo-equivalent
-        /// audio is buffered, or the timeout elapses.</summary>
-        public void WaitUntilBuffered(double seconds, TimeSpan timeout)
-        {
-            var deadline = DateTime.UtcNow + timeout;
-            while (DateTime.UtcNow < deadline)
-            {
-                lock (_lock)
-                {
-                    if (_bufferedBytes >= seconds * 44100 * 4 || _dead) return;
-                }
-                Thread.Sleep(50);
-            }
-        }
-
-        public int Read(byte[] buffer, int offset, int count)
-        {
-            lock (_lock)
-            {
-                int total = 0;
-                while (total < count && _chunks.Count > 0)
-                {
-                    var chunk = _chunks.Peek();
-                    int available = chunk.Length - _headChunkOffset;
-                    int take = Math.Min(available, count - total);
-                    Array.Copy(chunk, _headChunkOffset, buffer, offset + total, take);
-                    _headChunkOffset += take;
-                    total += take;
-                    _bufferedBytes -= take;
-                    if (_headChunkOffset == chunk.Length)
-                    {
-                        _chunks.Dequeue();
-                        _headChunkOffset = 0;
-                    }
-                }
-                return total;
-            }
-        }
-    }
+    // The thread-safe byte queue lives in BufferedPcm.cs, shared with the YouTube pipe reader.
+    // Radio keeps its own end-of-stream policy here: silence on underrun, never an end.
 
     /// <summary>Serves the buffered 16-bit PCM as floats; silence on underrun (never end-of-stream).</summary>
     private sealed class PcmSampleProvider : ISampleProvider

@@ -38,6 +38,9 @@ dawnplayer.log). **포터블 모드**: exe 옆에 `portable.dat` 마커가 있�
 - **DLNA 브라우징** — 네트워크의 UPnP 미디어 서버를 자동으로 찾아 폴더를 탐색하고, 일반 엔진으로
   재생(갭리스·EQ·WASAPI 독점 출력 그대로): 서버 선택 → 폴더 이동 → 지금 재생/Now Playing 추가,
   앨범아트는 로컬 캐시. 원본 포맷 우선(FLAC/WAV/MP3/AAC…)
+- **YouTube 재생**(선택) — 네트워크 탭에 동영상 주소를 붙여넣으면 yt-dlp로 해석해 ffmpeg 파이프로
+  같은 엔진에 스트리밍합니다. 의존성 감지형: PATH에 yt-dlp·ffmpeg 필요. 유손실 소스만 지원하며
+  비공식 경로이므로 개인 재생 용도로 사용하세요
 - **지원 형식**: MP3, AAC/ALAC(m4a), FLAC, Ogg Vorbis, Opus, WAV, DSF/DSD, DFF(DSDIFF) —
   Media Foundation + NVorbis 디코딩. DSD는 박스카 디시메이션으로 44.1k/48k 계열 PCM 변환 재생 또는
   DSD 대응 DAC에 WASAPI 배타 DoP(DSD over PCM) 패킹 전송

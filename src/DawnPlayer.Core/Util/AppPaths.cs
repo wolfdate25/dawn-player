@@ -75,6 +75,7 @@ public static class AppPaths
     public static string PluginsDir => PluginsDirIn(BaseDir);
     public static string PluginsDataDir => PluginsDataDirIn(BaseDir);
     public static string NetworkStationsFile => NetworkStationsFileIn(BaseDir);
+    public static string YouTubeRecentFile => YouTubeRecentFileIn(BaseDir);
     public static string HttpSpoolDir => HttpSpoolDirIn(BaseDir);
 
     // Pure composition helpers. The layout of a data directory is worth asserting on its own,
@@ -88,6 +89,7 @@ public static class AppPaths
     public static string PluginsDirIn(string baseDir) => Path.Combine(baseDir, "plugins");
     public static string PluginsDataDirIn(string baseDir) => Path.Combine(baseDir, "plugins-data");
     public static string NetworkStationsFileIn(string baseDir) => Path.Combine(baseDir, "network-stations.json");
+    public static string YouTubeRecentFileIn(string baseDir) => Path.Combine(baseDir, "youtube-recent.json");
     /// <summary>Temp files for remote-track spooling; created on demand, swept of day-old leftovers.</summary>
     public static string HttpSpoolDirIn(string baseDir) => Path.Combine(baseDir, "http-spool");
 

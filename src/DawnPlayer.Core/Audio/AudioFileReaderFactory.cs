@@ -77,6 +77,7 @@ public static class AudioFileReaderFactory
     private static readonly object _gate = new();
     private static ITrackReaderProvider[] _providers =
     {
+        new YouTubeTrackReaderProvider(),
         new RadioStreamTrackReaderProvider(),
         new HttpFileTrackReaderProvider(),
         new DsfTrackReaderProvider(),
@@ -118,7 +119,8 @@ public static class AudioFileReaderFactory
     /// <summary>
     /// Opens a track with its source kind. The kind only reroutes http(s) URLs: <see cref="Models.TrackSourceKind.Radio"/>
     /// and the legacy default (a bare stream URL, kept radio for compatibility) stay on the live-stream
-    /// reader, <see cref="Models.TrackSourceKind.Dlna"/> goes to the spooling file reader, and local
+    /// reader, <see cref="Models.TrackSourceKind.Dlna"/> goes to the spooling file reader,
+    /// <see cref="Models.TrackSourceKind.YouTube"/> goes to the yt-dlp/ffmpeg pipe reader, and local
     /// files ignore the kind entirely.
     /// </summary>
     public static ITrackReader Open(string path, Models.TrackSourceKind sourceKind)
@@ -162,23 +164,29 @@ public static class AudioFileReaderFactory
     /// routing contract tests — selection must stay observable without opening anything.</summary>
     public static ITrackReaderProvider? SelectProvider(string path, string extension, Models.TrackSourceKind sourceKind)
     {
-        // Remote file sources are pinned to the spooling reader; everything else keeps the
-        // historical chain (radio first, which is exactly why the legacy bare-URL case still
-        // behaves like a live stream).
-        bool fileOverHttp = sourceKind == Models.TrackSourceKind.Dlna
-            || sourceKind == Models.TrackSourceKind.YouTube;
-
         lock (_gate)
         {
             foreach (var provider in _providers)
             {
                 if (!provider.CanOpen(path, extension)) continue;
-                if (provider is HttpFileTrackReaderProvider != fileOverHttp) continue;
+                if (!AcceptsKind(provider, sourceKind)) continue;
                 return provider;
             }
         }
         return null;
     }
+
+    /// <summary>
+    /// The kind pin: the YouTube provider only ever sees YouTube-kind paths, the spooling reader
+    /// only DLNA ones, and every other kind keeps the historical chain (radio first — exactly why
+    /// the legacy bare-URL case still behaves like a live stream). Local files ignore the kind.
+    /// </summary>
+    private static bool AcceptsKind(ITrackReaderProvider provider, Models.TrackSourceKind kind) => kind switch
+    {
+        Models.TrackSourceKind.YouTube => provider is YouTubeTrackReaderProvider,
+        Models.TrackSourceKind.Dlna => provider is HttpFileTrackReaderProvider,
+        _ => provider is not HttpFileTrackReaderProvider and not YouTubeTrackReaderProvider,
+    };
 }
 
 public sealed class AudioOpenException : Exception
