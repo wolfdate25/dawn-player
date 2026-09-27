@@ -20,6 +20,20 @@
         <services:InverseBoolToVisibilityConverter x:Key="NotFolderVis"/>
         <services:IsPlayingToBrushConverter x:Key="PlayingBrush"/>
         <services:IsPlayingToFontWeightConverter x:Key="PlayingFontWeight"/>
+        <services:RatingToStarsConverter x:Key="RatingStars"/>
+        <services:RatingAccessibilityConverter x:Key="RatingAccess"/>
+
+        <!-- L11 shared rating flyout for the track table (single shared instance, like PlaylistPage). -->
+        <Flyout x:Name="LibraryRatingFlyout" Placement="Top" Closed="OnLibraryRatingFlyoutClosed">
+            <StackPanel Spacing="6" MinWidth="190">
+                <RatingControl x:Name="LibraryRatingSelector" x:Uid="Rating_Selector"
+                               MaxRating="5" IsClearEnabled="True"
+                               ValueChanged="OnLibraryRatingSelectorValueChanged"/>
+                <TextBlock x:Uid="Rating_ClearHint" Text="선택한 별을 다시 누르면 평점이 지워집니다."
+                           FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                           TextWrapping="Wrap" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Flyout>
 
         <CollectionViewSource x:Name="RightQueueCvs" IsSourceGrouped="True" ItemsPath="Items"/>
 
@@ -563,6 +577,7 @@
                             <ColumnDefinition Width="2*"/>
                             <ColumnDefinition Width="1.3*"/>
                             <ColumnDefinition Width="1.7*"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="58"/>
                         </Grid.ColumnDefinitions>
 
@@ -578,7 +593,10 @@
                         <Button Grid.Column="3" Style="{StaticResource ColumnHeaderButton}" Click="OnSortByAlbum">
                             <TextBlock x:Uid="Library_Header_Album" x:Name="HeaderAlbum" Text="앨범" Style="{StaticResource ColumnHeaderText}"/>
                         </Button>
-                        <Button Grid.Column="4" Style="{StaticResource ColumnHeaderButton}" Click="OnSortByDuration">
+                        <Button Grid.Column="4" Style="{StaticResource ColumnHeaderButton}" Click="OnSortByRating">
+                            <TextBlock x:Uid="Library_Header_Rating" x:Name="HeaderRating" Text="평점" Style="{StaticResource ColumnHeaderText}"/>
+                        </Button>
+                        <Button Grid.Column="5" Style="{StaticResource ColumnHeaderButton}" Click="OnSortByDuration">
                             <TextBlock x:Uid="Library_Header_Duration" x:Name="HeaderDuration" Text="길이" Style="{StaticResource ColumnHeaderText}" HorizontalAlignment="Right"/>
                         </Button>
                     </Grid>
@@ -603,13 +621,23 @@
                                         <ColumnDefinition Width="2*"/>
                                         <ColumnDefinition Width="1.3*"/>
                                         <ColumnDefinition Width="1.7*"/>
+                                        <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="58"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="{x:Bind TrackNo, Converter={StaticResource TrackNoText}}" Style="{StaticResource TrackNumText}"/>
                                     <TextBlock Grid.Column="1" Text="{x:Bind Title}" Style="{StaticResource TrackTitleText}"/>
                                     <TextBlock Grid.Column="2" Text="{x:Bind Artist}" Style="{StaticResource TrackDimText}"/>
                                     <TextBlock Grid.Column="3" Text="{x:Bind Album}" Style="{StaticResource TrackDimText}"/>
-                                    <TextBlock Grid.Column="4" Text="{x:Bind Duration, Converter={StaticResource TimeSpanText}}"
+                                    <!-- Star Rating cell (L11): click opens the shared rating flyout.
+                                         Track has no INPC — x:Bind re-binds when the container re-realizes. -->
+                                    <Button Grid.Column="4" x:Uid="Rating_Cell" Style="{StaticResource RatingCellButton}"
+                                            Tag="{x:Bind}" Click="OnLibraryRatingCellClick"
+                                            AutomationProperties.Name="{x:Bind Rating, Converter={StaticResource RatingAccess}}">
+                                        <TextBlock Text="{x:Bind Rating, Converter={StaticResource RatingStars}}"
+                                                   FontSize="10" Foreground="{ThemeResource DawnAccentBrush}"
+                                                   VerticalAlignment="Center"/>
+                                    </Button>
+                                    <TextBlock Grid.Column="5" Text="{x:Bind Duration, Converter={StaticResource TimeSpanText}}"
                                                Style="{StaticResource TrackDurationText}"/>
                                 </Grid>
                             </DataTemplate>
@@ -641,6 +669,18 @@
                                         <FontIcon Glyph="&#xE70F;"/>
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
+                                <MenuFlyoutSubItem x:Uid="Playlist_TrackMenu_Rating" Text="평점">
+                                    <MenuFlyoutSubItem.Icon>
+                                        <FontIcon Glyph="&#xE735;"/>
+                                    </MenuFlyoutSubItem.Icon>
+                                    <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Rate1" Text="★" Click="OnRateSelected1"/>
+                                    <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Rate2" Text="★★" Click="OnRateSelected2"/>
+                                    <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Rate3" Text="★★★" Click="OnRateSelected3"/>
+                                    <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Rate4" Text="★★★★" Click="OnRateSelected4"/>
+                                    <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Rate5" Text="★★★★★" Click="OnRateSelected5"/>
+                                    <MenuFlyoutSeparator/>
+                                    <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Unrate" Text="평점 없음" Click="OnUnrateSelected"/>
+                                </MenuFlyoutSubItem>
                                 <MenuFlyoutSeparator/>
                                 <MenuFlyoutItem x:Uid="Library_TrackMenu_ShowInExplorer" Text="탐색기에서 보기" Click="OnShowInExplorer">
                                     <MenuFlyoutItem.Icon>

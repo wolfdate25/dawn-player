@@ -199,6 +199,7 @@
   <data name="Library_Header_Artist.Text" xml:space="preserve"><value>Artist</value></data>
   <data name="Library_Header_Album.Text" xml:space="preserve"><value>Album</value></data>
   <data name="Library_Header_Duration.Text" xml:space="preserve"><value>Duration</value></data>
+  <data name="Library_Header_Rating.Text" xml:space="preserve"><value>Rating</value></data>
 
   <data name="Library_RightQueue_Title.Text" xml:space="preserve"><value>Playing tracks...</value></data>
 
@@ -765,6 +766,13 @@
   <data name="Playlist_TrackMenu_Rate4.Text" xml:space="preserve"><value>★★★★</value></data>
   <data name="Playlist_TrackMenu_Rate5.Text" xml:space="preserve"><value>★★★★★</value></data>
   <data name="Playlist_TrackMenu_Unrate.Text" xml:space="preserve"><value>No rating</value></data>
+  <data name="Playlist_TrackMenu_RatingMulti" xml:space="preserve"><value>Rating ({0} tracks)</value></data>
+  <data name="Rating_Accessibility_Format" xml:space="preserve"><value>Rating {0}/5</value></data>
+  <data name="Rating_Unrated" xml:space="preserve"><value>Unrated</value></data>
+  <data name="Msg_RatingTagWriteFailed" xml:space="preserve"><value>Couldn't write the rating to file tags ({0} tracks) — the rating was saved to the app library only.</value></data>
+  <data name="Rating_Selector.AutomationProperties.Name" xml:space="preserve"><value>Set rating</value></data>
+  <data name="Rating_ClearHint.Text" xml:space="preserve"><value>Click the current star count again to clear the rating.</value></data>
+  <data name="Rating_Cell.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Set rating</value></data>
   <data name="Smart_Dialog_CreateTitle" xml:space="preserve"><value>New smart playlist</value></data>
   <data name="Smart_Dialog_EditTitle" xml:space="preserve"><value>Edit {0}</value></data>
   <data name="Smart_Dialog_NameHeader" xml:space="preserve"><value>Name</value></data>

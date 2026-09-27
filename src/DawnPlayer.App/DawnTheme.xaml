@@ -294,6 +294,19 @@
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 
+    <!-- L11 rating cell: invisible chrome over a list row, click opens the rating flyout.
+         The hover tint is the interaction feedback the star text alone never gave. -->
+    <Style x:Key="RatingCellButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="3,1"/>
+        <Setter Property="CornerRadius" Value="3"/>
+        <Setter Property="MinWidth" Value="0"/>
+        <Setter Property="MinHeight" Value="0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    </Style>
+
     <!-- Transport round toggle button (Theme-Integrated, No Solid Blue Circle) -->
     <Style x:Key="TransportToggleButton" TargetType="ToggleButton">
         <Setter Property="Width" Value="34"/>

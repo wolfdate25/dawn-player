@@ -90,6 +90,7 @@
     <Compile Include="..\..\src\DawnPlayer.App\Services\MotionService.cs" Link="Services\MotionService.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Calculators\SpectrumSmoother.cs" Link="Calculators\SpectrumSmoother.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Services\NotificationPresenter.cs" Link="Services\NotificationPresenter.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Services\RatingCommands.cs" Link="Services\RatingCommands.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Controls\LoadingGate.cs" Link="Controls\LoadingGate.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Services\DensityScale.cs" Link="Services\DensityScale.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Controls\WaveformLayout.cs" Link="Controls\WaveformLayout.cs" />

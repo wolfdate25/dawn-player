@@ -19,6 +19,20 @@
         <services:TrackNoFormatterConverter x:Key="TrackNoText"/>
         <services:IsPlayingToFontWeightConverter x:Key="PlayingFontWeight"/>
         <services:RatingToStarsConverter x:Key="RatingStars"/>
+        <services:RatingAccessibilityConverter x:Key="RatingAccess"/>
+
+        <!-- L11 shared rating flyout: one instance for every row's rating cell (per-row flyouts
+             would multiply with list virtualization). Opening value + reentry guard in code-behind. -->
+        <Flyout x:Name="RatingFlyout" Placement="Top" Closed="OnRatingFlyoutClosed">
+            <StackPanel Spacing="6" MinWidth="190">
+                <RatingControl x:Name="RatingSelector" x:Uid="Rating_Selector"
+                               MaxRating="5" IsClearEnabled="True"
+                               ValueChanged="OnRatingSelectorValueChanged"/>
+                <TextBlock x:Uid="Rating_ClearHint" Text="선택한 별을 다시 누르면 평점이 지워집니다."
+                           FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                           TextWrapping="Wrap" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Flyout>
         <CollectionViewSource x:Name="PlaylistCvs" IsSourceGrouped="True" ItemsPath="Items"/>
     </Page.Resources>
 
@@ -225,6 +239,7 @@
                           SelectionMode="Extended"
                           DoubleTapped="OnItemDoubleTapped"
                           KeyDown="OnListKeyDown"
+                          RightTapped="OnListRightTapped"
                           ContextRequested="OnListContextRequested"
                           AllowDrop="False"
                           CanReorderItems="False"
@@ -275,10 +290,15 @@
                                         </Border>
                                     </StackPanel>
 
-                                    <!-- Star Rating -->
-                                    <TextBlock Grid.Column="2" Text="{x:Bind Rating, Converter={StaticResource RatingStars}, Mode=OneWay}"
-                                               FontSize="9.5" Foreground="{ThemeResource DawnAccentBrush}"
-                                               VerticalAlignment="Center" Margin="0,1,0,0"/>
+                                    <!-- Star Rating cell (L11): click opens the shared rating flyout.
+                                         Tag binds the row item so the click can resolve the target set. -->
+                                    <Button Grid.Column="2" x:Uid="Rating_Cell" Style="{StaticResource RatingCellButton}"
+                                            Tag="{x:Bind}" Click="OnRatingCellClick"
+                                            AutomationProperties.Name="{x:Bind Rating, Converter={StaticResource RatingAccess}, Mode=OneWay}">
+                                        <TextBlock Text="{x:Bind Rating, Converter={StaticResource RatingStars}, Mode=OneWay}"
+                                                   FontSize="9.5" Foreground="{ThemeResource DawnAccentBrush}"
+                                                   VerticalAlignment="Center"/>
+                                    </Button>
 
                                     <!-- Static Duration -->
                                     <TextBlock Grid.Column="3" FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}"
@@ -324,10 +344,14 @@
                                             </Border>
                                         </StackPanel>
 
-                                        <!-- Star Rating -->
-                                        <TextBlock Grid.Column="2" Text="{x:Bind Rating, Converter={StaticResource RatingStars}, Mode=OneWay}"
-                                                   FontSize="9.5" Foreground="{ThemeResource DawnAccentBrush}"
-                                                   VerticalAlignment="Center" Margin="0,1,0,0"/>
+                                        <!-- Star Rating cell (playing highlight box) -->
+                                        <Button Grid.Column="2" x:Uid="Rating_Cell" Style="{StaticResource RatingCellButton}"
+                                                Tag="{x:Bind}" Click="OnRatingCellClick"
+                                                AutomationProperties.Name="{x:Bind Rating, Converter={StaticResource RatingAccess}, Mode=OneWay}">
+                                            <TextBlock Text="{x:Bind Rating, Converter={StaticResource RatingStars}, Mode=OneWay}"
+                                                       FontSize="9.5" Foreground="{ThemeResource DawnAccentBrush}"
+                                                       VerticalAlignment="Center"/>
+                                        </Button>
 
                                         <!-- Remaining Time (e.g. -3:40) -->
                                         <TextBlock Grid.Column="3" FontSize="11.5" Foreground="{ThemeResource TextSecondaryBrush}"
@@ -385,7 +409,7 @@
                     </ListView.GroupStyle>
 
                     <ListView.ContextFlyout>
-                        <MenuFlyout>
+                        <MenuFlyout Opening="OnTrackContextMenuOpening">
                             <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Play" Text="재생" Click="OnPlayItems">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE768;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
@@ -396,7 +420,7 @@
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE710;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                             <MenuFlyoutSeparator/>
-                            <MenuFlyoutSubItem x:Uid="Playlist_TrackMenu_Rating" Text="평점">
+                            <MenuFlyoutSubItem x:Uid="Playlist_TrackMenu_Rating" x:Name="RatingMenu" Text="평점">
                                 <MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xE735;"/></MenuFlyoutSubItem.Icon>
                                 <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Rate1" Text="★" Click="OnRateItems1"/>
                                 <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Rate2" Text="★★" Click="OnRateItems2"/>

@@ -53,17 +53,31 @@ public sealed class QueueIndexToTextConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotSupportedException();
 }
 
-/// <summary>0-5 rating → filled-star text ("" when unrated); a negative/absent value also maps to
-/// "" so a half-initialized proxy never renders garbage.</summary>
+/// <summary>0-5 rating → star text. Rated values render filled stars (clamped to 5); an unrated
+/// track renders a single outline star — the discovery affordance that tells the user the rating
+/// cell exists and is clickable, instead of the previous empty string that rendered nothing.
+/// The pure contract lives in <see cref="RatingCommands.DisplayText"/> (headless-testable); this
+/// WinUI converter shell exists because IValueConverter cannot compile into the test project.</summary>
 public sealed class RatingToStarsConverter : IValueConverter
 {
-    private const string FilledStar = "\u2605"; // ★
-
-    public static string Convert(int rating) =>
-        rating > 0 ? new string(FilledStar[0], Math.Min(rating, 5)) : "";
+    public static string DisplayText(int rating) => RatingCommands.DisplayText(rating);
 
     public object Convert(object value, Type targetType, object parameter, string language)
-        => value is int r ? Convert(r) : "";
+        => value is int r ? RatingCommands.DisplayText(r) : RatingCommands.DisplayText(0);
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotSupportedException();
+}
+
+/// <summary>0-5 rating → screen-reader text ("평점 N/5", "평점 없음" via resw). Bound dynamically
+/// to the rating cell's AutomationProperties.Name — the literal-attribute form is barred by the
+/// AutomationNameScan gate, dynamic data bindings are the sanctioned form. Pure contract in
+/// <see cref="RatingCommands.AccessibilityText"/>.</summary>
+public sealed class RatingAccessibilityConverter : IValueConverter
+{
+    public static string AccessibilityText(int rating) => RatingCommands.AccessibilityText(rating);
+
+    public object Convert(object value, Type targetType, object parameter, string language)
+        => value is int r ? RatingCommands.AccessibilityText(r) : RatingCommands.AccessibilityText(0);
 
     public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotSupportedException();
 }

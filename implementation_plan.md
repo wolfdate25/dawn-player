@@ -640,3 +640,47 @@ kind=Dlna — 인프라 그대로), 재생목록 편집 무결성, 콜드 리빌
 | G4 소각 | `DlnaSection.BrowsePageSize = 500` 상수 소유 + 요청에 명시 전달(페이지네이션 산술의 값 소유), `requestedCount` 암묵 의존 해소 | 코드 리뷰 |
 | 게이트 | 클린 리빌드 **0경고 0오류**, 전체 스위트 **2,004/2,004 통과**(신규 7종) | 2026-09-26 실측 |
 | 미확인 | 복원 트랙 재생 시 아트가 SMTC 첫 페인트 이후 도착하면 SMTC 아트는 다음 갱신까지 비음(드묾 — 스풀 지연이 해드 스타트); 실기기 수동 매트릭스(M1)·Narrator 스모크(M2)는 구현서 그대로 대기 | — |
+
+### L11. 평점 UX 고도화 (2026-09-27 지시·구현 — 커밋 대기)
+
+> 사용자 지시("rating 기능의 부족함" 분석 → "전부 진행해")로 착수. 원인 분석 결과: 백엔드
+> (DB+태그 이중 영속화, 스마트 재생목록 연동, 레이스 방지)는 완성도가 높은 반면 UX는
+> **발견(미평점이 빈 문자열로 렌더링돼 기능 존재 자체가 보이지 않음) → 입력(재생목록 우클릭
+> 2단 메뉴가 유일 경로, 라이브러리·재생 중 화면에 노출 없음, 키보드 불가) → 소비(스마트
+> 재생목록 쿼리 문법이 유일 활용처)** 3단계 모두 막혀 있음. 접근성 결함(별점 TextBlock에
+> 접근 이름 없음), 큐 트랙 태그 쓰기가 `AppPaths.PhysicalPath` 미경유로 실패하는 잠재 결함,
+> 태그 쓰기 실패가 로그만 남고 사용자 통보가 없는 결함을 함께 확인.
+
+| 항목 | 내용 | 검증 |
+|---|---|---|
+| 순수 명령 계층 | `App/Services/RatingCommands.cs` 신설 — `SelectTargets`(null·빈 경로·스트림 URL 제외, 경로 대소문자 무시 중복 제거, **무변경 스킵**: 이미 동일 별점인 트랙은 대상 제외 → DB·태그·프록시·스마트 재생목록 갱신 전부 노옵), `FormatTagWriteFailure`(실패 0건 → null, 유실 → 지역화된 경고 메시지), `TagWritePath`(큐 프래그먼트 제거 — `AppPaths.PhysicalPath` 경유) | `RatingCommandsTests` 신설(클램프·스트림 제외·중복 병합·무변경 스킵·빈 대상, 실패 메시지 0/N건) |
+| RateTracks 개선 | `AppServices.RateTracks`가 RatingCommands 경유로 재작성. 태그 쓰기 실패 건수 집계 후 `RaiseWarning`(InfoBar 단일 슬롯 — Warning은 수동 닫힘), **`RatingsApplied` 이벤트 신설**(UI 스레드, 대상 Track 목록) — NowPlayingBar·LibraryPage 화면 간 동기화. 무변경 시 조기 반환(이벤트·스마트 갱신 없음) | 기존 회귀 + 신규 순수 계층 테스트 |
+| 표시 변환기 | `RatingToStarsConverter` 확장 — 무평점 0 → 외곽 별 `☆` 1개(발견 가능성 어포던스), 1~5 → 채움 별, 범위 외 클램프. `RatingAccessibilityConverter` 신설 — "평점 N/5"/"평점 없음"(resw 3개 국어) | 변환기 단위 테스트(0·3·7·음수, 접근성 텍스트 0·3) |
+| 재생목록 셀 | 행 별점 TextBlock(양쪽 템플릿: 일반+재생 강조)을 투명 Button 셀로 교체 — 클릭 시 페이지 공유 `Flyout` + WinUI `RatingControl`(키보드·스크린리더 내장). 클릭 행이 다중 선택에 속하면 선택 전체에 적용(컨텍스트 메뉴 `CanRate`와 동일 계약). 플라이아웃 초기값 설정 시 `ValueChanged` 재진입 억제 플래그 — **프로그램적 Value 설정이 즉시 적용·닫힘으로 이어지는 재진입 결함 방어** | `ValueChanged` 가드는 코드 경로 리뷰 + 플레이스토어 규칙상 RatingControl 내장 접근성 |
+| 재생목록 메뉴 | 컨텍스트 메뉴 Opening에서 "평점" 하위 메뉴 텍스트를 다중 선택 시 "평점 (N곡)"으로 갱신(`AppStrings.Format`, 단독 선택 시 기본 라벨) | 기존 `CanRate` 회귀 유지 |
+| 라이브러리 노출 | 트랙 목록에 평점 컬럼 추가(헤더 정렬 버튼 + 행 셀 버튼+플라이아웃), `SortColumn.Rating`=6 신설 — 오름차순 미평점 먼저→5★, 내림차순 5★→1★→미평점 마지막(0이 최소값이므로 자연 숫자 순), 동률은 LINQ 안정 정렬로 기존 순서 보존. 컨텍스트 메뉴에 평점 하위 메뉴(`Playlist_TrackMenu_*` x:Uid 재사용). 평점 반영: 정렬 기준이 평점이면 `ApplyFilters()` 재정렬, 아니면 실현된 컨테이너만 `FindDescendant<Button>`으로 제자리 갱신(가상화 미실현 행은 x:Bind OneTime이 스크롤 시 신규 값으로 바인딩 — Track.Rating 제자리 변이 계약) | `LibraryFilterServiceTests`에 Rating 정렬 Theory 추가(양방향·미평점 위치·안정성) |
+| NowPlayingBar | 제목 우측 소형 평점 버튼(현재 곡 별점 표시) + 자체 플라이아웃 RatingControl. `OnTrackChanged`에서 갱신, **스트림(라디오/원격 URL)은 숨김**(RateTracks가 이미 스트림을 대상 제외 — UI도 계약 일치), `RatingsApplied` 구독으로 재생목록에서 매긴 평점이 즉시 반영 | 코드 경로 리뷰 |
+| 접근성 | 셀 버튼 `AutomationProperties.Name`은 **동적 바인딩**(x:Bind 변환기)·플라이아웃 RatingControl은 x:Uid resw 이름 — `AutomationNameScan` 리터럴 금지 게이트 준수(리터럴 어트리뷰트 사용 금지, 데이터 바인딩·x:Uid만) | `AutomationNameGateTests` 회귀 |
+| 지역화 | resw 3개 국어 신규 키: `Library_Header_Rating`, `Rating_Selector`(접근 이름+툴팁), `Rating_ClearHint`, `Playlist_RatingCell`(툴팁), `Rating_Accessibility_Format`, `Rating_Unrated`, `Playlist_TrackMenu_RatingMulti`, `Msg_RatingTagWriteFailed` | 빌드 게이트(키 누락 시 XamlCompiler/런타임 폴백 폴백문자열 확인) |
+| 불변식 | (1) 보고 별점 = `Track.Rating` = DB rating(무변경 스킵으로 프록시·DB·파일 삼자 일치). (2) 스트림 URL은 어떤 경로로도 평점 대상이 되지 않음(UI 숨김 + SelectTargets 이중 방어). (3) 큐 트랙 태그 쓰기는 항상 `AppPaths.PhysicalPath` 경유. (4) 프로그램적 RatingControl.Value 설정은 사용자 ValueChanged를 유발하지 않음(억제 플래그). (5) 태그 쓰기 실패 ≥1건이면 반드시 사용자 통보(로그만 남기기 금지) | `RatingCommandsTests` + 코드 경로 리뷰 |
+| 게이트 | 클린 리빌드 **0경고 0오류**(obj/bin 삭제 후 재빌드 — 1차 패스 WMC1509 연쇄는 2차 빌드로 해소, §5 절차), 전체 스위트 **2,110/2,110 통과**(신규 37종 포함 — 동일 파일에 병행된 우클릭 선택 갱신 수정(+4종)과의 합본 트리 기준). E2E 앱 실행 1회가 병렬 부하에서 간헐 실패 → 격리 재실행 통과로 플레이크 판별(§4) | 2026-09-27 실측 |
+| 미확인 | 행 셀 호버 시각 상태·플라이아웃 위치·NowPlayingBar 별점 셀 정렬은 실기기 육안 확인 필요 (Linux 빌드 환경에서 App XAML 렌더링 불가) | — |
+
+### 우클릭 컨텍스트 메뉴 선택 갱신 결함 수정 (2026-09-27 구현·검증 — 커밋 대기)
+
+> 플레이리스트 트랙 우클릭 → "Convert to WAV..."가 무음 no-op하는 사용자 보고. 실측 재현(앱 기동 →
+> 우클릭 → 메뉴 항목 클릭 → 피커/토스트/로그 관찰)으로 2중 원인 확정: (1) **ListViewBase가 우클릭의
+> ContextRequested를 ListView 수준 XAML 핸들러에 전달하지 않음** — 임시 `[ctxclick]` 진단 로그가
+> 우클릭 시 전혀 기록되지 않아 실증. 기존 `OnListContextRequested`는 키보드 호출 외엔 아예 불리지
+> 않았고, 사이드바 목록만 RightTapped를 써서 정상 동작하고 있었음. (2) 이벤트가 도달해도 x:Bind
+> DataTemplate 안의 요소는 DataContext가 설정되지 않아 `FindAncestorDataContext` 해석이 실패.
+> 결과적으로 컨텍스트 메뉴 전체(재생·대기열·평점·변환·이동·제거)가 우클릭 직후에는 선택 0으로 무음
+> no-op이었고, 좌클릭 선택이 남아 있으면 엉뚱한(이전 선택) 행에 적용됐음.
+
+| 항목 | 내용 | 검증 |
+|---|---|---|
+| 이벤트 배선 | `PlaylistList`에 `RightTapped="OnListRightTapped"` 추가, `ContextRequested`와 공통 `RefreshSelectionForContextClick` 경유(키보드 Shift+F10 경로 겸용) | GUI 실측: 선택 없는 우클릭 → Play 재생 시작·Convert 피커 즉시 오픈(수정 전 둘 다 no-op) |
+| 행 해석 | `ResolveRowItem` — OriginalSource→`ListViewItem` 컨테이너→`PlaylistList.ItemFromContainer`. x:Bind 안전 | 우클릭 행 = 메뉴 대상(전체 경로 실측, 변환 1건 성공) |
+| 순수 결정 | `PlaylistViewModel.SelectionAfterContextClick` — 선택 외 행 클릭→그 행 1개로 축소, 선택 내 행 클릭→다중 선택 보존, 행 밖/해석 실패→선택 불변 | `PlaylistAndLibraryViewModelTests` +4(빈 선택 축소·다른 선택 교체·멀티 보존·행 밖 불변) |
+| 게이트 | 순수 계층 필터 테스트 통과, 트리 일관 시점 전체 스위트 2,073/2,073 3회 연속(v1 포함)·클린 리빌드 0경고 0오류(14:24 기준). **RightTapped 재배선(v2) 이후 클린 게이트·전체 스위트는 미실행** — 같은 파일(PlaylistPage)에 동시 진행 중인 평점 기능 작업이 있어 트리 정착 후 재실행 필요 | 2026-09-27 실측 |
+| 미확인 | 다중 선택 보존은 순수 함수 테스트로 고정(GUI 육안 미확인), 키보드 Shift+F10 경로 미실측 | — |

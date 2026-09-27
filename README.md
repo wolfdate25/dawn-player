@@ -75,9 +75,11 @@ this marker).
 - **Query-based smart playlists** — build and edit smart playlists directly with foobar2000-style
   queries (`%rating% GREATER 3 AND %last_played% DURING LAST 30 DAYS LIMIT 50`). Strings
   (IS/HAS), numbers (GREATER, >=), dates (DURING LAST), MISSING/PRESENT, AND/OR/NOT, parentheses
-- **Track ratings** — 0–5 stars, shown in playlist rows and set from the context menu (batch for
-  multi-selection), synchronized both ways with ID3v2 POPM / Vorbis·MP4 RATING tags, usable in
-  queries as `%rating%`
+- **Track ratings** — 0–5 stars, set inline from any list row (playlist, library table, and the
+  now-playing bar) via the star cell or the context menu (batch for multi-selection), sortable in
+  the library table, synchronized both ways with ID3v2 POPM / Vorbis·MP4 RATING tags, usable in
+  queries as `%rating%`. Tag-write failures (read-only files) surface as a notice; unrated tracks
+  show an outline star so the rating cell is discoverable.
 - **Playback queue** — add/add-next per track, queue-centered playback then return to the
   original order. Q1, Q2… badges on list rows
 - Shuffle, repeat (off/all/one), previous-track history, **A-B repeat** (sample-tight loop on the

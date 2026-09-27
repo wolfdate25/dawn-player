@@ -52,6 +52,58 @@ public sealed class PlaylistAndLibraryViewModelTests
         Assert.True(PlaylistViewModel.CanRate(new List<PlaylistItem> { new(new Track { Path = "a" }) }));
     }
 
+    // ---------------- context (right) click selection ----------------
+    //
+    // Invariant: once a row under a context click is resolved, the selection the context menu
+    // handlers observe MUST contain that row — otherwise every menu action (play, queue,
+    // convert, remove) silently no-ops with zero feedback. A click outside any row (group
+    // header, blank area, unresolvable source) must not touch the selection.
+
+    [Fact]
+    public void ContextClick_OnRowWithoutSelection_SelectsThatRow()
+    {
+        var row = new PlaylistItem(new Track { Path = "a" });
+
+        var next = PlaylistViewModel.SelectionAfterContextClick(new List<PlaylistItem>(), row);
+
+        var chosen = Assert.Single(next!);
+        Assert.Same(row, chosen);
+    }
+
+    [Fact]
+    public void ContextClick_OnRowOutsideCurrentSelection_ReplacesSelection()
+    {
+        var existing = new PlaylistItem(new Track { Path = "a" });
+        var clicked = new PlaylistItem(new Track { Path = "b" });
+
+        var next = PlaylistViewModel.SelectionAfterContextClick(new List<PlaylistItem> { existing }, clicked);
+
+        var chosen = Assert.Single(next!);
+        Assert.Same(clicked, chosen);
+    }
+
+    [Fact]
+    public void ContextClick_InsideCurrentSelection_PreservesMultiSelection()
+    {
+        var a = new PlaylistItem(new Track { Path = "a" });
+        var b = new PlaylistItem(new Track { Path = "b" });
+        var clicked = b;
+
+        var next = PlaylistViewModel.SelectionAfterContextClick(new List<PlaylistItem> { a, b }, clicked);
+
+        Assert.Null(next); // null contract: caller leaves the multi-selection untouched
+    }
+
+    [Fact]
+    public void ContextClick_OutsideAnyRow_LeavesSelectionUntouched()
+    {
+        var a = new PlaylistItem(new Track { Path = "a" });
+
+        var next = PlaylistViewModel.SelectionAfterContextClick(new List<PlaylistItem> { a }, clicked: null);
+
+        Assert.Null(next);
+    }
+
     [Fact]
     public void DeadItemSweep_PicksTheRightMessage()
     {

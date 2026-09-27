@@ -54,6 +54,10 @@ public static class AppServices
     public static event Action<SessionInfo>? OutputSessionChanged;
     public static event Action? LyricsSettingsChanged;
     public static event Action<Track?>? LyricsChanged;
+    /// <summary>A rating command just landed for these tracks (UI thread, after the in-memory and
+    /// DB writes). Lets surfaces that don't bind PlaylistItem proxies — the now-playing bar, the
+    /// library track list — refresh their rating cells when the change happened elsewhere.</summary>
+    public static event Action<IReadOnlyList<Track>>? RatingsApplied;
     /// <summary>Live now-playing metadata (radio ICY station/song), already marshaled to the UI
     /// thread and with <see cref="PlaylistItem.NowPlayingSubtitle"/> already applied.</summary>
     public static event Action<Core.Audio.LiveStreamMetadata>? LiveStreamTitleChanged;
@@ -347,20 +351,21 @@ public static class AppServices
     /// <summary>
     /// Applies a 0-5 star rating to the working-set tracks: the in-memory value and the DB column
     /// update immediately, and the file tags are rewritten on the thread pool through the atomic
-    /// tag writer (best effort — a read-only file just keeps its DB rating). Refreshes smart
-    /// playlists afterwards because queries can filter on %rating%. Must be called on the UI
-    /// thread: it notifies the bound rating proxies of every playlist item sharing the track.
+    /// tag writer (best effort — a read-only file just keeps its DB rating, and every failure is
+    /// surfaced to the user through the InfoBar, never left in the log alone). Target selection,
+    /// the no-op guard and the tag-write path all come from <see cref="RatingCommands.SelectTargets"/>:
+    /// streams are never rateable, duplicate paths merge, and a batch whose ratings already match
+    /// is a complete no-op (no DB churn, no tag rewrite, no smart-playlist refresh, no event).
+    /// Refreshes smart playlists afterwards because queries can filter on %rating%. Must be called
+    /// on the UI thread: it notifies the bound rating proxies of every playlist item sharing the
+    /// track, and raises <see cref="RatingsApplied"/> for the surfaces without proxies.
     /// </summary>
     public static void RateTracks(IReadOnlyList<Track> tracks, int stars)
     {
         if (tracks == null || tracks.Count == 0) return;
-        stars = Math.Clamp(stars, 0, 5);
-
-        var distinct = tracks.Where(t => t != null && !string.IsNullOrEmpty(t.Path) && !Core.Audio.RadioTrack.IsStreamUrl(t.Path))
-            .GroupBy(t => t.Path, StringComparer.OrdinalIgnoreCase)
-            .Select(g => g.First())
-            .ToList();
+        var distinct = RatingCommands.SelectTargets(tracks, stars);
         if (distinct.Count == 0) return;
+        stars = RatingCommands.Normalize(stars);
 
         foreach (var track in distinct)
         {
@@ -380,25 +385,32 @@ public static class AppServices
             }
         }
 
-        var paths = distinct.Select(t => t.Path).ToList();
+        var paths = distinct.Select(t => RatingCommands.TagWritePath(t.Path)).ToList();
         Task.Run(() =>
         {
+            var failed = 0;
             foreach (var path in paths)
             {
                 try
                 {
                     if (!Core.Library.TagWriter.TrySetRating(path, stars))
                     {
+                        failed++;
                         App.Log($"[rating] tag write failed: {path}");
                     }
                 }
                 catch (Exception ex)
                 {
+                    failed++;
                     App.Log($"[rating] tag write threw: {path}: {ex.Message}");
                 }
             }
+
+            var notice = RatingCommands.FormatTagWriteFailure(failed);
+            if (notice != null) RaiseWarning(notice);
         });
 
+        RatingsApplied?.Invoke(distinct);
         Playlists.RefreshSmartPlaylists();
     }
 

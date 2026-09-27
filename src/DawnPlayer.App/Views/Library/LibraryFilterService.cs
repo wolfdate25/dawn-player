@@ -13,7 +13,11 @@ public enum SortColumn
     Title = 2,
     Artist = 3,
     Album = 4,
-    Duration = 5
+    Duration = 5,
+    /// <summary>L11: library-table sort by star rating. Ascending runs unrated-first (0 is the
+    /// smallest value); descending runs 5★→1★ with unrated last. Equal ratings keep the input
+    /// order — the sort is LINQ-stable.</summary>
+    Rating = 6
 }
 
 /// <summary>
@@ -79,6 +83,7 @@ public static class LibraryFilterService
             SortColumn.Artist => sortAscending ? query.OrderBy(t => t.SortArtist) : query.OrderByDescending(t => t.SortArtist),
             SortColumn.Album => sortAscending ? query.OrderBy(t => t.Album).ThenBy(t => t.TrackNo) : query.OrderByDescending(t => t.Album).ThenByDescending(t => t.TrackNo),
             SortColumn.Duration => sortAscending ? query.OrderBy(t => t.DurationMs) : query.OrderByDescending(t => t.DurationMs),
+            SortColumn.Rating => sortAscending ? query.OrderBy(t => t.Rating) : query.OrderByDescending(t => t.Rating),
             _ => query
         };
 

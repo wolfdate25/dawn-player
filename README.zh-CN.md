@@ -65,8 +65,10 @@ dawnplayer.log）。**便携模式**：exe 旁存在 `portable.dat` 标记时，
   （`%rating% GREATER 3 AND %last_played% DURING LAST 30 DAYS LIMIT 50`）直接创建和编辑。
   支持字符串（IS/HAS）、数值（GREATER、>=）、日期（DURING LAST）、MISSING/PRESENT、
   AND/OR/NOT 与括号
-- **曲目评分** — 0–5 星，显示在播放列表行中并可通过右键菜单设置（支持多选批量），
-  与 ID3v2 POPM / Vorbis·MP4 RATING 标签双向同步，可作为查询中的 `%rating%` 字段
+- **曲目评分** — 0–5 星。播放列表、资料库表格、正在播放栏中均可点击行内星标单元格直接评分，
+  也可通过右键菜单设置（支持多选批量）；资料库表格支持按评分排序；与 ID3v2 POPM / Vorbis·MP4
+  RATING 标签双向同步，可作为查询中的 `%rating%` 字段。标签写入失败（只读文件）会以通知提示，
+  未评分曲目显示空心星标，便于发现评分入口
 - **播放队列** — 按曲目加入队列/插队到最前，以队列优先播放后回到原顺序。
   列表行显示 Q1、Q2… 徽标
 - 随机播放、循环（关/全部/单曲）、上一曲历史、**A-B 循环**（音频线程上的采样精度循环，

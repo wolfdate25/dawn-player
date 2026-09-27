@@ -53,6 +53,7 @@ public sealed partial class NowPlayingBar : UserControl
         AppServices.OutputSessionChanged += OnOutputSession;
         AppServices.LiveStreamTitleChanged += OnLiveStreamTitle;
         AppServices.RemoteArtResolved += OnRemoteArtResolved;
+        AppServices.RatingsApplied += OnRatingsApplied;
     }
 
     /// <summary>Runs on the UI thread (AppServices relay): a remote track's art finished
@@ -121,6 +122,7 @@ public sealed partial class NowPlayingBar : UserControl
             TrackArtist.Text = "";
             _formatBadgeText = "";
             FormatBadge.Visibility = Visibility.Collapsed;
+            UpdateTrackRatingCell(null);
             ArtImage.Source = null;
             ArtFlyoutImage.Source = null;
             ArtImage.Visibility = Visibility.Collapsed;
@@ -140,7 +142,53 @@ public sealed partial class NowPlayingBar : UserControl
         _formatBadgeText = AudioFormatBadgeFormatter.FormatTrackBadgeText(t);
         UpdateFormatBadge();
 
+        UpdateTrackRatingCell(t);
         UpdateArt(t);
+    }
+
+    // ---------- rating cell (L11) ----------
+
+    private bool _suppressTrackRatingValueChanged;
+
+    /// <summary>Shows the playing track's stars next to the title. Streams carry no tags and are
+    /// never rateable (RatingCommands is the second wall if one slips through), so the cell hides.</summary>
+    private void UpdateTrackRatingCell(Track? track)
+    {
+        if (track == null || !RatingCommands.IsRateable(track))
+        {
+            TrackRatingButton.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        TrackRatingText.Text = RatingToStarsConverter.DisplayText(track.Rating);
+        AutomationProperties.SetName(TrackRatingButton, RatingAccessibilityConverter.AccessibilityText(track.Rating));
+        TrackRatingButton.Visibility = Visibility.Visible;
+    }
+
+    private void OnRatingsApplied(IReadOnlyList<Track> tracks)
+    {
+        var current = AppServices.Playback?.CurrentItem?.Track;
+        if (current == null) return;
+        if (!tracks.Any(t => ReferenceEquals(t, current))) return;
+        UpdateTrackRatingCell(current);
+    }
+
+    private void OnTrackRatingFlyoutOpening(object? sender, object e)
+    {
+        var t = AppServices.Playback?.CurrentItem?.Track;
+        if (t == null) return;
+        _suppressTrackRatingValueChanged = true;
+        try { TrackRatingSelector.Value = Math.Clamp(t.Rating, 0, 5); }
+        finally { _suppressTrackRatingValueChanged = false; }
+    }
+
+    private void OnTrackRatingSelectorValueChanged(RatingControl sender, object args)
+    {
+        if (_suppressTrackRatingValueChanged) return;
+        var t = AppServices.Playback?.CurrentItem?.Track;
+        if (t == null) return;
+        AppServices.RateTracks([t], (int)Math.Round(sender.Value));
+        TrackRatingFlyout.Hide();
     }
 
 

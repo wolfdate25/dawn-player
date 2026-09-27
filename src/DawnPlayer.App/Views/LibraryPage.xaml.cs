@@ -11,6 +11,7 @@ using DawnPlayer.Core.Util;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
@@ -84,6 +85,7 @@ public sealed partial class LibraryPage : Page
                 AppServices.ScanProgressChanged += OnScanProgress;
                 AppServices.CurrentTrackChanged += OnCurrentTrackChanged;
                 AppServices.QueueChanged += OnPlaylistOrQueueChanged;
+                AppServices.RatingsApplied += OnRatingsApplied;
                 SubscribeCurrentPlaylistItems();
 
                 RestoreLayoutSettings();
@@ -200,6 +202,7 @@ public sealed partial class LibraryPage : Page
             AppServices.ScanProgressChanged += OnScanProgress;
             AppServices.CurrentTrackChanged += OnCurrentTrackChanged;
             AppServices.QueueChanged += OnPlaylistOrQueueChanged;
+            AppServices.RatingsApplied += OnRatingsApplied;
             SubscribeCurrentPlaylistItems();
 
             RestoreLayoutSettings();
@@ -372,6 +375,13 @@ public sealed partial class LibraryPage : Page
     private void RebuildTree()
     {
         var tracks = AppServices.Library.Tracks;
+
+        // Clear the selection BEFORE the roots are rebuilt: with the old nodes still attached the
+        // native TreeView processes the removal safely, while clearing after the rebuild walks a
+        // selection vector of detached nodes — observed as 0xC0000374 heap corruption when
+        // switching tabs during playback (WER: same bucket on 08-19, 11 hits).
+        LibraryTree.SelectedNodes.Clear();
+
         var allTvNode = LibraryTreeBuilder.BuildTree(tracks, _treeMode, LibraryTree.RootNodes);
 
         TreeViewNode? matchingNode = null;
@@ -387,14 +397,12 @@ public sealed partial class LibraryPage : Page
         if (matchingNode != null)
         {
             _selectedNode = matchingNode.Content as LibraryTreeNode;
-            LibraryTree.SelectedNodes.Clear();
             LibraryTree.SelectedNodes.Add(matchingNode);
             LibraryTreeBuilder.ExpandAncestors(matchingNode);
         }
         else if (_selectedNode == null)
         {
             _selectedNode = allTvNode.Content as LibraryTreeNode;
-            LibraryTree.SelectedNodes.Clear();
             LibraryTree.SelectedNodes.Add(allTvNode);
         }
     }
@@ -686,6 +694,7 @@ public sealed partial class LibraryPage : Page
         HeaderTitle.Text = AppStrings.Get("Library_Header_Title.Text", "제목") + (_currentSort == SortColumn.Title ? arrow : "");
         HeaderArtist.Text = AppStrings.Get("Library_Header_Artist.Text", "아티스트") + (_currentSort == SortColumn.Artist ? arrow : "");
         HeaderAlbum.Text = AppStrings.Get("Library_Header_Album.Text", "앨범") + (_currentSort == SortColumn.Album ? arrow : "");
+        HeaderRating.Text = AppStrings.Get("Library_Header_Rating.Text", "평점") + (_currentSort == SortColumn.Rating ? arrow : "");
         HeaderDuration.Text = AppStrings.Get("Library_Header_Duration.Text", "길이") + (_currentSort == SortColumn.Duration ? arrow : "");
     }
     private void OnSortByTrackNo(object sender, RoutedEventArgs e) => SortBy(SortColumn.TrackNo);
@@ -693,6 +702,73 @@ public sealed partial class LibraryPage : Page
     private void OnSortByArtist(object sender, RoutedEventArgs e) => SortBy(SortColumn.Artist);
     private void OnSortByAlbum(object sender, RoutedEventArgs e) => SortBy(SortColumn.Album);
     private void OnSortByDuration(object sender, RoutedEventArgs e) => SortBy(SortColumn.Duration);
+    private void OnSortByRating(object sender, RoutedEventArgs e) => SortBy(SortColumn.Rating);
+
+    // ---------------- rating (L11) ----------------
+
+    private Track? _ratingFlyoutTarget;
+    private bool _suppressRatingValueChanged;
+
+    private void RateSelected(int stars)
+    {
+        var tracks = GetSelectedTracks();
+        if (tracks.Count == 0) return;
+        AppServices.RateTracks(tracks, stars);
+    }
+
+    private void OnRateSelected1(object sender, RoutedEventArgs e) => RateSelected(1);
+    private void OnRateSelected2(object sender, RoutedEventArgs e) => RateSelected(2);
+    private void OnRateSelected3(object sender, RoutedEventArgs e) => RateSelected(3);
+    private void OnRateSelected4(object sender, RoutedEventArgs e) => RateSelected(4);
+    private void OnRateSelected5(object sender, RoutedEventArgs e) => RateSelected(5);
+    private void OnUnrateSelected(object sender, RoutedEventArgs e) => RateSelected(0);
+
+    private void OnLibraryRatingCellClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button cell || cell.Tag is not Track track) return;
+        _ratingFlyoutTarget = track;
+        // Programmatic Value assignment raises ValueChanged; the guard keeps the initial value
+        // from being applied as a user rating.
+        _suppressRatingValueChanged = true;
+        try { LibraryRatingSelector.Value = Math.Clamp(track.Rating, 0, 5); }
+        finally { _suppressRatingValueChanged = false; }
+        LibraryRatingFlyout.ShowAt(cell);
+    }
+
+    private void OnLibraryRatingSelectorValueChanged(RatingControl sender, object args)
+    {
+        if (_suppressRatingValueChanged || _ratingFlyoutTarget == null) return;
+        var track = _ratingFlyoutTarget;
+        _ratingFlyoutTarget = null;
+        AppServices.RateTracks([track], (int)Math.Round(sender.Value));
+        LibraryRatingFlyout.Hide();
+    }
+
+    private void OnLibraryRatingFlyoutClosed(object sender, object args)
+    {
+        _ratingFlyoutTarget = null;
+    }
+
+    /// <summary>Rating-cell refresh after a rating command. Track has no INPC, so when the sort
+    /// column is rating the table must re-sort (ApplyFilters); otherwise only the realized
+    /// containers are patched in place — virtualized rows re-bind the mutated Track.Rating the
+    /// moment they scroll back into view.</summary>
+    private void OnRatingsApplied(IReadOnlyList<Track> tracks)
+    {
+        if (_currentSort == SortColumn.Rating)
+        {
+            ApplyFilters();
+            return;
+        }
+
+        foreach (var track in tracks)
+        {
+            if (TracksList.ContainerFromItem(track) is not ListViewItem container) continue;
+            if (VisualTreeHelperExtensions.FindDescendant<Button>(container) is not { } cell) continue;
+            if (cell.Content is TextBlock stars) stars.Text = RatingToStarsConverter.DisplayText(track.Rating);
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(cell, RatingAccessibilityConverter.AccessibilityText(track.Rating));
+        }
+    }
 
     private void ScrollRightQueueToItem(PlaylistItem? item)
     {

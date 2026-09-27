@@ -123,8 +123,33 @@
                 </Button>
 
                 <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center" Spacing="1">
-                    <TextBlock x:Uid="NowPlaying_TrackTitle_Empty" x:Name="TrackTitle" Text="재생 중인 트랙 없음" FontSize="13" FontWeight="SemiBold"
-                               Foreground="{ThemeResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                    <!-- L11 title row: inline rating cell for the playing track, hidden for streams
+                         (stream URLs carry no tags — RatingCommands.IsRateable mirrors this). -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Uid="NowPlaying_TrackTitle_Empty" x:Name="TrackTitle" Text="재생 중인 트랙 없음" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{ThemeResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                        <Button x:Name="TrackRatingButton" x:Uid="Rating_Cell" Grid.Column="1" Style="{StaticResource RatingCellButton}"
+                                Visibility="Collapsed" Margin="6,0,0,0">
+                            <Button.Flyout>
+                                <Flyout x:Name="TrackRatingFlyout" Placement="Top" Opening="OnTrackRatingFlyoutOpening">
+                                    <StackPanel Spacing="6" MinWidth="190">
+                                        <RatingControl x:Name="TrackRatingSelector" x:Uid="Rating_Selector"
+                                                       MaxRating="5" IsClearEnabled="True"
+                                                       ValueChanged="OnTrackRatingSelectorValueChanged"/>
+                                        <TextBlock x:Uid="Rating_ClearHint" Text="선택한 별을 다시 누르면 평점이 지워집니다."
+                                                   FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                                                   TextWrapping="Wrap" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                            <TextBlock x:Name="TrackRatingText" FontSize="10.5" Foreground="{ThemeResource DawnAccentBrush}"
+                                       VerticalAlignment="Center"/>
+                        </Button>
+                    </Grid>
 
                     <TextBlock x:Name="TrackArtist" Text="" FontSize="11.5"
                                Foreground="{ThemeResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>

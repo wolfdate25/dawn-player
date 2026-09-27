@@ -8,6 +8,7 @@ using DawnPlayer.Core.Playlists;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Shapes;
@@ -244,6 +245,54 @@ public sealed partial class PlaylistPage : Page
     private void OnRateItems4(object sender, RoutedEventArgs e) => RateSelected(4);
     private void OnRateItems5(object sender, RoutedEventArgs e) => RateSelected(5);
     private void OnUnrateItems(object sender, RoutedEventArgs e) => RateSelected(0);
+
+    // L11 inline rating cell + shared flyout. A row click rates the clicked item, unless the row
+    // belongs to the current multi-selection — then the whole selection is rated, matching the
+    // context menu's CanRate contract.
+    private List<Track>? _ratingFlyoutTargets;
+    private bool _suppressRatingValueChanged;
+
+    private void OnTrackContextMenuOpening(object? sender, object e)
+    {
+        var count = SelectedItems().Count;
+        RatingMenu.Text = count >= 2
+            ? AppStrings.Format("Playlist_TrackMenu_RatingMulti", "평점 ({0}곡)", count)
+            : AppStrings.Get("Playlist_TrackMenu_Rating.Text", "평점");
+    }
+
+    private void OnRatingCellClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button cell || cell.Tag is not PlaylistItem item) return;
+        var sel = SelectedItems();
+        _ratingFlyoutTargets = sel.Count > 0 && sel.Contains(item)
+            ? sel.Select(i => i.Track).ToList()
+            : [item.Track];
+        OpenRatingFlyout(cell, item.Track.Rating);
+    }
+
+    private void OpenRatingFlyout(FrameworkElement target, int initialStars)
+    {
+        // Programmatic Value assignment raises ValueChanged; without the guard the flyout would
+        // immediately re-apply the current rating and close itself.
+        _suppressRatingValueChanged = true;
+        try { RatingSelector.Value = Math.Clamp(initialStars, 0, 5); }
+        finally { _suppressRatingValueChanged = false; }
+        RatingFlyout.ShowAt(target);
+    }
+
+    private void OnRatingSelectorValueChanged(RatingControl sender, object args)
+    {
+        if (_suppressRatingValueChanged || _ratingFlyoutTargets == null) return;
+        var targets = _ratingFlyoutTargets;
+        _ratingFlyoutTargets = null;
+        AppServices.RateTracks(targets, (int)Math.Round(sender.Value));
+        RatingFlyout.Hide();
+    }
+
+    private void OnRatingFlyoutClosed(object sender, object args)
+    {
+        _ratingFlyoutTargets = null;
+    }
 
     private async void OnConvertItems(object sender, RoutedEventArgs e)
     {
@@ -695,16 +744,40 @@ public sealed partial class PlaylistPage : Page
         }
     }
 
-    private void OnListContextRequested(UIElement sender, ContextRequestedEventArgs e)
+    // Right-tap must drive the selection refresh: ListViewBase swallows ContextRequested for
+    // pointer gestures before it reaches the ListView-level handler (verified by [ctxclick]
+    // traces never appearing), so a ContextRequested-only hook silently never ran.
+    private void OnListRightTapped(object sender, RightTappedRoutedEventArgs e) =>
+        RefreshSelectionForContextClick(e.OriginalSource as DependencyObject);
+
+    private void OnListContextRequested(UIElement sender, ContextRequestedEventArgs e) =>
+        RefreshSelectionForContextClick(e.OriginalSource as DependencyObject);
+
+    /// <summary>Makes the context menu act on the row under the pointer: a click on a row
+    /// outside the current selection collapses the selection to that row; a click inside the
+    /// selection keeps the multi-selection; an unresolvable target (header, blank area)
+    /// leaves the selection untouched.</summary>
+    private void RefreshSelectionForContextClick(DependencyObject? source)
     {
-        if (e.OriginalSource is FrameworkElement fe && VisualTreeHelperExtensions.FindAncestorDataContext<PlaylistItem>(fe) is { } item)
+        var clicked = ResolveRowItem(source);
+        var next = ViewModels.Playlist.PlaylistViewModel.SelectionAfterContextClick(
+            PlaylistList.SelectedItems.OfType<PlaylistItem>().ToList(), clicked);
+        if (next != null)
         {
-            if (!PlaylistList.SelectedItems.Contains(item))
-            {
-                PlaylistList.SelectedItems.Clear();
-                PlaylistList.SelectedItem = item;
-            }
+            PlaylistList.SelectedItems.Clear();
+            foreach (var item in next) PlaylistList.SelectedItems.Add(item);
         }
+    }
+
+    /// <summary>The track row under a pointer target, resolved through the ListView container.
+    /// The DataContext walk cannot be used here: x:Bind item templates leave the template
+    /// elements without a DataContext, so the previous resolver silently failed and the context
+    /// menu acted on a stale (often empty) selection.</summary>
+    private PlaylistItem? ResolveRowItem(DependencyObject? source)
+    {
+        if (source == null) return null;
+        var container = VisualTreeHelperExtensions.FindAncestor<ListViewItem>(source);
+        return container == null ? null : PlaylistList.ItemFromContainer(container) as PlaylistItem;
     }
 
     private async void OnPlayItems(object sender, RoutedEventArgs e)

@@ -199,6 +199,7 @@
   <data name="Library_Header_Artist.Text" xml:space="preserve"><value>アーティスト</value></data>
   <data name="Library_Header_Album.Text" xml:space="preserve"><value>アルバム</value></data>
   <data name="Library_Header_Duration.Text" xml:space="preserve"><value>長さ</value></data>
+  <data name="Library_Header_Rating.Text" xml:space="preserve"><value>評価</value></data>
 
   <data name="Library_RightQueue_Title.Text" xml:space="preserve"><value>再生中のトラック...</value></data>
 
@@ -765,6 +766,13 @@
   <data name="Playlist_TrackMenu_Rate4.Text" xml:space="preserve"><value>★★★★</value></data>
   <data name="Playlist_TrackMenu_Rate5.Text" xml:space="preserve"><value>★★★★★</value></data>
   <data name="Playlist_TrackMenu_Unrate.Text" xml:space="preserve"><value>評価なし</value></data>
+  <data name="Playlist_TrackMenu_RatingMulti" xml:space="preserve"><value>評価 ({0}曲)</value></data>
+  <data name="Rating_Accessibility_Format" xml:space="preserve"><value>評価 {0}/5</value></data>
+  <data name="Rating_Unrated" xml:space="preserve"><value>評価なし</value></data>
+  <data name="Msg_RatingTagWriteFailed" xml:space="preserve"><value>ファイルタグに評価を書き込めませんでした（{0}曲）— 評価はアプリライブラリにのみ保存されました。</value></data>
+  <data name="Rating_Selector.AutomationProperties.Name" xml:space="preserve"><value>評価を設定</value></data>
+  <data name="Rating_ClearHint.Text" xml:space="preserve"><value>現在の星数をもう一度クリックすると評価が解除されます。</value></data>
+  <data name="Rating_Cell.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>評価を設定</value></data>
   <data name="Smart_Dialog_CreateTitle" xml:space="preserve"><value>スマートプレイリストを作成</value></data>
   <data name="Smart_Dialog_EditTitle" xml:space="preserve"><value>{0} を編集</value></data>
   <data name="Smart_Dialog_NameHeader" xml:space="preserve"><value>名前</value></data>

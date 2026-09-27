@@ -45,6 +45,20 @@ public sealed class PlaylistViewModel
     /// <summary>Whether a rating change applies to the selection.</summary>
     public static bool CanRate(IReadOnlyList<PlaylistItem> selection) => selection.Count > 0;
 
+    /// <summary>
+    /// The selection after a context-menu (right) click on a track row. A click on a row outside
+    /// the current selection collapses the selection to that row (Windows list convention, and
+    /// the only way the menu can act on the clicked row); a click inside the current selection
+    /// keeps the multi-selection; a click that resolves to no row (group header, blank area,
+    /// keyboard invocation) returns null and the caller must not touch the selection.
+    /// </summary>
+    public static IReadOnlyList<PlaylistItem>? SelectionAfterContextClick(
+        IReadOnlyList<PlaylistItem> currentSelection, PlaylistItem? clicked)
+    {
+        if (clicked == null || currentSelection.Contains(clicked)) return null;
+        return new[] { clicked };
+    }
+
     /// <summary>Whether a move applies, and which items should stay selected afterwards.</summary>
     public static bool CanMove(IReadOnlyList<PlaylistItem> selection) => selection.Count > 0;
 
