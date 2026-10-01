@@ -135,6 +135,17 @@ public sealed partial class LyricsSearchWindow : Window
 
     private void OnSearchClick(object sender, RoutedEventArgs e) => _ = RunSearchAsync();
 
+    /// <summary>PT4-20: Enter in a form field submits — the search used to require a pointer
+    /// click on the button.</summary>
+    private void OnSearchFieldKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.Enter)
+        {
+            e.Handled = true;
+            _ = RunSearchAsync();
+        }
+    }
+
     private async Task RunSearchAsync()
     {
         if (_closed || AppServices.LyricsOnline == null) return;
@@ -321,7 +332,9 @@ public sealed partial class LyricsSearchWindow : Window
             Content = AppStrings.Format("LyricsSearch_OverwriteMessage", "이미 가사 파일이 있습니다.\n{0}\n선택한 가사로 덮어쓸까요?", path ?? ""),
             PrimaryButtonText = AppStrings.Get("LyricsSearch_OverwriteConfirm", "덮어쓰기"),
             CloseButtonText = AppStrings.Get("Common_Cancel", "취소"),
-            DefaultButton = ContentDialogButton.Primary,
+            // Enter must not be the destructive action (PT4-11): the other destructive dialogs
+            // (EQ profile delete, shortcut reset, conflict overwrite) already default to Cancel.
+            DefaultButton = ContentDialogButton.Close,
             XamlRoot = Content.XamlRoot
         };
         return await dialog.ShowAsync() == ContentDialogResult.Primary;

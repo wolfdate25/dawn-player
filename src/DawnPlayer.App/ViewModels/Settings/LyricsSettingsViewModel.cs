@@ -13,6 +13,7 @@ public sealed class LyricsSettingsViewModel : ViewModelBase
     private readonly AppSettings _settings;
     private readonly Action? _lyricsChangedNotifier;
     private readonly Action<AppSettings>? _settingsSaver;
+    private readonly Action<string>? _warningNotifier;
 
     private int _fontFamilyIndex;
     private string _customFontFamily = "";
@@ -23,11 +24,13 @@ public sealed class LyricsSettingsViewModel : ViewModelBase
     public LyricsSettingsViewModel(
         AppSettings settings,
         Action? lyricsChangedNotifier = null,
-        Action<AppSettings>? settingsSaver = null)
+        Action<AppSettings>? settingsSaver = null,
+        Action<string>? warningNotifier = null)
     {
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _lyricsChangedNotifier = lyricsChangedNotifier;
         _settingsSaver = settingsSaver ?? (s => SettingsWriter.Schedule(s));
+        _warningNotifier = warningNotifier;
 
         InitializeFontState();
         _lrcPatternsText = string.Join(Environment.NewLine, _settings.Lyrics.FilePatterns);
@@ -254,10 +257,11 @@ public sealed class LyricsSettingsViewModel : ViewModelBase
     public void SaveLrcPatterns(string? rawText = null)
     {
         string text = rawText ?? _lrcPatternsText;
-        var patterns = text
+        var candidates = text
             .Split(LrcPatternSeparators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Where(p => p.EndsWith(".lrc", StringComparison.OrdinalIgnoreCase))
             .ToList();
+        var patterns = candidates.Where(p => p.EndsWith(".lrc", StringComparison.OrdinalIgnoreCase)).ToList();
+        int excluded = candidates.Count - patterns.Count;
 
         if (patterns.Count > 0)
         {
@@ -265,6 +269,16 @@ public sealed class LyricsSettingsViewModel : ViewModelBase
             _lrcPatternsText = string.Join(Environment.NewLine, patterns);
             OnPropertyChanged(nameof(LrcPatternsText));
             _settingsSaver?.Invoke(_settings);
+        }
+
+        // Silent filtering used to swallow invalid lines (PT4-08): say what was kept and why
+        // the rest was dropped, including the all-invalid case where nothing was saved.
+        if (excluded > 0)
+        {
+            _warningNotifier?.Invoke(Localization.AppStrings.Format(
+                "Settings_Lyrics_LrcPatterns_Filtered",
+                "{0}개 패턴이 저장되고 {1}개가 제외되었습니다 (.lrc로 끝나야 합니다).",
+                patterns.Count, excluded));
         }
     }
 

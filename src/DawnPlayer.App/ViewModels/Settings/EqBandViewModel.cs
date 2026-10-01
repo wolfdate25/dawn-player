@@ -33,11 +33,22 @@ public sealed class EqBandViewModel : ViewModelBase
             {
                 OnPropertyChanged(nameof(DisplayNumber));
                 OnPropertyChanged(nameof(ColorHex));
+                OnPropertyChanged(nameof(TypeAccessibleName));
+                OnPropertyChanged(nameof(FreqAccessibleName));
+                OnPropertyChanged(nameof(GainAccessibleName));
+                OnPropertyChanged(nameof(QAccessibleName));
             }
         }
     }
 
     public string DisplayNumber => AppStrings.Format("Settings_Eq_BandFormat", "밴드 {0}", _index + 1);
+
+    // Screen-reader names for the band's controls (PT5-03): "밴드 3 주파수" style, so the EQ
+    // template's unnamed sliders/boxes announce which band they belong to.
+    public string TypeAccessibleName => AppStrings.Format("Settings_Eq_Band_Type_Name", "밴드 {0} 유형", DisplayNumber);
+    public string FreqAccessibleName => AppStrings.Format("Settings_Eq_Band_Freq_Name", "밴드 {0} 주파수", DisplayNumber);
+    public string GainAccessibleName => AppStrings.Format("Settings_Eq_Band_Gain_Name", "밴드 {0} 게인", DisplayNumber);
+    public string QAccessibleName => AppStrings.Format("Settings_Eq_Band_Q_Name", "밴드 {0} Q 팩터", DisplayNumber);
 
     public string ColorHex => EqVisualizerCalculator.GetBandColorHex(_index);
 

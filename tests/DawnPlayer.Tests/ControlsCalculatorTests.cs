@@ -312,6 +312,35 @@ public class ControlsCalculatorTests
         Assert.Equal(180000, valDrag);
     }
 
+    /// <summary>PT3-05 (2026-09-30 audit): drag labels derive from the slider value — where the
+    /// thumb sits — never from a position the caller might pass in, and clamp to the duration.</summary>
+    [Fact]
+    public void SeekbarScrubbingCalculator_CalculateDraggingLabels_FollowThumbAndClamp()
+    {
+        var duration = TimeSpan.FromSeconds(200);
+
+        // Mid drag: label is the thumb's time, remaining is duration-relative to it.
+        var (mid, midRem) = SeekbarScrubbingCalculator.CalculateDraggingLabels(50, duration);
+        Assert.Equal("0:50", mid);
+        Assert.Equal("-2:30", midRem);
+
+        // Thumb past the duration clamps to the end.
+        var (end, endRem) = SeekbarScrubbingCalculator.CalculateDraggingLabels(500, duration);
+        Assert.Equal("3:20", end);
+        Assert.Equal("0:00", endRem);
+
+        // NaN/Infinity thumbs never poison the label.
+        var (nan, _) = SeekbarScrubbingCalculator.CalculateDraggingLabels(double.NaN, duration);
+        Assert.Equal("0:00", nan);
+        var (inf, _) = SeekbarScrubbingCalculator.CalculateDraggingLabels(double.PositiveInfinity, duration);
+        Assert.Equal("3:20", inf);
+
+        // Zero duration (stream without known length): clamp to non-negative, no crash.
+        var (zeroDur, zeroDurRem) = SeekbarScrubbingCalculator.CalculateDraggingLabels(42, TimeSpan.Zero);
+        Assert.Equal("0:42", zeroDur);
+        Assert.Equal("0:00", zeroDurRem);
+    }
+
     [Fact]
     public void SeekbarScrubbingCalculator_CalculateRestoreState_ExtremeAndBoundaryScenarios()
     {

@@ -571,7 +571,15 @@ public static class AppServices
     public static event Action<string>? RgScanProgressChanged;
     public static bool IsRgScanRunning => Volatile.Read(ref _rgScanCts) != null;
 
-    /// <summary>
+    /// <summary>Raised on a worker thread when a ReplayGain scan settles (done, failed or
+    /// cancelled) — the settings page re-enables its scan buttons on this, not on a progress
+    /// message guess.</summary>
+    public static event Action? RgScanCompleted;
+
+    /// <summary>Whether a ReplayGain scan is currently in flight (a fresh CTS exists).</summary>
+    public static bool IsReplayGainScanRunning => Volatile.Read(ref _rgScanCts) != null;
+
+        /// <summary>
     /// Scans the library for loudness (EBU R128, ReplayGain 2.0 at −18 LUFS), storing track and
     /// album values in the DB and writing REPLAYGAIN_* tags back to the files. Cancels any running
     /// RG scan; a library scan running concurrently is left alone (both only read the files).
@@ -599,7 +607,8 @@ public static class AppServices
                         RunOnUi(() => WarningRaised?.Invoke(AppStrings.Format("Msg_RgScanFailed", "ReplayGain 분석 실패: {0}", ex.Message)));
                     }
                 }
-            }, TaskScheduler.Default);
+            }, TaskScheduler.Default)
+            .ContinueWith(_ => RgScanCompleted?.Invoke(), TaskScheduler.Default);
     }
 
     public static void CancelReplayGainScan()

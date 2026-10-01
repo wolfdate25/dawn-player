@@ -174,7 +174,18 @@ public static class TagEditorDialogs
             ? AppStrings.Get("Msg_TagEditorAlbumDialogTitle", "앨범 태그 편집")
             : AppStrings.Get("Msg_TagEditorDialogTitle", "태그 편집");
 
-        return new ContentDialog
+        // PT2-15: malformed numeric input used to be silently dropped while the dialog reported
+        // success — validate on save, keep the dialog open and say which field is wrong.
+        var errorText = new TextBlock
+        {
+            FontSize = 11.5,
+            TextWrapping = TextWrapping.Wrap,
+            Visibility = Visibility.Collapsed,
+            Foreground = Helpers.ThemeResourceHelper.GetBrush("StatusDangerBrush"),
+        };
+        form.Children.Add(errorText);
+
+        var dialog = new ContentDialog
         {
             Title = dialogTitle,
             Content = new ScrollViewer { Content = form, MaxHeight = 560 },
@@ -183,6 +194,32 @@ public static class TagEditorDialogs
             DefaultButton = ContentDialogButton.Primary,
             XamlRoot = root
         };
+
+        dialog.Closing += (_, args) =>
+        {
+            if (args.Result != ContentDialogResult.Primary) return;
+            var bad = new List<string>();
+            foreach (var (box, label) in new[]
+                     {
+                         (state.YearBox, AppStrings.Get("Msg_TagEditorYear", "연도")),
+                         (state.TrackNoBox, AppStrings.Get("Msg_TagEditorTrackNo", "트랙 번호")),
+                         (state.DiscNoBox, AppStrings.Get("Msg_TagEditorDiscNo", "디스크 번호")),
+                     })
+            {
+                if (box == null || string.IsNullOrWhiteSpace(box.Text)) continue;
+                if (ParseInt(box.Text) == null)
+                {
+                    bad.Add(label);
+                    box.BorderBrush = Helpers.ThemeResourceHelper.GetBrush("StatusDangerBrush");
+                }
+            }
+            if (bad.Count == 0) return;
+            args.Cancel = true;
+            errorText.Text = AppStrings.Format("Msg_TagEditorInvalidNumbers",
+                "다음 필드는 정수여야 합니다: {0}", string.Join(", ", bad));
+            errorText.Visibility = Visibility.Visible;
+        };
+        return dialog;
     }
 
     private static StackPanel LabeledBox(string label, TextBox box)

@@ -61,9 +61,9 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock x:Uid="Playlist_SidebarHeader" Text="Playlists..." FontSize="13.5" FontWeight="SemiBold" FontStyle="Italic"
+                <TextBlock x:Uid="Playlist_SidebarHeader" Text="Playlists..." FontSize="{StaticResource FontSubtitle}" FontWeight="SemiBold" FontStyle="Italic"
                            Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                <TextBlock x:Name="PlaylistsCountText" Grid.Column="1" Text="0" FontSize="11.5"
+                <TextBlock x:Name="PlaylistsCountText" Grid.Column="1" Text="0" FontSize="{StaticResource FontBodySmall}"
                            Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>
             </Grid>
 
@@ -72,14 +72,14 @@
                 <Button x:Uid="Playlist_CreateButton" Click="OnCreatePlaylistClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
                         Padding="10,6" Background="Transparent" BorderThickness="0" CornerRadius="4">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon Glyph="&#xE710;" FontSize="12" Foreground="{ThemeResource DawnAccentBrush}"/>
+                        <FontIcon Glyph="&#xE710;" FontSize="12" Foreground="{ThemeResource DawnAccentTextBrush}"/>
                         <TextBlock x:Uid="Playlist_CreateButtonText" Text="Create Playlist" FontSize="12" Foreground="{ThemeResource TextPrimaryBrush}"/>
                     </StackPanel>
                 </Button>
                 <Button x:Uid="Playlist_CreateSmartButton" Click="OnCreateSmartPlaylistClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
                         Padding="10,6" Background="Transparent" BorderThickness="0" CornerRadius="4">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon Glyph="&#xE71C;" FontSize="12" Foreground="{ThemeResource DawnAccentBrush}"/>
+                        <FontIcon Glyph="&#xE71C;" FontSize="12" Foreground="{ThemeResource DawnAccentTextBrush}"/>
                         <TextBlock x:Uid="Playlist_CreateSmartButtonText" Text="Create Smart Playlist" FontSize="12" Foreground="{ThemeResource TextPrimaryBrush}"/>
                     </StackPanel>
                 </Button>
@@ -111,7 +111,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <FontIcon Grid.Column="0" Glyph="&#xE8B9;" FontSize="12" Foreground="{ThemeResource TextTertiaryBrush}"/>
-                            <TextBlock Grid.Column="1" Text="{x:Bind Name, Mode=OneWay}" FontSize="12.5"
+                            <TextBlock Grid.Column="1" Text="{x:Bind Name, Mode=OneWay}" FontSize="{StaticResource FontBody}"
                                        Foreground="{ThemeResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                             <TextBlock Grid.Column="2" Text="{x:Bind Items.Count, Mode=OneWay}" FontSize="11"
                                        Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>
@@ -170,14 +170,17 @@
 
                 <!-- Playlist Name (Italic) -->
                 <TextBlock x:Name="PlaylistTitleText" Text="Mixed selection"
-                           FontSize="15" FontWeight="SemiBold" FontStyle="Italic"
+                           FontSize="{StaticResource FontSubtitle}" FontWeight="SemiBold" FontStyle="Italic"
                            Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis"/>
 
                 <!-- Right: Summary Stats & Tools Menu Button -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                     <TextBlock x:Name="PlaylistStatsText" Text="0 items"
-                               FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>
+                               FontSize="{StaticResource FontBodySmall}" Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>
+                    <!-- PT2-12: multi-selection used to be invisible until a menu was opened. -->
+                    <TextBlock x:Name="PlaylistSelectionText" Text="" FontSize="{StaticResource FontBodySmall}"
+                               Foreground="{ThemeResource DawnAccentTextBrush}" VerticalAlignment="Center" Visibility="Collapsed"/>
                     <Button x:Uid="Playlist_ToolsButton" Style="{StaticResource TransportButton}" Width="28" Height="28" ToolTipService.ToolTip="재생목록 도구 및 정렬">
                         <FontIcon Glyph="&#xE712;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
                         <Button.Flyout>
@@ -236,6 +239,7 @@
             <!-- Main Track List -->
             <Grid Grid.Row="1">
                 <ListView x:Name="PlaylistList"
+                              SelectionChanged="OnPlaylistSelectionChanged"
                           SelectionMode="Extended"
                           DoubleTapped="OnItemDoubleTapped"
                           KeyDown="OnListKeyDown"
@@ -270,12 +274,12 @@
 
                                     <!-- Italic Track No -->
                                     <TextBlock Grid.Column="0" Text="{x:Bind Track.TrackNo, Converter={StaticResource TrackNoText}}"
-                                               FontStyle="Italic" FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}"
+                                               FontStyle="Italic" FontSize="{StaticResource FontBodySmall}" Foreground="{ThemeResource TextTertiaryBrush}"
                                                VerticalAlignment="Center"/>
 
                                     <!-- Title - Italic Artist -->
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                        <TextBlock Text="{x:Bind Track.Title}" FontSize="12.5"
+                                        <TextBlock Text="{x:Bind Track.Title}" FontSize="{StaticResource FontBody}"
                                                    Foreground="{ThemeResource TextPrimaryBrush}"
                                                    TextTrimming="CharacterEllipsis"/>
                                         <TextBlock Text=" - " FontSize="12" Foreground="{ThemeResource TextTertiaryBrush}"/>
@@ -285,7 +289,7 @@
                                         <Border Visibility="{x:Bind QueueIndex, Converter={StaticResource QueueVis}, Mode=OneWay}"
                                                 Style="{StaticResource CodecBadge}" Margin="4,0,0,0">
                                             <TextBlock Style="{StaticResource BadgeText}"
-                                                       Foreground="{ThemeResource DawnAccentBrush}"
+                                                       Foreground="{ThemeResource DawnAccentTextBrush}"
                                                        Text="{x:Bind QueueIndex, Converter={StaticResource QueueText}, Mode=OneWay}"/>
                                         </Border>
                                     </StackPanel>
@@ -296,12 +300,12 @@
                                             Tag="{x:Bind}" Click="OnRatingCellClick"
                                             AutomationProperties.Name="{x:Bind Rating, Converter={StaticResource RatingAccess}, Mode=OneWay}">
                                         <TextBlock Text="{x:Bind Rating, Converter={StaticResource RatingStars}, Mode=OneWay}"
-                                                   FontSize="9.5" Foreground="{ThemeResource DawnAccentBrush}"
+                                                   FontSize="{StaticResource FontCaption}" Foreground="{ThemeResource DawnAccentTextBrush}"
                                                    VerticalAlignment="Center"/>
                                     </Button>
 
                                     <!-- Static Duration -->
-                                    <TextBlock Grid.Column="3" FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}"
+                                    <TextBlock Grid.Column="3" FontSize="{StaticResource FontBodySmall}" Foreground="{ThemeResource TextTertiaryBrush}"
                                                HorizontalAlignment="Right" VerticalAlignment="Center"
                                                Text="{x:Bind DurationDisplay, Mode=OneWay}"/>
                                 </Grid>
@@ -323,13 +327,13 @@
                                                 Background="{ThemeResource DawnAccentBrush}" VerticalAlignment="Stretch"/>
 
                                         <!-- Speaker Icon -->
-                                        <FontIcon Grid.Column="0" Glyph="&#xE767;" FontSize="11.5"
-                                                  Foreground="{ThemeResource DawnAccentBrush}"
+                                        <FontIcon Grid.Column="0" Glyph="&#xE767;" FontSize="{StaticResource FontBodySmall}"
+                                                  Foreground="{ThemeResource DawnAccentTextBrush}"
                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
                                         <!-- Title - Italic Artist (Bold / White) -->
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                            <TextBlock Text="{x:Bind Track.Title}" FontSize="12.5" FontWeight="SemiBold"
+                                            <TextBlock Text="{x:Bind Track.Title}" FontSize="{StaticResource FontBody}" FontWeight="SemiBold"
                                                        Foreground="{ThemeResource TextPrimaryBrush}"
                                                        TextTrimming="CharacterEllipsis"/>
                                             <TextBlock Text=" - " FontSize="12" Foreground="{ThemeResource TextSecondaryBrush}"/>
@@ -339,7 +343,7 @@
                                             <Border Visibility="{x:Bind QueueIndex, Converter={StaticResource QueueVis}, Mode=OneWay}"
                                                     Style="{StaticResource CodecBadge}" Margin="4,0,0,0">
                                                 <TextBlock Style="{StaticResource BadgeText}"
-                                                           Foreground="{ThemeResource DawnAccentBrush}"
+                                                           Foreground="{ThemeResource DawnAccentTextBrush}"
                                                            Text="{x:Bind QueueIndex, Converter={StaticResource QueueText}, Mode=OneWay}"/>
                                             </Border>
                                         </StackPanel>
@@ -349,12 +353,12 @@
                                                 Tag="{x:Bind}" Click="OnRatingCellClick"
                                                 AutomationProperties.Name="{x:Bind Rating, Converter={StaticResource RatingAccess}, Mode=OneWay}">
                                             <TextBlock Text="{x:Bind Rating, Converter={StaticResource RatingStars}, Mode=OneWay}"
-                                                       FontSize="9.5" Foreground="{ThemeResource DawnAccentBrush}"
+                                                       FontSize="{StaticResource FontCaption}" Foreground="{ThemeResource DawnAccentTextBrush}"
                                                        VerticalAlignment="Center"/>
                                         </Button>
 
                                         <!-- Remaining Time (e.g. -3:40) -->
-                                        <TextBlock Grid.Column="3" FontSize="11.5" Foreground="{ThemeResource TextSecondaryBrush}"
+                                        <TextBlock Grid.Column="3" FontSize="{StaticResource FontBodySmall}" Foreground="{ThemeResource TextSecondaryBrush}"
                                                    HorizontalAlignment="Right" VerticalAlignment="Center"
                                                    Text="{x:Bind DurationDisplay, Mode=OneWay}"/>
                                     </Grid>
@@ -389,7 +393,7 @@
 
                                         <!-- Album Title & Artist -->
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                            <TextBlock Text="{Binding Album}" FontSize="13.5" FontWeight="SemiBold" FontStyle="Italic"
+                                            <TextBlock Text="{Binding Album}" FontSize="{StaticResource FontSubtitle}" FontWeight="SemiBold" FontStyle="Italic"
                                                        Foreground="{ThemeResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
                                             <TextBlock Text="{Binding Artist}" FontSize="12"
                                                        Foreground="{ThemeResource TextTertiaryBrush}" TextTrimming="CharacterEllipsis"/>
@@ -397,7 +401,7 @@
 
                                         <!-- Right: Album Total Duration & Release Year -->
                                         <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2" HorizontalAlignment="Right" Margin="0,0,4,0">
-                                            <TextBlock Text="{Binding DurationFormatted}" FontSize="11.5"
+                                            <TextBlock Text="{Binding DurationFormatted}" FontSize="{StaticResource FontBodySmall}"
                                                        Foreground="{ThemeResource TextTertiaryBrush}" HorizontalAlignment="Right"/>
                                             <TextBlock Text="{Binding YearFormatted}" FontSize="11"
                                                        Foreground="{ThemeResource TextTertiaryBrush}" HorizontalAlignment="Right"/>
@@ -413,11 +417,12 @@
                             <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Play" Text="재생" Click="OnPlayItems">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE768;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
+                            <!-- PT5-11 glyph rule: E710=playlist add, E8FD=queue add, E76C=next. -->
                             <MenuFlyoutItem x:Uid="Playlist_TrackMenu_QueueNext" Text="다음에 재생 (대기열 선두)" Click="OnQueueNextItems">
-                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8FD;"/></MenuFlyoutItem.Icon>
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE76C;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                             <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Queue" Text="대기열에 추가" Click="OnQueueItems">
-                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE710;"/></MenuFlyoutItem.Icon>
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8FD;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                             <MenuFlyoutSeparator/>
                             <MenuFlyoutSubItem x:Uid="Playlist_TrackMenu_Rating" x:Name="RatingMenu" Text="평점">

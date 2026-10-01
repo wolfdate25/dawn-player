@@ -128,21 +128,42 @@ public static void ApplyTheme(Window window, UiSettings ui, Panel? rootGrid = nu
     /// Resolves whether the effective visual flavor is light — either an explicit Light theme, or
     /// System mode on a light-mode OS (read from the root element's ActualTheme).
     /// </summary>
-    /// <summary>Whether a Windows high-contrast theme is active. The COM lookup is not free and
-    /// ApplyTheme runs on every accent change, so the answer is memoized.</summary>
-    private static readonly Lazy<bool> _highContrast = new(() =>
-    {
-        try
-        {
-            return new Windows.UI.ViewManagement.AccessibilitySettings().HighContrast;
-        }
-        catch
-        {
-            return false;
-        }
-    });
+    /// <summary>Whether a Windows high-contrast theme is active. Watched live, not memoized: a
+    /// start-up-only snapshot left custom palettes painted over a mid-session HC switch on (and
+    /// the reverse after switching HC off) until restart (2026-09-30 audit PT1-04).</summary>
+    private static Windows.UI.ViewManagement.AccessibilitySettings? _highContrastWatch;
+    private static bool _highContrastActive;
 
-    public static bool IsHighContrastActive() => _highContrast.Value;
+    private static bool EnsureHighContrastWatch()
+    {
+        if (_highContrastWatch == null)
+        {
+            try
+            {
+                var watch = new Windows.UI.ViewManagement.AccessibilitySettings();
+                _highContrastActive = watch.HighContrast;
+                watch.HighContrastChanged += (_, _) =>
+                {
+                    _highContrastActive = watch.HighContrast;
+                    // Re-run the pipeline exactly like an appearance-settings change: HC on
+                    // delegates to system colors, HC off restores the custom palette.
+                    AppServices.RunOnUi(() =>
+                    {
+                        App.MainWin?.ApplyTheme();
+                        RefreshAuxiliaryWindows(AppServices.Settings.Ui);
+                    });
+                };
+                _highContrastWatch = watch;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        return _highContrastActive;
+    }
+
+    public static bool IsHighContrastActive() => EnsureHighContrastWatch();
 
     public static bool IsEffectiveLight(Window window, UiSettings ui) =>
         ui.Theme == ThemeMode.Light ||
@@ -323,6 +344,17 @@ public static void ApplyTheme(Window window, UiSettings ui, Panel? rootGrid = nu
         SetBrush("DawnAccentMutedBrush", mutedColor);
         SetBrush("DawnAccentGlowBrush", glowColor);
 
+        // Text/icon accent: the raw accent can sit below 4.5:1 on the current panel (the light
+        // amber family does by design), so foregrounds consume this solver-adjusted variant.
+        // Recomputed per preset so PlayGreen/custom colors stay readable too.
+        var panelColor = Application.Current.Resources["PanelColor"] is Windows.UI.Color pc
+            ? pc
+            : Windows.UI.Color.FromArgb(0xFF, 0x1F, 0x1F, 0x25);
+        var (tr, tg, tb) = Helpers.ContrastMath.SolveTextVariant(color.R, color.G, color.B, panelColor.R, panelColor.G, panelColor.B);
+        var textColor = Windows.UI.Color.FromArgb(0xFF, tr, tg, tb);
+        Application.Current.Resources["DawnAccentTextColor"] = textColor;
+        SetBrush("DawnAccentTextBrush", textColor);
+
         // Control item highlight overrides
         SetBrush("SliderTrackValueFill", color);
         SetBrush("SliderThumbBackground", color);
@@ -330,13 +362,21 @@ public static void ApplyTheme(Window window, UiSettings ui, Panel? rootGrid = nu
         SetBrush("SliderThumbBackgroundPointerOver", hoverColor);
         SetBrush("SliderThumbBackgroundPressed", pressedColor);
 
-        // ToggleButton theme overrides
+        // List selection tints ride the accent (PT1-05): the theme-dictionary defaults are baked
+        // amber hexes, so a preset change left the selection highlight amber while everything
+        // else followed the new accent.
+        SetBrush("ListViewItemBackgroundSelected", WithAlpha(color, 0x26));
+        SetBrush("ListViewItemBackgroundSelectedPointerOver", WithAlpha(color, 0x3D));
+        SetBrush("ListViewItemBackgroundSelectedPressed", WithAlpha(color, 0x4D));
+
+        // ToggleButton theme overrides — checked foreground is text, so all three states use
+        // the contrast-safe text variant (hover/pressed bg changes carry the state feedback).
         SetBrush("ToggleButtonBackgroundChecked", mutedColor);
         SetBrush("ToggleButtonBackgroundCheckedPointerOver", mutedColor);
         SetBrush("ToggleButtonBackgroundCheckedPressed", glowColor);
-        SetBrush("ToggleButtonForegroundChecked", color);
-        SetBrush("ToggleButtonForegroundCheckedPointerOver", hoverColor);
-        SetBrush("ToggleButtonForegroundCheckedPressed", pressedColor);
+        SetBrush("ToggleButtonForegroundChecked", textColor);
+        SetBrush("ToggleButtonForegroundCheckedPointerOver", textColor);
+        SetBrush("ToggleButtonForegroundCheckedPressed", textColor);
         SetBrush("ToggleButtonBorderBrushChecked", glowColor);
         SetBrush("ToggleButtonBorderBrushCheckedPointerOver", color);
         SetBrush("ToggleButtonBorderBrushCheckedPressed", pressedColor);
@@ -401,7 +441,7 @@ public static void ApplyTheme(Window window, UiSettings ui, Panel? rootGrid = nu
         // dark-theme fallbacks and rendered drawer titles and lyric lines invisible.
         SetResourceColor("TextPrimaryColor", "#FFF3F3F6");
         SetResourceColor("TextSecondaryColor", "#FFAEAEBC");
-        SetResourceColor("TextTertiaryColor", "#FF787888");
+        SetResourceColor("TextTertiaryColor", "#FF8F8FA0");
         SetResourceColor("LayerBgColor", "#FF000000");
         SetResourceColor("PanelColor", "#FF08080A");
         SetResourceColor("PanelSubtleColor", "#FF000000");
@@ -423,7 +463,7 @@ public static void ApplyTheme(Window window, UiSettings ui, Panel? rootGrid = nu
         // dark-theme fallbacks and rendered drawer titles and lyric lines invisible.
         SetResourceColor("TextPrimaryColor", "#FFF3F3F6");
         SetResourceColor("TextSecondaryColor", "#FFAEAEBC");
-        SetResourceColor("TextTertiaryColor", "#FF787888");
+        SetResourceColor("TextTertiaryColor", "#FF8F8FA0");
         SetResourceColor("LayerBgColor", "#FF18181D");
         SetResourceColor("PanelColor", "#FF1F1F25");
         SetResourceColor("PanelSubtleColor", "#FF19191E");
@@ -445,7 +485,7 @@ public static void ApplyTheme(Window window, UiSettings ui, Panel? rootGrid = nu
         // dark-theme fallbacks and rendered drawer titles and lyric lines invisible.
         SetResourceColor("TextPrimaryColor", "#FF1A1A20");
         SetResourceColor("TextSecondaryColor", "#FF555562");
-        SetResourceColor("TextTertiaryColor", "#FF868694");
+        SetResourceColor("TextTertiaryColor", "#FF62626F");
         SetResourceColor("LayerBgColor", "#FFF7F6F3");
         SetResourceColor("PanelColor", "#FFF0EFEB");
         SetResourceColor("PanelSubtleColor", "#FFEBEAE5");
@@ -467,6 +507,9 @@ public static void ApplyTheme(Window window, UiSettings ui, Panel? rootGrid = nu
         Application.Current.Resources[key] = col;
         SetBrush(key.Replace("Color", "Brush"), col);
     }
+
+    private static Windows.UI.Color WithAlpha(Windows.UI.Color c, byte alpha) =>
+        Windows.UI.Color.FromArgb(alpha, c.R, c.G, c.B);
 
     /// <summary>
     /// Parses an ARGB/RGB hex color string (e.g., "#FFC77F1B" or "C77F1B") into Windows.UI.Color.

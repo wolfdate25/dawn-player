@@ -65,14 +65,17 @@ public sealed partial class FullscreenNowPlayingWindow : Window
             _timer.Stop();
             AppServices.CurrentTrackChanged -= OnTrackChanged;
             AppServices.LiveStreamTitleChanged -= OnLiveStreamTitle;
+            AppServices.PlaybackStateChanged -= OnPlaybackStateChanged;
         };
 
         BuildSpectrumBars();
         AppServices.CurrentTrackChanged += OnTrackChanged;
         AppServices.LiveStreamTitleChanged += OnLiveStreamTitle;
+        AppServices.PlaybackStateChanged += OnPlaybackStateChanged;
 
         _timer.Start();
         OnTrackChanged(AppServices.Playback.CurrentItem);
+        OnPlaybackStateChanged();
         OnFrame();
     }
 
@@ -93,11 +96,113 @@ public sealed partial class FullscreenNowPlayingWindow : Window
 
     private void OnKeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (e.Key == Windows.System.VirtualKey.Escape)
+        // Escape was the only key this window took — immersive mode read as a trap (PT3-02/
+        // PT5-17). Space and the arrows mirror the main-window transport shortcuts.
+        switch (e.Key)
         {
-            Close();
-            e.Handled = true;
+            case Windows.System.VirtualKey.Escape:
+                Close();
+                e.Handled = true;
+                break;
+            case Windows.System.VirtualKey.Space:
+                AppServices.Playback?.PlayPause();
+                e.Handled = true;
+                break;
+            case Windows.System.VirtualKey.Left:
+                _ = AppServices.Playback?.PreviousAsync();
+                e.Handled = true;
+                break;
+            case Windows.System.VirtualKey.Right:
+                _ = AppServices.Playback?.NextAsync();
+                e.Handled = true;
+                break;
         }
+    }
+
+    // ---------- transport (PT3-02) ----------
+
+    private void OnPlaybackStateChanged()
+    {
+        var playing = AppServices.Playback?.State == PlaybackState.Playing;
+        FsPlayIcon.Glyph = playing ? "\uE769" : "\uE768";
+        // The custom template wraps the icon in a ContentPresenter, so Parent is not the
+        // Button — walk to it or the screen reader keeps announcing the static name.
+        var button = Helpers.VisualTreeHelperExtensions.FindAncestor<Microsoft.UI.Xaml.Controls.Button>(FsPlayIcon);
+        if (button != null)
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, playing ? "\uC77C\uC2DC\uC815\uC9C0" : "\uC7AC\uC0DD");
+    }
+
+    private void OnFsPreviousClick(object sender, RoutedEventArgs e) => _ = AppServices.Playback?.PreviousAsync();
+    private void OnFsNextClick(object sender, RoutedEventArgs e) => _ = AppServices.Playback?.NextAsync();
+    private void OnFsPlayPauseClick(object sender, RoutedEventArgs e) => AppServices.Playback?.PlayPause();
+
+    /// <summary>Mirrors shuffle/repeat/A-B state every frame — cheap reads, and WinUI no-ops
+    /// when a value is unchanged (PT3-10).</summary>
+    private void UpdateTransportState()
+    {
+        var settings = AppServices.Settings;
+        var playback = AppServices.Playback;
+        bool shuffle = (settings?.Playback.ShuffleMode ?? Core.Persistence.ShuffleMode.Off) != Core.Persistence.ShuffleMode.Off;
+        var repeat = settings?.Playback.Repeat ?? Core.Persistence.RepeatMode.Off;
+        var stage = (playback?.AbRepeatWindow ?? Core.Audio.AbRepeatWindow.Off).Stage;
+
+        FsShuffleIcon.Visibility = shuffle ? Visibility.Visible : Visibility.Collapsed;
+        FsRepeatIcon.Visibility = repeat != Core.Persistence.RepeatMode.Off ? Visibility.Visible : Visibility.Collapsed;
+        FsRepeatIcon.Glyph = repeat == Core.Persistence.RepeatMode.One ? "\uE8ED" : "\uE8EE";
+        FsAbLabel.Visibility = stage != Core.Audio.AbRepeatStage.Off ? Visibility.Visible : Visibility.Collapsed;
+        FsAbLabel.Text = stage switch
+        {
+            Core.Audio.AbRepeatStage.WaitingForB => "A \u2715",
+            Core.Audio.AbRepeatStage.Looping => "A\u2192B",
+            _ => "A\u2013B"
+        };
+        FsStateRow.Visibility = shuffle || repeat != Core.Persistence.RepeatMode.Off || stage != Core.Audio.AbRepeatStage.Off
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    /// <summary>A-B window mirrored on the waveform (PT3-10). The wave canvas has no thumb, so
+    /// band edges map linearly — the slider's thumb-inset mapping would lie here.</summary>
+    private void UpdateAbBand()
+    {
+        var playback = AppServices.Playback;
+        var window = playback?.AbRepeatWindow ?? Core.Audio.AbRepeatWindow.Off;
+        double width = WaveCanvas.ActualWidth;
+        if (window.Stage == Core.Audio.AbRepeatStage.Off || width <= 0 || playback == null || playback.Duration <= TimeSpan.Zero)
+        {
+            AbBand.Visibility = Visibility.Collapsed;
+            AbMarkerA.Visibility = Visibility.Collapsed;
+            AbMarkerB.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        double durationSec = playback.Duration.TotalSeconds;
+        double X(TimeSpan t) => WaveformLayout.FractionToX(Math.Clamp(t.TotalSeconds / durationSec, 0, 1), width);
+
+        double aX = X(window.Start);
+        AbMarkerA.Visibility = Visibility.Visible;
+        Microsoft.UI.Xaml.Controls.Canvas.SetLeft(AbMarkerA, aX - 1);
+
+        double? bX = window.HasEnd ? X(window.End) : null;
+        double? positionX = window.Stage == Core.Audio.AbRepeatStage.WaitingForB ? X(playback.Position) : null;
+
+        double? bandLeft = window.Stage == Core.Audio.AbRepeatStage.Looping ? aX
+            : positionX.HasValue && positionX.Value > aX ? aX : null;
+        double? bandRight = window.Stage == Core.Audio.AbRepeatStage.Looping ? bX : positionX;
+
+        if (bandLeft.HasValue && bandRight.HasValue && bandRight.Value > bandLeft.Value)
+        {
+            AbBand.Visibility = Visibility.Visible;
+            Microsoft.UI.Xaml.Controls.Canvas.SetLeft(AbBand, bandLeft.Value);
+            AbBand.Width = bandRight.Value - bandLeft.Value;
+        }
+        else
+        {
+            AbBand.Visibility = Visibility.Collapsed;
+        }
+
+        AbMarkerB.Visibility = bX.HasValue ? Visibility.Visible : Visibility.Collapsed;
+        if (bX.HasValue) Microsoft.UI.Xaml.Controls.Canvas.SetLeft(AbMarkerB, bX.Value - 1);
     }
 
     // ---------- track + waveform ----------
@@ -122,6 +227,7 @@ public sealed partial class FullscreenNowPlayingWindow : Window
         TrackArtist.Text = item?.Track.Artist ?? "";
         Title = item is null ? "Dawn Player" : $"{item.Track.Title} — {item.Track.Artist}";
         CoverImage.Source = null;
+        CoverPlaceholder.Visibility = Visibility.Visible;
         WavePlayed.Points.Clear();
         WaveUnplayed.Points.Clear();
         WaveClip.Rect = new Rect(0, 0, 0, WaveHeight);
@@ -161,21 +267,38 @@ public sealed partial class FullscreenNowPlayingWindow : Window
 
     private void LoadCover(Track track)
     {
-        try
+        // PT3-12: folder probing and tag extraction touch the disk — same off-thread rule the
+        // bar follows, so a track change can't stall the fullscreen frame loop.
+        int generation = _generation;
+        Task.Run(() =>
         {
-            string? artPath = !string.IsNullOrEmpty(track.ArtPath) && File.Exists(track.ArtPath)
-                ? track.ArtPath
-                : AlbumArtService.FindFolderArt(track.Path ?? "");
-            if (string.IsNullOrEmpty(artPath))
-                artPath = AlbumArtService.TryExtractArt(track, TagReader.ComputeAlbumKey(track));
-
-            if (string.IsNullOrEmpty(artPath) || !File.Exists(artPath)) return;
-            CoverImage.Source = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri(artPath));
-        }
-        catch (Exception ex)
+            try
+            {
+                string? artPath = !string.IsNullOrEmpty(track.ArtPath) && File.Exists(track.ArtPath)
+                    ? track.ArtPath
+                    : AlbumArtService.FindFolderArt(track.Path ?? "");
+                if (string.IsNullOrEmpty(artPath))
+                    artPath = AlbumArtService.TryExtractArt(track, TagReader.ComputeAlbumKey(track));
+                return (generation, string.IsNullOrEmpty(artPath) || !File.Exists(artPath) ? null : artPath);
+            }
+            catch (Exception ex)
+            {
+                App.Log($"[fullscreen] cover: {ex.Message}");
+                return (generation, null);
+            }
+        }).ContinueWith(t =>
         {
-            App.Log($"[fullscreen] cover: {ex.Message}");
-        }
+            if (t.Result.generation != _generation) return;
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                if (t.Result.generation != _generation) return;
+                CoverImage.Source = t.Result.Item2 is { } artPath
+                    ? new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri(artPath))
+                    : null;
+                // PT3-17: cover-less tracks show the placeholder glyph, not a black void.
+                CoverPlaceholder.Visibility = CoverImage.Source == null ? Visibility.Visible : Visibility.Collapsed;
+            });
+        });
     }
 
     /// <summary>Rebuilds the mirrored envelope polygons from the decimated peaks. Call after
@@ -238,7 +361,31 @@ public sealed partial class FullscreenNowPlayingWindow : Window
 
     private void OnWavePointerMoved(object sender, PointerRoutedEventArgs e)
     {
-        if (_dragging) UpdateSeekPreview(e);
+        if (_dragging)
+        {
+            UpdateSeekPreview(e);
+            return;
+        }
+
+        // Hover affordance (PT3-13): preview the time under the pointer before committing a
+        // seek; the crosshair-style cursor marks the canvas as scrubbable.
+        var playback = AppServices.Playback;
+        if (playback == null || playback.Duration <= TimeSpan.Zero || WaveCanvas.ActualWidth <= 0) return;
+        var x = e.GetCurrentPoint(WaveCanvas).Position.X;
+        var fraction = WaveformLayout.XToFraction(x, WaveCanvas.ActualWidth);
+        Microsoft.UI.Xaml.Controls.ToolTipService.SetToolTip(WaveCanvas,
+            TextFormat.LongDuration(TimeSpan.FromSeconds(fraction * playback.Duration.TotalSeconds)));
+        WaveHoverLine.Visibility = Visibility.Visible;
+        Microsoft.UI.Xaml.Controls.Canvas.SetLeft(WaveHoverLine, x);
+    }
+
+    private void OnWavePointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+    }
+
+    private void OnWavePointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        WaveHoverLine.Visibility = Visibility.Collapsed;
     }
 
     private void OnWavePointerReleased(object sender, PointerRoutedEventArgs e)
@@ -291,6 +438,8 @@ public sealed partial class FullscreenNowPlayingWindow : Window
             ApplyWaveClip(CurrentFraction());
         }
 
+        UpdateTransportState();
+        UpdateAbBand();
         RenderSpectrum();
     }
 

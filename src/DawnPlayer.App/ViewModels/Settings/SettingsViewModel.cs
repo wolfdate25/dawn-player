@@ -38,6 +38,7 @@ public sealed class SettingsViewModel : ViewModelBase
         Action? scanStarter = null,
         Action? lyricsChangedNotifier = null,
         Action<AppSettings>? settingsSaver = null,
+        Action<string>? warningNotifier = null,
         Func<bool>? isExclusiveSessionGetter = null,
         IShortcutBindingStore? shortcutStore = null,
         Action<string>? logger = null,
@@ -68,9 +69,9 @@ public sealed class SettingsViewModel : ViewModelBase
 
         Lastfm = lastfm ?? new LastfmSettingsViewModel(_settings, new ScrobbleService(() => _settings, msg => logger?.Invoke(msg)));
 
-        Library = new LibrarySettingsViewModel(_settings, scanStarter, settingsSaver);
+        Library = new LibrarySettingsViewModel(_settings, scanStarter, settingsSaver, warningNotifier);
 
-        Lyrics = new LyricsSettingsViewModel(_settings, lyricsChangedNotifier, settingsSaver);
+        Lyrics = new LyricsSettingsViewModel(_settings, lyricsChangedNotifier, settingsSaver, warningNotifier);
 
         OnlineLyrics = new LyricsOnlineSettingsViewModel(_settings, lyricsOnlineService, lyricsChangedNotifier, settingsSaver);
 

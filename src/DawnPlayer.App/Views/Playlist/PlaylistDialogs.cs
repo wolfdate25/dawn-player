@@ -98,7 +98,7 @@ public static class PlaylistDialogs
         };
         var errorText = new TextBlock
         {
-            FontSize = 11.5,
+            FontSize = DawnPlayer.App.Styles.DesignTokenValues.Font.BodySmall,
             TextWrapping = TextWrapping.Wrap,
             Opacity = 0.9,
             Visibility = Visibility.Collapsed,
@@ -163,6 +163,9 @@ public static class PlaylistDialogs
             try
             {
                 M3u.Write(file.Path, pl.GetSnapshot(), pl.Name);
+                // Silent success read as "nothing happened" (PT2-14).
+                AppServices.RaiseWarning(Localization.AppStrings.Format(
+                    "Msg_ExportedPlaylist", "'{0}'(으)로 내보냈습니다.", file.Path));
             }
             catch (Exception ex)
             {

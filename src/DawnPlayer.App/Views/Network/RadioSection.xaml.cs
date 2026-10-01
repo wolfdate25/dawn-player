@@ -107,9 +107,22 @@ public sealed partial class RadioSection : UserControl
         ReloadStations();
     }
 
-    private void OnRemoveStationClick(object sender, RoutedEventArgs e)
+    private async void OnRemoveStationClick(object sender, RoutedEventArgs e)
     {
         if (StationFromSender(sender) is not { } station) return;
+
+        // Removing a saved favorite is unrecoverable — confirm first (PT4-05).
+        var dialog = new ContentDialog
+        {
+            Title = AppStrings.Get("Network_Radio_DeleteTitle", "방송국 삭제"),
+            Content = AppStrings.Format("Network_Radio_DeleteMessage", "'{0}'을(를) 즐겨찾기에서 삭제할까요?", station.Name),
+            PrimaryButtonText = AppStrings.Get("Msg_DeletePlaylistConfirm", "삭제"),
+            CloseButtonText = AppStrings.Get("Common_Cancel", "취소"),
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = XamlRoot,
+        };
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+
         AppServices.Stations.Remove(station.Url);
         AppServices.Stations.Save();
         ReloadStations();
@@ -138,13 +151,25 @@ public sealed partial class RadioSection : UserControl
         return true;
     }
 
+    // List items are RadioRow wrappers (DataContext never holds the station itself) — the cast
+    // must unwrap the row or every context-menu command silently no-ops.
     private static RadioStation? StationFromSender(object sender) =>
-        (sender as FrameworkElement)?.DataContext as RadioStation;
+        ((sender as FrameworkElement)?.DataContext as RadioRow)?.Station;
 
     private async void OnStationDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
     {
         if (StationList.SelectedItem is RadioRow { } row)
             await PlayStationAsync(row.Station);
+    }
+
+    /// <summary>Keyboard parity with double-click (PT5-02): the favorites list had no Enter path.</summary>
+    private void OnStationKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.Enter && StationList.SelectedItem is RadioRow { } row)
+        {
+            e.Handled = true;
+            _ = PlayStationAsync(row.Station);
+        }
     }
 
     private async void OnPlayStationClick(object sender, RoutedEventArgs e)
@@ -159,7 +184,9 @@ public sealed partial class RadioSection : UserControl
     {
         ConnectStatusRow.Visibility = Visibility.Visible;
         ConnectRing.IsActive = true;
+        ConnectStatusText.Foreground = Helpers.ThemeResourceHelper.GetBrush("TextSecondaryBrush");
         ConnectStatusText.Text = AppStrings.Format("Network_Radio_Connecting", "연결 중: {0}", station.Name);
+        var failed = false;
         try
         {
             var playlists = AppServices.Playlists;
@@ -174,13 +201,23 @@ public sealed partial class RadioSection : UserControl
         }
         catch (Exception ex)
         {
+            failed = true;
             App.Log($"[radio-station] play failed for '{station.Url}': {ex.Message}");
-            AppServices.RaiseWarning(ex.Message);
+            // Failure keeps the inline status visible with the reason (PT4-12): hiding the row
+            // in finally left only the global InfoBar, breaking pattern parity with the YouTube
+            // section's inline status surface.
+            ConnectRing.IsActive = false;
+            ConnectStatusText.Text = AppStrings.Format("Network_Radio_ConnectFailed",
+                "연결 실패: {0}", ex.Message);
+            ConnectStatusText.Foreground = Helpers.ThemeResourceHelper.GetBrush("StatusDangerBrush");
         }
         finally
         {
             ConnectRing.IsActive = false;
-            ConnectStatusRow.Visibility = Visibility.Collapsed;
+            if (!failed)
+            {
+                ConnectStatusRow.Visibility = Visibility.Collapsed;
+            }
         }
     }
 
@@ -204,7 +241,7 @@ public sealed partial class RadioSection : UserControl
         };
         var errorText = new TextBlock
         {
-            FontSize = 11.5,
+            FontSize = DawnPlayer.App.Styles.DesignTokenValues.Font.BodySmall,
             TextWrapping = TextWrapping.Wrap,
             Visibility = Visibility.Collapsed,
             // The system critical brush when the theme ships it, a plain red otherwise.

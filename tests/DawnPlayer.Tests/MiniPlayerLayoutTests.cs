@@ -62,9 +62,12 @@ public class MiniPlayerLayoutTests
     }
 
     [Fact]
-    public void WideState_Owns640Breakpoint()
+    public void WideState_OwnsBreakpoint()
     {
-        Assert.Equal(640, FindWideBreakpoint(ReadNowPlayingBarXaml()));
+        // PT3-15 (2026-09-30 audit): the AdaptiveTrigger (window width) and the code-side
+        // compact switch (control width) used to disagree (640 vs 730) and produced a mixed
+        // state in between. Both now own the single 730 threshold.
+        Assert.Equal(730, FindWideBreakpoint(ReadNowPlayingBarXaml()));
     }
 
     [Fact]

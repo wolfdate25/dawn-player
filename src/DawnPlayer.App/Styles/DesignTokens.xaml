@@ -34,6 +34,10 @@
             <SolidColorBrush x:Key="StatusDangerBrush" Color="{StaticResource StatusDangerColor}" />
             <SolidColorBrush x:Key="StatusWarningBrush" Color="{StaticResource StatusWarningColor}" />
             <SolidColorBrush x:Key="StatusInfoBrush" Color="{StaticResource StatusInfoColor}" />
+            <Color x:Key="OnAccentColor">#FF141414</Color>
+            <SolidColorBrush x:Key="OnAccentBrush" Color="{StaticResource OnAccentColor}" />
+            <Color x:Key="VisualizerSurfaceColor">#FF141414</Color>
+            <SolidColorBrush x:Key="VisualizerSurfaceBrush" Color="{StaticResource VisualizerSurfaceColor}" />
             <SolidColorBrush x:Key="GlassFillBrush" Color="{StaticResource GlassFillColor}" />
             <SolidColorBrush x:Key="GlassBorderBrush" Color="{StaticResource GlassBorderColor}" />
         </ResourceDictionary>
@@ -53,6 +57,10 @@
             <SolidColorBrush x:Key="StatusDangerBrush" Color="{StaticResource StatusDangerColor}" />
             <SolidColorBrush x:Key="StatusWarningBrush" Color="{StaticResource StatusWarningColor}" />
             <SolidColorBrush x:Key="StatusInfoBrush" Color="{StaticResource StatusInfoColor}" />
+            <Color x:Key="OnAccentColor">#FF141414</Color>
+            <SolidColorBrush x:Key="OnAccentBrush" Color="{StaticResource OnAccentColor}" />
+            <Color x:Key="VisualizerSurfaceColor">#FF141414</Color>
+            <SolidColorBrush x:Key="VisualizerSurfaceBrush" Color="{StaticResource VisualizerSurfaceColor}" />
             <SolidColorBrush x:Key="GlassFillBrush" Color="{StaticResource GlassFillColor}" />
             <SolidColorBrush x:Key="GlassBorderBrush" Color="{StaticResource GlassBorderColor}" />
         </ResourceDictionary>

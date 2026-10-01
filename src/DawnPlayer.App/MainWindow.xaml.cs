@@ -444,6 +444,7 @@ public sealed partial class MainWindow : Window
     private bool _isMiniMode;
     private Windows.Graphics.SizeInt32 _preMiniSize;
     private bool _preMiniAlwaysOnTop;
+    private bool _preMiniMaximized;
 
     /// <summary>True while the window is collapsed to the compact player bar.</summary>
     public bool IsMiniMode => _isMiniMode;
@@ -460,6 +461,9 @@ public sealed partial class MainWindow : Window
         {
             _preMiniSize = appWindow.Size;
             _preMiniAlwaysOnTop = presenter?.IsAlwaysOnTop == true;
+            // PT1-15: exiting mini mode used to un-maximize the window — the maximized state
+            // is part of the pre-mini placement.
+            _preMiniMaximized = presenter?.State == Microsoft.UI.Windowing.OverlappedPresenterState.Maximized;
 
             AppTitleBar.Visibility = Visibility.Collapsed;
             ContentHost.Visibility = Visibility.Collapsed;
@@ -472,12 +476,19 @@ public sealed partial class MainWindow : Window
         }
         else
         {
-            RootGrid.RowDefinitions[0].Height = new GridLength(42);
+            RootGrid.RowDefinitions[0].Height = new GridLength(40);
             RootGrid.RowDefinitions[1].Height = new GridLength(1, GridUnitType.Star);
             AppTitleBar.Visibility = Visibility.Visible;
             ContentHost.Visibility = Visibility.Visible;
 
-            appWindow.Resize(_preMiniSize);
+            if (_preMiniMaximized && presenter != null)
+            {
+                presenter.Maximize();
+            }
+            else
+            {
+                appWindow.Resize(_preMiniSize);
+            }
             if (presenter != null) presenter.IsAlwaysOnTop = _preMiniAlwaysOnTop;
             _isMiniMode = false;
         }
@@ -672,6 +683,16 @@ public sealed partial class MainWindow : Window
             if (TabLibrary != null) TabLibrary.IsChecked = false;
             if (TabPlaylists != null) TabPlaylists.IsChecked = false;
             if (TabNetwork != null) TabNetwork.IsChecked = false;
+        }
+
+        // PT1-03: the settings entry must carry the active-location marker while the tabs are
+        // all unchecked, or nothing on the shell indicates where you are.
+        if (SettingsGearIcon != null)
+        {
+            var onSettings = ContentFrame.Content is SettingsPage;
+            SettingsGearIcon.Foreground = onSettings
+                ? Helpers.ThemeResourceHelper.GetBrush("DawnAccentTextBrush")
+                : Helpers.ThemeResourceHelper.GetBrush("TextSecondaryBrush");
         }
     }
 

@@ -55,6 +55,7 @@
   <data name="MainWindow_Tab_Playlists.Text" xml:space="preserve"><value>Playlists</value></data>
   <data name="MainWindow_Tab_Network.Text" xml:space="preserve"><value>Network</value></data>
   <data name="MainWindow_SettingsGearButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Preferences</value></data>
+  <data name="MainWindow_SettingsGearButton.AutomationProperties.Name" xml:space="preserve"><value>Settings</value></data>
 
   <!-- Module 1: NowPlayingBar -->
   <data name="NowPlaying_SeekSlider.AutomationProperties.Name" xml:space="preserve"><value>Seek position</value></data>
@@ -62,7 +63,7 @@
   <data name="NowPlaying_AlbumArtButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Expand album cover</value></data>
   <data name="NowPlaying_TrackTitle_Empty.Text" xml:space="preserve"><value>No track playing</value></data>
   <data name="NowPlaying_ABRepeatButton.AutomationProperties.Name" xml:space="preserve"><value>A-B repeat</value></data>
-  <data name="NowPlaying_ABRepeat_Tooltip_Off" xml:space="preserve"><value>A-B repeat: click to mark point A here (Ctrl+L)</value></data>
+  <data name="NowPlaying_ABRepeat_Tooltip_Off" xml:space="preserve"><value>A-B repeat: click to mark the current position as point A</value></data>
   <data name="NowPlaying_ABRepeat_Tooltip_Marking" xml:space="preserve"><value>A-B repeat: A marked at {0} — click again to mark B, right-click to cancel</value></data>
   <data name="NowPlaying_ABRepeat_Tooltip_Looping" xml:space="preserve"><value>A-B repeat looping {0}–{1} ({2}) — click to clear</value></data>
   <data name="NowPlaying_ABRepeat_Reject_BBeforeA" xml:space="preserve"><value>Point B must come after point A</value></data>
@@ -139,6 +140,7 @@
   <data name="Library_TreeMenu_Enqueue.Text" xml:space="preserve"><value>Add to queue</value></data>
 
   <data name="Library_SearchBox.PlaceholderText" xml:space="preserve"><value>Search...</value></data>
+  <data name="Library_SearchBox.AutomationProperties.Name" xml:space="preserve"><value>Search library</value></data>
   <data name="Library_ViewGridBtn.AutomationProperties.Name" xml:space="preserve"><value>Cover grid view</value></data>
   <data name="Library_ViewGridBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Cover grid view</value></data>
   <data name="Library_ViewListBtn.AutomationProperties.Name" xml:space="preserve"><value>Track list view</value></data>
@@ -272,7 +274,12 @@
   <data name="LyricsEditor_TabRaw.Header" xml:space="preserve"><value>Edit Full LRC Text Directly</value></data>
   <data name="LyricsEditor_StatusLabel.Text" xml:space="preserve"><value>Ready</value></data>
   <data name="LyricsEditor_CloseBtn.Content" xml:space="preserve"><value>Close</value></data>
-  <data name="LyricsEditor_SaveBtn.Content" xml:space="preserve"><value>💾 Save as LRC File</value></data>
+  <data name="LyricsEditor_SaveBtn.AutomationProperties.Name" xml:space="preserve"><value>Save as LRC File</value></data>
+  <data name="LyricsEditor_SaveBtnText.Text" xml:space="preserve"><value>Save as LRC File</value></data>
+  <data name="LyricsEditor_UnsavedTitle" xml:space="preserve"><value>Unsaved changes</value></data>
+  <data name="Fullscreen_ExitHint.Text" xml:space="preserve"><value>Esc: close · Space: play/pause · ←/→: change track</value></data>
+  <data name="LyricsEditor_UnsavedMessage" xml:space="preserve"><value>There are unsaved lyrics edits. Discard them and close?</value></data>
+  <data name="LyricsEditor_UnsavedDiscard" xml:space="preserve"><value>Discard and close</value></data>
   <data name="LyricsEditor_NewLineText" xml:space="preserve"><value>New lyric line</value></data>
   <data name="LyricsEditor_Status_LinesLoaded" xml:space="preserve"><value>{0} lines of lyrics loaded</value></data>
   <data name="LyricsEditor_Status_NoExistingLyrics" xml:space="preserve"><value>No existing lyrics (Ready to create new)</value></data>
@@ -408,6 +415,83 @@
   <data name="Msg_AddedTracksToQueue" xml:space="preserve"><value>Added {0} tracks to queue.</value></data>
   <data name="Msg_AddedTracksToNamedPlaylist" xml:space="preserve"><value>Added {1} tracks to '{0}'.</value></data>
   <data name="Msg_CreateNewPlaylistAndAdd" xml:space="preserve"><value>Create New Playlist &amp; Add...</value></data>
+  <data name="Msg_DeletePlaylistTitle" xml:space="preserve"><value>Delete playlist</value></data>
+  <data name="Library_MixedSelection" xml:space="preserve"><value>Mixed selection</value></data>
+  <data name="Library_Splitter_Left" xml:space="preserve"><value>Adjust left panel width</value></data>
+  <data name="Settings_SearchBox.PlaceholderText" xml:space="preserve"><value>Search settings…</value></data>
+  <data name="Settings_SearchBox.AutomationProperties.Name" xml:space="preserve"><value>Search settings</value></data>
+  <data name="Tooltip_WithShortcut" xml:space="preserve"><value>{0} ({1})</value></data>
+  <data name="Library_SelectedCount" xml:space="preserve"><value>{0} selected</value></data>
+  <data name="Library_Empty_Title" xml:space="preserve"><value>Your library is empty</value></data>
+  <data name="Library_Empty_OpenSettings.Text" xml:space="preserve"><value>Open settings</value></data>
+  <data name="Library_Empty_ClearSearch.Text" xml:space="preserve"><value>Clear search</value></data>
+  <data name="Report_Loading" xml:space="preserve"><value>Building the report…</value></data>
+  <data name="Report_BuildFailed" xml:space="preserve"><value>Could not build the report: {0}</value></data>
+  <data name="Library_Empty_Hint" xml:space="preserve"><value>Add a music folder and scan in Settings to see your tracks.</value></data>
+  <data name="Library_SearchNoHit_Title" xml:space="preserve"><value>No search results</value></data>
+  <data name="Library_SearchNoHit_Hint" xml:space="preserve"><value>Try a different search or clear the search field.</value></data>
+  <data name="NowPlaying_QueueClearConfirmTitle" xml:space="preserve"><value>Clear queue</value></data>
+  <data name="NowPlaying_QueueClearConfirmMessage" xml:space="preserve"><value>Remove all {0} tracks from the queue?</value></data>
+  <data name="Msg_TagEditorInvalidNumbers" xml:space="preserve"><value>These fields must be integers: {0}</value></data>
+  <data name="Library_Splitter_Right" xml:space="preserve"><value>Adjust right panel width</value></data>
+  <data name="Library_Splitter_Lyrics" xml:space="preserve"><value>Adjust lyrics panel width</value></data>
+  <data name="Settings_Lyrics_LrcPatterns_Filtered" xml:space="preserve"><value>{0} patterns saved, {1} excluded (must end with .lrc).</value></data>
+  <data name="Settings_Library_FolderDuplicate" xml:space="preserve"><value>'{0}' is already a watched folder.</value></data>
+  <data name="Settings_Library_RemoveFolderTitle" xml:space="preserve"><value>Remove watched folder</value></data>
+  <data name="Settings_Library_RemoveFolderMessage" xml:space="preserve"><value>Remove '{0}' from the watched folders? The folder and files are not deleted.</value></data>
+  <data name="Settings_Appearance_CustomAccent_InvalidHex" xml:space="preserve"><value>Not a valid HEX color. Use the #RRGGBB format.</value></data>
+  <data name="Network_Radio_ConnectFailed" xml:space="preserve"><value>Connection failed: {0}</value></data>
+  <data name="Msg_ExportedPlaylist" xml:space="preserve"><value>Exported to '{0}'.</value></data>
+  <data name="Settings_Lastfm_ApiKeyBox.Header" xml:space="preserve"><value>API key</value></data>
+  <data name="Settings_Lastfm_ApiSecretBox.Header" xml:space="preserve"><value>Shared secret</value></data>
+  <data name="Settings_Audio_Driver_A11yName" xml:space="preserve"><value>Audio Output Driver</value></data>
+  <data name="Settings_Audio_Device_A11yName" xml:space="preserve"><value>Output Device</value></data>
+  <data name="Settings_Audio_BitDepth_A11yName" xml:space="preserve"><value>Exclusive Mode Bit Depth</value></data>
+  <data name="Settings_Audio_RateMismatch_A11yName" xml:space="preserve"><value>Sample rate mismatch handling (exclusive mode)</value></data>
+  <data name="Settings_Audio_DsdMode_A11yName" xml:space="preserve"><value>DSD playback mode (DSF/DFF)</value></data>
+  <data name="Settings_Audio_AllowVolume_A11yName" xml:space="preserve"><value>Allow Volume / ReplayGain in Exclusive Mode</value></data>
+  <data name="Settings_Audio_Latency_A11yName" xml:space="preserve"><value>Output Buffer Latency</value></data>
+  <data name="Settings_Eq_Profile_A11yName" xml:space="preserve"><value>Select Profile to Edit</value></data>
+  <data name="Settings_Eq_Preamp_A11yName" xml:space="preserve"><value>Preamp</value></data>
+  <data name="Settings_Eq_TargetDevice_A11yName" xml:space="preserve"><value>Target Audio Output Device</value></data>
+  <data name="Settings_Eq_BoundProfile_A11yName" xml:space="preserve"><value>Profile Bound to Device</value></data>
+  <data name="Settings_Playback_NormMode_A11yName" xml:space="preserve"><value>Normalization Mode</value></data>
+  <data name="Settings_Playback_TargetLevel_A11yName" xml:space="preserve"><value>Target Volume Level</value></data>
+  <data name="Settings_Playback_MaxBoost_A11yName" xml:space="preserve"><value>Max Boost Limit</value></data>
+  <data name="Settings_Playback_Speed_A11yName" xml:space="preserve"><value>Response Speed</value></data>
+  <data name="Settings_Playback_ReplayGain_A11yName" xml:space="preserve"><value>ReplayGain Mode</value></data>
+  <data name="Settings_Playback_RgPreamp_A11yName" xml:space="preserve"><value>ReplayGain Preamp</value></data>
+  <data name="Settings_Playback_PreventClipping_A11yName" xml:space="preserve"><value>Prevent Clipping</value></data>
+  <data name="Settings_Playback_CrossfeedStrength_A11yName" xml:space="preserve"><value>Crossfeed Strength</value></data>
+  <data name="Settings_Library_StartupScan_A11yName" xml:space="preserve"><value>Scan on Startup</value></data>
+  <data name="Settings_Library_Rg_R128_A11yName" xml:space="preserve"><value>Also write ReplayGain 2.0 (R128_*) tags</value></data>
+  <data name="Settings_Lyrics_Font_A11yName" xml:space="preserve"><value>Lyrics Font Family</value></data>
+  <data name="Settings_Lyrics_FontSize_A11yName" xml:space="preserve"><value>Base Lyrics Font Size</value></data>
+  <data name="Settings_Lyrics_ActiveFontSize_A11yName" xml:space="preserve"><value>Active Lyrics Font Size</value></data>
+  <data name="Settings_Lyrics_CharSpacing_A11yName" xml:space="preserve"><value>Character Spacing</value></data>
+  <data name="Settings_Lyrics_LineHeight_A11yName" xml:space="preserve"><value>Line Height</value></data>
+  <data name="Settings_Lyrics_Alignment_A11yName" xml:space="preserve"><value>Text Alignment</value></data>
+  <data name="Settings_Lyrics_FocusDimming_A11yName" xml:space="preserve"><value>Focus Dimming Effect</value></data>
+  <data name="Settings_Lyrics_Embedded_A11yName" xml:space="preserve"><value>Read Embedded Lyrics</value></data>
+  <data name="Settings_Lyrics_LrcPattern_A11yName" xml:space="preserve"><value>.lrc File Search Patterns</value></data>
+  <data name="Settings_OnlineLyrics_SaveLoc_A11yName" xml:space="preserve"><value>Save Location</value></data>
+  <data name="Settings_OnlineLyrics_Template_A11yName" xml:space="preserve"><value>Filename Template</value></data>
+  <data name="Settings_Appearance_Lang_A11yName" xml:space="preserve"><value>Language</value></data>
+  <data name="Settings_Appearance_Tray_A11yName" xml:space="preserve"><value>Close to Tray</value></data>
+  <data name="Settings_Appearance_Motion_A11yName" xml:space="preserve"><value>UI Motion</value></data>
+  <data name="Settings_Appearance_FsAcrylic_A11yName" xml:space="preserve"><value>Full-screen Acrylic</value></data>
+  <data name="Settings_Appearance_Theme_A11yName" xml:space="preserve"><value>Theme Mode</value></data>
+  <data name="Settings_Appearance_Backdrop_A11yName" xml:space="preserve"><value>Window Backdrop Material</value></data>
+  <data name="Settings_Appearance_DynamicAccent_A11yName" xml:space="preserve"><value>Dynamic Album Art Accent</value></data>
+  <data name="Settings_Appearance_Accent_A11yName" xml:space="preserve"><value>Accent Color Presets</value></data>
+  <data name="Settings_Appearance_CustomAccent_A11yName" xml:space="preserve"><value>Custom Accent Color</value></data>
+  <data name="Settings_Layout_CoverSize_A11yName" xml:space="preserve"><value>Default Album Cover Size</value></data>
+  <data name="Msg_DeletePlaylistMessage" xml:space="preserve"><value>Delete '{0}'? This cannot be undone.</value></data>
+  <data name="Msg_DeletePlaylistConfirm" xml:space="preserve"><value>Delete</value></data>
+  <data name="Network_Radio_DeleteTitle" xml:space="preserve"><value>Delete station</value></data>
+  <data name="Network_Radio_DeleteMessage" xml:space="preserve"><value>Remove '{0}' from favorites?</value></data>
+  <data name="Network_YouTube_DeleteTitle" xml:space="preserve"><value>Delete recent entry</value></data>
+  <data name="Network_YouTube_DeleteMessage" xml:space="preserve"><value>Remove '{0}' from the recent list?</value></data>
   <data name="Msg_SavedQueueToPlaylist" xml:space="preserve"><value>Saved queue ({0} tracks) to '{1}'.</value></data>
   <data name="Msg_DefaultSavedQueueName" xml:space="preserve"><value>Saved Queue</value></data>
   <data name="Msg_NoTrackPlayingWarning" xml:space="preserve"><value>No track currently playing.</value></data>
@@ -507,6 +591,11 @@
   <data name="Settings_Eq_Band_LowPass.Content" xml:space="preserve"><value>Low Pass</value></data>
   <data name="Settings_Eq_Band_HighPass.Content" xml:space="preserve"><value>High Pass</value></data>
   <data name="Settings_Eq_DeleteBand_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Delete band</value></data>
+  <data name="Settings_Eq_Band_Type_Name" xml:space="preserve"><value>EQ band {0} type</value></data>
+  <data name="Settings_Eq_Band_Freq_Name" xml:space="preserve"><value>EQ band {0} frequency</value></data>
+  <data name="Settings_Eq_Band_Gain_Name" xml:space="preserve"><value>EQ band {0} gain</value></data>
+  <data name="Settings_Eq_Band_Q_Name" xml:space="preserve"><value>EQ band {0} Q factor</value></data>
+  <data name="Settings_Eq_DeleteBand_Button.AutomationProperties.Name" xml:space="preserve"><value>Delete band</value></data>
   <data name="Settings_Eq_DeleteBand_Button.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Delete band</value></data>
   <data name="Settings_Eq_Band_Freq_Label.Text" xml:space="preserve"><value>Frequency</value></data>
   <data name="Settings_Eq_Band_Gain_Label.Text" xml:space="preserve"><value>Gain</value></data>
@@ -583,6 +672,10 @@
   <data name="Settings_Library_Rg_Scan_Button.Content" xml:space="preserve"><value>Start Analysis</value></data>
   <data name="Settings_Library_Rg_Rescan_Button.Content" xml:space="preserve"><value>Re-analyze All</value></data>
   <data name="Settings_Library_Rg_NothingToScan" xml:space="preserve"><value>Nothing to analyze (all tracks already have ReplayGain tags).</value></data>
+  <data name="Settings_Library_Rg_AlreadyRunning" xml:space="preserve"><value>A ReplayGain analysis is already running.</value></data>
+  <data name="Settings_Library_Rg_Starting" xml:space="preserve"><value>Starting analysis…</value></data>
+  <data name="Settings_Library_Rg_RescanConfirmTitle" xml:space="preserve"><value>Rescan all</value></data>
+  <data name="Settings_Library_Rg_RescanConfirmMessage" xml:space="preserve"><value>This recomputes ReplayGain tags for every track and overwrites existing values. Continue?</value></data>
   <data name="Settings_Library_Rg_ScanningFormat" xml:space="preserve"><value>{0}/{1} · {2}</value></data>
   <data name="Settings_Library_Rg_DoneFormat" xml:space="preserve"><value>Done: {0} analyzed, {1} failed</value></data>
   <data name="Msg_RgScanFailed" xml:space="preserve"><value>ReplayGain analysis failed: {0}</value></data>
@@ -773,6 +866,7 @@
   <data name="Rating_Selector.AutomationProperties.Name" xml:space="preserve"><value>Set rating</value></data>
   <data name="Rating_ClearHint.Text" xml:space="preserve"><value>Click the current star count again to clear the rating.</value></data>
   <data name="Rating_Cell.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Set rating</value></data>
+  <data name="Rating_Cell.AutomationProperties.Name" xml:space="preserve"><value>Set rating</value></data>
   <data name="Smart_Dialog_CreateTitle" xml:space="preserve"><value>New smart playlist</value></data>
   <data name="Smart_Dialog_EditTitle" xml:space="preserve"><value>Edit {0}</value></data>
   <data name="Smart_Dialog_NameHeader" xml:space="preserve"><value>Name</value></data>

@@ -9,9 +9,10 @@ namespace DawnPlayer.App.Helpers;
 public static class ThemeResourceHelper
 {
     private static readonly SolidColorBrush DefaultAccent = new(Windows.UI.Color.FromArgb(255, 232, 163, 61));
+    private static readonly SolidColorBrush DefaultAccentText = new(Windows.UI.Color.FromArgb(255, 232, 163, 61));
     private static readonly SolidColorBrush DefaultPrimaryText = new(Windows.UI.Color.FromArgb(255, 243, 243, 246));
     private static readonly SolidColorBrush DefaultSecondaryText = new(Windows.UI.Color.FromArgb(255, 174, 174, 188));
-    private static readonly SolidColorBrush DefaultTertiaryText = new(Windows.UI.Color.FromArgb(255, 120, 120, 136));
+    private static readonly SolidColorBrush DefaultTertiaryText = new(Windows.UI.Color.FromArgb(255, 143, 143, 160));
 
     public static Brush GetBrush(string key, Brush? fallback = null)
     {
@@ -28,6 +29,7 @@ public static class ThemeResourceHelper
         return fallback ?? key switch
         {
             "DawnAccentBrush" => DefaultAccent,
+            "DawnAccentTextBrush" => DefaultAccentText,
             "TextPrimaryBrush" => DefaultPrimaryText,
             "TextSecondaryBrush" => DefaultSecondaryText,
             "TextTertiaryBrush" => DefaultTertiaryText,

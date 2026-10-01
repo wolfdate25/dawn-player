@@ -28,6 +28,7 @@ public sealed partial class SettingsPage : Page
 
     public SettingsPage()
     {
+        _flashTimer.Tick += (_, _) => RestoreFlashedCard();
         ViewModel = new SettingsViewModel(
             AppServices.Settings,
             AppServices.AudioSettings,
@@ -35,6 +36,7 @@ public sealed partial class SettingsPage : Page
             AppServices.AppearanceSettings,
             scanStarter: AppServices.StartLibraryScan,
             lyricsChangedNotifier: AppServices.RaiseLyricsSettingsChanged,
+            warningNotifier: AppServices.RaiseWarning,
             isExclusiveSessionGetter: () => AppServices.Playback.IsExclusiveSession ||
                 (AppServices.Settings.Output.DriverType == AudioDriverType.Wasapi &&
                  AppServices.Settings.Output.UseExclusiveMode &&
@@ -68,8 +70,18 @@ public sealed partial class SettingsPage : Page
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
+        // CR2: a scan settling while the page is unloaded drops its completion event — sync
+        // the button state from the source of truth instead of trusting the last event.
+        _settingsSearchIndex = null; // rebuild per visit: category labels are localized
+        var scanRunning = AppServices.IsReplayGainScanRunning;
+        RgScanStartButton.IsEnabled = !scanRunning;
+        RgRescanAllButton.IsEnabled = !scanRunning;
+        // Seed the masked secret box from the saved credential (PasswordBox has no bindable
+        // two-way Password; see OnLastfmSecretPasswordChanged).
+        LastfmApiSecretBox.Password = ViewModel.Lastfm.ApiSecret ?? "";
         AppServices.OutputSessionChanged += OnOutputSessionChanged;
         AppServices.RgScanProgressChanged += OnRgScanProgress;
+        AppServices.RgScanCompleted += OnRgScanCompleted;
         ViewModel.Equalizer.PropertyChanged += OnEqualizerPropertyChanged;
         ViewModel.Lyrics.PropertyChanged += OnLyricsPropertyChanged;
         ViewModel.Shortcuts.AttachToStore();
@@ -101,6 +113,30 @@ public sealed partial class SettingsPage : Page
     private void OnLastfmCredentialsLostFocus(object sender, RoutedEventArgs e) =>
         ViewModel.Lastfm.ApplyCredentials();
 
+    /// <summary>PasswordBox.Password is not a DependencyProperty, so the secret syncs through
+    /// this handler instead of a TwoWay binding (PT4-06).</summary>
+    private void OnLastfmSecretPasswordChanged(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel?.Lastfm == null || LastfmApiSecretBox == null) return;
+        ViewModel.Lastfm.ApiSecret = LastfmApiSecretBox.Password;
+    }
+
+    /// <summary>Commits the typed HEX on blur and reports malformed input beside the field —
+    /// the old TwoWay binding silently dropped invalid text (PT4-07).</summary>
+    private void OnCustomAccentHexLostFocus(object sender, RoutedEventArgs e)
+    {
+        var ok = ViewModel.Appearance.TrySetCustomAccentHex(CustomAccentHexBox.Text);
+        CustomAccentHexError.Text = ok
+            ? ""
+            : AppStrings.Get("Settings_Appearance_CustomAccent_InvalidHex",
+                "올바른 HEX 형식이 아닙니다. #RRGGBB 형식으로 입력하세요.");
+        CustomAccentHexError.Visibility = ok ? Visibility.Collapsed : Visibility.Visible;
+        if (ok && ThemeService.TryColorFromHex(ViewModel.Appearance.CustomAccentHex, out var color))
+        {
+            CustomColorPreview.Background = new SolidColorBrush(color);
+        }
+    }
+
     private void OnLastfmAuthClick(object sender, RoutedEventArgs e) =>
         _ = ViewModel.Lastfm.StartAuthAsync();
 
@@ -109,8 +145,10 @@ public sealed partial class SettingsPage : Page
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
+        RestoreFlashedCard();
         AppServices.OutputSessionChanged -= OnOutputSessionChanged;
         AppServices.RgScanProgressChanged -= OnRgScanProgress;
+        AppServices.RgScanCompleted -= OnRgScanCompleted;
         ViewModel.Equalizer.PropertyChanged -= OnEqualizerPropertyChanged;
         ViewModel.Lyrics.PropertyChanged -= OnLyricsPropertyChanged;
         ViewModel.Shortcuts.DetachFromStore();
@@ -142,6 +180,191 @@ public sealed partial class SettingsPage : Page
     private void OnLyricsPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         UpdateLyricsPreview();
+    }
+
+    // ---------------- settings search (PT4-14) ----------------
+
+    private sealed class SettingSearchEntry
+    {
+        public required string Display;
+        public required string SearchText;
+        public int SectionIndex;
+        public FrameworkElement? Target;
+
+        public override string ToString() => Display;
+    }
+
+    private List<SettingSearchEntry>? _settingsSearchIndex;
+
+    /// <summary>Indexes every settings card title (plus its sibling description text and the
+    /// category name) once, on first use. All sections stay instantiated behind Visibility
+    /// toggles, so the whole page is searchable without switching categories.</summary>
+    private void BuildSettingsSearchIndex()
+    {
+        if (_settingsSearchIndex != null) return;
+        var index = new List<SettingSearchEntry>();
+        var titleStyle = Resources["SettingTitle"] as Style;
+        var descStyle = Resources["SettingDesc"] as Style;
+        int sectionIndex = 0;
+        foreach (var item in CategoryList.Items.OfType<ListViewItem>())
+        {
+            var tag = item.Tag as string ?? "";
+            var section = FindName("Section_" + tag) as StackPanel;
+            var categoryName = (item.Content as StackPanel)?.Children.OfType<TextBlock>().FirstOrDefault()?.Text ?? tag;
+
+            // The category itself is always searchable.
+            index.Add(new SettingSearchEntry
+            {
+                Display = categoryName,
+                SearchText = categoryName,
+                SectionIndex = sectionIndex,
+                Target = section,
+            });
+
+            if (section != null)
+            {
+                foreach (var title in EnumerateDescendants<TextBlock>(section)
+                             .Where(t => titleStyle != null && ReferenceEquals(t.Style, titleStyle)))
+                {
+                    // Sibling SettingDesc texts (same label stack) join the search text so a
+                    // word from the description finds the row too.
+                    var siblings = title.Parent is StackPanel sp
+                        ? sp.Children.OfType<TextBlock>()
+                            .Where(t => descStyle != null && ReferenceEquals(t.Style, descStyle))
+                            .Select(t => t.Text)
+                        : Enumerable.Empty<string>();
+                    var searchText = string.Join(" ", new[] { title.Text }.Concat(siblings).Where(x => x.Length > 0));
+                    if (searchText.Length == 0) continue;
+                    index.Add(new SettingSearchEntry
+                    {
+                        Display = title.Text,
+                        SearchText = searchText,
+                        SectionIndex = sectionIndex,
+                        Target = title,
+                    });
+                }
+            }
+            sectionIndex++;
+        }
+        _settingsSearchIndex = index;
+    }
+
+    private static IEnumerable<T> EnumerateDescendants<T>(DependencyObject root) where T : DependencyObject
+    {
+        var queue = new Queue<DependencyObject>();
+        queue.Enqueue(root);
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            int count;
+            try { count = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(current); }
+            catch { continue; }
+            for (int i = 0; i < count; i++)
+            {
+                DependencyObject? child;
+                try { child = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(current, i); }
+                catch { continue; }
+                if (child is T match) yield return match;
+                if (child != null) queue.Enqueue(child);
+            }
+        }
+    }
+
+    private void OnSettingsSearchTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+    {
+        if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput) return;
+        BuildSettingsSearchIndex();
+        var query = sender.Text.Trim();
+        if (query.Length == 0)
+        {
+            sender.ItemsSource = null;
+            return;
+        }
+        var matches = _settingsSearchIndex!
+            .Where(e => e.SearchText.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .Take(12)
+            .ToList();
+        sender.ItemsSource = matches;
+    }
+
+#pragma warning disable CA1822
+    private void OnSettingsSearchSuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
+    {
+        // Highlight-only here; the jump happens on submit (click/Enter) so arrowing through the
+        // dropdown doesn't yank the page around.
+    }
+#pragma warning restore CA1822
+
+    private void OnSettingsSearchQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+    {
+        BuildSettingsSearchIndex();
+        var entry = args.ChosenSuggestion as SettingSearchEntry;
+        if (entry == null)
+        {
+            var query = args.QueryText.Trim();
+            if (query.Length == 0) return;
+            entry = _settingsSearchIndex!.FirstOrDefault(
+                e => e.SearchText.Contains(query, StringComparison.OrdinalIgnoreCase));
+        }
+        if (entry == null) return;
+        JumpToSetting(entry);
+    }
+
+    /// <summary>Switches to the entry's category, scrolls the matched card into view and
+    /// flashes it. CategoryList's SelectionChanged resets the scroll position, so the jump
+    /// scroll runs one dispatcher tick later — after that reset.</summary>
+    private void JumpToSetting(SettingSearchEntry entry)
+    {
+        SettingsSearchBox.IsSuggestionListOpen = false;
+        SettingsSearchBox.Text = entry.Display;
+        if (CategoryList.SelectedIndex != entry.SectionIndex)
+        {
+            CategoryList.SelectedIndex = entry.SectionIndex;
+        }
+        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+        {
+            var target = entry.Target;
+            if (target == null || ContentScrollViewer?.Content is not UIElement content) return;
+            target.UpdateLayout();
+            var pos = target.TransformToVisual(content).TransformPoint(new Windows.Foundation.Point(0, 0));
+            ContentScrollViewer.ChangeView(null, Math.Max(0, pos.Y - 40), null, false);
+            FlashSectionCard(target);
+        });
+    }
+
+    private Border? _flashingCard;
+    private Brush? _flashOriginalBrush;
+    private readonly DispatcherTimer _flashTimer = new() { Interval = TimeSpan.FromMilliseconds(1200) };
+
+    private void FlashSectionCard(FrameworkElement target)
+    {
+        var card = Helpers.VisualTreeHelperExtensions.FindAncestor<Border>(target);
+        while (card != null && !ReferenceEquals(card.Style, Resources["SectionCard"]))
+        {
+            card = Helpers.VisualTreeHelperExtensions.FindAncestor<Border>(card.Parent);
+        }
+        if (card == null) return;
+
+        if (_flashingCard != card)
+        {
+            RestoreFlashedCard();
+            _flashingCard = card;
+            _flashOriginalBrush = card.Background;
+        }
+        card.Background = Helpers.ThemeResourceHelper.GetBrush("DawnAccentMutedBrush");
+        _flashTimer.Stop();
+        _flashTimer.Start();
+    }
+
+    private void RestoreFlashedCard()
+    {
+        if (_flashingCard != null && _flashOriginalBrush != null)
+        {
+            _flashingCard.Background = _flashOriginalBrush;
+        }
+        _flashingCard = null;
+        _flashOriginalBrush = null;
+        _flashTimer.Stop();
     }
 
     private void OnCategorySelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -434,14 +657,30 @@ public sealed partial class SettingsPage : Page
         }
     }
 
-    private void OnRemoveFolder(object sender, RoutedEventArgs e) =>
+    private async void OnRemoveFolder(object sender, RoutedEventArgs e)
+    {
+        var target = ViewModel.Library.SelectedFolder;
+        if (string.IsNullOrWhiteSpace(target)) return;
+
+        // Removing a watch folder stops updates for everything under it (PT4-09) — confirm.
+        var dialog = new ContentDialog
+        {
+            Title = AppStrings.Get("Settings_Library_RemoveFolderTitle", "감시 폴더 제거"),
+            Content = AppStrings.Format("Settings_Library_RemoveFolderMessage",
+                "'{0}'을(를) 감시 폴더에서 제거할까요? 폴더와 파일은 삭제되지 않습니다.", target),
+            PrimaryButtonText = AppStrings.Get("Msg_DeletePlaylistConfirm", "삭제"),
+            CloseButtonText = AppStrings.Get("Common_Cancel", "취소"),
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = XamlRoot,
+        };
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
         ViewModel.Library.RemoveFolder();
+    }
 
     private void OnScanNow(object sender, RoutedEventArgs e) =>
         ViewModel.Library.TriggerScanNow();
 
-    private void OnRgScanStart(object sender, RoutedEventArgs e) =>
-        AppServices.StartReplayGainScan(false);
+    private void OnRgScanStart(object sender, RoutedEventArgs e) => RunRgScan(rescanAll: false);
 
     private async void OnPickImpulseClick(object sender, RoutedEventArgs e)
     {
@@ -467,8 +706,48 @@ public sealed partial class SettingsPage : Page
     private void OnClearImpulseClick(object sender, RoutedEventArgs e) =>
         ViewModel.Playback.SetImpulsePath("");
 
-    private void OnRgScanRescanAll(object sender, RoutedEventArgs e) =>
-        AppServices.StartReplayGainScan(true);
+    private async void OnRgScanRescanAll(object sender, RoutedEventArgs e)
+    {
+        // A rescan overwrites existing REPLAYGAIN_* tags on every file — confirm (PT4-10).
+        var dialog = new ContentDialog
+        {
+            Title = AppStrings.Get("Settings_Library_Rg_RescanConfirmTitle", "전체 재분석"),
+            Content = AppStrings.Get("Settings_Library_Rg_RescanConfirmMessage",
+                "모든 트랙의 ReplayGain 태그를 다시 계산하고 기존 값을 덮어씁니다. 계속할까요?"),
+            PrimaryButtonText = AppStrings.Get("Common_OK", "확인"),
+            CloseButtonText = AppStrings.Get("Common_Cancel", "취소"),
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = XamlRoot,
+        };
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+        RunRgScan(rescanAll: true);
+    }
+
+    /// <summary>Starts an RG scan with immediate feedback: the buttons lock for the whole run
+    /// and the status line wakes up before the first per-track event lands (PT4-10).</summary>
+    private void RunRgScan(bool rescanAll)
+    {
+        if (AppServices.IsReplayGainScanRunning)
+        {
+            AppServices.RaiseWarning(AppStrings.Get("Settings_Library_Rg_AlreadyRunning", "ReplayGain 분석이 이미 실행 중입니다."));
+            return;
+        }
+        RgScanStartButton.IsEnabled = false;
+        RgRescanAllButton.IsEnabled = false;
+        if (RgScanStatusText != null)
+        {
+            RgScanStatusText.Text = AppStrings.Get("Settings_Library_Rg_Starting", "분석 시작…");
+            RgScanStatusText.Visibility = Visibility.Visible;
+        }
+        AppServices.StartReplayGainScan(rescanAll);
+    }
+
+    private void OnRgScanCompleted() => AppServices.RunOnUi(() =>
+    {
+        // Raised on a worker thread — the button unlock must hop back to the UI thread.
+        RgScanStartButton.IsEnabled = true;
+        RgRescanAllButton.IsEnabled = true;
+    });
 
     private void OnLrcPatternsLostFocus(object sender, RoutedEventArgs e) =>
         ViewModel.Lyrics.SaveLrcPatterns(LrcPatternsBox.Text);

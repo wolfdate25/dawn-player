@@ -198,6 +198,50 @@ public class DesignTokenTests
         Assert.True(ContrastMath.ContrastRatio(primaryLight, layerLight) >= 7.0, "TextPrimary on LayerBg must be AAA (light)");
     }
 
+    /// <summary>TextTertiary paints functional small text (track numbers, column headers,
+    /// settings descriptions) — it is body text under WCAG, not decoration, so it must clear
+    /// 4.5:1 on every rest surface it appears on (2026-09-30 audit PT1-02/PT5-04).</summary>
+    [Fact]
+    public void TextTertiary_MeetsTextContrast_OnEoleSurfaces_InBothThemes()
+    {
+        var root = FindRepoRoot();
+        Assert.True(root != null);
+
+        string[] surfaces = { "LayerBgColor", "PanelSubtleColor", "PanelColor", "CardColor" };
+        foreach (var theme in new[] { "Default", "Light" })
+        {
+            var tertiary = DawnThemeHex(root!, "TextTertiaryColor", theme);
+            foreach (var surface in surfaces)
+            {
+                var bg = DawnThemeHex(root!, surface, theme);
+                var ratio = ContrastMath.ContrastRatio(tertiary, bg);
+                Assert.True(ratio >= 4.5, $"TextTertiary on {surface} ({theme}): {ratio:F2} < 4.5");
+            }
+        }
+    }
+
+    /// <summary>DawnAccentTextBrush is what accent-colored foregrounds actually consume
+    /// (toggles, segment tabs, active lyrics, ratings). It must clear AA text contrast on the
+    /// panel and card surfaces in both themes — the raw light accent cannot, which is exactly
+    /// why this separate token exists (2026-09-30 audit PT1-01/PT5-05).</summary>
+    [Fact]
+    public void AccentText_MeetsTextContrast_OnPanelAndCard_InBothThemes()
+    {
+        var root = FindRepoRoot();
+        Assert.True(root != null);
+
+        foreach (var theme in new[] { "Default", "Light" })
+        {
+            var accentText = DawnThemeHex(root!, "DawnAccentTextColor", theme);
+            foreach (var surface in new[] { "PanelColor", "CardColor" })
+            {
+                var bg = DawnThemeHex(root!, surface, theme);
+                var ratio = ContrastMath.ContrastRatio(accentText, bg);
+                Assert.True(ratio >= 4.5, $"DawnAccentText on {surface} ({theme}): {ratio:F2} < 4.5");
+            }
+        }
+    }
+
     [Fact]
     public void Accent_MeetsUiContrast_OnPanel()
     {
@@ -209,9 +253,11 @@ public class DesignTokenTests
         Assert.True(ContrastMath.ContrastRatio(darkAccent, darkPanel) >= 3.0,
             "Accent must meet the 3:1 UI-component threshold on the dark panel");
 
-        // Light accent (#C77F1B family) sits at ~2.8:1 on the warm light panel — documented
-        // current-palette state, gated so it cannot silently degrade further. Raising it is a
-        // deliberate palette change, not a drive-by.
+        // The light fill accent (#C77F1B family) stays at ~2.6:1 on the warm light panel by
+        // design — it is only ever a *fill* (buttons, slider value, muted toggle backgrounds)
+        // where its shape carries the affordance. Text/icon foregrounds moved to the separate
+        // DawnAccentTextColor token, gated at 4.5:1 above. This floor keeps the fill from
+        // degrading further.
         var lightAccent = DawnThemeHex(root!, "DawnAccentColor", "Light");
         var lightPanel = DawnThemeHex(root!, "PanelColor", "Light");
         Assert.True(ContrastMath.ContrastRatio(lightAccent, lightPanel) >= 2.5,

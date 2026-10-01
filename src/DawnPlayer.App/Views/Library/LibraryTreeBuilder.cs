@@ -14,9 +14,13 @@ public static class LibraryTreeBuilder
     /// Builds the root node and hierarchical children for the given grouping mode.
     /// Folder mode defers child UI nodes until first expansion (P0 lazy expansion):
     /// the model hierarchy stays complete, so counts and filters are unaffected.
+    /// User expansion state survives the rebuild (PT2-05): a rescan or tag edit used to
+    /// collapse every manually expanded node back to its DefaultExpanded default.
     /// </summary>
     public static TreeViewNode BuildTree(IReadOnlyList<Track> tracks, TreeGroupMode mode, IList<TreeViewNode> rootNodes)
     {
+        var expandedKeys = CollectExpandedKeys(rootNodes);
+
         rootNodes.Clear();
 
         var models = new List<LibraryTreeNode>();
@@ -26,7 +30,7 @@ public static class LibraryTreeBuilder
         TreeViewNode? allTvNode = null;
         foreach (var model in models)
         {
-            var tvNode = ToTreeViewNode(model, lazy);
+            var tvNode = ToTreeViewNode(model, lazy, expandedKeys);
             if (ReferenceEquals(model, allModel)) allTvNode = tvNode;
             rootNodes.Add(tvNode);
         }
@@ -34,26 +38,60 @@ public static class LibraryTreeBuilder
         return allTvNode ?? new TreeViewNode { Content = allModel, IsExpanded = allModel.DefaultExpanded };
     }
 
+    /// <summary>Stable identity of a node across rebuilds: its filter coordinates. Two nodes
+    /// with the same coordinates are the same node for expansion-state purposes.</summary>
+    public static string ExpansionKey(LibraryTreeNode model) =>
+        $"{model.FilterType}|{model.FilterValue}|{model.FilterExtra}|{model.FilterExtra2}";
+
+    private static HashSet<string> CollectExpandedKeys(IList<TreeViewNode> roots)
+    {
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+        void Walk(IList<TreeViewNode> nodes)
+        {
+            foreach (var n in nodes)
+            {
+                if (n.IsExpanded && n.Content is LibraryTreeNode model)
+                {
+                    keys.Add(ExpansionKey(model));
+                }
+                Walk(n.Children);
+            }
+        }
+        Walk(roots);
+        return keys;
+    }
+
     /// <summary>Marks an unexpanded node whose children are not materialized yet.</summary>
     private static readonly object DeferredSentinel = new();
 
-    private static TreeViewNode ToTreeViewNode(LibraryTreeNode model, bool lazy)
+    private static TreeViewNode ToTreeViewNode(LibraryTreeNode model, bool lazy, HashSet<string>? expandedKeys = null)
     {
-        var node = new TreeViewNode
-        {
-            Content = model,
-            IsExpanded = model.DefaultExpanded
-        };
+        bool expanded = model.DefaultExpanded
+            || (expandedKeys?.Contains(ExpansionKey(model)) ?? false);
+        var node = new TreeViewNode { IsExpanded = expanded };
 
         if (lazy && model.DeferChildren)
         {
-            node.Children.Add(new TreeViewNode { Content = DeferredSentinel });
+            if (expanded)
+            {
+                // Restored expansion materializes immediately: a sentinel child under an
+                // already-expanded node depends on Expanding firing for a node the TreeView
+                // never saw the user expand — materializing here keeps the restore honest.
+                foreach (var child in model.Children)
+                {
+                    node.Children.Add(ToTreeViewNode(child, lazy, expandedKeys));
+                }
+            }
+            else
+            {
+                node.Children.Add(new TreeViewNode { Content = DeferredSentinel });
+            }
         }
         else
         {
             foreach (var child in model.Children)
             {
-                node.Children.Add(ToTreeViewNode(child, lazy));
+                node.Children.Add(ToTreeViewNode(child, lazy, expandedKeys));
             }
         }
 

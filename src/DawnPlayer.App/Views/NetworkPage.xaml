@@ -24,21 +24,21 @@
                          Style="{StaticResource EoleNavTabStyle}" Click="OnSectionRadioClick">
                 <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                     <FontIcon Glyph="&#xE968;" FontSize="12"/>
-                    <TextBlock x:Uid="Network_Section_Radio" Text="라디오" FontSize="12.5"/>
+                    <TextBlock x:Uid="Network_Section_Radio" Text="라디오" FontSize="{StaticResource FontBody}"/>
                 </StackPanel>
             </RadioButton>
             <RadioButton x:Name="SectionDlna" GroupName="NetworkSectionGroup"
                          Style="{StaticResource EoleNavTabStyle}" Click="OnSectionDlnaClick">
                 <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                     <FontIcon Glyph="&#xE8F1;" FontSize="12"/>
-                    <TextBlock x:Uid="Network_Section_Dlna" Text="DLNA" FontSize="12.5"/>
+                    <TextBlock x:Uid="Network_Section_Dlna" Text="DLNA" FontSize="{StaticResource FontBody}"/>
                 </StackPanel>
             </RadioButton>
             <RadioButton x:Name="SectionYouTube" GroupName="NetworkSectionGroup"
                          Style="{StaticResource EoleNavTabStyle}" Click="OnSectionYouTubeClick">
                 <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                     <FontIcon Glyph="&#xE8F2;" FontSize="12"/>
-                    <TextBlock x:Uid="Network_Section_YouTube" Text="YouTube" FontSize="12.5"/>
+                    <TextBlock x:Uid="Network_Section_YouTube" Text="YouTube" FontSize="{StaticResource FontBody}"/>
                 </StackPanel>
             </RadioButton>
         </StackPanel>

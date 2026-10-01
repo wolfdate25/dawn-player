@@ -14,9 +14,15 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Cover hero -->
-        <Image x:Name="CoverImage" Grid.Row="0" Stretch="Uniform" Margin="48,32,48,8"
-               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <!-- Cover hero (PT3-17: a cover-less track shows the same placeholder glyph as the
+             bar instead of a fully black screen) -->
+        <Grid Grid.Row="0">
+            <FontIcon x:Name="CoverPlaceholder" Glyph="&#xE90B;" FontSize="56"
+                      Foreground="{ThemeResource TextTertiaryBrush}"
+                      HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+            <Image x:Name="CoverImage" Stretch="Uniform" Margin="48,32,48,8"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Grid>
 
         <!-- Bottom info panel -->
         <Border Grid.Row="1" Background="{ThemeResource GlassFillBrush}"
@@ -29,14 +35,33 @@
                 <TextBlock x:Name="TrackArtist" Text="" FontSize="{StaticResource FontBody}"
                            Foreground="{ThemeResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
 
+                <!-- PT3-10: shuffle/repeat/A-B state is mirrored here — the bottom bar could
+                     toggle them invisibly from fullscreen. -->
+                <StackPanel x:Name="FsStateRow" Orientation="Horizontal" Spacing="12"
+                            HorizontalAlignment="Center" Visibility="Collapsed">
+                    <FontIcon x:Name="FsShuffleIcon" Glyph="&#xE8B1;" FontSize="12"
+                              Foreground="{ThemeResource DawnAccentTextBrush}"/>
+                    <FontIcon x:Name="FsRepeatIcon" Glyph="&#xE8EE;" FontSize="12"
+                              Foreground="{ThemeResource DawnAccentTextBrush}"/>
+                    <TextBlock x:Name="FsAbLabel" Text="A–B" FontSize="11" FontWeight="SemiBold"
+                               Foreground="{ThemeResource DawnAccentTextBrush}"/>
+                </StackPanel>
+
                 <!-- Waveform seek canvas: full envelope (muted) + played clip (accent) -->
                 <Canvas x:Name="WaveCanvas" x:Uid="Fullscreen_WaveCanvas" Height="72" Background="Transparent"
                         PointerPressed="OnWavePointerPressed"
                         PointerMoved="OnWavePointerMoved"
                         PointerReleased="OnWavePointerReleased"
+                        PointerEntered="OnWavePointerEntered"
+                        PointerExited="OnWavePointerExited"
                         AutomationProperties.LiveSetting="Polite">
                     <Polygon x:Name="WaveUnplayed" Fill="{ThemeResource SeparatorBrush}" Opacity="0.9"/>
                     <Polygon x:Name="WavePlayed" Fill="{ThemeResource DawnAccentBrush}"/>
+                    <!-- PT3-10: A-B window mirrored on the fullscreen waveform. -->
+                    <Rectangle x:Name="AbBand" Fill="{ThemeResource DawnAccentMutedBrush}" Visibility="Collapsed"/>
+                    <Rectangle x:Name="AbMarkerA" Width="2" Fill="{ThemeResource DawnAccentTextBrush}" Visibility="Collapsed"/>
+                    <Rectangle x:Name="AbMarkerB" Width="2" Fill="{ThemeResource DawnAccentTextBrush}" Visibility="Collapsed"/>
+                    <Rectangle x:Name="WaveHoverLine" Width="1" Fill="{ThemeResource TextTertiaryBrush}" Visibility="Collapsed"/>
                     <Canvas.Clip>
                         <RectangleGeometry x:Name="WaveClip" Rect="0,0,0,72"/>
                     </Canvas.Clip>
@@ -50,6 +75,29 @@
 
                 <!-- 28-band spectrum (same tap the removed bottom-bar strip once used) -->
                 <Canvas x:Name="SpectrumCanvas" x:Uid="Fullscreen_SpectrumCanvas" Height="56"/>
+
+                <!-- PT3-02: minimal transport row — fullscreen used to offer no controls at all
+                     besides an undiscoverable Escape. -->
+                <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                    <Button x:Uid="NowPlaying_PreviousButton" Style="{StaticResource TransportButton}"
+                            Click="OnFsPreviousClick">
+                        <FontIcon Glyph="&#xE76B;" FontSize="14" Foreground="{ThemeResource TextPrimaryBrush}"/>
+                    </Button>
+                    <Button x:Uid="NowPlaying_PlayButton" Style="{StaticResource PlayPauseButton}"
+                            Click="OnFsPlayPauseClick">
+                        <FontIcon x:Name="FsPlayIcon" Glyph="&#xE768;" FontSize="16"
+                                  Foreground="{ThemeResource OnAccentBrush}"/>
+                    </Button>
+                    <Button x:Uid="NowPlaying_NextButton" Style="{StaticResource TransportButton}"
+                            Click="OnFsNextClick">
+                        <FontIcon Glyph="&#xE76C;" FontSize="14" Foreground="{ThemeResource TextPrimaryBrush}"/>
+                    </Button>
+                </StackPanel>
+
+                <!-- Visible exit hint (PT3-02): Escape used to be an undiscoverable hidden exit -->
+                <TextBlock x:Uid="Fullscreen_ExitHint" Text="Esc: 닫기 · Space: 재생/일시정지 · ←/→: 트랙 이동"
+                           FontSize="{StaticResource FontCaption}" Foreground="{ThemeResource TextTertiaryBrush}"
+                           HorizontalAlignment="Center" Opacity="0.8"/>
             </StackPanel>
         </Border>
     </Grid>

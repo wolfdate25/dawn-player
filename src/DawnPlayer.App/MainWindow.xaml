@@ -10,7 +10,7 @@
     <Grid x:Name="RootGrid" AllowDrop="True" Background="Transparent"
           DragOver="OnRootDragOver" Drop="OnRootDrop" PointerPressed="OnRootPointerPressed" KeyDown="OnRootKeyDown">
         <Grid.RowDefinitions>
-            <RowDefinition Height="42"/>
+            <RowDefinition Height="40"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -67,12 +67,13 @@
                         </MenuFlyout>
                     </Button.Flyout>
                 </Button>
-                <TextBlock x:Uid="AppBrand" Text="Dawn Player" FontSize="12.5" FontWeight="SemiBold"
+                <TextBlock x:Uid="AppBrand" Text="Dawn Player" FontSize="{StaticResource FontBody}" FontWeight="SemiBold"
                            Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                 <TextBlock Text="|" FontSize="11" Foreground="{ThemeResource SeparatorSubtleBrush}" VerticalAlignment="Center"/>
-                <TextBlock x:Uid="MainWindow_TitleBarTrack" x:Name="TitleBarTrack" Text="No sound — Nothing played" FontSize="11.5"
+                <TextBlock x:Uid="MainWindow_TitleBarTrack" x:Name="TitleBarTrack" Text="No sound — Nothing played" FontSize="{StaticResource FontBodySmall}"
                            Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"
-                           MaxWidth="320" TextTrimming="CharacterEllipsis"/>
+                           MaxWidth="320" TextTrimming="CharacterEllipsis"
+                           AutomationProperties.LiveSetting="Polite"/>
             </StackPanel>
 
             <!-- Eole Horizontal Navigation Tabs (Library / Playlists / Network) -->
@@ -84,7 +85,7 @@
                              DoubleTapped="OnTabDoubleTapped">
                     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                         <FontIcon Glyph="&#xE8B9;" FontSize="12"/>
-                        <TextBlock x:Uid="MainWindow_Tab_Library" Text="Library" FontSize="12.5"/>
+                        <TextBlock x:Uid="MainWindow_Tab_Library" Text="Library" FontSize="{StaticResource FontBody}"/>
                     </StackPanel>
                 </RadioButton>
                 <RadioButton x:Name="TabPlaylists" GroupName="TopNavGroup"
@@ -93,7 +94,7 @@
                              DoubleTapped="OnTabDoubleTapped">
                     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                         <FontIcon Glyph="&#xE90B;" FontSize="12"/>
-                        <TextBlock x:Uid="MainWindow_Tab_Playlists" Text="Playlists" FontSize="12.5"/>
+                        <TextBlock x:Uid="MainWindow_Tab_Playlists" Text="Playlists" FontSize="{StaticResource FontBody}"/>
                     </StackPanel>
                 </RadioButton>
                 <RadioButton x:Name="TabNetwork" GroupName="TopNavGroup"
@@ -102,7 +103,7 @@
                              DoubleTapped="OnTabDoubleTapped">
                     <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                         <FontIcon Glyph="&#xE777;" FontSize="12"/>
-                        <TextBlock x:Uid="MainWindow_Tab_Network" Text="Network" FontSize="12.5"/>
+                        <TextBlock x:Uid="MainWindow_Tab_Network" Text="Network" FontSize="{StaticResource FontBody}"/>
                     </StackPanel>
                 </RadioButton>
             </StackPanel>
@@ -116,7 +117,7 @@
                 <Grid x:Name="AppTitleBarDragArea" Grid.Column="0" Background="Transparent"/>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,4,0">
                     <Button x:Uid="MainWindow_SettingsGearButton" x:Name="SettingsGearButton" Style="{StaticResource TitleMenuButtonStyle}" Click="OnMenuSettings" ToolTipService.ToolTip="환경설정">
-                        <FontIcon Glyph="&#xE713;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                        <FontIcon x:Name="SettingsGearIcon" Glyph="&#xE713;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
                     </Button>
                 </StackPanel>
             </Grid>

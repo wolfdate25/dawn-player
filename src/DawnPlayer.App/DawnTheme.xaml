@@ -21,7 +21,7 @@
 
             <Color x:Key="TextPrimaryColor">#FFF3F3F6</Color>
             <Color x:Key="TextSecondaryColor">#FFAEAEBC</Color>
-            <Color x:Key="TextTertiaryColor">#FF787888</Color>
+            <Color x:Key="TextTertiaryColor">#FF8F8FA0</Color>
 
             <!-- Eole Amber Accent -->
             <Color x:Key="DawnAccentColor">#FFE8A33D</Color>
@@ -29,6 +29,9 @@
             <Color x:Key="DawnAccentPressedColor">#FFD4881A</Color>
             <Color x:Key="DawnAccentMutedColor">#33E8A33D</Color>
             <Color x:Key="DawnAccentGlowColor">#1AE8A33D</Color>
+            <!-- Text/icon-usable accent variant: meets 4.5:1 on every rest surface. Equals the
+                 accent on dark; darker on light. ThemeService recomputes it per accent preset. -->
+            <Color x:Key="DawnAccentTextColor">#FFE8A33D</Color>
 
             <Color x:Key="BadgeBgColor">#FF2A2A34</Color>
             <Color x:Key="BadgeTextColor">#FFBDBDCB</Color>
@@ -55,6 +58,7 @@
             <SolidColorBrush x:Key="DawnAccentPressedBrush" Color="{StaticResource DawnAccentPressedColor}" />
             <SolidColorBrush x:Key="DawnAccentMutedBrush" Color="{StaticResource DawnAccentMutedColor}" />
             <SolidColorBrush x:Key="DawnAccentGlowBrush" Color="{StaticResource DawnAccentGlowColor}" />
+            <SolidColorBrush x:Key="DawnAccentTextBrush" Color="{StaticResource DawnAccentTextColor}" />
 
             <SolidColorBrush x:Key="BadgeBgBrush" Color="{StaticResource BadgeBgColor}" />
             <SolidColorBrush x:Key="BadgeTextBrush" Color="{StaticResource BadgeTextColor}" />
@@ -100,9 +104,9 @@
             <SolidColorBrush x:Key="ToggleButtonForeground" Color="{StaticResource TextSecondaryColor}"/>
             <SolidColorBrush x:Key="ToggleButtonForegroundPointerOver" Color="{StaticResource TextPrimaryColor}"/>
             <SolidColorBrush x:Key="ToggleButtonForegroundPressed" Color="{StaticResource TextPrimaryColor}"/>
-            <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="{StaticResource DawnAccentColor}"/>
-            <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="{StaticResource DawnAccentHoverColor}"/>
-            <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPressed" Color="{StaticResource DawnAccentPressedColor}"/>
+            <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="{StaticResource DawnAccentTextColor}"/>
+            <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="{StaticResource DawnAccentTextColor}"/>
+            <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPressed" Color="{StaticResource DawnAccentTextColor}"/>
         </ResourceDictionary>
 
         <!-- ==================== LIGHT THEME (EOLE SIGNATURE WARM SLATE) ==================== -->
@@ -121,7 +125,7 @@
 
             <Color x:Key="TextPrimaryColor">#FF1A1A20</Color>
             <Color x:Key="TextSecondaryColor">#FF555562</Color>
-            <Color x:Key="TextTertiaryColor">#FF868694</Color>
+            <Color x:Key="TextTertiaryColor">#FF62626F</Color>
 
             <!-- Eole Warm Amber Accent (Light Mode) -->
             <Color x:Key="DawnAccentColor">#FFC77F1B</Color>
@@ -129,6 +133,9 @@
             <Color x:Key="DawnAccentPressedColor">#FFAE6C12</Color>
             <Color x:Key="DawnAccentMutedColor">#26C77F1B</Color>
             <Color x:Key="DawnAccentGlowColor">#12C77F1B</Color>
+            <!-- Text/icon accent must clear 4.5:1 on the warm light panel/card, which the raw
+                 light accent (~2.6:1) cannot — foregrounds use this deeper amber instead. -->
+            <Color x:Key="DawnAccentTextColor">#FF8F5408</Color>
 
             <Color x:Key="BadgeBgColor">#FFE0DED6</Color>
             <Color x:Key="BadgeTextColor">#FF484854</Color>
@@ -155,6 +162,7 @@
             <SolidColorBrush x:Key="DawnAccentPressedBrush" Color="{StaticResource DawnAccentPressedColor}" />
             <SolidColorBrush x:Key="DawnAccentMutedBrush" Color="{StaticResource DawnAccentMutedColor}" />
             <SolidColorBrush x:Key="DawnAccentGlowBrush" Color="{StaticResource DawnAccentGlowColor}" />
+            <SolidColorBrush x:Key="DawnAccentTextBrush" Color="{StaticResource DawnAccentTextColor}" />
 
             <SolidColorBrush x:Key="BadgeBgBrush" Color="{StaticResource BadgeBgColor}" />
             <SolidColorBrush x:Key="BadgeTextBrush" Color="{StaticResource BadgeTextColor}" />
@@ -170,7 +178,9 @@
             <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="#12000000"/>
             <SolidColorBrush x:Key="ListViewItemBackgroundPressed" Color="#1A000000"/>
 
-            <SolidColorBrush x:Key="SliderTrackFill" Color="#FFD2CFCA"/>
+            <!-- PT5-13: the unplayed slider track is a boundary, not decor — light value
+                 keeps ≥3:1 against the warm panel. -->
+            <SolidColorBrush x:Key="SliderTrackFill" Color="#FF8A8780"/>
             <SolidColorBrush x:Key="SliderTrackValueFill" Color="{StaticResource DawnAccentColor}"/>
             <SolidColorBrush x:Key="SliderThumbBackground" Color="{StaticResource DawnAccentColor}"/>
             <SolidColorBrush x:Key="SliderTrackFillPointerOver" Color="#FFC5C1BA"/>
@@ -200,17 +210,19 @@
             <SolidColorBrush x:Key="ToggleButtonForeground" Color="{StaticResource TextSecondaryColor}"/>
             <SolidColorBrush x:Key="ToggleButtonForegroundPointerOver" Color="{StaticResource TextPrimaryColor}"/>
             <SolidColorBrush x:Key="ToggleButtonForegroundPressed" Color="{StaticResource TextPrimaryColor}"/>
-            <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="{StaticResource DawnAccentColor}"/>
-            <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="{StaticResource DawnAccentHoverColor}"/>
-            <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPressed" Color="{StaticResource DawnAccentPressedColor}"/>
+            <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="{StaticResource DawnAccentTextColor}"/>
+            <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="{StaticResource DawnAccentTextColor}"/>
+            <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPressed" Color="{StaticResource DawnAccentTextColor}"/>
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 
     <!-- ==================== ROOT FALLBACK BRUSHES FOR DIRECT CODE / RESOURCE LOOKUPS ==================== -->
     <SolidColorBrush x:Key="DawnAccentBrush" Color="#FFE8A33D" />
+    <SolidColorBrush x:Key="DawnAccentTextBrush" Color="#FFE8A33D" />
+    <SolidColorBrush x:Key="OnAccentBrush" Color="#FF141414" />
     <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FFF3F3F6" />
     <SolidColorBrush x:Key="TextSecondaryBrush" Color="#FFAEAEBC" />
-    <SolidColorBrush x:Key="TextTertiaryBrush" Color="#FF787888" />
+    <SolidColorBrush x:Key="TextTertiaryBrush" Color="#FF8F8FA0" />
     <SolidColorBrush x:Key="LayerBgBrush" Color="#FF18181D" />
     <SolidColorBrush x:Key="PanelBrush" Color="#FF1F1F25" />
     <SolidColorBrush x:Key="PanelSubtleBrush" Color="#FF19191E" />
@@ -274,7 +286,7 @@
     </Style>
 
     <Style x:Key="BadgeText" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="FontSize" Value="11"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{ThemeResource BadgeTextBrush}"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -284,6 +296,7 @@
 
     <!-- Transport round button -->
     <Style x:Key="TransportButton" TargetType="Button">
+        <Setter Property="UseSystemFocusVisuals" Value="True"/>
         <Setter Property="Width" Value="36"/>
         <Setter Property="Height" Value="36"/>
         <Setter Property="CornerRadius" Value="18"/>
@@ -297,18 +310,20 @@
     <!-- L11 rating cell: invisible chrome over a list row, click opens the rating flyout.
          The hover tint is the interaction feedback the star text alone never gave. -->
     <Style x:Key="RatingCellButton" TargetType="Button">
+        <Setter Property="UseSystemFocusVisuals" Value="True"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding" Value="3,1"/>
         <Setter Property="CornerRadius" Value="3"/>
-        <Setter Property="MinWidth" Value="0"/>
-        <Setter Property="MinHeight" Value="0"/>
+        <Setter Property="MinWidth" Value="20"/>
+        <Setter Property="MinHeight" Value="20"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
     </Style>
 
     <!-- Transport round toggle button (Theme-Integrated, No Solid Blue Circle) -->
     <Style x:Key="TransportToggleButton" TargetType="ToggleButton">
+        <Setter Property="UseSystemFocusVisuals" Value="True"/>
         <Setter Property="Width" Value="34"/>
         <Setter Property="Height" Value="34"/>
         <Setter Property="CornerRadius" Value="17"/>
@@ -324,6 +339,10 @@
                     <Grid x:Name="RootGrid" Background="Transparent" CornerRadius="{TemplateBinding CornerRadius}">
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <!-- 120ms = MotionDurationFast token; XAML Duration cannot take a token resource -->
+                                    <VisualTransition GeneratedDuration="0:0:0.12"/>
+                                </VisualStateGroup.Transitions>
                                 <VisualState x:Name="Normal"/>
                                 <VisualState x:Name="PointerOver">
                                     <Storyboard>
@@ -379,6 +398,7 @@
     <!-- Play/Pause: the single accent-filled control in the transport row. Glyph on top must
          stay near-black for contrast against every accent preset. -->
     <Style x:Key="PlayPauseButton" TargetType="Button">
+        <Setter Property="UseSystemFocusVisuals" Value="True"/>
         <Setter Property="Width" Value="42"/>
         <Setter Property="Height" Value="42"/>
         <Setter Property="CornerRadius" Value="21"/>
@@ -393,19 +413,25 @@
                           CornerRadius="{TemplateBinding CornerRadius}">
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <!-- 120ms = MotionDurationFast token; XAML Duration cannot take a token resource -->
+                                    <VisualTransition GeneratedDuration="0:0:0.12"/>
+                                </VisualStateGroup.Transitions>
                                 <VisualState x:Name="Normal"/>
                                 <VisualState x:Name="PointerOver">
                                     <Storyboard>
+                                        <!-- 120ms = MotionDurationFast token; XAML Duration cannot
+                                             take a token resource, keep in sync with DesignTokens -->
                                         <DoubleAnimation Storyboard.TargetName="RootGrid"
                                                          Storyboard.TargetProperty="Opacity"
-                                                         To="0.88" Duration="0"/>
+                                                         To="0.88" Duration="0:0:0.12"/>
                                     </Storyboard>
                                 </VisualState>
                                 <VisualState x:Name="Pressed">
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="RootGrid"
                                                          Storyboard.TargetProperty="Opacity"
-                                                         To="0.72" Duration="0"/>
+                                                         To="0.72" Duration="0:0:0.12"/>
                                     </Storyboard>
                                 </VisualState>
                                 <VisualState x:Name="Disabled">
@@ -444,15 +470,16 @@
          (HorizontalTrackRect / HorizontalDecreaseRect / HorizontalThumb + translate transform),
          so value→thumb positioning keeps working without the stock chrome. -->
     <Style x:Key="EoleSlimSliderStyle" TargetType="Slider">
-        <Setter Property="MinHeight" Value="20"/>
+        <Setter Property="UseSystemFocusVisuals" Value="True"/>
+        <Setter Property="MinHeight" Value="24"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="Padding" Value="0"/>
-        <Setter Property="Foreground" Value="{StaticResource DawnAccentBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource DawnAccentTextBrush}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Slider">
                     <Grid x:Name="SliderContainer" Background="Transparent">
-                        <Grid x:Name="HorizontalTemplate" MinHeight="20">
+                        <Grid x:Name="HorizontalTemplate" MinHeight="24">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
@@ -461,7 +488,7 @@
                             <Rectangle x:Name="HorizontalTrackRect"
                                        Grid.Column="0" Grid.ColumnSpan="3"
                                        Height="3" RadiusX="1.5" RadiusY="1.5"
-                                       Fill="{StaticResource SeparatorSubtleBrush}"
+                                       Fill="{ThemeResource SliderTrackFill}"
                                        VerticalAlignment="Center"/>
                             <Rectangle x:Name="HorizontalDecreaseRect"
                                        Grid.Column="0"
@@ -476,8 +503,8 @@
                                 </Thumb.RenderTransform>
                                 <Thumb.Template>
                                     <ControlTemplate TargetType="Thumb">
-                                        <Ellipse Fill="{StaticResource DawnAccentBrush}"
-                                                 Stroke="{StaticResource PanelBrush}"
+                                        <Ellipse Fill="{ThemeResource DawnAccentBrush}"
+                                                 Stroke="{ThemeResource PanelBrush}"
                                                  StrokeThickness="1.5"/>
                                     </ControlTemplate>
                                 </Thumb.Template>
@@ -501,6 +528,7 @@
 
     <!-- Sleek Title Bar Icon Button -->
     <Style x:Key="TitleMenuButtonStyle" TargetType="Button">
+        <Setter Property="UseSystemFocusVisuals" Value="True"/>
         <Setter Property="Width" Value="32"/>
         <Setter Property="Height" Value="32"/>
         <Setter Property="Background" Value="Transparent"/>
@@ -513,8 +541,11 @@
 
     <!-- Accent Button Style -->
     <Style x:Key="AccentButtonStyle" TargetType="Button">
+        <Setter Property="UseSystemFocusVisuals" Value="True"/>
         <Setter Property="Background" Value="{ThemeResource DawnAccentBrush}"/>
-        <Setter Property="Foreground" Value="#000000"/>
+        <!-- #141414 is the gated play-glyph contract color (DesignTokenTests) — one accent-on
+             ink for every accent fill, not a second black. -->
+        <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Padding" Value="12,6"/>
@@ -524,6 +555,7 @@
 
     <!-- Eole Nav Tab Style (Sleek text+icon with bottom active accent underline) -->
     <Style x:Key="EoleNavTabStyle" TargetType="RadioButton">
+        <Setter Property="UseSystemFocusVisuals" Value="True"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{ThemeResource TextSecondaryBrush}"/>
         <Setter Property="Padding" Value="14,0"/>
@@ -545,6 +577,10 @@
                                 CornerRadius="1"/>
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <!-- 120ms = MotionDurationFast token; XAML Duration cannot take a token resource -->
+                                    <VisualTransition GeneratedDuration="0:0:0.12"/>
+                                </VisualStateGroup.Transitions>
                                 <VisualState x:Name="Normal"/>
                                 <VisualState x:Name="PointerOver">
                                     <VisualState.Setters>
@@ -574,6 +610,7 @@
 
     <!-- Segmented Icon/Text Tab Style (e.g. Grid / List toggle) -->
     <Style x:Key="SegmentedTabStyle" TargetType="RadioButton">
+        <Setter Property="UseSystemFocusVisuals" Value="True"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{ThemeResource TextSecondaryBrush}"/>
         <Setter Property="Padding" Value="8,4"/>
@@ -593,6 +630,10 @@
                                           VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <!-- 120ms = MotionDurationFast token; XAML Duration cannot take a token resource -->
+                                    <VisualTransition GeneratedDuration="0:0:0.12"/>
+                                </VisualStateGroup.Transitions>
                                 <VisualState x:Name="Normal"/>
                                 <VisualState x:Name="PointerOver">
                                     <VisualState.Setters>
@@ -606,7 +647,7 @@
                                 <VisualState x:Name="Checked">
                                     <VisualState.Setters>
                                         <Setter Target="RootBorder.Background" Value="{ThemeResource CardBrush}"/>
-                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource DawnAccentBrush}"/>
+                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource DawnAccentTextBrush}"/>
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Unchecked"/>

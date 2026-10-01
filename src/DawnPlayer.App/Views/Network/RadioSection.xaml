@@ -21,21 +21,21 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <FontIcon Glyph="&#xE968;" FontSize="14" Foreground="{ThemeResource DawnAccentBrush}" VerticalAlignment="Center"/>
-            <TextBlock x:Uid="Network_Radio_Title" Grid.Column="1" Text="라디오" FontSize="13.5" FontWeight="SemiBold"
+            <FontIcon Glyph="&#xE968;" FontSize="14" Foreground="{ThemeResource DawnAccentTextBrush}" VerticalAlignment="Center"/>
+            <TextBlock x:Uid="Network_Radio_Title" Grid.Column="1" Text="라디오" FontSize="{StaticResource FontSubtitle}" FontWeight="SemiBold"
                        Foreground="{ThemeResource TextPrimaryBrush}" Margin="8,0,0,0" VerticalAlignment="Center"/>
-            <TextBlock x:Name="StationCountText" Grid.Column="2" Text="0" FontSize="11.5"
+            <TextBlock x:Name="StationCountText" Grid.Column="2" Text="0" FontSize="{StaticResource FontBodySmall}"
                        Foreground="{ThemeResource TextTertiaryBrush}" Margin="0,0,12,0" VerticalAlignment="Center"/>
             <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
                         Margin="0,0,12,0" Visibility="Collapsed" x:Name="ConnectStatusRow">
                 <ProgressRing x:Name="ConnectRing" Width="14" Height="14" IsActive="False"/>
-                <TextBlock x:Name="ConnectStatusText" Text="" FontSize="11.5" VerticalAlignment="Center"
+                <TextBlock x:Name="ConnectStatusText" Text="" FontSize="{StaticResource FontBodySmall}" VerticalAlignment="Center"
                            Foreground="{ThemeResource TextSecondaryBrush}"/>
             </StackPanel>
             <Button x:Uid="Network_Radio_Add" x:Name="AddStationButton" Grid.Column="4" Click="OnAddStationClick"
                     Padding="10,5" CornerRadius="4">
                 <StackPanel Orientation="Horizontal" Spacing="7">
-                    <FontIcon Glyph="&#xE710;" FontSize="12" Foreground="{ThemeResource DawnAccentBrush}"/>
+                    <FontIcon Glyph="&#xE710;" FontSize="12" Foreground="{ThemeResource DawnAccentTextBrush}"/>
                     <TextBlock x:Uid="Network_Radio_AddText" Text="방송국 추가" FontSize="12"/>
                 </StackPanel>
             </Button>
@@ -43,6 +43,7 @@
 
         <!-- Station list -->
         <ListView x:Name="StationList" Grid.Row="1" SelectionMode="Single"
+                      KeyDown="OnStationKeyDown"
                   DoubleTapped="OnStationDoubleTapped"
                   Background="{ThemeResource PanelSubtleBrush}"
                   BorderBrush="{ThemeResource SeparatorSubtleBrush}" BorderThickness="1" CornerRadius="6">
@@ -71,11 +72,11 @@
                                 Background="{ThemeResource DawnAccentBrush}"/>
                         <StackPanel Grid.Column="1" Spacing="2">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="{x:Bind Station.Name}" FontSize="12.5" FontWeight="SemiBold"
+                                <TextBlock Text="{x:Bind Station.Name}" FontSize="{StaticResource FontBody}" FontWeight="SemiBold"
                                            Foreground="{ThemeResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
                                 <Border CornerRadius="3" Padding="5,1" Background="{ThemeResource DawnAccentBrush}"
                                         Visibility="{x:Bind PlayingBadgeVisibility, Mode=OneWay}">
-                                    <TextBlock x:Uid="Network_Radio_PlayingBadge" Text="재생 중" FontSize="10"
+                                    <TextBlock x:Uid="Network_Radio_PlayingBadge" Text="재생 중" FontSize="{StaticResource FontCaption}"
                                                Foreground="{ThemeResource TextPrimaryBrush}"/>
                                 </Border>
                             </StackPanel>

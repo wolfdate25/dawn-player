@@ -20,13 +20,26 @@ public static class ListeningReportDialog
     public static async Task ShowAsync(XamlRoot xamlRoot)
     {
         var reportHost = new ContentControl();
-        var periodCombo = new ComboBox { Header = AppStrings.Get("Report_PeriodHeader", "기간"), MinWidth = 180, FontSize = 12.5 };
+        var periodCombo = new ComboBox { Header = AppStrings.Get("Report_PeriodHeader", "기간"), MinWidth = 180, FontSize = DawnPlayer.App.Styles.DesignTokenValues.Font.Body };
         periodCombo.Items.Add(AppStrings.Get("Report_PeriodAllTime", "전체"));
         periodCombo.Items.Add(AppStrings.Get("Report_Period30Days", "최근 30일"));
         periodCombo.Items.Add(AppStrings.Get("Report_PeriodThisYear", "올해"));
         periodCombo.SelectedIndex = 1;
         periodCombo.SelectionChanged += async (_, _) =>
         {
+            // PT4-18: the switch used to freeze silently and, on failure, left the previous
+            // period's report on screen next to the new selection.
+            var previous = reportHost.Content;
+            reportHost.Content = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 8,
+                Children =
+                {
+                    new Microsoft.UI.Xaml.Controls.ProgressRing { Width = 16, Height = 16, IsActive = true },
+                    new TextBlock { Text = AppStrings.Get("Report_Loading", "리포트를 만들고 있습니다…"), FontSize = 12, VerticalAlignment = VerticalAlignment.Center },
+                }
+            };
             try
             {
                 reportHost.Content = await BuildAsync((AppServices.ReportPeriod)periodCombo.SelectedIndex);
@@ -34,6 +47,14 @@ public static class ListeningReportDialog
             catch (Exception ex)
             {
                 App.Log($"[ListeningReport] build failed: {ex}");
+                reportHost.Content = new TextBlock
+                {
+                    Text = AppStrings.Format("Report_BuildFailed", "리포트를 만들지 못했습니다: {0}", ex.Message),
+                    FontSize = 12,
+                    TextWrapping = TextWrapping.Wrap,
+                    Foreground = Helpers.ThemeResourceHelper.GetBrush("StatusDangerBrush"),
+                };
+                _ = previous; // failure keeps the error visible instead of stale data
             }
         };
 
@@ -143,7 +164,7 @@ public static class ListeningReportDialog
                 // "N회" — the count rides a localized format so the unit word translates.
                 Text = AppStrings.Format("Report_PlaysFormat", "{0}회", e.Plays),
                 FontSize = 11,
-                Foreground = (Brush)Application.Current.Resources["DawnAccentBrush"],
+                Foreground = (Brush)Application.Current.Resources["DawnAccentTextBrush"],
             }, 2);
 
             panel.Children.Add(row);

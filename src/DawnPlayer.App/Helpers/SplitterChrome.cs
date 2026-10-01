@@ -38,7 +38,7 @@ public static class SplitterChrome
     {
         if (splitter?.Child is not Rectangle line) return;
         line.Fill = on
-            ? ThemeResourceHelper.GetBrush("DawnAccentBrush")
+            ? ThemeResourceHelper.GetBrush("DawnAccentTextBrush")
             : new SolidColorBrush(Microsoft.UI.Colors.Transparent);
     }
 }

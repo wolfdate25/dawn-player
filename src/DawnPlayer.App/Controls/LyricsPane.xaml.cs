@@ -20,7 +20,7 @@ public sealed class IsCurrentToBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language) =>
         value is true
-            ? ThemeResourceHelper.GetBrush("DawnAccentBrush")
+            ? ThemeResourceHelper.GetBrush("DawnAccentTextBrush")
             : ThemeResourceHelper.GetBrush("TextPrimaryBrush");
 
     public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotSupportedException();
@@ -53,6 +53,13 @@ public sealed partial class LyricsPane : UserControl
     {
         InitializeComponent();
         _timer.Tick += (_, _) => OnTimer();
+
+        // PT3-04: auto-scroll must not fight the reader — while the pointer rests over the
+        // lyrics the active-line highlight keeps updating, but the view is left where the user
+        // put it. Leaving the pane resumes following on the next line change.
+        LinesList.PointerEntered += (_, _) => _pointerOverLines = true;
+        LinesList.PointerExited += (_, _) => _pointerOverLines = false;
+        LinesList.PointerCanceled += (_, _) => _pointerOverLines = false;
 
         AppServices.LyricsSettingsChanged += OnLyricsSettingsChanged;
         AppServices.LyricsChanged += OnExternalLyricsChanged;
@@ -253,6 +260,8 @@ public sealed partial class LyricsPane : UserControl
         LinesList.ScrollIntoView(_lines[scrollTargetIndex], ScrollIntoViewAlignment.Leading);
     }
 
+    private bool _pointerOverLines;
+
     private void OnTimer()
     {
         if (AppServices.Playback == null || _lines.Count == 0 || !_hasTimedLines) return;
@@ -261,7 +270,8 @@ public sealed partial class LyricsPane : UserControl
         int targetIdx = LyricsScrollSynchronizer.FindActiveLineIndex(_lines, AppServices.Playback.Position, 0);
         if (LyricsScrollSynchronizer.UpdateActiveLineState(_lines, ref _currentIndex, targetIdx))
         {
-            if (_currentIndex >= 0 && _currentIndex < _lines.Count)
+            // Highlight always follows; the scroll only follows when the user isn't reading.
+            if (!_pointerOverLines && _currentIndex >= 0 && _currentIndex < _lines.Count)
             {
                 ScrollActiveLineToViewportRatio(_currentIndex, 0.33);
             }

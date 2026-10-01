@@ -108,7 +108,7 @@ public sealed class IsPlayingToBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
         => value is true
-            ? Helpers.ThemeResourceHelper.GetBrush("DawnAccentBrush")
+            ? Helpers.ThemeResourceHelper.GetBrush("DawnAccentTextBrush")
             : Helpers.ThemeResourceHelper.GetBrush("TextPrimaryBrush");
 
     public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotSupportedException();

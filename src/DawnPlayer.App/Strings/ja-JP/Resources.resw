@@ -55,6 +55,7 @@
   <data name="MainWindow_Tab_Playlists.Text" xml:space="preserve"><value>プレイリスト</value></data>
   <data name="MainWindow_Tab_Network.Text" xml:space="preserve"><value>ネットワーク</value></data>
   <data name="MainWindow_SettingsGearButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>設定</value></data>
+  <data name="MainWindow_SettingsGearButton.AutomationProperties.Name" xml:space="preserve"><value>設定</value></data>
 
   <!-- Module 1: NowPlayingBar -->
   <data name="NowPlaying_SeekSlider.AutomationProperties.Name" xml:space="preserve"><value>再生位置</value></data>
@@ -62,7 +63,7 @@
   <data name="NowPlaying_AlbumArtButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>アルバムアートを拡大</value></data>
   <data name="NowPlaying_TrackTitle_Empty.Text" xml:space="preserve"><value>再生中の曲はありません</value></data>
   <data name="NowPlaying_ABRepeatButton.AutomationProperties.Name" xml:space="preserve"><value>A-Bリピート</value></data>
-  <data name="NowPlaying_ABRepeat_Tooltip_Off" xml:space="preserve"><value>A-Bリピート: クリックで現在位置をA地点に設定 (Ctrl+L)</value></data>
+  <data name="NowPlaying_ABRepeat_Tooltip_Off" xml:space="preserve"><value>A-Bリピート: クリックで現在位置をA地点に設定</value></data>
   <data name="NowPlaying_ABRepeat_Tooltip_Marking" xml:space="preserve"><value>A-Bリピート: A地点({0})設定済み — もう一度クリックでB地点を設定、右クリックで解除</value></data>
   <data name="NowPlaying_ABRepeat_Tooltip_Looping" xml:space="preserve"><value>A-Bリピート中 {0}–{1} ({2}) — クリックで解除</value></data>
   <data name="NowPlaying_ABRepeat_Reject_BBeforeA" xml:space="preserve"><value>B地点はA地点より後である必要があります</value></data>
@@ -139,6 +140,7 @@
   <data name="Library_TreeMenu_Enqueue.Text" xml:space="preserve"><value>キューに追加</value></data>
 
   <data name="Library_SearchBox.PlaceholderText" xml:space="preserve"><value>検索...</value></data>
+  <data name="Library_SearchBox.AutomationProperties.Name" xml:space="preserve"><value>ライブラリを検索</value></data>
   <data name="Library_ViewGridBtn.AutomationProperties.Name" xml:space="preserve"><value>カバーグリッド表示</value></data>
   <data name="Library_ViewGridBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>カバーグリッド表示</value></data>
   <data name="Library_ViewListBtn.AutomationProperties.Name" xml:space="preserve"><value>トラックリスト表示</value></data>
@@ -272,7 +274,12 @@
   <data name="LyricsEditor_TabRaw.Header" xml:space="preserve"><value>全LRCテキスト直接編集</value></data>
   <data name="LyricsEditor_StatusLabel.Text" xml:space="preserve"><value>準備完了</value></data>
   <data name="LyricsEditor_CloseBtn.Content" xml:space="preserve"><value>閉じる</value></data>
-  <data name="LyricsEditor_SaveBtn.Content" xml:space="preserve"><value>💾 LRCファイルとして保存</value></data>
+  <data name="LyricsEditor_SaveBtn.AutomationProperties.Name" xml:space="preserve"><value>LRCファイルとして保存</value></data>
+  <data name="LyricsEditor_SaveBtnText.Text" xml:space="preserve"><value>LRCファイルとして保存</value></data>
+  <data name="LyricsEditor_UnsavedTitle" xml:space="preserve"><value>未保存の変更</value></data>
+  <data name="Fullscreen_ExitHint.Text" xml:space="preserve"><value>Esc: 閉じる · Space: 再生/一時停止 · ←/→: 曲の移動</value></data>
+  <data name="LyricsEditor_UnsavedMessage" xml:space="preserve"><value>保存されていない歌詞の編集があります。破棄して閉じますか？</value></data>
+  <data name="LyricsEditor_UnsavedDiscard" xml:space="preserve"><value>破棄して閉じる</value></data>
   <data name="LyricsEditor_NewLineText" xml:space="preserve"><value>新しい歌詞行</value></data>
   <data name="LyricsEditor_Status_LinesLoaded" xml:space="preserve"><value>歌詞 {0}行 読み込み完了</value></data>
   <data name="LyricsEditor_Status_NoExistingLyrics" xml:space="preserve"><value>既存の歌詞なし (新規作成可能)</value></data>
@@ -408,6 +415,83 @@
   <data name="Msg_AddedTracksToQueue" xml:space="preserve"><value>キューに {0}曲を追加しました。</value></data>
   <data name="Msg_AddedTracksToNamedPlaylist" xml:space="preserve"><value>'{0}' に {1}曲を追加しました。</value></data>
   <data name="Msg_CreateNewPlaylistAndAdd" xml:space="preserve"><value>新規プレイリストを作成して追加...</value></data>
+  <data name="Msg_DeletePlaylistTitle" xml:space="preserve"><value>プレイリストの削除</value></data>
+  <data name="Library_MixedSelection" xml:space="preserve"><value>混合選択</value></data>
+  <data name="Library_Splitter_Left" xml:space="preserve"><value>左パネルの幅を調整</value></data>
+  <data name="Settings_SearchBox.PlaceholderText" xml:space="preserve"><value>設定を検索…</value></data>
+  <data name="Settings_SearchBox.AutomationProperties.Name" xml:space="preserve"><value>設定を検索</value></data>
+  <data name="Tooltip_WithShortcut" xml:space="preserve"><value>{0} ({1})</value></data>
+  <data name="Library_SelectedCount" xml:space="preserve"><value>{0}曲選択中</value></data>
+  <data name="Library_Empty_Title" xml:space="preserve"><value>ライブラリが空です</value></data>
+  <data name="Library_Empty_OpenSettings.Text" xml:space="preserve"><value>設定を開く</value></data>
+  <data name="Library_Empty_ClearSearch.Text" xml:space="preserve"><value>検索をクリア</value></data>
+  <data name="Report_Loading" xml:space="preserve"><value>レポートを作成しています…</value></data>
+  <data name="Report_BuildFailed" xml:space="preserve"><value>レポートを作成できませんでした: {0}</value></data>
+  <data name="Library_Empty_Hint" xml:space="preserve"><value>設定で音楽フォルダを追加してスキャンすると、トラックが表示されます。</value></data>
+  <data name="Library_SearchNoHit_Title" xml:space="preserve"><value>検索結果がありません</value></data>
+  <data name="Library_SearchNoHit_Hint" xml:space="preserve"><value>別のキーワードを試すか、検索条件を消してください。</value></data>
+  <data name="NowPlaying_QueueClearConfirmTitle" xml:space="preserve"><value>キューを空にする</value></data>
+  <data name="NowPlaying_QueueClearConfirmMessage" xml:space="preserve"><value>キューの{0}曲をすべて削除しますか？</value></data>
+  <data name="Msg_TagEditorInvalidNumbers" xml:space="preserve"><value>次のフィールドは整数である必要があります: {0}</value></data>
+  <data name="Library_Splitter_Right" xml:space="preserve"><value>右パネルの幅を調整</value></data>
+  <data name="Library_Splitter_Lyrics" xml:space="preserve"><value>歌詞パネルの幅を調整</value></data>
+  <data name="Settings_Lyrics_LrcPatterns_Filtered" xml:space="preserve"><value>{0}件のパターンを保存し、{1}件を除外しました（.lrc で終わる必要があります）。</value></data>
+  <data name="Settings_Library_FolderDuplicate" xml:space="preserve"><value>'{0}' は既に登録されたフォルダです。</value></data>
+  <data name="Settings_Library_RemoveFolderTitle" xml:space="preserve"><value>監視フォルダの削除</value></data>
+  <data name="Settings_Library_RemoveFolderMessage" xml:space="preserve"><value>'{0}' を監視フォルダから削除しますか？フォルダやファイルは削除されません。</value></data>
+  <data name="Settings_Appearance_CustomAccent_InvalidHex" xml:space="preserve"><value>有効なHEX形式ではありません。#RRGGBB 形式で入力してください。</value></data>
+  <data name="Network_Radio_ConnectFailed" xml:space="preserve"><value>接続失敗: {0}</value></data>
+  <data name="Msg_ExportedPlaylist" xml:space="preserve"><value>'{0}' にエクスポートしました。</value></data>
+  <data name="Settings_Lastfm_ApiKeyBox.Header" xml:space="preserve"><value>APIキー</value></data>
+  <data name="Settings_Lastfm_ApiSecretBox.Header" xml:space="preserve"><value>共有シークレット</value></data>
+  <data name="Settings_Audio_Driver_A11yName" xml:space="preserve"><value>オーディオ出力ドライバー</value></data>
+  <data name="Settings_Audio_Device_A11yName" xml:space="preserve"><value>出力デバイス (Device)</value></data>
+  <data name="Settings_Audio_BitDepth_A11yName" xml:space="preserve"><value>排他モードのビット深度</value></data>
+  <data name="Settings_Audio_RateMismatch_A11yName" xml:space="preserve"><value>サンプルレート不一致の処理 (排他モード)</value></data>
+  <data name="Settings_Audio_DsdMode_A11yName" xml:space="preserve"><value>DSD再生方式 (DSF/DFF)</value></data>
+  <data name="Settings_Audio_AllowVolume_A11yName" xml:space="preserve"><value>排他モードでの音量/ReplayGainを許可</value></data>
+  <data name="Settings_Audio_Latency_A11yName" xml:space="preserve"><value>出力バッファサイズ (Latency)</value></data>
+  <data name="Settings_Eq_Profile_A11yName" xml:space="preserve"><value>編集するプロファイルを選択</value></data>
+  <data name="Settings_Eq_Preamp_A11yName" xml:space="preserve"><value>プリアンプ (Preamp)</value></data>
+  <data name="Settings_Eq_TargetDevice_A11yName" xml:space="preserve"><value>対象オーディオ出力デバイス</value></data>
+  <data name="Settings_Eq_BoundProfile_A11yName" xml:space="preserve"><value>このデバイスに関連付けられたプロファイル</value></data>
+  <data name="Settings_Playback_NormMode_A11yName" xml:space="preserve"><value>ノーマライズ動作モード</value></data>
+  <data name="Settings_Playback_TargetLevel_A11yName" xml:space="preserve"><value>目標音量レベル (Target Level)</value></data>
+  <data name="Settings_Playback_MaxBoost_A11yName" xml:space="preserve"><value>最大増幅限界 (Max Boost Limit)</value></data>
+  <data name="Settings_Playback_Speed_A11yName" xml:space="preserve"><value>応答速度 (Response Speed)</value></data>
+  <data name="Settings_Playback_ReplayGain_A11yName" xml:space="preserve"><value>ReplayGain モード</value></data>
+  <data name="Settings_Playback_RgPreamp_A11yName" xml:space="preserve"><value>ReplayGain プリアンプ (Preamp)</value></data>
+  <data name="Settings_Playback_PreventClipping_A11yName" xml:space="preserve"><value>クリッピング防止 (Prevent Clipping)</value></data>
+  <data name="Settings_Playback_CrossfeedStrength_A11yName" xml:space="preserve"><value>クロスフィード強度</value></data>
+  <data name="Settings_Library_StartupScan_A11yName" xml:space="preserve"><value>起動時に自動スキャン</value></data>
+  <data name="Settings_Library_Rg_R128_A11yName" xml:space="preserve"><value>ReplayGain 2.0 タグ (R128_*) も書き込む</value></data>
+  <data name="Settings_Lyrics_Font_A11yName" xml:space="preserve"><value>歌詞フォント (Font Family)</value></data>
+  <data name="Settings_Lyrics_FontSize_A11yName" xml:space="preserve"><value>基本歌詞フォントサイズ</value></data>
+  <data name="Settings_Lyrics_ActiveFontSize_A11yName" xml:space="preserve"><value>再生中の強調歌詞サイズ</value></data>
+  <data name="Settings_Lyrics_CharSpacing_A11yName" xml:space="preserve"><value>文字間隔 (Character Spacing)</value></data>
+  <data name="Settings_Lyrics_LineHeight_A11yName" xml:space="preserve"><value>行の高さ (Line Height)</value></data>
+  <data name="Settings_Lyrics_Alignment_A11yName" xml:space="preserve"><value>歌詞の配置方法</value></data>
+  <data name="Settings_Lyrics_FocusDimming_A11yName" xml:space="preserve"><value>歌詞フォーカス演出 (Focus Dimming)</value></data>
+  <data name="Settings_Lyrics_Embedded_A11yName" xml:space="preserve"><value>音源内蔵歌詞(Embedded Lyrics)の自動読み込み</value></data>
+  <data name="Settings_Lyrics_LrcPattern_A11yName" xml:space="preserve"><value>.lrc ファイル検索パターン</value></data>
+  <data name="Settings_OnlineLyrics_SaveLoc_A11yName" xml:space="preserve"><value>保存場所</value></data>
+  <data name="Settings_OnlineLyrics_Template_A11yName" xml:space="preserve"><value>ファイル名テンプレート</value></data>
+  <data name="Settings_Appearance_Lang_A11yName" xml:space="preserve"><value>言語 (Language)</value></data>
+  <data name="Settings_Appearance_Tray_A11yName" xml:space="preserve"><value>トレイに格納 (Close to Tray)</value></data>
+  <data name="Settings_Appearance_Motion_A11yName" xml:space="preserve"><value>UI モーション (UI Motion)</value></data>
+  <data name="Settings_Appearance_FsAcrylic_A11yName" xml:space="preserve"><value>フルスクリーン アクリル</value></data>
+  <data name="Settings_Appearance_Theme_A11yName" xml:space="preserve"><value>テーマモード</value></data>
+  <data name="Settings_Appearance_Backdrop_A11yName" xml:space="preserve"><value>ウィンドウ背景マテリアル (Backdrop)</value></data>
+  <data name="Settings_Appearance_DynamicAccent_A11yName" xml:space="preserve"><value>アルバムアート動的テーマ (Dynamic Theme)</value></data>
+  <data name="Settings_Appearance_Accent_A11yName" xml:space="preserve"><value>アクセントカラー プリセット</value></data>
+  <data name="Settings_Appearance_CustomAccent_A11yName" xml:space="preserve"><value>カスタム アクセントカラー</value></data>
+  <data name="Settings_Layout_CoverSize_A11yName" xml:space="preserve"><value>アルバムジャケット基本サイズ</value></data>
+  <data name="Msg_DeletePlaylistMessage" xml:space="preserve"><value>'{0}'を削除しますか？この操作は元に戻せません。</value></data>
+  <data name="Msg_DeletePlaylistConfirm" xml:space="preserve"><value>削除</value></data>
+  <data name="Network_Radio_DeleteTitle" xml:space="preserve"><value>ステーションの削除</value></data>
+  <data name="Network_Radio_DeleteMessage" xml:space="preserve"><value>'{0}'をお気に入りから削除しますか？</value></data>
+  <data name="Network_YouTube_DeleteTitle" xml:space="preserve"><value>履歴項目の削除</value></data>
+  <data name="Network_YouTube_DeleteMessage" xml:space="preserve"><value>'{0}'を履歴から削除しますか？</value></data>
   <data name="Msg_SavedQueueToPlaylist" xml:space="preserve"><value>キューの {0}曲を '{1}' に保存しました。</value></data>
   <data name="Msg_DefaultSavedQueueName" xml:space="preserve"><value>保存されたキュー</value></data>
   <data name="Msg_NoTrackPlayingWarning" xml:space="preserve"><value>現在再生中のトラックはありません。</value></data>
@@ -507,6 +591,11 @@
   <data name="Settings_Eq_Band_LowPass.Content" xml:space="preserve"><value>ローパス</value></data>
   <data name="Settings_Eq_Band_HighPass.Content" xml:space="preserve"><value>ハイパス</value></data>
   <data name="Settings_Eq_DeleteBand_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>バンドの削除</value></data>
+  <data name="Settings_Eq_Band_Type_Name" xml:space="preserve"><value>EQバンド {0} タイプ</value></data>
+  <data name="Settings_Eq_Band_Freq_Name" xml:space="preserve"><value>EQバンド {0} 周波数</value></data>
+  <data name="Settings_Eq_Band_Gain_Name" xml:space="preserve"><value>EQバンド {0} ゲイン</value></data>
+  <data name="Settings_Eq_Band_Q_Name" xml:space="preserve"><value>EQバンド {0} Qファクター</value></data>
+  <data name="Settings_Eq_DeleteBand_Button.AutomationProperties.Name" xml:space="preserve"><value>バンドを削除</value></data>
   <data name="Settings_Eq_DeleteBand_Button.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>バンドの削除</value></data>
   <data name="Settings_Eq_Band_Freq_Label.Text" xml:space="preserve"><value>周波数</value></data>
   <data name="Settings_Eq_Band_Gain_Label.Text" xml:space="preserve"><value>ゲイン</value></data>
@@ -583,6 +672,10 @@
   <data name="Settings_Library_Rg_Scan_Button.Content" xml:space="preserve"><value>解析開始</value></data>
   <data name="Settings_Library_Rg_Rescan_Button.Content" xml:space="preserve"><value>全曲再解析</value></data>
   <data name="Settings_Library_Rg_NothingToScan" xml:space="preserve"><value>解析するトラックがありません (すべてにReplayGainタグがあります)。</value></data>
+  <data name="Settings_Library_Rg_AlreadyRunning" xml:space="preserve"><value>ReplayGain解析がすでに実行中です。</value></data>
+  <data name="Settings_Library_Rg_Starting" xml:space="preserve"><value>解析を開始…</value></data>
+  <data name="Settings_Library_Rg_RescanConfirmTitle" xml:space="preserve"><value>全曲再解析</value></data>
+  <data name="Settings_Library_Rg_RescanConfirmMessage" xml:space="preserve"><value>全トラックのReplayGainタグを再計算し、既存の値を上書きします。続行しますか？</value></data>
   <data name="Settings_Library_Rg_ScanningFormat" xml:space="preserve"><value>{0}/{1} · {2}</value></data>
   <data name="Settings_Library_Rg_DoneFormat" xml:space="preserve"><value>完了: {0}曲解析、{1}曲失敗</value></data>
   <data name="Msg_RgScanFailed" xml:space="preserve"><value>ReplayGain解析失敗: {0}</value></data>
@@ -773,6 +866,7 @@
   <data name="Rating_Selector.AutomationProperties.Name" xml:space="preserve"><value>評価を設定</value></data>
   <data name="Rating_ClearHint.Text" xml:space="preserve"><value>現在の星数をもう一度クリックすると評価が解除されます。</value></data>
   <data name="Rating_Cell.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>評価を設定</value></data>
+  <data name="Rating_Cell.AutomationProperties.Name" xml:space="preserve"><value>評価を設定</value></data>
   <data name="Smart_Dialog_CreateTitle" xml:space="preserve"><value>スマートプレイリストを作成</value></data>
   <data name="Smart_Dialog_EditTitle" xml:space="preserve"><value>{0} を編集</value></data>
   <data name="Smart_Dialog_NameHeader" xml:space="preserve"><value>名前</value></data>

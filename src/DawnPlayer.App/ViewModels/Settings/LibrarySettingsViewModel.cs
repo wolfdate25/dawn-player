@@ -12,6 +12,7 @@ public sealed class LibrarySettingsViewModel : ViewModelBase
     private readonly AppSettings _settings;
     private readonly Action? _scanStarter;
     private readonly Action<AppSettings>? _settingsSaver;
+    private readonly Action<string>? _warningNotifier;
 
     private readonly ObservableCollection<string> _folders = new();
     private string? _selectedFolder;
@@ -19,11 +20,13 @@ public sealed class LibrarySettingsViewModel : ViewModelBase
     public LibrarySettingsViewModel(
         AppSettings settings,
         Action? scanStarter = null,
-        Action<AppSettings>? settingsSaver = null)
+        Action<AppSettings>? settingsSaver = null,
+        Action<string>? warningNotifier = null)
     {
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _scanStarter = scanStarter;
         _settingsSaver = settingsSaver ?? (s => SettingsWriter.Schedule(s));
+        _warningNotifier = warningNotifier;
 
         foreach (var f in _settings.Library.Folders)
         {
@@ -80,6 +83,9 @@ public sealed class LibrarySettingsViewModel : ViewModelBase
         string trimmed = path.Trim();
         if (_settings.Library.Folders.Contains(trimmed, StringComparer.OrdinalIgnoreCase))
         {
+            // Silent duplicate add used to look like a dead button (PT4-09).
+            _warningNotifier?.Invoke(Localization.AppStrings.Format(
+                "Settings_Library_FolderDuplicate", "'{0}'은(는) 이미 등록된 폴더입니다.", trimmed));
             return false;
         }
 

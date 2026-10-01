@@ -307,6 +307,17 @@ public sealed partial class DlnaSection : UserControl
         }
     }
 
+    /// <summary>Keyboard parity with double-click (PT5-02): the browser list had no Enter path.</summary>
+    private void OnEntryKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.Enter
+            && EntryList.SelectedItem is DlnaRow { IsTrack: true } row && row.Item != null)
+        {
+            e.Handled = true;
+            _ = PlayRowAsync(row, play: true);
+        }
+    }
+
     private async void OnPlayItemClick(object sender, RoutedEventArgs e)
     {
         if (RowFromSender(sender) is { IsTrack: true } row && row.Item != null)

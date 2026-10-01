@@ -42,6 +42,7 @@ public sealed partial class NowPlayingBar : UserControl
         SeekSlider.AddHandler(UIElement.PointerCanceledEvent, new PointerEventHandler((_, _) => CompleteSeek()), true);
         SeekSlider.ValueChanged += OnSeekChanged;
         SeekSlider.SizeChanged += (_, _) => UpdateAbRepeatOverlay();
+        SeekSlider.PointerMoved += OnSeekPointerMovedPreview;
         _timer.Tick += (_, _) => OnTimer();
         _abRejectionTimer.Tick += (_, _) =>
         {
@@ -54,6 +55,15 @@ public sealed partial class NowPlayingBar : UserControl
         AppServices.LiveStreamTitleChanged += OnLiveStreamTitle;
         AppServices.RemoteArtResolved += OnRemoteArtResolved;
         AppServices.RatingsApplied += OnRatingsApplied;
+
+        // PT5-09: surface the live chord on every static transport tooltip. Dynamic tooltips
+        // (shuffle, A-B) get their suffix at their own update sites.
+        ShortcutTooltipBinder.BindShortcutTooltip(PreviousButton, Shortcuts.ShortcutCommand.Previous);
+        ShortcutTooltipBinder.BindShortcutTooltip(PlayButton, Shortcuts.ShortcutCommand.PlayPause);
+        ShortcutTooltipBinder.BindShortcutTooltip(NextButton, Shortcuts.ShortcutCommand.Next);
+        ShortcutTooltipBinder.BindShortcutTooltip(StopButton, Shortcuts.ShortcutCommand.Stop);
+        ShortcutTooltipBinder.BindShortcutTooltip(RepeatButton, Shortcuts.ShortcutCommand.RepeatCycle);
+        ShortcutTooltipBinder.BindShortcutTooltip(MuteButton, Shortcuts.ShortcutCommand.MuteToggle);
     }
 
     /// <summary>Runs on the UI thread (AppServices relay): a remote track's art finished
@@ -396,8 +406,20 @@ public sealed partial class NowPlayingBar : UserControl
             }
         }
 
-        ElapsedText.Text = SeekbarScrubbingCalculator.FormatTime(position);
-        RemainingText.Text = SeekbarScrubbingCalculator.FormatRemaining(position, duration);
+        if (_seekCalculator.IsDragging)
+        {
+            // Dragging: the labels preview the thumb, not the playhead — a live playhead readout
+            // under a thumb parked elsewhere reads as reported position ≠ visible position.
+            var (dragElapsed, dragRemaining) = SeekbarScrubbingCalculator.CalculateDraggingLabels(
+                SeekSlider.Value, duration);
+            ElapsedText.Text = dragElapsed;
+            RemainingText.Text = dragRemaining;
+        }
+        else
+        {
+            ElapsedText.Text = SeekbarScrubbingCalculator.FormatTime(position);
+            RemainingText.Text = SeekbarScrubbingCalculator.FormatRemaining(position, duration);
+        }
 
         // WaitingForB's preview band tracks the live playhead; the Looping band is static but
         // redrawing it is a couple of double writes, so one path serves both.
@@ -427,9 +449,30 @@ public sealed partial class NowPlayingBar : UserControl
 
     private void OnSeekChanged(object sender, RangeBaseValueChangedEventArgs e)
     {
-        if (_seekCalculator.IsDragging || _updatingSliderFromTimer || AppServices.Playback == null) return;
+        if (_seekCalculator.IsDragging)
+        {
+            // Paused drags get no timer ticks, so the thumb preview labels must update here.
+            var (elapsed, remaining) = SeekbarScrubbingCalculator.CalculateDraggingLabels(
+                SeekSlider.Value, AppServices.Playback?.Duration ?? TimeSpan.Zero);
+            ElapsedText.Text = elapsed;
+            RemainingText.Text = remaining;
+            return;
+        }
+        if (_updatingSliderFromTimer || AppServices.Playback == null) return;
         // tap-to-seek (no drag)
         AppServices.Playback.Seek(TimeSpan.FromSeconds(e.NewValue));
+    }
+
+    /// <summary>Hover preview: a tooltip at the pointer shows the time that spot would seek to,
+    /// so scrubbing decisions happen before the click, not after the jump.</summary>
+    private void OnSeekPointerMovedPreview(object sender, PointerRoutedEventArgs e)
+    {
+        if (AppServices.Playback is not { } playback || playback.Duration <= TimeSpan.Zero) return;
+        if (SeekSlider.ActualWidth <= 0) return;
+        var x = e.GetCurrentPoint(SeekSlider).Position.X;
+        var fraction = Math.Clamp(x / SeekSlider.ActualWidth, 0.0, 1.0);
+        ToolTipService.SetToolTip(SeekSlider,
+            SeekbarScrubbingCalculator.FormatTime(TimeSpan.FromSeconds(fraction * playback.Duration.TotalSeconds)));
     }
 
     // ---------- transport ----------
@@ -478,7 +521,7 @@ public sealed partial class NowPlayingBar : UserControl
             _ => "LIVE"
         };
         ABRepeatLabel.Foreground = ThemeResourceHelper.GetBrush("TextSecondaryBrush");
-        ToolTipService.SetToolTip(ABRepeatButton, reason switch
+        string reasonText = reason switch
         {
             AbRepeatRejectionReason.BBeforeA => AppStrings.Format("NowPlaying_ABRepeat_Reject_BBeforeA",
                 "B 지점은 A 지점보다 뒤에 있어야 합니다"),
@@ -486,7 +529,11 @@ public sealed partial class NowPlayingBar : UserControl
                 "YouTube 스트림에서는 A-B 반복을 사용할 수 없습니다"),
             _ => AppStrings.Format("NowPlaying_ABRepeat_Reject_Live",
                 "라이브 스트림에서는 A-B 반복을 사용할 수 없습니다")
-        });
+        };
+        ToolTipService.SetToolTip(ABRepeatButton, reasonText);
+        // The label snaps back after 1.4 s (PT3-07): the reason must survive for screen readers
+        // and non-hovering users via the persistent tooltip + automation name.
+        AutomationProperties.SetName(ABRepeatButton, reasonText);
         _abRejectionTimer.Stop();
         _abRejectionTimer.Start();
     }
@@ -500,10 +547,12 @@ public sealed partial class NowPlayingBar : UserControl
         ABRepeatButton.IsChecked = stage == AbRepeatStage.Looping;
         ABRepeatLabel.Foreground = stage == AbRepeatStage.Off
             ? ThemeResourceHelper.GetBrush("TextSecondaryBrush")
-            : ThemeResourceHelper.GetBrush("DawnAccentBrush");
+            : ThemeResourceHelper.GetBrush("DawnAccentTextBrush");
+        // The ✕ is the visible cancel affordance (PT3-08): right-click clears the window and
+        // that used to be tooltip-only knowledge.
         ABRepeatLabel.Text = stage switch
         {
-            AbRepeatStage.WaitingForB => "A…",
+            AbRepeatStage.WaitingForB => "A ✕",
             AbRepeatStage.Looping => "A→B",
             _ => "A–B"
         };
@@ -518,9 +567,9 @@ public sealed partial class NowPlayingBar : UserControl
                 SeekbarScrubbingCalculator.FormatTime(window.End),
                 AbRepeatOverlayCalculator.FormatLoopLength(window.End - window.Start)),
             _ => AppStrings.Get("NowPlaying_ABRepeat_Tooltip_Off",
-                "A-B 반복: 눌러서 현재 위치를 A 지점으로 설정 (Ctrl+L)")
+                "A-B 반복: 눌러서 현재 위치를 A 지점으로 설정")
         };
-        ToolTipService.SetToolTip(ABRepeatButton, tooltip);
+        ToolTipService.SetToolTip(ABRepeatButton, ShortcutTooltipBinder.WithShortcutSuffix(tooltip, Shortcuts.ShortcutCommand.ABRepeatCycle));
         UpdateAbRepeatOverlay();
     }
 
@@ -584,7 +633,7 @@ public sealed partial class NowPlayingBar : UserControl
         var mode = AppServices.Settings.Playback.ShuffleMode;
         ShuffleButton.IsChecked = mode != ShuffleMode.Off;
         ShuffleIcon.Foreground = mode != ShuffleMode.Off
-            ? ThemeResourceHelper.GetBrush("DawnAccentBrush")
+            ? ThemeResourceHelper.GetBrush("DawnAccentTextBrush")
             : ThemeResourceHelper.GetBrush("TextSecondaryBrush");
 
         ShuffleIcon.Glyph = mode == ShuffleMode.Albums ? "\uE93C" : "\uE8B1";
@@ -595,7 +644,7 @@ public sealed partial class NowPlayingBar : UserControl
             ShuffleMode.Albums => AppStrings.Get("NowPlaying_ShuffleTip_Albums", "셔플: 앨범 (앨범 순차 재생 후 다음 앨범 셔플)"),
             _ => AppStrings.Get("NowPlaying_ShuffleTip_Off", "셔플 끄기 (순차 재생)")
         };
-        ToolTipService.SetToolTip(ShuffleButton, tip);
+        ToolTipService.SetToolTip(ShuffleButton, ShortcutTooltipBinder.WithShortcutSuffix(tip, Shortcuts.ShortcutCommand.ShuffleCycle));
     }
 
     private void UpdateRepeatVisual()
@@ -604,7 +653,7 @@ public sealed partial class NowPlayingBar : UserControl
         var mode = AppServices.Settings.Playback.Repeat;
         RepeatIcon.Glyph = mode == RepeatMode.One ? "\uE8ED" : "\uE8EE";
         RepeatIcon.Foreground = mode != RepeatMode.Off
-            ? ThemeResourceHelper.GetBrush("DawnAccentBrush")
+            ? ThemeResourceHelper.GetBrush("DawnAccentTextBrush")
             : ThemeResourceHelper.GetBrush("TextSecondaryBrush");
         RepeatButton.IsChecked = mode != RepeatMode.Off;
     }
@@ -660,8 +709,26 @@ public sealed partial class NowPlayingBar : UserControl
         QueueButton.Flyout.ShowAt(QueueButton);
     }
 
-    private void OnQueueClearClick(object sender, RoutedEventArgs e) =>
-        QueuePopupController.RequestClear(AppServices.Playback?.Queue);
+    private async void OnQueueClearClick(object sender, RoutedEventArgs e)
+    {
+        var playback = AppServices.Playback;
+        if (playback == null || playback.Queue.Count == 0) return;
+
+        // PT3-16: "clear" wiped the whole queue instantly with no undo — confirm with the
+        // item count so the click can't be a one-shot accident.
+        var dialog = new ContentDialog
+        {
+            Title = AppStrings.Get("NowPlaying_QueueClearConfirmTitle", "대기열 비우기"),
+            Content = AppStrings.Format("NowPlaying_QueueClearConfirmMessage",
+                "대기열의 {0}곡을 모두 비울까요?", playback.Queue.Count),
+            PrimaryButtonText = AppStrings.Get("Common_OK", "확인"),
+            CloseButtonText = AppStrings.Get("Common_Cancel", "취소"),
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = XamlRoot,
+        };
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+        QueuePopupController.RequestClear(playback.Queue);
+    }
 
     private void OnQueueSaveClick(object sender, RoutedEventArgs e)
     {

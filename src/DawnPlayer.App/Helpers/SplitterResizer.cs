@@ -55,7 +55,7 @@ public sealed class SplitterResizer
         _setCursor?.Invoke(InputSystemCursor.Create(InputSystemCursorShape.SizeWestEast));
         if (_highlightLine != null)
         {
-            _highlightLine.Fill = ThemeResourceHelper.GetBrush("DawnAccentBrush");
+            _highlightLine.Fill = ThemeResourceHelper.GetBrush("DawnAccentTextBrush");
         }
     }
 
@@ -109,5 +109,28 @@ public sealed class SplitterResizer
             _onCompleted?.Invoke(_getCurrentWidth());
             e.Handled = true;
         }
+    }
+
+    /// <summary>Keyboard alternative for the drag gesture (WCAG 2.5.7, audit PT1-09/PT5-07):
+    /// makes the splitter focusable and resizes with Left/Right (8px steps), Enter/Space to
+    /// finish. Called once per splitter from the owning page's setup.</summary>
+    public void EnableKeyboardResizing(UIElement splitter, string accessibleName, double stepPx = 8)
+    {
+        splitter.IsTabStop = true;
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(splitter, accessibleName);
+        splitter.KeyDown += (_, e) =>
+        {
+            var delta = e.Key switch
+            {
+                Windows.System.VirtualKey.Left => -stepPx,
+                Windows.System.VirtualKey.Right => stepPx,
+                _ => 0,
+            };
+            if (delta == 0) return;
+            var effective = _invertDelta ? -delta : delta;
+            _setWidth(Math.Clamp(_getCurrentWidth() + effective, _minWidth, _maxWidth));
+            _onCompleted?.Invoke(_getCurrentWidth());
+            e.Handled = true;
+        };
     }
 }

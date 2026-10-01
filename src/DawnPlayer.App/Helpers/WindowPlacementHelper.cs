@@ -16,6 +16,14 @@ public static class WindowPlacementHelper
     [DllImport("user32.dll")]
     private static extern uint GetDpiForWindow(IntPtr hwnd);
 
+    [DllImport("user32.dll")]
+    private static extern int GetSystemMetrics(int index);
+
+    private const int SM_XVIRTUALSCREEN = 76;
+    private const int SM_YVIRTUALSCREEN = 77;
+    private const int SM_CXVIRTUALSCREEN = 78;
+    private const int SM_CYVIRTUALSCREEN = 79;
+
     /// <summary>
     /// Computes the DPI scale factor for a given window handle. Falls back to XamlRoot rasterization scale or 1.0.
     /// </summary>
@@ -41,7 +49,13 @@ public static class WindowPlacementHelper
     {
         if (ui.WindowX.HasValue && ui.WindowY.HasValue)
         {
-            window.AppWindow.Move(new PointInt32(ui.WindowX.Value, ui.WindowY.Value));
+            // Clamp against the virtual desktop (PT1-06): restoring a saved position after a
+            // monitor was unplugged used to move the window fully off-screen, which read as
+            // "the app no longer starts".
+            var (vx, vy, vw, vh) = GetVirtualScreenBounds();
+            var size = EstimateRestoredSize(ui, hwnd);
+            var (x, y) = ClampToVirtualScreen(ui.WindowX.Value, ui.WindowY.Value, size.W, size.H, vx, vy, vw, vh);
+            window.AppWindow.Move(new PointInt32(x, y));
         }
 
         if (ui.WindowMaximized && window.AppWindow.Presenter is OverlappedPresenter presenter)
@@ -55,6 +69,36 @@ public static class WindowPlacementHelper
         int h = Math.Clamp((int)Math.Round(ui.WindowHeight * scale), 520, 2160);
         window.AppWindow.ResizeClient(new SizeInt32(w, h));
     }
+
+    private static (int X, int Y, int W, int H) GetVirtualScreenBounds()
+    {
+        try
+        {
+            var x = GetSystemMetrics(SM_XVIRTUALSCREEN);
+            var y = GetSystemMetrics(SM_YVIRTUALSCREEN);
+            var w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+            var h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+            if (w > 0 && h > 0) return (x, y, w, h);
+        }
+        catch { }
+        return (0, 0, 1920, 1080);
+    }
+
+    private static (int W, int H) EstimateRestoredSize(UiSettings ui, IntPtr hwnd)
+    {
+        // The clamp runs before ResizeClient, so the eventual size is estimated from the saved
+        // DIP size at the current DPI — close enough to keep the window reachable.
+        double scale = GetDpiScale(hwnd, null);
+        int w = Math.Clamp((int)Math.Round(ui.WindowWidth * scale), 760, 3840);
+        int h = Math.Clamp((int)Math.Round(ui.WindowHeight * scale), 520, 2160);
+        return (w, h);
+    }
+
+    /// <summary>Pure clamp lives in <see cref="WindowPlacementMath"/> (unit-tested); this shim
+    /// keeps the restore call site readable.</summary>
+    internal static (int X, int Y) ClampToVirtualScreen(
+        int x, int y, int w, int h, int vx, int vy, int vw, int vh) =>
+        WindowPlacementMath.ClampToVirtualScreen(x, y, w, h, vx, vy, vw, vh);
 
     /// <summary>
     /// Saves current window placement (position, size, maximized state) into UiSettings.

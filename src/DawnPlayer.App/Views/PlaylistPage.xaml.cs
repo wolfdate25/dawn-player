@@ -147,6 +147,10 @@ public sealed partial class PlaylistPage : Page
             w => PlaylistLyricsPane.Width = w,
             cursor => ProtectedCursor = cursor,
             w => { if (AppServices.Settings != null) { AppServices.Settings.Ui.LyricsSidebarWidth = w; SettingsWriter.Schedule(AppServices.Settings); } });
+
+        // Keyboard alternative to pointer-drag (WCAG 2.5.7 — audit PT1-09/PT5-07).
+        _leftResizer.EnableKeyboardResizing(LeftSplitter, AppStrings.Get("Library_Splitter_Left", "왼쪽 패널 너비 조절"));
+        _lyricsResizer.EnableKeyboardResizing(LyricsSplitter, AppStrings.Get("Library_Splitter_Lyrics", "가사 패널 너비 조절"));
     }
 
     private void RestoreLayoutSettings()
@@ -472,7 +476,7 @@ public sealed partial class PlaylistPage : Page
     private void OnDeleteActivePlaylist(object sender, RoutedEventArgs e) =>
         DeleteSelectedSidebarPlaylist(Current);
 
-    private void DeleteSelectedSidebarPlaylist(Playlist? target = null)
+    private async void DeleteSelectedSidebarPlaylist(Playlist? target = null)
     {
         var pl = target ?? ResolveSidebarPlaylist(null);
         if (pl == null) return;
@@ -484,6 +488,19 @@ public sealed partial class PlaylistPage : Page
             Rebuild();
             return;
         }
+
+        // Deleting a user playlist is unrecoverable — confirm first (PT2-06). The context item
+        // and the sidebar Del key both used to delete instantly.
+        var dialog = new ContentDialog
+        {
+            Title = AppStrings.Get("Msg_DeletePlaylistTitle", "재생목록 삭제"),
+            Content = AppStrings.Format("Msg_DeletePlaylistMessage", "'{0}'을(를) 삭제할까요? 이 작업은 되돌릴 수 없습니다.", pl.Name),
+            PrimaryButtonText = AppStrings.Get("Msg_DeletePlaylistConfirm", "삭제"),
+            CloseButtonText = AppStrings.Get("Common_Cancel", "취소"),
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = XamlRoot,
+        };
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
 
         AppServices.Playlists.RemovePlaylist(pl);
         var next = AppServices.Playlists.Current;
@@ -732,6 +749,12 @@ public sealed partial class PlaylistPage : Page
                 e.Handled = true;
             }
         }
+        else if (e.Key == Windows.System.VirtualKey.Enter)
+        {
+            // Keyboard parity with double-click (PT5-02): the table only handled Delete/Alt+arrows.
+            e.Handled = true;
+            OnPlayItems(sender, e);
+        }
         else if (isAlt && e.Key == Windows.System.VirtualKey.Up)
         {
             OnMoveUpClick(sender, e);
@@ -749,6 +772,21 @@ public sealed partial class PlaylistPage : Page
     // traces never appearing), so a ContextRequested-only hook silently never ran.
     private void OnListRightTapped(object sender, RightTappedRoutedEventArgs e) =>
         RefreshSelectionForContextClick(e.OriginalSource as DependencyObject);
+
+    /// <summary>PT2-12: surface how many rows are selected next to the stats line.</summary>
+    private void OnPlaylistSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        int count = PlaylistList.SelectedItems.Count;
+        if (count > 1)
+        {
+            PlaylistSelectionText.Text = AppStrings.Format("Library_SelectedCount", "{0}곡 선택됨", count);
+            PlaylistSelectionText.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            PlaylistSelectionText.Visibility = Visibility.Collapsed;
+        }
+    }
 
     private void OnListContextRequested(UIElement sender, ContextRequestedEventArgs e) =>
         RefreshSelectionForContextClick(e.OriginalSource as DependencyObject);

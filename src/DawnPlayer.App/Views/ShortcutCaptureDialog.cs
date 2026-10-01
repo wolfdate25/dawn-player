@@ -46,7 +46,7 @@ internal sealed class ShortcutCaptureDialog : ContentDialog
             Spacing = 10,
             Children =
             {
-                new TextBlock { Text = AppStrings.Get("Msg_ShortcutCaptureInstruction", "새 키 조합을 누르세요."), FontSize = 15, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
+                new TextBlock { Text = AppStrings.Get("Msg_ShortcutCaptureInstruction", "새 키 조합을 누르세요."), FontSize = DawnPlayer.App.Styles.DesignTokenValues.Font.Subtitle, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
                 _hint
             }
         };

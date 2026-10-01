@@ -38,6 +38,7 @@
         <CollectionViewSource x:Name="RightQueueCvs" IsSourceGrouped="True" ItemsPath="Items"/>
 
         <Style x:Key="ColumnHeaderButton" TargetType="Button">
+            <Setter Property="UseSystemFocusVisuals" Value="True"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="4,2"/>
@@ -47,6 +48,7 @@
         </Style>
 
         <Style x:Key="AlbumCardButtonStyle" TargetType="Button">
+            <Setter Property="UseSystemFocusVisuals" Value="True"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="0"/>
@@ -57,6 +59,7 @@
         </Style>
 
         <Style x:Key="TrackRowButtonStyle" TargetType="Button">
+            <Setter Property="UseSystemFocusVisuals" Value="True"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="4,1"/>
@@ -156,7 +159,7 @@
                             <TextBlock Grid.Column="1" Text="{Binding Content.Title}" FontSize="12"
                                        VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                                        Foreground="{ThemeResource TextPrimaryBrush}"/>
-                            <TextBlock Grid.Column="2" Text="{Binding Content.CountText}" FontSize="10"
+                            <TextBlock Grid.Column="2" Text="{Binding Content.CountText}" FontSize="{StaticResource FontCaption}"
                                        Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"
                                        Margin="6,0,6,0"/>
                         </Grid>
@@ -190,15 +193,15 @@
 
                 <!-- Left: Selection & Stats Breadcrumb -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                    <FontIcon Glyph="&#xE8B9;" FontSize="11" Foreground="{ThemeResource DawnAccentBrush}"/>
-                    <TextBlock x:Name="StatusText" FontSize="11.5" Foreground="{ThemeResource TextSecondaryBrush}"
-                               Text="Mixed selection • 0 tracks" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                    <FontIcon Glyph="&#xE8B9;" FontSize="11" Foreground="{ThemeResource DawnAccentTextBrush}"/>
+                    <TextBlock x:Name="StatusText" FontSize="{StaticResource FontBodySmall}" Foreground="{ThemeResource TextSecondaryBrush}"
+                               Text="" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
 
                 <!-- Right: Search, View Mode Toggle, Zoom Flyout & Rescan -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                     <AutoSuggestBox x:Uid="Library_SearchBox" x:Name="SearchBox" Width="140" Height="28" PlaceholderText="Search..."
-                                    QueryIcon="Find" TextChanged="OnSearchChanged" FontSize="11.5"/>
+                                    QueryIcon="Find" TextChanged="OnSearchChanged" FontSize="{StaticResource FontBodySmall}"/>
 
                     <!-- Segmented View Mode Toggle (Grid / List) -->
                     <Border Background="{ThemeResource PanelSubtleBrush}" BorderBrush="{ThemeResource BorderSubtleBrush}"
@@ -218,7 +221,7 @@
                     </Border>
 
                     <!-- Cover Zoom Flyout Button -->
-                    <Button x:Uid="Library_Zoom_Button" Style="{StaticResource TransportButton}" Width="28" Height="28"
+                    <Button x:Uid="Library_Zoom_Button" Style="{StaticResource TransportButton}" Width="32" Height="32"
  ToolTipService.ToolTip="커버 크기 조절 (Ctrl+마우스 휠)">
                         <!-- Cover-size mark: MDL2 Picture (E91B), same language/weight/size
                              as the neighboring toolbar glyphs (E80A/EA37/E72C @11). -->
@@ -227,7 +230,7 @@
                             <Flyout Placement="Bottom" Opened="OnCoverZoomFlyoutOpened">
                                 <StackPanel Width="190" Spacing="8" Padding="6">
                                     <Grid>
-                                        <TextBlock x:Uid="Library_Zoom_Title" Text="커버 크기" FontSize="11.5" FontWeight="SemiBold"/>
+                                        <TextBlock x:Uid="Library_Zoom_Title" Text="커버 크기" FontSize="{StaticResource FontBodySmall}" FontWeight="SemiBold"/>
                                         <TextBlock x:Name="ZoomLabel" Text="144px" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}" HorizontalAlignment="Right"/>
                                     </Grid>
                                     <Slider x:Name="CoverZoomSlider" Minimum="80" Maximum="260" StepFrequency="4"
@@ -239,17 +242,17 @@
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <Button x:Uid="Library_Zoom_Small" Grid.Column="0" Content="소" FontSize="10.5" Padding="0,2" HorizontalAlignment="Stretch" Click="OnZoomSmall"/>
-                                        <Button x:Uid="Library_Zoom_Medium" Grid.Column="1" Content="중" FontSize="10.5" Padding="0,2" HorizontalAlignment="Stretch" Click="OnZoomMedium"/>
-                                        <Button x:Uid="Library_Zoom_Large" Grid.Column="2" Content="대" FontSize="10.5" Padding="0,2" HorizontalAlignment="Stretch" Click="OnZoomLarge"/>
-                                        <Button x:Uid="Library_Zoom_ExtraLarge" Grid.Column="3" Content="특대" FontSize="10.5" Padding="0,2" HorizontalAlignment="Stretch" Click="OnZoomExtraLarge"/>
+                                        <Button x:Uid="Library_Zoom_Small" Grid.Column="0" Content="소" FontSize="{StaticResource FontCaption}" Padding="0,2" HorizontalAlignment="Stretch" Click="OnZoomSmall"/>
+                                        <Button x:Uid="Library_Zoom_Medium" Grid.Column="1" Content="중" FontSize="{StaticResource FontCaption}" Padding="0,2" HorizontalAlignment="Stretch" Click="OnZoomMedium"/>
+                                        <Button x:Uid="Library_Zoom_Large" Grid.Column="2" Content="대" FontSize="{StaticResource FontCaption}" Padding="0,2" HorizontalAlignment="Stretch" Click="OnZoomLarge"/>
+                                        <Button x:Uid="Library_Zoom_ExtraLarge" Grid.Column="3" Content="특대" FontSize="{StaticResource FontCaption}" Padding="0,2" HorizontalAlignment="Stretch" Click="OnZoomExtraLarge"/>
                                     </Grid>
                                 </StackPanel>
                             </Flyout>
                         </Button.Flyout>
                     </Button>
 
-                    <Button x:Uid="Library_RescanButton" x:Name="RescanButton" Style="{StaticResource TransportButton}" Width="28" Height="28"
+                    <Button x:Uid="Library_RescanButton" x:Name="RescanButton" Style="{StaticResource TransportButton}" Width="32" Height="32"
                             Click="OnRescanClick" ToolTipService.ToolTip="라이브러리 새로고침">
                         <FontIcon Glyph="&#xE72C;" FontSize="11"/>
                     </Button>
@@ -329,7 +332,7 @@
                                                                     <!-- Eole Year Badge Overlay (Top-Left) -->
                                                                     <Border Style="{StaticResource YearBadgeStyle}"
                                                                             Visibility="{x:Bind HasYear, Converter={StaticResource BoolToVis}}">
-                                                                        <TextBlock Text="{x:Bind YearString}" FontSize="9.5" FontWeight="SemiBold"
+                                                                        <TextBlock Text="{x:Bind YearString}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold"
                                                                                    Foreground="#FFF0F0F0"/>
                                                                     </Border>
                                                                 </Grid>
@@ -347,7 +350,7 @@
 
                                                             <!-- Eole Active Selection Downward Caret Arrow (▼) -->
                                                             <FontIcon Grid.Row="3" Glyph="&#xE96E;" FontSize="11"
-                                                                      Foreground="{ThemeResource DawnAccentBrush}"
+                                                                      Foreground="{ThemeResource DawnAccentTextBrush}"
                                                                       HorizontalAlignment="Center" Margin="0,2,0,-6"
                                                                       Visibility="{x:Bind IsSelected, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
                                                         </Grid>
@@ -382,10 +385,10 @@
                                                     <!-- Left: Album Title (Italic SemiBold) & Artist -->
                                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                                         <TextBlock Text="{x:Bind DrawerAlbumTitle, Mode=OneWay}"
-                                                                   FontSize="16" FontWeight="SemiBold" FontStyle="Italic"
+                                                                   FontSize="{StaticResource FontTitle}" FontWeight="SemiBold" FontStyle="Italic"
                                                                    Foreground="{ThemeResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
                                                         <TextBlock Text="{x:Bind DrawerArtist, Mode=OneWay}"
-                                                                   FontSize="12.5" Foreground="{ThemeResource TextSecondaryBrush}"
+                                                                   FontSize="{StaticResource FontBody}" Foreground="{ThemeResource TextSecondaryBrush}"
                                                                    TextTrimming="CharacterEllipsis"/>
                                                     </StackPanel>
 
@@ -397,25 +400,25 @@
                                                         </Grid.RowDefinitions>
                                                         <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" VerticalAlignment="Center">
                                                             <TextBlock Text="{x:Bind DrawerStats, Mode=OneWay}"
-                                                                       FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>
+                                                                       FontSize="{StaticResource FontBodySmall}" Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>
                                                             
                                                             <!-- Quick Action Toolbar -->
                                                             <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Margin="6,0,0,0">
-                                                                <Button x:Uid="Library_Drawer_PlayAlbum" Style="{StaticResource TransportButton}" Width="26" Height="26"
+                                                                <Button x:Uid="Library_Drawer_PlayAlbum" Style="{StaticResource TransportButton}" Width="32" Height="32"
                                                                         Click="OnDrawerPlayAlbumClick" ToolTipService.ToolTip="앨범 전체 재생">
                                                                     <FontIcon Glyph="&#xE768;" FontSize="11" Foreground="{ThemeResource TextSecondaryBrush}"/>
                                                                 </Button>
-                                                                <Button x:Uid="Library_Drawer_EnqueueAlbum" Style="{StaticResource TransportButton}" Width="26" Height="26"
+                                                                <Button x:Uid="Library_Drawer_EnqueueAlbum" Style="{StaticResource TransportButton}" Width="32" Height="32"
                                                                         Click="OnDrawerEnqueueAlbumClick" ToolTipService.ToolTip="대기열에 추가">
                                                                     <FontIcon Glyph="&#xE8FD;" FontSize="11" Foreground="{ThemeResource TextSecondaryBrush}"/>
                                                                 </Button>
-                                                                <Button x:Uid="Library_Drawer_AddToPlaylist" Style="{StaticResource TransportButton}" Width="26" Height="26"
+                                                                <Button x:Uid="Library_Drawer_AddToPlaylist" Style="{StaticResource TransportButton}" Width="32" Height="32"
                                                                         Click="OnDrawerAddToPlaylistClick" ToolTipService.ToolTip="현재 재생목록에 추가">
                                                                     <FontIcon Glyph="&#xE710;" FontSize="11" Foreground="{ThemeResource TextSecondaryBrush}"/>
                                                                 </Button>
-                                                                <Button x:Uid="Library_Drawer_Close" Style="{StaticResource TransportButton}" Width="26" Height="26"
+                                                                <Button x:Uid="Library_Drawer_Close" Style="{StaticResource TransportButton}" Width="32" Height="32"
                                                                         Click="OnCloseRowDrawerClick" ToolTipService.ToolTip="닫기 (Esc)" Margin="4,0,0,0">
-                                                                    <FontIcon Glyph="&#xE711;" FontSize="10" Foreground="{ThemeResource TextTertiaryBrush}"/>
+                                                                    <FontIcon Glyph="&#xE711;" FontSize="{StaticResource FontCaption}" Foreground="{ThemeResource TextTertiaryBrush}"/>
                                                                 </Button>
                                                             </StackPanel>
                                                         </StackPanel>
@@ -439,7 +442,8 @@
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate x:DataType="lib:AlbumTrackItemVm">
                                                                 <Button Style="{StaticResource TrackRowButtonStyle}"
-                                                                        DoubleTapped="OnDrawerTrackDoubleTapped">
+                                                                        DoubleTapped="OnDrawerTrackDoubleTapped"
+                                                                        KeyDown="OnDrawerTrackKeyDown">
                                                                     <Button.ContextFlyout>
                                                                         <MenuFlyout Opening="OnDrawerTrackMenuOpening">
                                                                             <MenuFlyoutItem x:Uid="Library_TrackMenu_Play" Text="재생" Click="OnDrawerTrackPlaySelected">
@@ -471,15 +475,15 @@
                                                                         <Grid Grid.Column="0" VerticalAlignment="Center">
                                                                             <TextBlock Text="{x:Bind TrackNoFormatted}"
                                                                                        Visibility="{x:Bind IsPlaying, Mode=OneWay, Converter={StaticResource NotPlayingVis}}"
-                                                                                       FontSize="11.5" FontStyle="Italic" Foreground="{ThemeResource TextTertiaryBrush}"/>
+                                                                                       FontSize="{StaticResource FontBodySmall}" FontStyle="Italic" Foreground="{ThemeResource TextTertiaryBrush}"/>
                                                                             <FontIcon Glyph="&#xE767;" FontSize="11"
-                                                                                       Foreground="{ThemeResource DawnAccentBrush}"
+                                                                                       Foreground="{ThemeResource DawnAccentTextBrush}"
                                                                                        Visibility="{x:Bind IsPlaying, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
                                                                         </Grid>
 
                                                                         <!-- Title -->
                                                                         <TextBlock Grid.Column="1" Text="{x:Bind Title}"
-                                                                                   FontSize="11.5"
+                                                                                   FontSize="{StaticResource FontBodySmall}"
                                                                                    Foreground="{x:Bind IsPlaying, Mode=OneWay, Converter={StaticResource PlayingBrush}}"
                                                                                    FontWeight="{x:Bind IsPlaying, Mode=OneWay, Converter={StaticResource PlayingFontWeight}}"
                                                                                    TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
@@ -500,7 +504,8 @@
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate x:DataType="lib:AlbumTrackItemVm">
                                                                 <Button Style="{StaticResource TrackRowButtonStyle}"
-                                                                        DoubleTapped="OnDrawerTrackDoubleTapped">
+                                                                        DoubleTapped="OnDrawerTrackDoubleTapped"
+                                                                        KeyDown="OnDrawerTrackKeyDown">
                                                                     <Button.ContextFlyout>
                                                                         <MenuFlyout Opening="OnDrawerTrackMenuOpening">
                                                                             <MenuFlyoutItem x:Uid="Library_TrackMenu_Play" Text="재생" Click="OnDrawerTrackPlaySelected">
@@ -532,15 +537,15 @@
                                                                         <Grid Grid.Column="0" VerticalAlignment="Center">
                                                                             <TextBlock Text="{x:Bind TrackNoFormatted}"
                                                                                        Visibility="{x:Bind IsPlaying, Mode=OneWay, Converter={StaticResource NotPlayingVis}}"
-                                                                                       FontSize="11.5" FontStyle="Italic" Foreground="{ThemeResource TextTertiaryBrush}"/>
+                                                                                       FontSize="{StaticResource FontBodySmall}" FontStyle="Italic" Foreground="{ThemeResource TextTertiaryBrush}"/>
                                                                             <FontIcon Glyph="&#xE767;" FontSize="11"
-                                                                                       Foreground="{ThemeResource DawnAccentBrush}"
+                                                                                       Foreground="{ThemeResource DawnAccentTextBrush}"
                                                                                        Visibility="{x:Bind IsPlaying, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
                                                                         </Grid>
 
                                                                         <!-- Title -->
                                                                         <TextBlock Grid.Column="1" Text="{x:Bind Title}"
-                                                                                   FontSize="11.5"
+                                                                                   FontSize="{StaticResource FontBodySmall}"
                                                                                    Foreground="{x:Bind IsPlaying, Mode=OneWay, Converter={StaticResource PlayingBrush}}"
                                                                                    FontWeight="{x:Bind IsPlaying, Mode=OneWay, Converter={StaticResource PlayingFontWeight}}"
                                                                                    TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
@@ -563,6 +568,30 @@
                         </ItemsRepeater>
                     </ScrollViewer>
                 </Grid>
+
+                <!-- PT2-07: central empty state — "library is empty" and "search found nothing"
+                     are different situations and used to share one misleading status line. -->
+                <StackPanel x:Name="LibraryEmptyState" HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Spacing="8" Visibility="Collapsed">
+                    <FontIcon Glyph="&#xE8B9;" FontSize="28" Foreground="{ThemeResource TextTertiaryBrush}"
+                              HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="LibraryEmptyTitle" Text="" FontSize="14" FontWeight="SemiBold"
+                               Foreground="{ThemeResource TextPrimaryBrush}" TextAlignment="Center"
+                               TextWrapping="Wrap" MaxWidth="380"/>
+                    <TextBlock x:Name="LibraryEmptyHint" Text="" FontSize="12"
+                               Foreground="{ThemeResource TextSecondaryBrush}" TextAlignment="Center"
+                               TextWrapping="Wrap" MaxWidth="380"/>
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                        <Button x:Name="LibraryEmptySettingsButton" Click="OnEmptyOpenSettingsClick" Padding="14,6" CornerRadius="4"
+                                Visibility="Collapsed">
+                            <TextBlock x:Uid="Library_Empty_OpenSettings" Text="설정 열기" FontSize="12"/>
+                        </Button>
+                        <Button x:Name="LibraryEmptyClearSearchButton" Click="OnEmptyClearSearchClick" Padding="14,6" CornerRadius="4"
+                                Visibility="Collapsed">
+                            <TextBlock x:Uid="Library_Empty_ClearSearch" Text="검색 지우기" FontSize="12"/>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
 
                 <!-- B: Track List View (Alternative) -->
                 <Grid x:Name="TrackListViewContainer" Visibility="Collapsed">
@@ -601,8 +630,11 @@
                         </Button>
                     </Grid>
 
-                    <ListView x:Name="TracksList" Grid.Row="1" SelectionMode="Single"
+                    <ListView x:Name="TracksList" Grid.Row="1" SelectionMode="Extended"
                               DoubleTapped="OnTrackDoubleTapped"
+                              KeyDown="OnTracksListKeyDown"
+                              RightTapped="OnTracksListRightTapped"
+                              ContextRequested="OnTracksListContextRequested"
                               Padding="8,4,8,20">
                         <ListView.ItemContainerStyle>
                             <Style TargetType="ListViewItem">
@@ -634,7 +666,7 @@
                                             Tag="{x:Bind}" Click="OnLibraryRatingCellClick"
                                             AutomationProperties.Name="{x:Bind Rating, Converter={StaticResource RatingAccess}}">
                                         <TextBlock Text="{x:Bind Rating, Converter={StaticResource RatingStars}}"
-                                                   FontSize="10" Foreground="{ThemeResource DawnAccentBrush}"
+                                                   FontSize="{StaticResource FontCaption}" Foreground="{ThemeResource DawnAccentTextBrush}"
                                                    VerticalAlignment="Center"/>
                                     </Button>
                                     <TextBlock Grid.Column="5" Text="{x:Bind Duration, Converter={StaticResource TimeSpanText}}"
@@ -731,7 +763,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <FontIcon Grid.Column="0" Glyph="&#xE721;" FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}" Margin="0,0,8,0"/>
+                <FontIcon Grid.Column="0" Glyph="&#xE721;" FontSize="{StaticResource FontBodySmall}" Foreground="{ThemeResource TextTertiaryBrush}" Margin="0,0,8,0"/>
                 <TextBlock x:Uid="Library_RightQueue_Title" Grid.Column="1" Text="Playing tracks..." FontSize="12"
                            Foreground="{ThemeResource TextSecondaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                 <TextBlock Grid.Column="2" x:Name="RightQueueStatsText" Text="0 items" FontSize="11"
@@ -776,7 +808,7 @@
                                            VerticalAlignment="Center"/>
 
                                 <!-- Track Title -->
-                                <TextBlock Grid.Column="1" Text="{x:Bind Track.Title}" FontSize="11.5"
+                                <TextBlock Grid.Column="1" Text="{x:Bind Track.Title}" FontSize="{StaticResource FontBodySmall}"
                                            Foreground="{ThemeResource TextPrimaryBrush}"
                                            TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
 
@@ -803,11 +835,11 @@
 
                                     <!-- Speaker Icon -->
                                     <FontIcon Grid.Column="0" Glyph="&#xE767;" FontSize="11"
-                                              Foreground="{ThemeResource DawnAccentBrush}"
+                                              Foreground="{ThemeResource DawnAccentTextBrush}"
                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
                                     <!-- Track Title (White, SemiBold) -->
-                                    <TextBlock Grid.Column="1" Text="{x:Bind Track.Title}" FontSize="11.5"
+                                    <TextBlock Grid.Column="1" Text="{x:Bind Track.Title}" FontSize="{StaticResource FontBodySmall}"
                                                FontWeight="SemiBold" Foreground="{ThemeResource TextPrimaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
 
@@ -856,7 +888,7 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Text="{Binding Album}" FontSize="12.5" FontWeight="SemiBold" FontStyle="Italic"
+                                            <TextBlock Text="{Binding Album}" FontSize="{StaticResource FontBody}" FontWeight="SemiBold" FontStyle="Italic"
                                                        Foreground="{ThemeResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
                                             <TextBlock Grid.Column="1" Text="{Binding DurationFormatted}" FontSize="11"
                                                        Foreground="{ThemeResource TextTertiaryBrush}" HorizontalAlignment="Right" Margin="4,0,2,0"/>
@@ -867,7 +899,7 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Text="{Binding Artist}" FontSize="11.5"
+                                            <TextBlock Text="{Binding Artist}" FontSize="{StaticResource FontBodySmall}"
                                                        Foreground="{ThemeResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
                                             <TextBlock Grid.Column="1" Text="{Binding YearFormatted}" FontSize="11"
                                                        Foreground="{ThemeResource TextTertiaryBrush}" HorizontalAlignment="Right" Margin="4,0,2,0"/>

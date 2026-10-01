@@ -44,4 +44,65 @@ public static class ContrastMath
                 Convert.ToByte(s.Substring(2, 2), 16),
                 Convert.ToByte(s.Substring(4, 2), 16));
     }
+
+    /// <summary>
+    /// Resolves a text-usable variant of an accent color: the color closest to the original
+    /// (smallest shift) that still meets <paramref name="targetRatio"/> against the surface it
+    /// will be painted on. The shift moves away from the background's luminance — darkening on
+    /// light surfaces, lightening on dark ones — by blending toward black/white, which preserves
+    /// hue exactly. Already-passing colors come back unchanged, so dark-theme accents (which
+    /// pass) never drift while light-theme presets get a readable text variant. Pure logic;
+    /// consumed by ThemeService.SetAccentBrushes for the DawnAccentTextBrush resource.
+    /// </summary>
+    public static (byte r, byte g, byte b) SolveTextVariant(
+        byte r, byte g, byte b, byte bgR, byte bgG, byte bgB, double targetRatio = 4.5)
+    {
+        double RatioOf(byte cr, byte cg, byte cb)
+        {
+            var la = RelativeLuminance(cr, cg, cb);
+            var lb = RelativeLuminance(bgR, bgG, bgB);
+            var lighter = Math.Max(la, lb);
+            var darker = Math.Min(la, lb);
+            return (lighter + 0.05) / (darker + 0.05);
+        }
+
+        if (RatioOf(r, g, b) >= targetRatio) return (r, g, b);
+
+        var darken = RelativeLuminance(bgR, bgG, bgB) > 0.5;
+
+        // t is the shift amount from the original toward the blend extreme — t=0 is the original
+        // (fails by precondition), t=1 is full black/white. Contrast is monotonic in t, so the
+        // passing region is [t*, 1] and the search invariant "lo fails, hi passes" holds for
+        // both directions.
+        (byte, byte, byte) Blend(double t) => darken
+            ? ((byte)Math.Round(r * (1 - t)), (byte)Math.Round(g * (1 - t)), (byte)Math.Round(b * (1 - t)))
+            : ((byte)Math.Round(r + (255 - r) * t),
+               (byte)Math.Round(g + (255 - g) * t),
+               (byte)Math.Round(b + (255 - b) * t));
+
+        var extreme = Blend(1);
+        if (RatioOf(extreme.Item1, extreme.Item2, extreme.Item3) < targetRatio)
+        {
+            return extreme;
+        }
+
+        double lo = 0, hi = 1;
+        for (var i = 0; i < 20; i++)
+        {
+            var mid = (lo + hi) / 2;
+            var c = Blend(mid);
+            if (RatioOf(c.Item1, c.Item2, c.Item3) >= targetRatio) hi = mid; else lo = mid;
+        }
+
+        // Byte rounding at the boundary can land an epsilon below the target — step further
+        // from the original (toward the extreme, always the safe direction) until it clears.
+        var t2 = hi;
+        var result = Blend(t2);
+        for (var i = 0; i < 256 && RatioOf(result.Item1, result.Item2, result.Item3) < targetRatio; i++)
+        {
+            t2 = Math.Min(1.0, t2 + 1.0 / 256);
+            result = Blend(t2);
+        }
+        return result;
+    }
 }

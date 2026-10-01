@@ -23,13 +23,13 @@
 
             <StackPanel Spacing="3">
                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                    <FontIcon Glyph="&#xEC4F;" FontSize="16" Foreground="{ThemeResource DawnAccentBrush}"/>
-                    <TextBlock x:Name="TrackHeaderTitle" x:Uid="LyricsEditor_TrackHeaderTitle" Text="곡 제목" FontSize="16" FontWeight="SemiBold"
+                    <FontIcon Glyph="&#xEC4F;" FontSize="{StaticResource FontTitle}" Foreground="{ThemeResource DawnAccentTextBrush}"/>
+                    <TextBlock x:Name="TrackHeaderTitle" x:Uid="LyricsEditor_TrackHeaderTitle" Text="곡 제목" FontSize="{StaticResource FontTitle}" FontWeight="SemiBold"
                                Foreground="{ThemeResource TextPrimaryBrush}"/>
                     <TextBlock x:Name="TrackHeaderArtist" x:Uid="LyricsEditor_TrackHeaderArtist" Text="— 아티스트" FontSize="14"
                                Foreground="{ThemeResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                 </StackPanel>
-                <TextBlock x:Name="FilePathLabel" Text="C:\Music\..." FontSize="11.5"
+                <TextBlock x:Name="FilePathLabel" Text="C:\Music\..." FontSize="{StaticResource FontBodySmall}"
                            Foreground="{ThemeResource TextTertiaryBrush}" TextTrimming="CharacterEllipsis"/>
             </StackPanel>
 
@@ -38,7 +38,7 @@
                     <FontIcon x:Name="PlayPauseIcon" Glyph="&#xE768;" FontSize="13"/>
                 </Button>
                 <TextBlock x:Name="PositionText" Text="0:00.000" FontSize="13" FontWeight="SemiBold"
-                           Foreground="{ThemeResource DawnAccentBrush}" VerticalAlignment="Center" Width="72" TextAlignment="Right"/>
+                           Foreground="{ThemeResource DawnAccentTextBrush}" VerticalAlignment="Center" Width="72" TextAlignment="Right"/>
             </StackPanel>
         </Grid>
 
@@ -68,7 +68,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
-                        <TextBlock x:Uid="LyricsEditor_StepPresetsLabel" Text="스텝 프리셋:" FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock x:Uid="LyricsEditor_StepPresetsLabel" Text="스텝 프리셋:" FontSize="{StaticResource FontBodySmall}" Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0"/>
                         <Button Content="0.001ms" FontSize="11" Padding="6,2" Click="OnPresetStepClick" Tag="0.001"/>
                         <Button Content="0.5ms" FontSize="11" Padding="6,2" Click="OnPresetStepClick" Tag="0.5"/>
                         <Button Content="1ms" FontSize="11" Padding="6,2" Click="OnPresetStepClick" Tag="1"/>
@@ -90,12 +90,12 @@
                             Click="OnStepMinusClick" Width="120" HorizontalContentAlignment="Center"/>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <TextBlock x:Uid="LyricsEditor_TotalOffsetLabel" Text="현재 총 오프셋:" FontSize="12.5" FontWeight="SemiBold"
+                        <TextBlock x:Uid="LyricsEditor_TotalOffsetLabel" Text="현재 총 오프셋:" FontSize="{StaticResource FontBody}" FontWeight="SemiBold"
                                    Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                         <TextBox x:Name="TotalOffsetBox" Width="100" Text="+0.000" TextAlignment="Right"
                                  TextChanged="OnTotalOffsetBoxChanged"/>
                         <TextBlock Text="ms" FontSize="12" Foreground="{ThemeResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="TotalOffsetSecLabel" Text="(= 0.0000초)" FontSize="11.5"
+                        <TextBlock x:Name="TotalOffsetSecLabel" Text="(= 0.0000초)" FontSize="{StaticResource FontBodySmall}"
                                    Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>
                         <Button x:Uid="LyricsEditor_ResetOffsetBtn" Content="0 초기화" FontSize="11" Click="OnResetOffsetClick" Margin="6,0,0,0"/>
                     </StackPanel>
@@ -172,7 +172,7 @@
                                         <TextBox Grid.Column="1" Text="{x:Bind TimeString, Mode=TwoWay}" FontSize="12"
                                                  FontFamily="Consolas, Cascadia Code" TextAlignment="Center"/>
 
-                                        <TextBox Grid.Column="2" Text="{x:Bind Text, Mode=TwoWay}" FontSize="12.5"/>
+                                        <TextBox Grid.Column="2" Text="{x:Bind Text, Mode=TwoWay}" FontSize="{StaticResource FontBody}"/>
 
                                         <Button x:Uid="LyricsEditor_SeekToLineBtn" Grid.Column="3" Style="{StaticResource TransportButton}" Width="28" Height="28"
                                                 Click="OnSeekToLineClick" Tag="{x:Bind}" ToolTipService.ToolTip="이 위치로 오디오 재생">
@@ -189,7 +189,7 @@
                 <TabViewItem x:Uid="LyricsEditor_TabRaw" Header="전체 LRC 텍스트 직접 편집" IsClosable="False">
                     <Grid Padding="0,10,0,0">
                         <TextBox x:Name="RawTextEditorBox" AcceptsReturn="True" TextWrapping="NoWrap"
-                                 FontFamily="Consolas, Cascadia Code, Courier New" FontSize="12.5"
+                                 FontFamily="Consolas, Cascadia Code, Courier New" FontSize="{StaticResource FontBody}"
                                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
                                  TextChanged="OnRawTextChanged"/>
@@ -210,7 +210,12 @@
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                 <Button x:Uid="LyricsEditor_CloseBtn" Content="닫기" Click="OnCloseClick" Width="80"/>
-                <Button x:Uid="LyricsEditor_SaveBtn" Content="💾 LRC 파일로 저장" Style="{StaticResource AccentButtonStyle}" Click="OnSaveClick" Width="150"/>
+                <Button x:Uid="LyricsEditor_SaveBtn" Style="{StaticResource AccentButtonStyle}" Click="OnSaveClick" Width="150">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE78C;" FontSize="13"/>
+                        <TextBlock x:Uid="LyricsEditor_SaveBtnText" Text="LRC 파일로 저장"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Grid>
     </Grid>

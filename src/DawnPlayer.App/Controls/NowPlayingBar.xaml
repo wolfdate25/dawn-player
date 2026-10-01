@@ -14,7 +14,7 @@
             <VisualStateGroup x:Name="WidthStates">
                 <VisualState x:Name="Wide">
                     <VisualState.StateTriggers>
-                        <AdaptiveTrigger MinWindowWidth="640"/>
+                        <AdaptiveTrigger MinWindowWidth="730"/>
                     </VisualState.StateTriggers>
                 </VisualState>
                 <VisualState x:Name="Compact">
@@ -146,12 +146,12 @@
                                     </StackPanel>
                                 </Flyout>
                             </Button.Flyout>
-                            <TextBlock x:Name="TrackRatingText" FontSize="10.5" Foreground="{ThemeResource DawnAccentBrush}"
+                            <TextBlock x:Name="TrackRatingText" FontSize="{StaticResource FontCaption}" Foreground="{ThemeResource DawnAccentTextBrush}"
                                        VerticalAlignment="Center"/>
                         </Button>
                     </Grid>
 
-                    <TextBlock x:Name="TrackArtist" Text="" FontSize="11.5"
+                    <TextBlock x:Name="TrackArtist" Text="" FontSize="{StaticResource FontBodySmall}"
                                Foreground="{ThemeResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
 
                     <!-- Audio format and output session badges -->
@@ -159,12 +159,12 @@
                         <Border x:Name="FormatBadge" Style="{StaticResource CodecBadge}" HorizontalAlignment="Left"
                                 Visibility="Collapsed">
                             <TextBlock x:Name="FormatBadgeText" Text="FLAC · 24bit/96kHz" Style="{StaticResource BadgeText}"
-                                       FontSize="9" Foreground="{ThemeResource DawnAccentBrush}"/>
+                                       FontSize="{StaticResource FontCaption}" Foreground="{ThemeResource DawnAccentTextBrush}"/>
                         </Border>
                         <Border x:Name="OutputBadge" Style="{StaticResource CodecBadge}" HorizontalAlignment="Left"
                                 Visibility="Collapsed" MaxWidth="220">
                             <TextBlock x:Name="OutputBadgeText" Text="WASAPI 배타" Style="{StaticResource BadgeText}"
-                                       FontSize="9" Foreground="{ThemeResource TextSecondaryBrush}"
+                                       FontSize="{StaticResource FontCaption}" Foreground="{ThemeResource TextSecondaryBrush}"
                                        TextTrimming="CharacterEllipsis"/>
                         </Border>
                     </StackPanel>
@@ -185,7 +185,7 @@
 
                 <Button x:Uid="NowPlaying_PlayButton" x:Name="PlayButton" Style="{StaticResource PlayPauseButton}" Click="OnPlayClick"
  ToolTipService.ToolTip="재생/일시정지">
-                    <FontIcon x:Name="PlayIcon" Glyph="&#xE768;" FontSize="15" Foreground="#141414"/>
+                    <FontIcon x:Name="PlayIcon" Glyph="&#xE768;" FontSize="{StaticResource FontSubtitle}" Foreground="{ThemeResource OnAccentBrush}"/>
                 </Button>
 
                 <Button x:Uid="NowPlaying_NextButton" x:Name="NextButton"
@@ -229,19 +229,19 @@
                         <Border x:Name="QueueBadge" CornerRadius="8" Background="{ThemeResource DawnAccentBrush}"
                                 MinWidth="16" Height="16" VerticalAlignment="Top" HorizontalAlignment="Right"
                                 Margin="0,-6,-8,0" Padding="4,0" Visibility="Collapsed">
-                            <TextBlock x:Name="QueueBadgeText" Text="0" FontSize="9" FontWeight="Bold"
-                                       Foreground="Black" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="QueueBadgeText" Text="0" FontSize="{StaticResource FontCaption}" FontWeight="Bold"
+                                       Foreground="{ThemeResource OnAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                     </Grid>
                     <Button.Flyout>
                         <Flyout Placement="Top" ShouldConstrainToRootBounds="False">
                             <StackPanel Width="340" MaxHeight="380">
                                 <Grid Margin="4,0,4,8">
-                                    <TextBlock x:Uid="NowPlaying_QueueTitle" Text="재생 대기열" FontWeight="SemiBold" FontSize="13.5" VerticalAlignment="Center"/>
+                                    <TextBlock x:Uid="NowPlaying_QueueTitle" Text="재생 대기열" FontWeight="SemiBold" FontSize="{StaticResource FontSubtitle}" VerticalAlignment="Center"/>
                                     <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
-                                        <Button x:Uid="NowPlaying_QueueSaveButton" x:Name="QueueSaveButton" Content="재생목록으로 저장" FontSize="11.5"
+                                        <Button x:Uid="NowPlaying_QueueSaveButton" x:Name="QueueSaveButton" Content="재생목록으로 저장" FontSize="{StaticResource FontBodySmall}"
                                                 Click="OnQueueSaveClick"/>
-                                        <Button x:Uid="NowPlaying_QueueClearButton" x:Name="QueueClearButton" Content="비우기" FontSize="11.5"
+                                        <Button x:Uid="NowPlaying_QueueClearButton" x:Name="QueueClearButton" Content="비우기" FontSize="{StaticResource FontBodySmall}"
                                                 Click="OnQueueClearClick"/>
                                     </StackPanel>
                                 </Grid>
@@ -253,12 +253,12 @@
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="22"/>
                                                     <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="28"/>
+                                                    <ColumnDefinition Width="32"/>
                                                 </Grid.ColumnDefinitions>
                                                 <Border Grid.Column="0" Background="{ThemeResource CardBrush}" CornerRadius="4"
                                                         Width="20" Height="20" VerticalAlignment="Center">
-                                                    <TextBlock Text="{x:Bind Index}" FontSize="10" FontWeight="SemiBold"
-                                                               Foreground="{ThemeResource DawnAccentBrush}"
+                                                    <TextBlock Text="{x:Bind Index}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold"
+                                                               Foreground="{ThemeResource DawnAccentTextBrush}"
                                                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
@@ -266,8 +266,8 @@
                                                     <TextBlock Text="{x:Bind Subtitle}" FontSize="11"
                                                                Foreground="{ThemeResource TextTertiaryBrush}" TextTrimming="CharacterEllipsis"/>
                                                 </StackPanel>
-                                                <Button x:Uid="NowPlaying_QueueRemoveButton" Grid.Column="2" Content="&#xE711;" FontFamily="Segoe Fluent Icons" FontSize="10"
-                                                        Width="26" Height="26" CornerRadius="13" Background="Transparent"
+                                                <Button x:Uid="NowPlaying_QueueRemoveButton" Grid.Column="2" Content="&#xE711;" FontFamily="Segoe Fluent Icons" FontSize="{StaticResource FontCaption}"
+                                                        Width="32" Height="32" CornerRadius="16" Background="Transparent"
                                                         BorderThickness="0" Padding="0"
                                                         ToolTipService.ToolTip="대기열에서 제거"
                                                         Click="OnQueueRemoveClick" Tag="{x:Bind Index}"/>
@@ -276,7 +276,7 @@
                                     </ListView.ItemTemplate>
                                 </ListView>
                                 <TextBlock x:Uid="NowPlaying_QueueEmptyText" x:Name="QueueEmptyText" Text="대기열이 비어 있습니다. 트랙에서 마우스 오른쪽 버튼으로 '대기열에 추가'를 선택하세요."
-                                           FontSize="11.5" Foreground="{ThemeResource TextTertiaryBrush}" TextWrapping="Wrap"
+                                           FontSize="{StaticResource FontBodySmall}" Foreground="{ThemeResource TextTertiaryBrush}" TextWrapping="Wrap"
                                            Margin="4,10"/>
                             </StackPanel>
                         </Flyout>

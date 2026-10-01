@@ -171,6 +171,13 @@ public sealed partial class LyricsEditorWindow : Window
             root.KeyDown += OnWindowKeyDown;
         }
 
+        // Unsaved-change guard (PT4-04): Window.Closed cannot cancel, so the cancellable
+        // AppWindow.Closing carries the confirm. The dirty check is a content snapshot compare,
+        // which covers every mutation path (raw tab typing, line edits, stamps, offsets) without
+        // per-handler wiring.
+        _savedSnapshot = CurrentContent();
+        AppWindow.Closing += OnAppWindowClosing;
+
         Closed += OnWindowClosed;
     }
 
@@ -234,6 +241,9 @@ public sealed partial class LyricsEditorWindow : Window
         }
 
         SyncToRawText();
+        // Baseline for the unsaved-change guard — also refreshed when LoadTrack re-points the
+        // editor at another track.
+        _savedSnapshot = CurrentContent();
     }
 
     private void OnPollPlayback()
@@ -532,6 +542,61 @@ public sealed partial class LyricsEditorWindow : Window
 
     // ---------------- Save & Close ----------------
 
+    private string _savedSnapshot = "";
+    private bool _forceClose;
+    private bool _confirmPending;
+
+    /// <summary>The exact bytes a save would write right now. Dirty = differs from the snapshot
+    /// taken at load (and refreshed after each save).</summary>
+    private string CurrentContent()
+    {
+        var doc = new LyricsDocument
+        {
+            Title = _track.Title,
+            Artist = _track.Artist,
+            Album = _track.Album,
+            Lines = _lines.Select(l => new LrcLine(l.Time, l.Text)).ToList()
+        };
+        return LrcParser.Format(doc);
+    }
+
+    private void OnAppWindowClosing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args)
+    {
+        if (_forceClose) return;
+        if (string.Equals(_savedSnapshot, CurrentContent(), StringComparison.Ordinal)) return;
+
+        // A sync edit lost to an accidental close is unrecoverable — block the close and ask.
+        args.Cancel = true;
+        if (_confirmPending) return; // impatient second close must not stack a second dialog
+        _confirmPending = true;
+        _ = ConfirmDiscardAndCloseAsync();
+    }
+
+    private async Task ConfirmDiscardAndCloseAsync()
+    {
+        var dialog = new ContentDialog
+        {
+            Title = AppStrings.Get("LyricsEditor_UnsavedTitle", "저장하지 않은 변경"),
+            Content = AppStrings.Get("LyricsEditor_UnsavedMessage", "저장하지 않은 가사 편집이 있습니다. 변경 내용을 버리고 닫을까요?"),
+            PrimaryButtonText = AppStrings.Get("LyricsEditor_UnsavedDiscard", "버리고 닫기"),
+            CloseButtonText = AppStrings.Get("Common_Cancel", "취소"),
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = Content.XamlRoot,
+        };
+        try
+        {
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            {
+                _forceClose = true;
+                Close();
+            }
+        }
+        finally
+        {
+            _confirmPending = false;
+        }
+    }
+
     private void OnSaveClick(object sender, RoutedEventArgs e)
     {
         try
@@ -546,6 +611,7 @@ public sealed partial class LyricsEditorWindow : Window
 
             var content = LrcParser.Format(doc);
             LrcParser.SaveToFile(_targetLrcPath, content);
+            _savedSnapshot = content;
 
             // The edited file is authoritative now; drop any search-window pick for this track.
             AppServices.LyricsOnline?.ClearAppliedResult(_track.Path);
@@ -575,6 +641,13 @@ public sealed partial class LyricsEditorWindow : Window
         {
             AppServices.Playback?.PlayPause();
             e.Handled = true;
+        }
+        else if (e.Key == Windows.System.VirtualKey.Escape)
+        {
+            // Routes through the unsaved-change guard above (PT5-20: this window was one of the
+            // few surfaces without an Esc exit).
+            e.Handled = true;
+            Close();
         }
     }
 }

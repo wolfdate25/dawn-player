@@ -185,22 +185,26 @@ public sealed partial class YouTubeSection : UserControl
                 {
                     await Controls.PlaybackUiHelper.PlayItemAsync(AppServices.Playback, playlist, item);
                 }
+                SetBusy(false);
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException)
+            {
+                SetBusy(false);
+            }
             catch (Exception ex)
             {
                 // The resolve/chain failure reason is the useful part — surface it here and in
-                // the InfoBar, and leave a retry in place.
+                // the InfoBar. SetBusy(false) resets first, then the failure state goes on top,
+                // so the retry button and the reason both survive the busy reset.
+                SetBusy(false);
+                StatusRow.Visibility = Visibility.Visible;
+                // PT1-14: failure text carries the semantic danger token.
+                StatusText.Foreground = Helpers.ThemeResourceHelper.GetBrush("StatusDangerBrush");
                 StatusText.Text = AppStrings.Format("Network_YouTube_ResolveFailed",
                     "항목을 가져오지 못했습니다: {0}", TrimDetail(ex.Message));
                 RetryButton.Visibility = Visibility.Visible;
                 _lastFailed = (play, normalized);
                 AppServices.RaiseWarning(StatusText.Text);
-                return;
-            }
-            finally
-            {
-                SetBusy(false);
             }
         }
         finally
@@ -219,16 +223,21 @@ public sealed partial class YouTubeSection : UserControl
     {
         PlayButton.IsEnabled = !busy;
         AddButton.IsEnabled = !busy;
-        RetryButton.Visibility = Visibility.Collapsed;
         BusyRing.IsActive = busy;
         if (busy)
         {
+            RetryButton.Visibility = Visibility.Collapsed;
             StatusRow.Visibility = Visibility.Visible;
+            StatusText.Foreground = Helpers.ThemeResourceHelper.GetBrush("TextSecondaryBrush");
             StatusText.Text = AppStrings.Get("Network_YouTube_Status_Resolving",
                 "해석 중… — 첫 재생까지 몇 초 걸립니다");
         }
-        else if (BusyRing.IsActive == false && StatusText.Text.Length == 0)
+        else
         {
+            // Done (or cancelled): hide the status line entirely so no stale "resolving…" text
+            // survives a completed resolve. The retry button is deliberately left alone here —
+            // a failure sets it visible after this reset runs.
+            StatusText.Text = "";
             StatusRow.Visibility = Visibility.Collapsed;
         }
     }
@@ -405,9 +414,23 @@ public sealed partial class YouTubeSection : UserControl
         if (RowFromSender(sender) is { } row) await PlayRecentAsync(row, play: false);
     }
 
-    private void OnRecentRemoveClick(object sender, RoutedEventArgs e)
+    private async void OnRecentRemoveClick(object sender, RoutedEventArgs e)
     {
         if (RowFromSender(sender) is not { } row) return;
+
+        // Same destructive-action rule as the radio favorites (PT4-05): confirm before the
+        // entry is gone for good.
+        var dialog = new ContentDialog
+        {
+            Title = AppStrings.Get("Network_YouTube_DeleteTitle", "최근 항목 삭제"),
+            Content = AppStrings.Format("Network_YouTube_DeleteMessage", "'{0}'을(를) 최근 항목에서 삭제할까요?", row.Title),
+            PrimaryButtonText = AppStrings.Get("Msg_DeletePlaylistConfirm", "삭제"),
+            CloseButtonText = AppStrings.Get("Common_Cancel", "취소"),
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = XamlRoot,
+        };
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+
         AppServices.YouTubeRecent.Remove(row.PageUrl);
         AppServices.YouTubeRecent.Save();
         RefreshRecentRows();

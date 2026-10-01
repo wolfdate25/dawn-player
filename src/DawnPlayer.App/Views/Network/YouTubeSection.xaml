@@ -21,9 +21,9 @@
         <!-- Header: title + dependency badge + single configure entry (re-check happens on open
              and after every path change, so it needs no dedicated button) -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-            <TextBlock x:Uid="Network_YouTube_Header" Text="YouTube" FontSize="16" FontWeight="SemiBold"
+            <TextBlock x:Uid="Network_YouTube_Header" Text="YouTube" FontSize="{StaticResource FontTitle}" FontWeight="SemiBold"
                        Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-            <TextBlock x:Name="DependencyBadge" Text="" FontSize="11.5" VerticalAlignment="Center"
+            <TextBlock x:Name="DependencyBadge" Text="" FontSize="{StaticResource FontBodySmall}" VerticalAlignment="Center"
                        Foreground="{ThemeResource TextSecondaryBrush}"/>
             <Button x:Uid="Network_YouTube_Paths" x:Name="PathsButton" Padding="10,5" CornerRadius="4"
                     VerticalAlignment="Center">
@@ -32,7 +32,7 @@
                     <Flyout Placement="Bottom" Opened="OnPathsFlyoutOpened">
                         <StackPanel Width="340" Spacing="10">
                             <TextBlock x:Uid="Network_YouTube_PathsHeader" Text="yt-dlp / ffmpeg 경로"
-                                       FontSize="13.5" FontWeight="SemiBold"/>
+                                       FontSize="{StaticResource FontSubtitle}" FontWeight="SemiBold"/>
                             <StackPanel Spacing="4">
                                 <TextBlock x:Uid="Network_YouTube_YtDlpLabel" Text="yt-dlp" FontSize="12"
                                            Foreground="{ThemeResource TextSecondaryBrush}"/>
@@ -87,7 +87,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBox x:Uid="Network_YouTube_UrlBox" x:Name="UrlBox" Grid.Column="0" FontSize="12.5"
+                <TextBox x:Uid="Network_YouTube_UrlBox" x:Name="UrlBox" Grid.Column="0" FontSize="{StaticResource FontBody}"
                          LostFocus="OnUrlBoxLostFocus"/>
                 <Button x:Uid="Network_YouTube_Play" x:Name="PlayButton" Grid.Column="1"
                         Click="OnPlayClick" Padding="14,6" CornerRadius="4"/>
@@ -96,17 +96,17 @@
             </Grid>
             <StackPanel x:Name="StatusRow" Orientation="Horizontal" Spacing="8" Visibility="Collapsed">
                 <ProgressRing x:Name="BusyRing" Width="14" Height="14" IsActive="False"/>
-                <TextBlock x:Name="StatusText" Text="" FontSize="11.5" VerticalAlignment="Center"
+                <TextBlock x:Name="StatusText" Text="" FontSize="{StaticResource FontBodySmall}" VerticalAlignment="Center"
                            TextWrapping="Wrap" Foreground="{ThemeResource TextSecondaryBrush}"/>
                 <Button x:Uid="Network_YouTube_Retry" x:Name="RetryButton" Click="OnRetryClick"
-                        Padding="8,2" CornerRadius="4" FontSize="11.5" Visibility="Collapsed"/>
+                        Padding="8,2" CornerRadius="4" FontSize="{StaticResource FontBodySmall}" Visibility="Collapsed"/>
             </StackPanel>
-            <TextBlock x:Name="GuidanceText" Text="" FontSize="11.5" TextWrapping="Wrap"
+            <TextBlock x:Name="GuidanceText" Text="" FontSize="{StaticResource FontBodySmall}" TextWrapping="Wrap"
                        Foreground="{ThemeResource TextSecondaryBrush}"/>
         </StackPanel>
 
         <!-- Recent grid -->
-        <TextBlock Grid.Row="2" x:Uid="Network_YouTube_RecentHeader" Text="최근 항목" FontSize="13.5"
+        <TextBlock Grid.Row="2" x:Uid="Network_YouTube_RecentHeader" Text="최근 항목" FontSize="{StaticResource FontSubtitle}"
                    FontWeight="SemiBold" Foreground="{ThemeResource TextPrimaryBrush}"/>
 
         <Grid Grid.Row="3">
@@ -139,7 +139,7 @@
                                 <Border HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,4,4"
                                         CornerRadius="3" Background="{ThemeResource LayerBgBrush}" Padding="4,1"
                                         Visibility="{x:Bind DurationBadgeVisibility, Mode=OneWay}">
-                                    <TextBlock Text="{x:Bind DurationBadge}" FontSize="10.5"
+                                    <TextBlock Text="{x:Bind DurationBadge}" FontSize="{StaticResource FontCaption}"
                                                Foreground="{ThemeResource TextPrimaryBrush}"/>
                                 </Border>
                             </Grid>
@@ -148,7 +148,7 @@
                                            MaxLines="2" TextTrimming="CharacterEllipsis" TextWrapping="Wrap"
                                            Foreground="{ThemeResource TextPrimaryBrush}"
                                            ToolTipService.ToolTip="{x:Bind Title}"/>
-                                <TextBlock Text="{x:Bind Subtitle}" FontSize="10.5"
+                                <TextBlock Text="{x:Bind Subtitle}" FontSize="{StaticResource FontCaption}"
                                            TextTrimming="CharacterEllipsis"
                                            Foreground="{ThemeResource TextSecondaryBrush}"/>
                             </StackPanel>

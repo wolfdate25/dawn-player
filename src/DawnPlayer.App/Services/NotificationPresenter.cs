@@ -41,6 +41,10 @@ public sealed class NotificationPresenter
     public void Show(string message, UiSeverity severity)
     {
         if (string.IsNullOrEmpty(message)) return;
+        // PT4-19: a transient confirmation used to overwrite an unacknowledged Warning/Error,
+        // so the problem vanished before anyone read it. Transient severities yield; a newer
+        // Warning/Error still replaces (higher or equal severity wins).
+        if (IsOpen && !WillAutoClose && IsTransient(severity)) return;
         Message = message;
         Severity = severity;
         WillAutoClose = IsTransient(severity);

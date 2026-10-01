@@ -146,6 +146,11 @@ public sealed partial class LibraryPage : Page
             w => LibraryLyricsPane.Width = w,
             cursor => ProtectedCursor = cursor,
             w => { if (AppServices.Settings != null) { AppServices.Settings.Ui.LyricsSidebarWidth = w; SettingsWriter.Schedule(AppServices.Settings); } });
+
+        // Keyboard alternative to pointer-drag (WCAG 2.5.7 — audit PT1-09/PT5-07).
+        _leftResizer.EnableKeyboardResizing(LeftSplitter, AppStrings.Get("Library_Splitter_Left", "왼쪽 패널 너비 조절"));
+        _rightResizer.EnableKeyboardResizing(RightSplitter, AppStrings.Get("Library_Splitter_Right", "가사 패널/오른쪽 패널 너비 조절"));
+        _lyricsResizer.EnableKeyboardResizing(LyricsSplitter, AppStrings.Get("Library_Splitter_Lyrics", "가사 패널 너비 조절"));
     }
 
     private void RestoreLayoutSettings()
@@ -364,6 +369,10 @@ public sealed partial class LibraryPage : Page
         SearchBox.Focus(FocusState.Keyboard);
     }
 
+    // Interaction convention (audit PT5-10, documented as intentional): single click selects
+    // or navigates; double-click or Enter plays. The YouTube recent grid is a deliberate
+    // exception — its cards exist to replay on a single click ("click what you played").
+
     // ---------------- data flow ----------------
 
     private void RebuildAll()
@@ -407,27 +416,102 @@ public sealed partial class LibraryPage : Page
         }
     }
 
+    // PT2-08 (2026-09-30 audit): the whole-library filter+sort used to run synchronously on the
+    // UI thread — large libraries froze the window on every search tick and tree pick. The pure
+    // compute now runs off-thread; the visible list updates when the newest result lands.
+    private readonly FilterRequestGate _filterGate = new();
+
     private void ApplyFilters()
     {
-        _visible = LibraryFilterService.FilterAndSort(
-            AppServices.Library.Tracks,
-            _selectedNode,
-            _search,
-            _currentSort,
-            _sortAscending);
+        // Snapshot on the UI thread: FilterAndSort enumerates the library, and a rescan landing
+        // mid-iteration on another thread must never see a mutating collection.
+        var snapshot = AppServices.Library.Tracks.ToList();
+        var node = _selectedNode;
+        var search = _search;
+        var sort = _currentSort;
+        var ascending = _sortAscending;
 
+        int token = _filterGate.BeginRequest();
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                return LibraryFilterService.FilterAndSort(snapshot, node, search, sort, ascending);
+            }
+            catch (Exception ex)
+            {
+                // Keep the previously rendered list; an empty patch is worse than a stale one.
+                App.Log($"[library-filter] compute failed: {ex.Message}");
+                return null;
+            }
+        })
+        .ContinueWith(t =>
+        {
+            var result = t.Result;
+            if (result == null) return;
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                // An out-of-order completion (retyped search, re-sort, node switch) must not
+                // repaint the screen with stale data — only the newest token applies.
+                if (!_filterGate.CanApply(token)) return;
+                ApplyFilterResult(result);
+            });
+        });
+    }
+
+    /// <summary>Runs on the UI thread with a fresh, newest-token filter result.</summary>
+    private void ApplyFilterResult(List<Track> visible)
+    {
+        _visible = visible;
         TracksList.ItemsSource = _visible;
 
-        // Rebuild Album Cards & Rows for Grid View using batch ReplaceAll
+        // Rebuild Album Cards & Rows for Grid View using batch ReplaceAll. Card construction
+        // stays on the UI thread — AlbumCard holds a BitmapImage.
         _allBuiltCards = LibraryFilterService.BuildAlbumCards(_visible, AppServices.Settings.Ui.AlbumCoverSize);
         AlbumCards.ReplaceAll(_allBuiltCards);
         RechunkAlbumRows();
 
         var totalMs = _visible.Sum(t => t.DurationMs);
-        string nodeLabel = _selectedNode?.Title ?? "Mixed selection";
+        // PT2-12: multi-selection used to be invisible until you opened a menu.
+        int selectedCount = TracksList.SelectedItems.OfType<Track>().Count();
+        string selectionPrefix = selectedCount > 1
+            ? AppStrings.Format("Library_SelectedCount", "{0}곡 선택됨", selectedCount) + " • "
+            : "";
+        string nodeLabel = _selectedNode?.Title ?? AppStrings.Get("Library_MixedSelection", "혼합 선택");
         StatusText.Text = _visible.Count == 0
             ? AppStrings.Get("Msg_LibraryEmptyStatus", "트랙 없음 — 설정에서 음악 폴더를 추가하고 스캔하세요.")
-            : AppStrings.Format("Msg_LibraryStatusBarFormat", "{0} • {1}, {2:N0}곡, {3:N0}개 앨범", nodeLabel, TextFormat.LongDuration(TimeSpan.FromMilliseconds(totalMs)), _visible.Count, AlbumCards.Count);
+            : AppStrings.Format("Msg_LibraryStatusBarFormat", "{0}{1} • {2}, {3:N0}곡, {4:N0}개 앨범", selectionPrefix, nodeLabel, TextFormat.LongDuration(TimeSpan.FromMilliseconds(totalMs)), _visible.Count, AlbumCards.Count);
+
+        UpdateEmptyState();
+    }
+
+    /// <summary>PT2-07: an empty content area needs a message and an action. Empty library and
+    /// search-no-hit are distinct states with distinct buttons.</summary>
+    private void UpdateEmptyState()
+    {
+        bool libraryEmpty = AppServices.Library.Tracks.Count == 0;
+        bool show = libraryEmpty || _visible.Count == 0;
+        LibraryEmptyState.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        if (!show) return;
+
+        LibraryEmptyTitle.Text = libraryEmpty
+            ? AppStrings.Get("Library_Empty_Title", "라이브러리가 비어 있습니다")
+            : AppStrings.Get("Library_SearchNoHit_Title", "검색 결과가 없습니다");
+        LibraryEmptyHint.Text = libraryEmpty
+            ? AppStrings.Get("Library_Empty_Hint", "설정에서 음악 폴더를 추가하고 스캔하면 트랙이 표시됩니다.")
+            : AppStrings.Get("Library_SearchNoHit_Hint", "다른 검색어를 사용하거나 검색 조건을 지워 보세요.");
+        LibraryEmptySettingsButton.Visibility = libraryEmpty ? Visibility.Visible : Visibility.Collapsed;
+        LibraryEmptyClearSearchButton.Visibility = !libraryEmpty ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void OnEmptyOpenSettingsClick(object sender, RoutedEventArgs e) =>
+        App.MainWin?.NavigateToSettings();
+
+    private void OnEmptyClearSearchClick(object sender, RoutedEventArgs e)
+    {
+        SearchBox.Text = "";
+        _search = "";
+        ApplyFilters();
     }
 
     private void RechunkAlbumRows()
@@ -615,16 +699,24 @@ public sealed partial class LibraryPage : Page
 
     private async Task PlayCurrentTreeSelectionAsync()
     {
-        if (_visible.Count == 0) return;
+        // A tree activation is a direct user action on the just-selected node, so it computes
+        // its context synchronously instead of playing the previous node's still-on-screen
+        // list — the async pipeline (PT2-08) may not have landed for the new node yet.
+        if (_selectedNode == null) return;
+        var visible = LibraryFilterService.FilterAndSort(
+            AppServices.Library.Tracks, _selectedNode, _search, _currentSort, _sortAscending);
+        if (visible.Count == 0) return;
         await PlaybackUiHelper.PlayAlbumNowPlayingAsync(
-            AppServices.Playlists, AppServices.Playback, _visible, 0);
+            AppServices.Playlists, AppServices.Playback, visible, 0);
     }
 
     private async void OnTreeContextMenuPlay(object sender, RoutedEventArgs e)
     {
         try
         {
-            await PlayCurrentTreeSelectionAsync();
+            if (_treeMenuTracks.Count == 0) return;
+            await PlaybackUiHelper.PlayAlbumNowPlayingAsync(
+                AppServices.Playlists, AppServices.Playback, _treeMenuTracks, 0);
         }
         catch (Exception ex)
         {
@@ -634,28 +726,43 @@ public sealed partial class LibraryPage : Page
 
     private void OnTreeContextMenuAddToPlaylist(object sender, RoutedEventArgs e)
     {
-        if (_visible.Count == 0) return;
-        var items = PlaybackUiHelper.AddTracksToNowPlaying(AppServices.Playlists, _visible);
+        if (_treeMenuTracks.Count == 0) return;
+        var items = PlaybackUiHelper.AddTracksToNowPlaying(AppServices.Playlists, _treeMenuTracks);
         if (items.Count > 0)
             AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToCurrentPlaylist", "현재 재생목록에 {0}곡을 추가했습니다.", items.Count));
     }
 
     private void OnTreeContextMenuEnqueue(object sender, RoutedEventArgs e)
     {
-        if (_visible.Count == 0) return;
+        if (_treeMenuTracks.Count == 0) return;
         var items = PlaybackUiHelper.EnqueueAlbumNowPlaying(
-            AppServices.Playlists, AppServices.Playback, _visible);
+            AppServices.Playlists, AppServices.Playback, _treeMenuTracks);
         if (items.Count > 0)
             AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToQueue", "대기열에 {0}곡을 추가했습니다.", items.Count));
     }
 
+    /// <summary>Tracks the tree menu acts on, fixed at Opening time from the right-clicked node.
+    /// TreeView does not move its selection on right-press, so the old <c>_visible</c> (the
+    /// selected node's filter result) made the menu act on the wrong node; the popup-hosted menu
+    /// items also never see the row's DataContext (measured on the playlist page), so the target
+    /// must be resolved from flyout.Target — the node row Grid in the visual tree.</summary>
+    private List<Track> _treeMenuTracks = [];
+
     private void OnTreeContextMenuOpening(object? sender, object e)
     {
+        _treeMenuTracks = [];
         if (sender is MenuFlyout flyout)
         {
+            var node = VisualTreeHelperExtensions.FindAncestorDataContext<TreeViewNode>(flyout.Target)
+                ?.Content as LibraryTreeNode;
+            if (node != null)
+            {
+                _treeMenuTracks = LibraryFilterService.FilterAndSort(
+                    AppServices.Library.Tracks, node, "", _currentSort, _sortAscending);
+            }
             var subMenu = flyout.Items.OfType<MenuFlyoutSubItem>()
                 .FirstOrDefault(i => (i.Tag as string) == SendToPlaylistTag);
-            PopulatePlaylistSubMenu(subMenu, () => _visible.ToList());
+            PopulatePlaylistSubMenu(subMenu, () => _treeMenuTracks.ToList());
         }
     }
 
@@ -886,70 +993,80 @@ public sealed partial class LibraryPage : Page
         e.Handled = true;
         var vm = VisualTreeHelperExtensions.ResolveItem<AlbumTrackItemVm>(e)
             ?? (sender as FrameworkElement)?.DataContext as AlbumTrackItemVm;
-        var row = AlbumRows.FirstOrDefault(r => r.IsDrawerOpen && r.SelectedAlbum != null);
-        if (vm?.Track != null && row?.SelectedAlbum != null)
-        {
-            var tracks = row.SelectedAlbum.Tracks
-                .OrderBy(t => t.DiscNo > 0 ? t.DiscNo : 1)
-                .ThenBy(t => t.TrackNo > 0 ? t.TrackNo : 1)
-                .ThenBy(t => t.Title, StringComparer.CurrentCultureIgnoreCase)
-                .ToList();
-            int startIndex = tracks.FindIndex(t => string.Equals(t.Path, vm.Track.Path, StringComparison.OrdinalIgnoreCase));
-            if (startIndex < 0) startIndex = 0;
-            await PlaybackUiHelper.PlayAlbumNowPlayingAsync(
-                AppServices.Playlists, AppServices.Playback, tracks, startIndex);
-        }
+        await PlayDrawerTrackAsync(vm);
     }
 
-    private void OnDrawerTrackRightTapped(object sender, RightTappedRoutedEventArgs e)
+    /// <summary>Keyboard activation parity (PT5-01): the drawer row is a focusable Button whose
+    /// Click was never wired, so Space/Enter did nothing. KeyDown on the focused row plays it;
+    /// marking the key handled keeps single-pointer semantics unchanged (still double-click).</summary>
+    private void OnDrawerTrackKeyDown(object sender, KeyRoutedEventArgs e)
     {
+        if (e.Key is not (Windows.System.VirtualKey.Enter or Windows.System.VirtualKey.Space)) return;
+        e.Handled = true;
+        var vm = VisualTreeHelperExtensions.FindAncestorDataContext<AlbumTrackItemVm>(sender as DependencyObject);
+        _ = PlayDrawerTrackAsync(vm);
     }
 
-    private List<Track> GetSelectedDrawerTracks(object? sender)
+    private async Task PlayDrawerTrackAsync(AlbumTrackItemVm? vm)
     {
-        if (sender is AlbumTrackItemVm directVm && directVm.Track != null)
-        {
-            return new List<Track> { directVm.Track };
-        }
-
-        if (sender is FrameworkElement fe)
-        {
-            if (fe.DataContext is AlbumTrackItemVm vm && vm.Track != null)
-                return new List<Track> { vm.Track };
-        }
-
-        if (sender is MenuFlyoutItem mfi && mfi.DataContext is AlbumTrackItemVm mfiVm && mfiVm.Track != null)
-        {
-            return new List<Track> { mfiVm.Track };
-        }
-
         var row = AlbumRows.FirstOrDefault(r => r.IsDrawerOpen && r.SelectedAlbum != null);
-        if (row != null)
-        {
-            var playing = row.LeftTracks.Concat(row.RightTracks).FirstOrDefault(t => t.IsPlaying)?.Track;
-            if (playing != null) return new List<Track> { playing };
-            var first = row.LeftTracks.Concat(row.RightTracks).FirstOrDefault()?.Track;
-            if (first != null) return new List<Track> { first };
-        }
-        return new List<Track>();
+        if (vm?.Track == null || row?.SelectedAlbum == null) return;
+        var tracks = row.SelectedAlbum.Tracks
+            .OrderBy(t => t.DiscNo > 0 ? t.DiscNo : 1)
+            .ThenBy(t => t.TrackNo > 0 ? t.TrackNo : 1)
+            .ThenBy(t => t.Title, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+        int startIndex = tracks.FindIndex(t => string.Equals(t.Path, vm.Track.Path, StringComparison.OrdinalIgnoreCase));
+        if (startIndex < 0) startIndex = 0;
+        await PlaybackUiHelper.PlayAlbumNowPlayingAsync(
+            AppServices.Playlists, AppServices.Playback, tracks, startIndex);
     }
 
-    private void OnDrawerTrackPlaySelected(object sender, RoutedEventArgs e) =>
-        _ = PlaybackUiHelper.PlayAlbumNowPlayingAsync(AppServices.Playlists, AppServices.Playback, GetSelectedDrawerTracks(sender), 0);
+    /// <summary>Tracks the drawer-row menu acts on, fixed at Opening time from the right-clicked
+    /// row. The old resolver read MenuFlyoutItem.DataContext, which the popup-hosted flyout never
+    /// receives (measured: "x:Bind item templates leave the template elements without a
+    /// DataContext"), so the menu fell back to the playing/first drawer track and acted on the
+    /// wrong row — or nothing. flyout.Target is the row Button; walk its visual tree instead.</summary>
+    private List<Track> _drawerMenuTracks = [];
+
+    private void OnDrawerTrackMenuOpening(object? sender, object e)
+    {
+        _drawerMenuTracks = [];
+        if (sender is MenuFlyout flyout)
+        {
+            var vm = VisualTreeHelperExtensions.FindAncestorDataContext<AlbumTrackItemVm>(flyout.Target);
+            if (vm?.Track != null)
+            {
+                _drawerMenuTracks = [vm.Track];
+            }
+            var subMenu = flyout.Items.OfType<MenuFlyoutSubItem>().FirstOrDefault(i => (i.Tag as string) == SendToPlaylistTag);
+            PopulatePlaylistSubMenu(subMenu, () => _drawerMenuTracks.ToList());
+        }
+    }
+
+    private void OnDrawerTrackPlaySelected(object sender, RoutedEventArgs e)
+    {
+        if (_drawerMenuTracks.Count == 0) return;
+        _ = PlaybackUiHelper.PlayAlbumNowPlayingAsync(AppServices.Playlists, AppServices.Playback, _drawerMenuTracks, 0);
+    }
 
     private void OnDrawerTrackAddToPlaylist(object sender, RoutedEventArgs e)
     {
-        var items = PlaybackUiHelper.AddTracksToNowPlaying(AppServices.Playlists, GetSelectedDrawerTracks(sender));
+        if (_drawerMenuTracks.Count == 0) return;
+        var items = PlaybackUiHelper.AddTracksToNowPlaying(AppServices.Playlists, _drawerMenuTracks);
         if (items.Count > 0)
             AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToCurrentPlaylist", "현재 재생목록에 {0}곡을 추가했습니다.", items.Count));
     }
 
-    private void OnDrawerTrackEnqueue(object sender, RoutedEventArgs e) =>
-        PlaybackUiHelper.EnqueueAlbumNowPlaying(AppServices.Playlists, AppServices.Playback, GetSelectedDrawerTracks(sender));
+    private void OnDrawerTrackEnqueue(object sender, RoutedEventArgs e)
+    {
+        if (_drawerMenuTracks.Count == 0) return;
+        PlaybackUiHelper.EnqueueAlbumNowPlaying(AppServices.Playlists, AppServices.Playback, _drawerMenuTracks);
+    }
 
     private void OnDrawerTrackShowInExplorer(object sender, RoutedEventArgs e)
     {
-        foreach (var t in GetSelectedDrawerTracks(sender))
+        foreach (var t in _drawerMenuTracks)
         {
             try
             {
@@ -960,54 +1077,46 @@ public sealed partial class LibraryPage : Page
         }
     }
 
-    private void OnDrawerTrackMenuOpening(object? sender, object e)
+    /// <summary>Tracks the album-card menu acts on, fixed at Opening time from the right-clicked
+    /// card. MenuFlyoutItem.DataContext is empty inside the popup (see OnDrawerTrackMenuOpening),
+    /// so the old resolver fell through to "the open drawer's album" — with a drawer open the
+    /// menu edited a different album, without one it silently no-op'd. flyout.Target is the card
+    /// Button; walk its visual tree for the AlbumCard.</summary>
+    private List<Track> _albumMenuTracks = [];
+
+    private void OnAlbumMenuOpening(object? sender, object e)
     {
+        _albumMenuTracks = [];
         if (sender is MenuFlyout flyout)
         {
+            var card = VisualTreeHelperExtensions.FindAncestorDataContext<AlbumCard>(flyout.Target);
+            if (card != null && card.Tracks.Count > 0)
+            {
+                _albumMenuTracks = card.Tracks.ToList();
+            }
             var subMenu = flyout.Items.OfType<MenuFlyoutSubItem>().FirstOrDefault(i => (i.Tag as string) == SendToPlaylistTag);
-            PopulatePlaylistSubMenu(subMenu, () => GetSelectedDrawerTracks(flyout.Target));
+            PopulatePlaylistSubMenu(subMenu, () => _albumMenuTracks.ToList());
         }
-    }
-
-    private List<Track> GetSelectedAlbumTracks(object? sender)
-    {
-        if ((sender as FrameworkElement)?.DataContext is AlbumCard card && card.Tracks.Count > 0)
-        {
-            return card.Tracks.ToList();
-        }
-        var openCard = AlbumRows.FirstOrDefault(r => r.IsDrawerOpen)?.SelectedAlbum;
-        if (openCard != null && openCard.Tracks.Count > 0)
-        {
-            return openCard.Tracks.ToList();
-        }
-        return new List<Track>();
     }
 
     private void OnAlbumPlaySelected(object sender, RoutedEventArgs e)
     {
-        var tracks = GetSelectedAlbumTracks(sender);
-        if (tracks.Count > 0)
-            _ = PlaybackUiHelper.PlayAlbumNowPlayingAsync(AppServices.Playlists, AppServices.Playback, tracks, 0);
+        if (_albumMenuTracks.Count == 0) return;
+        _ = PlaybackUiHelper.PlayAlbumNowPlayingAsync(AppServices.Playlists, AppServices.Playback, _albumMenuTracks, 0);
     }
 
     private void OnAlbumAddToPlaylist(object sender, RoutedEventArgs e)
     {
-        var tracks = GetSelectedAlbumTracks(sender);
-        if (tracks.Count > 0)
-        {
-            PlaybackUiHelper.AddTracksToNowPlaying(AppServices.Playlists, tracks);
-            AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToCurrentPlaylist", "현재 재생목록에 {0}곡을 추가했습니다.", tracks.Count));
-        }
+        if (_albumMenuTracks.Count == 0) return;
+        PlaybackUiHelper.AddTracksToNowPlaying(AppServices.Playlists, _albumMenuTracks);
+        AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToCurrentPlaylist", "현재 재생목록에 {0}곡을 추가했습니다.", _albumMenuTracks.Count));
     }
 
     private void OnAlbumEnqueue(object sender, RoutedEventArgs e)
     {
-        var tracks = GetSelectedAlbumTracks(sender);
-        if (tracks.Count > 0)
-        {
-            PlaybackUiHelper.EnqueueAlbumNowPlaying(AppServices.Playlists, AppServices.Playback, tracks);
-            AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToQueue", "대기열에 {0}곡을 추가했습니다.", tracks.Count));
-        }
+        if (_albumMenuTracks.Count == 0) return;
+        PlaybackUiHelper.EnqueueAlbumNowPlaying(AppServices.Playlists, AppServices.Playback, _albumMenuTracks);
+        AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToQueue", "대기열에 {0}곡을 추가했습니다.", _albumMenuTracks.Count));
     }
 
     private async void OnRightQueueTrackDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
@@ -1022,15 +1131,6 @@ public sealed partial class LibraryPage : Page
 
     private void OnTrackMenuOpening(object? sender, object e) =>
         PopulatePlaylistSubMenu(TrackSendToPlaylistSubMenu, GetSelectedTracks);
-
-    private void OnAlbumMenuOpening(object? sender, object e)
-    {
-        if (sender is MenuFlyout flyout)
-        {
-            var subMenu = flyout.Items.OfType<MenuFlyoutSubItem>().FirstOrDefault(i => (i.Tag as string) == SendToPlaylistTag);
-            PopulatePlaylistSubMenu(subMenu, () => GetSelectedAlbumTracks(flyout.Target));
-        }
-    }
 
     /// <summary>Locates the "send to playlist" submenu inside template flyouts without matching on display text.</summary>
     private const string SendToPlaylistTag = "SendToPlaylist";
@@ -1097,22 +1197,64 @@ public sealed partial class LibraryPage : Page
 
     // ---------------- playback actions ----------------
 
+    // Right-tap must drive the selection refresh (same platform trap the playlist page fixed):
+    // ListViewBase swallows ContextRequested for pointer gestures before the ListView-level
+    // hook runs, and a right-press never moves the selection — so the menu acted on whatever
+    // row was already selected, or on nobody.
+    private void OnTracksListRightTapped(object sender, RightTappedRoutedEventArgs e) =>
+        SelectTrackRowForContext(e.OriginalSource as DependencyObject);
+
+    private void OnTracksListContextRequested(UIElement sender, ContextRequestedEventArgs e) =>
+        SelectTrackRowForContext(e.OriginalSource as DependencyObject);
+
+    /// <summary>Selects the track row under the pointer so the context menu acts on it. Windows
+    /// list convention: a click on a row outside the current selection collapses the selection
+    /// to that row; a click inside the multi-selection keeps it; a target that resolves to no
+    /// row (header, blank area) leaves the selection untouched (PT2-11, Extended mode).</summary>
+    private void SelectTrackRowForContext(DependencyObject? source)
+    {
+        var container = VisualTreeHelperExtensions.FindAncestor<ListViewItem>(source);
+        if (container == null) return;
+        if (TracksList.ItemFromContainer(container) is not Track track) return;
+        if (TracksList.SelectedItems.Contains(track)) return;
+        TracksList.SelectedItems.Clear();
+        TracksList.SelectedItems.Add(track);
+    }
+
     private List<Track> GetSelectedTracks()
     {
-        var sel = TracksList.SelectedItems.OfType<Track>().ToList();
-        return sel.Count > 0 ? sel : _visible.Take(1).ToList();
+        // No first-track fallback: a menu invoked over a blank area with nothing selected must
+        // no-op, not surprise-play the top of the list.
+        return TracksList.SelectedItems.OfType<Track>().ToList();
     }
 
     private void OnTrackDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
     {
         var track = VisualTreeHelperExtensions.ResolveItem<Track>(e);
         if (track == null) return;
+        _ = PlayTrackFromListAsync(track);
+    }
 
-        // Hand playback the whole context the user is looking at and start at the row they clicked,
-        // the way every other double-click path here does (tree, album card, album drawer). Passing
-        // only the clicked track left Now Playing exactly one track long, so Next and Previous had
-        // nowhere to go ("다음 트랙이 없습니다") and playback stopped at the end of that one track.
+    private void OnTracksListKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        // Keyboard parity with double-click (PT5-02): the track table had no Enter path at all,
+        // so the core workflow was pointer-only.
+        if (e.Key == Windows.System.VirtualKey.Enter && TracksList.SelectedItem is Track selected)
+        {
+            e.Handled = true;
+            _ = PlayTrackFromListAsync(selected);
+        }
+    }
+
+    /// <summary>Shared by double-click and Enter: hand playback the whole context the user is
+    /// looking at and start at the activated row, the way every other activation path here does
+    /// (tree, album card, album drawer). Passing only the clicked track left Now Playing exactly
+    /// one track long, so Next and Previous had nowhere to go ("다음 트랙이 없습니다").</summary>
+    private async Task PlayTrackFromListAsync(Track track)
+    {
         var selection = TracksList.SelectedItems.OfType<Track>().ToList();
+        // _visible is the list currently RENDERED (the async pipeline updates it together with
+        // ItemsSource), so it is the correct playback context for the row the user just acted on.
         var tracks = selection.Count > 1 && selection.Contains(track) ? selection : _visible;
 
         int startIndex = tracks.IndexOf(track);
@@ -1122,7 +1264,7 @@ public sealed partial class LibraryPage : Page
             startIndex = 0;
         }
 
-        _ = PlaybackUiHelper.PlayAlbumNowPlayingAsync(AppServices.Playlists, AppServices.Playback, tracks, startIndex);
+        await PlaybackUiHelper.PlayAlbumNowPlayingAsync(AppServices.Playlists, AppServices.Playback, tracks, startIndex);
     }
 
     private void OnPlaySelected(object sender, RoutedEventArgs e) =>
@@ -1160,9 +1302,8 @@ public sealed partial class LibraryPage : Page
 
     private async void OnAlbumEditTags(object sender, RoutedEventArgs e)
     {
-        var tracks = GetSelectedAlbumTracks(sender);
-        if (tracks.Count == 0 || XamlRoot == null) return;
-        await TagEditorDialogs.ShowForAlbumAsync(tracks, XamlRoot);
+        if (_albumMenuTracks.Count == 0 || XamlRoot == null) return;
+        await TagEditorDialogs.ShowForAlbumAsync(_albumMenuTracks, XamlRoot);
     }
 
     // ---------------- Cover Zoom (Slider / Ctrl+Wheel / Presets) ----------------

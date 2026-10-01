@@ -30,6 +30,30 @@ public sealed class SeekbarScrubbingCalculator
         return TimeSpan.FromSeconds(clamped);
     }
 
+    /// <summary>Labels shown while the seek thumb is being dragged (or hovering, for previews):
+    /// derived from the slider's value — where the thumb sits — not from the decoder position.
+    /// Showing the live playhead while the thumb rests elsewhere made the reported time
+    /// contradict the visible thumb (2026-09-30 audit PT3-05).</summary>
+    public static (string Elapsed, string Remaining) CalculateDraggingLabels(double sliderValue, TimeSpan duration)
+    {
+        double maxSec = duration > TimeSpan.Zero ? duration.TotalSeconds : 0.0;
+        double clamped;
+        if (double.IsNaN(sliderValue))
+        {
+            clamped = 0.0;
+        }
+        else if (maxSec > 0)
+        {
+            clamped = Math.Clamp(sliderValue, 0.0, maxSec); // ±Infinity clamp to the ends
+        }
+        else
+        {
+            clamped = double.IsInfinity(sliderValue) ? 0.0 : Math.Max(0.0, sliderValue);
+        }
+        var preview = TimeSpan.FromSeconds(clamped);
+        return (FormatTime(preview), FormatRemaining(preview, duration));
+    }
+
     public static (bool UpdateMax, double NewMax, double NewValue) CalculateSliderProgress(
         TimeSpan position, TimeSpan duration, double currentSliderMax, bool isDragging)
     {
