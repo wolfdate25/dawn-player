@@ -272,10 +272,11 @@
                                         <ColumnDefinition Width="54"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <!-- Italic Track No -->
+                                    <!-- Italic Track No (PT2-10: converters defer to phase 1; the
+                                         title row realizes first during fast panning) -->
                                     <TextBlock Grid.Column="0" Text="{x:Bind Track.TrackNo, Converter={StaticResource TrackNoText}}"
                                                FontStyle="Italic" FontSize="{StaticResource FontBodySmall}" Foreground="{ThemeResource TextTertiaryBrush}"
-                                               VerticalAlignment="Center"/>
+                                               VerticalAlignment="Center" x:Phase="1"/>
 
                                     <!-- Title - Italic Artist -->
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
@@ -285,7 +286,7 @@
                                         <TextBlock Text=" - " FontSize="12" Foreground="{ThemeResource TextTertiaryBrush}"/>
                                         <TextBlock Text="{x:Bind Track.Artist}" FontSize="12" FontStyle="Italic"
                                                    Foreground="{ThemeResource TextTertiaryBrush}"
-                                                   TextTrimming="CharacterEllipsis"/>
+                                                   TextTrimming="CharacterEllipsis" x:Phase="1"/>
                                         <Border Visibility="{x:Bind QueueIndex, Converter={StaticResource QueueVis}, Mode=OneWay}"
                                                 Style="{StaticResource CodecBadge}" Margin="4,0,0,0">
                                             <TextBlock Style="{StaticResource BadgeText}"
@@ -298,7 +299,8 @@
                                          Tag binds the row item so the click can resolve the target set. -->
                                     <Button Grid.Column="2" x:Uid="Rating_Cell" Style="{StaticResource RatingCellButton}"
                                             Tag="{x:Bind}" Click="OnRatingCellClick"
-                                            AutomationProperties.Name="{x:Bind Rating, Converter={StaticResource RatingAccess}, Mode=OneWay}">
+                                            AutomationProperties.Name="{x:Bind Rating, Converter={StaticResource RatingAccess}, Mode=OneWay}"
+                                            x:Phase="1">
                                         <TextBlock Text="{x:Bind Rating, Converter={StaticResource RatingStars}, Mode=OneWay}"
                                                    FontSize="{StaticResource FontCaption}" Foreground="{ThemeResource DawnAccentTextBrush}"
                                                    VerticalAlignment="Center"/>
@@ -307,7 +309,7 @@
                                     <!-- Static Duration -->
                                     <TextBlock Grid.Column="3" FontSize="{StaticResource FontBodySmall}" Foreground="{ThemeResource TextTertiaryBrush}"
                                                HorizontalAlignment="Right" VerticalAlignment="Center"
-                                               Text="{x:Bind DurationDisplay, Mode=OneWay}"/>
+                                               Text="{x:Bind DurationDisplay, Mode=OneWay}" x:Phase="1"/>
                                 </Grid>
 
                                 <!-- Eole Active Playing Highlight Box (when playing) -->

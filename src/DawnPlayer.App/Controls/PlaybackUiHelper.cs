@@ -334,7 +334,10 @@ public static class PlaybackUiHelper
         if (playback == null) return;
         try
         {
-            if (playback.State == PlaybackState.Playing || playback.State == PlaybackState.Paused)
+            // Buffering counts as "active playback": the play button during an open window goes
+            // through PlayPause's Buffering arm (cancel the open, resume/stop) instead of
+            // starting a second, superseding open.
+            if (playback.State is PlaybackState.Playing or PlaybackState.Paused or PlaybackState.Buffering)
             {
                 playback.PlayPause();
                 return;

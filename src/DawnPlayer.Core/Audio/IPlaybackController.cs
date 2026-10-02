@@ -13,6 +13,9 @@ namespace DawnPlayer.Core.Audio;
 public interface IPlaybackController : IDisposable
 {
     PlaybackState State { get; }
+    /// <summary>Buffering feedback: an open in flight from a non-playing state, or a live stream
+    /// underrun (silence served while the source is alive). Poll-safe; pairs with StateChanged.</summary>
+    bool IsBuffering { get; }
     IPlaybackQueue Queue { get; }
     bool StopAfterCurrent { get; set; }
     PlaylistItem? CurrentItem { get; }
@@ -32,6 +35,9 @@ public interface IPlaybackController : IDisposable
     Task PlayAsync(Playlist playlist, PlaylistItem item);
     void PlayPause();
     void Stop();
+    /// <summary>Cancels an open in flight and lands Paused/Stopped without resuming anything —
+    /// the "want silence now" primitive (sleep-timer expiry). No-op when not buffering.</summary>
+    void CancelPendingOpen();
     Task NextAsync();
     Task PreviousAsync();
     void Seek(TimeSpan position);

@@ -74,10 +74,13 @@
             <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="#1FFFFFFF"/>
             <SolidColorBrush x:Key="ListViewItemBackgroundPressed" Color="#28FFFFFF"/>
 
-            <SolidColorBrush x:Key="SliderTrackFill" Color="#FF3D3D49"/>
+            <!-- PT5-13 (3:1 convergence): the unplayed track is a boundary, not decor — the rest
+                 value clears 3:1 against every surface a slider sits on (Panel/LayerBg/Card, the
+                 card being the binding constraint at 3.02:1), and hover widens the gap. -->
+            <SolidColorBrush x:Key="SliderTrackFill" Color="#FF707079"/>
             <SolidColorBrush x:Key="SliderTrackValueFill" Color="{StaticResource DawnAccentColor}"/>
             <SolidColorBrush x:Key="SliderThumbBackground" Color="{StaticResource DawnAccentColor}"/>
-            <SolidColorBrush x:Key="SliderTrackFillPointerOver" Color="#FF4A4A58"/>
+            <SolidColorBrush x:Key="SliderTrackFillPointerOver" Color="#FF7B7B85"/>
             <SolidColorBrush x:Key="SliderTrackValueFillPointerOver" Color="{StaticResource DawnAccentHoverColor}"/>
             <SolidColorBrush x:Key="SliderThumbBackgroundPointerOver" Color="{StaticResource DawnAccentHoverColor}"/>
             <SolidColorBrush x:Key="SliderThumbBackgroundPressed" Color="{StaticResource DawnAccentPressedColor}"/>
@@ -178,12 +181,13 @@
             <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="#12000000"/>
             <SolidColorBrush x:Key="ListViewItemBackgroundPressed" Color="#1A000000"/>
 
-            <!-- PT5-13: the unplayed slider track is a boundary, not decor — light value
-                 keeps ≥3:1 against the warm panel. -->
-            <SolidColorBrush x:Key="SliderTrackFill" Color="#FF8A8780"/>
+            <!-- PT5-13 (3:1 convergence): the rest value clears 3:1 against every surface a
+                 slider sits on (the card being the binding constraint at 3.01:1); hover darkens
+                 on light — the old hover lightened, which pushed the boundary below 3:1. -->
+            <SolidColorBrush x:Key="SliderTrackFill" Color="#FF85827C"/>
             <SolidColorBrush x:Key="SliderTrackValueFill" Color="{StaticResource DawnAccentColor}"/>
             <SolidColorBrush x:Key="SliderThumbBackground" Color="{StaticResource DawnAccentColor}"/>
-            <SolidColorBrush x:Key="SliderTrackFillPointerOver" Color="#FFC5C1BA"/>
+            <SolidColorBrush x:Key="SliderTrackFillPointerOver" Color="#FF6E6B65"/>
             <SolidColorBrush x:Key="SliderTrackValueFillPointerOver" Color="{StaticResource DawnAccentHoverColor}"/>
             <SolidColorBrush x:Key="SliderThumbBackgroundPointerOver" Color="{StaticResource DawnAccentHoverColor}"/>
             <SolidColorBrush x:Key="SliderThumbBackgroundPressed" Color="{StaticResource DawnAccentPressedColor}"/>

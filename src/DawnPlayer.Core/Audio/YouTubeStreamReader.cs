@@ -28,7 +28,7 @@ public interface IResyncRequestSource
 /// bookkeeping plus an async chain restart from the new offset; the reported position is the seek
 /// target plus actually-played PCM, so it can never drift from what the listener has heard.
 /// </summary>
-public sealed class YouTubeStreamReader : ITrackReader, IResyncRequestSource
+public sealed class YouTubeStreamReader : ITrackReader, IResyncRequestSource, IStreamStallSource
 {
     /// <summary>Decoded seconds to buffer before reporting the reader as open.</summary>
     private const double PrebufferSeconds = 1.5;
@@ -45,6 +45,7 @@ public sealed class YouTubeStreamReader : ITrackReader, IResyncRequestSource
     private readonly YouTubeTrackMeta _meta;
     private readonly IYouTubeProcessRunner _runner;
     private readonly BufferedPcm _pcm = new();
+    private readonly StreamStallTracker _stall = new();
     private readonly WaveFormat _format = new(48000, 16, 2);
     private long _maxBufferedBytes;
     private FinitePcmSampleProvider? _provider;
@@ -77,6 +78,10 @@ public sealed class YouTubeStreamReader : ITrackReader, IResyncRequestSource
     /// surfaces it as a warning; the buffered tail still plays out and the track advances.</summary>
     public event Action<string>? PrematureEnd;
 
+    /// <summary>True while the source is alive but the buffer ran dry (silence is being served);
+    /// the controller surfaces this as buffering feedback.</summary>
+    public bool IsStalled => _stall.IsStalled;
+
     /// <summary>Fixed by the ffmpeg arguments — the sequencer resamples/channels as needed.</summary>
     public WaveFormat SourceFormat => _format;
 
@@ -103,7 +108,7 @@ public sealed class YouTubeStreamReader : ITrackReader, IResyncRequestSource
     public void Connect()
     {
         _onFirstRealAudio = () => Volatile.Write(ref _resyncPending, 1);
-        _provider = new FinitePcmSampleProvider(_pcm, _format, firstRealAudio: _onFirstRealAudio);
+        _provider = new FinitePcmSampleProvider(_pcm, _format, firstRealAudio: _onFirstRealAudio, stall: _stall);
         StartChain(0);
         var prebufferBytes = (long)(PrebufferSeconds * _format.AverageBytesPerSecond);
         _pcm.WaitUntilBufferedBytes(prebufferBytes, TimeSpan.FromSeconds(10));
@@ -144,6 +149,9 @@ public sealed class YouTubeStreamReader : ITrackReader, IResyncRequestSource
             while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
             {
                 _pcm.AddBytes(buffer, read, generation); // dropped silently once superseded
+                // Resume threshold hysteresis: one chunk must not clear a stall that the next
+                // read would immediately re-assert.
+                _stall.NotifyBufferFilled(_pcm.BufferedBytes, _format.AverageBytesPerSecond);
                 // Backpressure: pace the download when the buffer ceiling is reached — the pipe
                 // propagates it upstream to yt-dlp (bounded RAM even mid-pause).
                 while (_pcm.BufferedBytes >= _maxBufferedBytes &&
@@ -223,7 +231,8 @@ public sealed class YouTubeStreamReader : ITrackReader, IResyncRequestSource
     /// the first real audio after a seek raises <paramref name="firstRealAudio"/> so the sequencer
     /// can re-anchor its clock to the reader's.
     /// </summary>
-    private sealed class FinitePcmSampleProvider(BufferedPcm pcm, WaveFormat format, Action? firstRealAudio) : ISampleProvider
+    private sealed class FinitePcmSampleProvider(BufferedPcm pcm, WaveFormat format, Action? firstRealAudio,
+        StreamStallTracker stall) : ISampleProvider
     {
         private byte[] _scratch = new byte[8192];
         private long _realBytes;
@@ -252,6 +261,7 @@ public sealed class YouTubeStreamReader : ITrackReader, IResyncRequestSource
             {
                 if (pcm.HasEnded) return 0; // drained + source gone → the track ends
                 buffer.Clear();             // alive underrun → silence
+                stall.NotifyServedSilence();
                 return count;
             }
 
@@ -282,6 +292,9 @@ public sealed class YouTubeStreamReader : ITrackReader, IResyncRequestSource
                     // next read reports end-of-stream.
                     return produced;
                 }
+                // A short read while the source is alive means silence is being padded into this
+                // block — the same stall a fully-empty read reports, just mid-trickle.
+                stall.NotifyServedSilence();
                 for (int i = produced; i < count; i++) buffer[i] = 0f;
             }
             return count;

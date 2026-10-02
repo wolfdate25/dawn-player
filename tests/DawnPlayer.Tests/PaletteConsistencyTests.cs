@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using DawnPlayer.App.Helpers;
 using Xunit;
 
 namespace DawnPlayer.Tests;
@@ -129,6 +130,45 @@ public class PaletteConsistencyTests
             if (!dark.TryGetValue(colorKey, out var darkHex)) continue; // not a palette color (e.g. OnAccent)
             Assert.True(string.Equals(hex, darkHex, StringComparison.OrdinalIgnoreCase),
                 $"Root fallback '{brushKey}'={hex} drifted from dark '{colorKey}'={darkHex}");
+        }
+    }
+
+    /// <summary>Pulls a SolidColorBrush hex out of one theme dictionary block.</summary>
+    private static string ThemeDictionaryBrush(string xaml, string themeKey, string brushKey)
+    {
+        var dictStart = xaml.IndexOf($"x:Key=\"{themeKey}\"", StringComparison.Ordinal);
+        Assert.True(dictStart >= 0, $"theme dictionary '{themeKey}' not found");
+        var dictEnd = xaml.IndexOf("</ResourceDictionary>", dictStart, StringComparison.Ordinal);
+        var block = xaml[dictStart..dictEnd];
+        var m = Regex.Match(block, $@"<SolidColorBrush x:Key=""{brushKey}""\s+Color=""(#\w{{8}})""");
+        Assert.True(m.Success, $"'{themeKey}' block is missing brush '{brushKey}'");
+        return m.Groups[1].Value;
+    }
+
+    /// <summary>
+    /// PT5-13 (3:1 convergence, 2026-10-02): the unplayed slider track is a UI-component
+    /// boundary and must clear WCAG's 3:1 against every surface a slider actually sits on —
+    /// Panel (NowPlayingBar), LayerBg (LibraryPage cover controls) and Card (settings sliders).
+    /// The Wave-4 mitigation measured against Panel only, which let the light value pass while
+    /// settings-card sliders sat at 2.82:1. The rest value is the binding constraint; the hover
+    /// variant must not fall below it either.
+    /// </summary>
+    [Theory]
+    [InlineData("Default", "SliderTrackFill")]
+    [InlineData("Default", "SliderTrackFillPointerOver")]
+    [InlineData("Light", "SliderTrackFill")]
+    [InlineData("Light", "SliderTrackFillPointerOver")]
+    public void SliderTrackFill_Meets3To1_OnEveryHostingSurface(string theme, string brushKey)
+    {
+        var xaml = File.ReadAllText(Path.Combine(RepoRoot(), "src", "DawnPlayer.App", "DawnTheme.xaml"));
+        var track = ThemeDictionaryBrush(xaml, theme, brushKey);
+
+        foreach (var surfaceKey in new[] { "PanelColor", "LayerBgColor", "CardColor" })
+        {
+            var surface = ThemeDictionaryColors(xaml, theme)[surfaceKey];
+            var ratio = ContrastMath.ContrastRatio(track, surface);
+            Assert.True(ratio >= 3.0,
+                $"{theme} '{brushKey}'={track} vs '{surfaceKey}'={surface} is {ratio:F3}:1 — below the 3:1 component boundary");
         }
     }
 }

@@ -156,6 +156,14 @@
 
                     <!-- Audio format and output session badges -->
                     <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,1,0,0">
+                        <!-- PT3-11: transient buffering feedback; stays visible in compact where
+                             the static badges hide, because it is the only signal of dead air. -->
+                        <Border x:Name="BufferingBadge" Style="{StaticResource CodecBadge}" HorizontalAlignment="Left"
+                                Visibility="Collapsed" MaxWidth="220">
+                            <TextBlock x:Uid="NowPlaying_BufferingBadge" x:Name="BufferingBadgeText" Text="버퍼링…"
+                                       Style="{StaticResource BadgeText}" FontSize="{StaticResource FontCaption}"
+                                       Foreground="{ThemeResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
+                        </Border>
                         <Border x:Name="FormatBadge" Style="{StaticResource CodecBadge}" HorizontalAlignment="Left"
                                 Visibility="Collapsed">
                             <TextBlock x:Name="FormatBadgeText" Text="FLAC · 24bit/96kHz" Style="{StaticResource BadgeText}"

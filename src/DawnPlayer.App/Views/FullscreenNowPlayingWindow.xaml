@@ -45,6 +45,11 @@
                               Foreground="{ThemeResource DawnAccentTextBrush}"/>
                     <TextBlock x:Name="FsAbLabel" Text="A–B" FontSize="11" FontWeight="SemiBold"
                                Foreground="{ThemeResource DawnAccentTextBrush}"/>
+                    <!-- PT3-11: buffering feedback must survive into fullscreen, where the
+                         NowPlayingBar badge row is not visible. -->
+                    <TextBlock x:Uid="Fullscreen_Buffering" x:Name="FsBufferingLabel" Text="버퍼링…" FontSize="11"
+                               FontWeight="SemiBold" Foreground="{ThemeResource TextSecondaryBrush}"
+                               Visibility="Collapsed"/>
                 </StackPanel>
 
                 <!-- Waveform seek canvas: full envelope (muted) + played clip (accent) -->

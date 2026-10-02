@@ -11,19 +11,31 @@ namespace DawnPlayer.Core.Audio;
 /// <see cref="TotalTime"/> is zero and seeking is a no-op; buffer underruns emit silence instead
 /// of end-of-stream (the sequencer must not advance away from a live radio on a network hiccup).
 /// </summary>
-public sealed class RadioStreamReader : ITrackReader, ILiveMetadataSource
+public sealed class RadioStreamReader : ITrackReader, ILiveMetadataSource, IStreamStallSource
 {
     /// <summary>Decoded seconds to buffer before reporting the reader as open.</summary>
     private const double PrebufferSeconds = 1.5;
 
     private readonly HttpClient _client;
     private readonly BufferedPcm _pcm = new();
+    private readonly StreamStallTracker _stall = new();
     private readonly string _url;
     private readonly Stopwatch _playedClock = Stopwatch.StartNew();
     private Task? _fillTask;
     private volatile string _streamTitle = "";
+    private volatile bool _disposed;
 
     public event Action<string>? StreamTitleChanged;
+
+    /// <summary>Raised once on the fill thread when the network side died for good (the catch
+    /// below). The reader keeps serving silence by design, so without this the UI would show a
+    /// buffering badge forever with no word of why. Handlers must not block.</summary>
+    public event Action<string>? StreamDied;
+
+    /// <summary>True while the station is alive but the buffer ran dry (silence is being served);
+    /// the controller surfaces this as buffering feedback. A dead stream keeps it set — it never
+    /// recovers, and "버퍼링" is the honest description of that state.</summary>
+    public bool IsStalled => _stall.IsStalled;
 
     /// <summary>Station name announced via the ICY <c>icy-name</c> header; empty when absent.</summary>
     public string StationName { get; private set; } = "";
@@ -100,7 +112,7 @@ public sealed class RadioStreamReader : ITrackReader, ILiveMetadataSource
         var decompressor = new AcmMp3FrameDecompressor(new Mp3WaveFormat(firstFrame.SampleRate, firstFrame.ChannelMode == ChannelMode.Mono ? 1 : 2, firstFrame.FrameLength, firstFrame.BitRate));
 
         SourceFormat = decompressor.OutputFormat;
-        Samples = new PcmSampleProvider(_pcm, SourceFormat);
+        Samples = new PcmSampleProvider(_pcm, SourceFormat, _stall);
 
         _fillTask = Task.Run(() => FillLoop(audio, firstFrame, decompressor));
         _pcm.WaitUntilBuffered(PrebufferSeconds, TimeSpan.FromSeconds(8));
@@ -118,16 +130,28 @@ public sealed class RadioStreamReader : ITrackReader, ILiveMetadataSource
                 if (decodedBytes > 0)
                 {
                     _pcm.AddBytes(decoded, decodedBytes);
+                    // Clear the stall only above the resume threshold: one refilled frame must
+                    // not flip the flag while the next read would immediately re-assert it.
+                    _stall.NotifyBufferFilled(_pcm.BufferedBytes, decompressor.OutputFormat.AverageBytesPerSecond);
                 }
                 frame = Mp3Frame.LoadFromStream(audio);
             }
-        }
-        catch
-        {
-            // Network died: mark the stream dead; the sample provider keeps emitting silence so
-            // playback halts quietly instead of tearing down the session.
             _pcm.MarkDead();
         }
+        catch (Exception ex)
+        {
+            // Network died: mark the stream dead; the sample provider keeps emitting silence so
+            // playback halts quietly instead of tearing down the session. The death itself is
+            // announced once — but NOT when the abort came from our own Dispose, which breaks
+            // the blocked read of every torn-down session and would cry wolf on every Stop.
+            _pcm.MarkDead();
+            if (!_disposed) StreamDied?.Invoke(ex.Message);
+            return;
+        }
+        // Clean server close (Icecast relay restart, source disconnect): the loop just ran out
+        // of frames — no exception — but the stream is exactly as dead. Announced OUTSIDE the
+        // try so a throwing subscriber cannot fall into the catch and announce twice.
+        if (!_disposed) StreamDied?.Invoke(_url);
     }
 
     TimeSpan ITrackReader.CurrentTime
@@ -140,6 +164,7 @@ public sealed class RadioStreamReader : ITrackReader, ILiveMetadataSource
 
     public void Dispose()
     {
+        _disposed = true;
         _pcm.MarkDead();
         try { _client.Dispose(); } catch { }
         try { _fillTask?.Wait(TimeSpan.FromSeconds(2)); } catch { }
@@ -215,17 +240,21 @@ public sealed class RadioStreamReader : ITrackReader, ILiveMetadataSource
     // The thread-safe byte queue lives in BufferedPcm.cs, shared with the YouTube pipe reader.
     // Radio keeps its own end-of-stream policy here: silence on underrun, never an end.
 
-    /// <summary>Serves the buffered 16-bit PCM as floats; silence on underrun (never end-of-stream).</summary>
+    /// <summary>Serves the buffered 16-bit PCM as floats; silence on underrun (never end-of-stream).
+    /// Serving silence raises the stall tracker — that padding is exactly the "buffering" the
+    /// controller reports to the UI.</summary>
     private sealed class PcmSampleProvider : ISampleProvider
     {
         private readonly BufferedPcm _pcm;
         private readonly WaveFormat _format;
+        private readonly StreamStallTracker _stall;
         private byte[] _byteScratch = new byte[8192];
 
-        public PcmSampleProvider(BufferedPcm pcm, WaveFormat format)
+        public PcmSampleProvider(BufferedPcm pcm, WaveFormat format, StreamStallTracker stall)
         {
             _pcm = pcm;
             _format = format;
+            _stall = stall;
         }
 
         public WaveFormat WaveFormat => _format;
@@ -251,6 +280,7 @@ public sealed class RadioStreamReader : ITrackReader, ILiveMetadataSource
 
             // Underrun: emit silence. Returning 0 would tell the sequencer the track ended and
             // advance the playlist away from a live station on a momentary network stall.
+            if (got < bytesNeeded) _stall.NotifyServedSilence();
             for (int i = frames * _format.Channels; i < count; i++)
             {
                 buffer[i] = 0f;

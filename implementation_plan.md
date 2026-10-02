@@ -252,13 +252,39 @@ Narrator 스모크. N3(YouTube)는 별도 승인 대기.
   빈 선택 경로(우클릭 선택 갱신이 보장해 도달 불가 + 헬퍼 안전).
 - 게이트: 클린 리빌드 0경고 0오류, 전체 테스트 **2,151/2,151**(신규 9종).
 
-**진짜 잔여**: **PT3-11** 소스 배지/버퍼링 상태(PlaybackState 확장 필요 — 엔진 변경 수반),
-**PT2-10** x:Phase 지연 바인딩(컨테이너 콜백 기계장치가 필요하고 실패 모드가 빈 행 — 가상화
-이득이 이미 ItemsRepeater+x:Load+디코딩 선행으로 달성되어 위험 대비 이득 미흡으로 유보),
-**PT5-13 완화치의 3:1 수렴**(팔레트 재설계 수반 — Fluent 관례 범위로 수용한 상태),
-기타 수용·문서화된 항목(PT5-10의 YouTube 최근 카드 단일 클릭 등). 실용적 잔여는 사실상
-완료이며, 위 세 항목은 각각 엔진 변경·위험 대비 이득 미흡·팔레트 재설계를 이유로 의사결정
-보류로 남긴다.
+**잔여 3건 해소 + 리뷰 수렴 루프 (2026-10-02, 사용자 /goal 지시 — "코드 리뷰를 반복하여 잔여 항목이
+남지 않을 때까지 수정")**:
+- **PT3-11 소스 배지·버퍼링 피드백**: `PlaybackState`에 `Buffering` 신설(열기 창 — 아무 소리도
+  나지 않을 때만 진입, 모든 실패·대체 경로는 `RestoreFromBuffering`으로 정직 복구: 트랙 보유
+  세션 존속 시 Paused, 배수 시퀀서는 정리 후 Stopped, `_sessionLock` 하 재확인). 재생 중 스트림
+  스톨은 별도 신호 — `IStreamStallSource`/`StreamStallTracker`(휘발성 히스테리시스: 읽기 측 침묵
+  서브 시 set, fill 측 0.25초 이상 적립 시 clear)를 `SessionSnapshot.StallSource`에 담아
+  `IPlaybackController.IsBuffering`로 노출, 핫스왑(`StartOrSwitchLocked`)·갭리스 체인·자연
+  어드밴드(`OnTrackStarted`)마다 재게시. 소비처: SMTC(Buffering→Playing 매핑, Pause 버튼은
+  `CancelPendingOpen`), 슬립 타이머(취소 전용 — 재개 없음), 재생 바·전체화면 배지(Paused에서의
+  낡은 스톨 플래그 미표시 게이트), 배지 앞 소스 라벨(RADIO/DLNA/YouTube —
+  `AudioFormatBadgeFormatter.GetSourceLabel`). 죽은 라디오 스트림은 `StreamDied` 1회 경고
+  (Dispose 유발 중단은 `_disposed`로 억제, 서버 깔끔 종료(EOF)도 동일 발표, 부착은 모든 시작
+  경로가 통과하는 `OnTrackStarted` 단일 퍼널). resw 3개 국어(버퍼링 배지·전체화면 라벨·CoreMsg).
+- **PT2-10 x:Phase**: LibraryPage 트랙 목록·PlaylistPage 대기열(모두 ListView)의 비-제목 셀에
+  `x:Phase="1"` — 제목이 0단계로 먼저 실체화. ItemsRepeater 앨범 그리드는 ContainerContentChanging
+  콜백이 없어 x:Phase 불가(위반 시 WMC0911/빈 카드) — 구조적 제외 근거를 XAML 주석으로 고정.
+- **PT5-13 3:1 수렴**: SliderTrackFill 다크 #3D3D49→**#707079**, 라이트 #8A8780→**#85827C**
+  (호버 #7B7B85/#6E6B65 — 기존 라이트 호버는 밝아져 대비가 오히려 하락하던 것을 수정).
+  Panel·LayerBg·Card 전 표면 기준 3:1 돌파(최저 3.01:1 — Wave 4 완화치는 카드 표면에서
+  2.82:1로 미달이었음). `PaletteConsistencyTests`에 표면×테마×rest/hover 게이트 4종 추가.
+- **리뷰 수렴 루프**: 서브에이전트 리뷰 5회(1차 6건 → 2차 6건 → 3차 6건 → 4차 2건 → 5차 **0건**,
+  총 20건 수선 — Buffering 잔류·슬립 타이머 의도 반전·StallSource 미게시·배수 시퀀서 좀비
+  Playing·RestartIfPlaying 상태 간섭·가짜 스트림 사망 경고·부착 누락 경로 등). 5차 패스에서
+  잔여 0 확인. 수용: CancelPendingOpen의 완주-경합 TOCTOU(이미 시작된 재생은 존중 — 검토자
+  판정 P3 수용), TrackStarted 가드의 이론적 발행-순서 창(기존 동작, 재구성 없음).
+- 게이트: 클린 리빌드 0경고 0오류, 전체 테스트 **2,170/2,170**(신규 19종: StreamStallTracker 4,
+  컨트롤러 Buffering 계약 5, SMTC 미러+소스 스캔 게이트 2, 소스 배지 4, 팔레트 3:1 게이트 4).
+
+**수용·문서화된 항목(수정 안 함 — 잔여 아님)**: PT5-10의 YouTube 최근 카드 단일 클릭(상호작용
+규약상 의도적 예외), PT5-13의 액센트 value-fill 대비(Fluent 관례 범위, 감사 요구는 트랙), 스플리터
+키보드 방향 의미, 시크바 호버·드래그 툴팁 공존, UpdateTransportState 10Hz 호출, 빈 선택 경로.
+"진짜 잔여" 3건은 위 2026-10-02 기록으로 전건 해소되어 더 이상 남지 않는다.
 
 ---
 

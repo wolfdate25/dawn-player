@@ -356,6 +356,7 @@ public sealed partial class NowPlayingBar : UserControl
         // The glyph is the only visual cue, so the automation name has to track it or a screen
         // reader always announces "\uC7AC\uC0DD" no matter what the button will actually do.
         AutomationProperties.SetName(PlayButton, playing ? "\uC77C\uC2DC\uC815\uC9C0" : "\uC7AC\uC0DD");
+        UpdateBufferingBadge();
 
         // Poll the playback position only while it actually moves: a permanent 200 ms
         // dispatcher timer against a paused player is pure battery drain. One final tick
@@ -369,6 +370,22 @@ public sealed partial class NowPlayingBar : UserControl
             _timer.Stop();
             OnTimer();
         }
+    }
+
+    /// <summary>PT3-11: dead-air feedback. Driven from both OnStateChanged (open-window
+    /// Buffering) and OnTimer (a mid-play stream stall raises no state change — only the 200 ms
+    /// poll sees the reader's stall flag flip).</summary>
+    private void UpdateBufferingBadge()
+    {
+        var playback = AppServices.Playback;
+        if (playback == null) return;
+        // The stall flag is only meaningful while sound is expected: a paused stream keeps
+        // refilling and the flag clears with no event, so any state but Playing/Buffering
+        // hides the badge instead of pinning a stale "버퍼링…" over healthy audio.
+        var state = playback.State;
+        var buffering = state == PlaybackState.Buffering
+            || (state == PlaybackState.Playing && playback.IsBuffering);
+        BufferingBadge.Visibility = buffering ? Visibility.Visible : Visibility.Collapsed;
     }
 
     public void OnQueueChanged()
@@ -387,6 +404,7 @@ public sealed partial class NowPlayingBar : UserControl
     {
         var playback = AppServices.Playback;
         if (playback == null) return;
+        UpdateBufferingBadge();
         var duration = playback.Duration;
         var position = playback.Position;
 

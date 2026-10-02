@@ -44,11 +44,28 @@ public static class AudioFormatBadgeFormatter
             : AppStrings.Get("Badge_WasapiShared", "WASAPI 공유")
     };
 
+    /// <summary>PT3-11: the badge is where a stream's provenance becomes explicit — without it a
+    /// radio station looks like any other track until its subtitle happens to update. Local files
+    /// carry no label: the codec part already says everything a file can offer.</summary>
+    public static string GetSourceLabel(TrackSourceKind kind) => kind switch
+    {
+        TrackSourceKind.Radio => "RADIO",
+        TrackSourceKind.Dlna => "DLNA",
+        TrackSourceKind.YouTube => "YouTube",
+        _ => string.Empty
+    };
+
     public static string FormatTrackBadgeText(Track? track)
     {
         if (track == null) return string.Empty;
 
         var parts = new List<string>();
+        var source = GetSourceLabel(track.SourceKind);
+        if (!string.IsNullOrEmpty(source))
+        {
+            parts.Add(source);
+        }
+
         var codec = GetCodec(track.Codec, track.Path);
         if (!string.IsNullOrEmpty(codec))
         {

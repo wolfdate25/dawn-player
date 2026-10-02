@@ -656,21 +656,28 @@
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="58"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{x:Bind TrackNo, Converter={StaticResource TrackNoText}}" Style="{StaticResource TrackNumText}"/>
+                                    <!-- PT2-10: identity (title) realizes at phase 0; the rest —
+                                         converters, the rating stars, layout-heavy cells — defer to
+                                         phase 1 so fast panning paints titles first. Valid here
+                                         because TracksList is a ListView (phases ride on its
+                                         ContainerContentChanging; the ItemsRepeater album grid
+                                         above has no such callback and must not use x:Phase). -->
+                                    <TextBlock Grid.Column="0" Text="{x:Bind TrackNo, Converter={StaticResource TrackNoText}}" Style="{StaticResource TrackNumText}" x:Phase="1"/>
                                     <TextBlock Grid.Column="1" Text="{x:Bind Title}" Style="{StaticResource TrackTitleText}"/>
-                                    <TextBlock Grid.Column="2" Text="{x:Bind Artist}" Style="{StaticResource TrackDimText}"/>
-                                    <TextBlock Grid.Column="3" Text="{x:Bind Album}" Style="{StaticResource TrackDimText}"/>
+                                    <TextBlock Grid.Column="2" Text="{x:Bind Artist}" Style="{StaticResource TrackDimText}" x:Phase="1"/>
+                                    <TextBlock Grid.Column="3" Text="{x:Bind Album}" Style="{StaticResource TrackDimText}" x:Phase="1"/>
                                     <!-- Star Rating cell (L11): click opens the shared rating flyout.
                                          Track has no INPC — x:Bind re-binds when the container re-realizes. -->
                                     <Button Grid.Column="4" x:Uid="Rating_Cell" Style="{StaticResource RatingCellButton}"
                                             Tag="{x:Bind}" Click="OnLibraryRatingCellClick"
-                                            AutomationProperties.Name="{x:Bind Rating, Converter={StaticResource RatingAccess}}">
+                                            AutomationProperties.Name="{x:Bind Rating, Converter={StaticResource RatingAccess}}"
+                                            x:Phase="1">
                                         <TextBlock Text="{x:Bind Rating, Converter={StaticResource RatingStars}}"
                                                    FontSize="{StaticResource FontCaption}" Foreground="{ThemeResource DawnAccentTextBrush}"
                                                    VerticalAlignment="Center"/>
                                     </Button>
                                     <TextBlock Grid.Column="5" Text="{x:Bind Duration, Converter={StaticResource TimeSpanText}}"
-                                               Style="{StaticResource TrackDurationText}"/>
+                                               Style="{StaticResource TrackDurationText}" x:Phase="1"/>
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>

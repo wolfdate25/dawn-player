@@ -62,6 +62,7 @@
   <data name="NowPlaying_AlbumArtButton.AutomationProperties.Name" xml:space="preserve"><value>アルバムアートを拡大</value></data>
   <data name="NowPlaying_AlbumArtButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>アルバムアートを拡大</value></data>
   <data name="NowPlaying_TrackTitle_Empty.Text" xml:space="preserve"><value>再生中の曲はありません</value></data>
+  <data name="NowPlaying_BufferingBadge.Text" xml:space="preserve"><value>バッファリング中…</value></data>
   <data name="NowPlaying_ABRepeatButton.AutomationProperties.Name" xml:space="preserve"><value>A-Bリピート</value></data>
   <data name="NowPlaying_ABRepeat_Tooltip_Off" xml:space="preserve"><value>A-Bリピート: クリックで現在位置をA地点に設定</value></data>
   <data name="NowPlaying_ABRepeat_Tooltip_Marking" xml:space="preserve"><value>A-Bリピート: A地点({0})設定済み — もう一度クリックでB地点を設定、右クリックで解除</value></data>
@@ -278,6 +279,7 @@
   <data name="LyricsEditor_SaveBtnText.Text" xml:space="preserve"><value>LRCファイルとして保存</value></data>
   <data name="LyricsEditor_UnsavedTitle" xml:space="preserve"><value>未保存の変更</value></data>
   <data name="Fullscreen_ExitHint.Text" xml:space="preserve"><value>Esc: 閉じる · Space: 再生/一時停止 · ←/→: 曲の移動</value></data>
+  <data name="Fullscreen_Buffering.Text" xml:space="preserve"><value>バッファリング中…</value></data>
   <data name="LyricsEditor_UnsavedMessage" xml:space="preserve"><value>保存されていない歌詞の編集があります。破棄して閉じますか？</value></data>
   <data name="LyricsEditor_UnsavedDiscard" xml:space="preserve"><value>破棄して閉じる</value></data>
   <data name="LyricsEditor_NewLineText" xml:space="preserve"><value>新しい歌詞行</value></data>
@@ -1016,6 +1018,7 @@
   <data name="Network_YouTube_UrlBox.AutomationProperties.Name" xml:space="preserve"><value>YouTube動画URLの入力</value></data>
   <data name="NowPlaying_ABRepeat_Reject_YouTube" xml:space="preserve"><value>YouTubeストリームではA-Bリピートを使用できません</value></data>
   <data name="CoreMsg_YouTubeEndedEarly" xml:space="preserve"><value>YouTubeストリームが予想より早く終了しました: {0}</value></data>
+  <data name="CoreMsg_StreamDied" xml:space="preserve"><value>ラジオストリームの接続が切断されました（ネットワークを確認してください）: {0}</value></data>
   <data name="CoreMsg_YouTubeOverrideInvalid" xml:space="preserve"><value>設定されたYouTubeツールのパスが無効です: {0}。ネットワークタブの「ツールパス」で再選択するか、既定（PATH）を使用してください。</value></data>
   <data name="CoreMsg_RestartFailedContinue" xml:space="preserve"><value>新しい出力設定を適用できず、現在の出力で再生を続けます。</value></data>
   <data name="Settings_Appearance_Motion_Title.Text" xml:space="preserve"><value>UI モーション (UI Motion)</value></data>

@@ -62,6 +62,7 @@
   <data name="NowPlaying_AlbumArtButton.AutomationProperties.Name" xml:space="preserve"><value>Expand album cover</value></data>
   <data name="NowPlaying_AlbumArtButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Expand album cover</value></data>
   <data name="NowPlaying_TrackTitle_Empty.Text" xml:space="preserve"><value>No track playing</value></data>
+  <data name="NowPlaying_BufferingBadge.Text" xml:space="preserve"><value>Buffering…</value></data>
   <data name="NowPlaying_ABRepeatButton.AutomationProperties.Name" xml:space="preserve"><value>A-B repeat</value></data>
   <data name="NowPlaying_ABRepeat_Tooltip_Off" xml:space="preserve"><value>A-B repeat: click to mark the current position as point A</value></data>
   <data name="NowPlaying_ABRepeat_Tooltip_Marking" xml:space="preserve"><value>A-B repeat: A marked at {0} — click again to mark B, right-click to cancel</value></data>
@@ -278,6 +279,7 @@
   <data name="LyricsEditor_SaveBtnText.Text" xml:space="preserve"><value>Save as LRC File</value></data>
   <data name="LyricsEditor_UnsavedTitle" xml:space="preserve"><value>Unsaved changes</value></data>
   <data name="Fullscreen_ExitHint.Text" xml:space="preserve"><value>Esc: close · Space: play/pause · ←/→: change track</value></data>
+  <data name="Fullscreen_Buffering.Text" xml:space="preserve"><value>Buffering…</value></data>
   <data name="LyricsEditor_UnsavedMessage" xml:space="preserve"><value>There are unsaved lyrics edits. Discard them and close?</value></data>
   <data name="LyricsEditor_UnsavedDiscard" xml:space="preserve"><value>Discard and close</value></data>
   <data name="LyricsEditor_NewLineText" xml:space="preserve"><value>New lyric line</value></data>
@@ -1016,6 +1018,7 @@
   <data name="Network_YouTube_UrlBox.AutomationProperties.Name" xml:space="preserve"><value>YouTube video URL entry</value></data>
   <data name="NowPlaying_ABRepeat_Reject_YouTube" xml:space="preserve"><value>A-B repeat is unavailable on YouTube streams</value></data>
   <data name="CoreMsg_YouTubeEndedEarly" xml:space="preserve"><value>The YouTube stream ended earlier than expected: {0}</value></data>
+  <data name="CoreMsg_StreamDied" xml:space="preserve"><value>Radio stream connection lost (check your network): {0}</value></data>
   <data name="CoreMsg_YouTubeOverrideInvalid" xml:space="preserve"><value>The configured YouTube tool path is invalid: {0}. Re-pick it in the Network tab's tool paths, or use the default (PATH).</value></data>
   <data name="CoreMsg_RestartFailedContinue" xml:space="preserve"><value>Could not apply the new output settings; continuing playback on the current output.</value></data>
   <data name="Settings_Appearance_Motion_Title.Text" xml:space="preserve"><value>UI Motion</value></data>

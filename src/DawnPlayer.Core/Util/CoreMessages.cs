@@ -24,6 +24,7 @@ public enum CoreMessageKey
     YouTubeStreamFailed,
     YouTubeEndedEarly,
     YouTubeOverrideInvalid,
+    StreamDied,
 }
 
 /// <summary>Encoder/decoder for keyed Core messages. Wire format:
@@ -79,6 +80,7 @@ public static class CoreMessages
         CoreMessageKey.YouTubeStreamFailed => Format("YouTube 스트림을 시작하지 못했습니다: {0}", args),
         CoreMessageKey.YouTubeEndedEarly => Format("YouTube 스트림이 예상보다 일찍 끝났습니다: {0}", args),
         CoreMessageKey.YouTubeOverrideInvalid => Format("구성된 YouTube 도구 경로가 유효하지 않습니다: {0}. 네트워크 탭의 '도구 경로'에서 다시 선택하거나 기본값을 사용하세요.", args),
+        CoreMessageKey.StreamDied => Format("라디오 스트림 연결이 끊겼습니다 (네트워크 상태를 확인하세요): {0}", args),
         _ => key.ToString(),
     };
 

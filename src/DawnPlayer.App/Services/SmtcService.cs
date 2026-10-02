@@ -23,6 +23,9 @@ public static class SmtcMapping
     {
         PlaybackState.Playing => MediaPlaybackStatus.Playing,
         PlaybackState.Paused => MediaPlaybackStatus.Paused,
+        // WinRT has no buffering status; a track is loaded and about to sound, so "Playing" is
+        // the least-wrong report (the system sees a resumable player either way).
+        PlaybackState.Buffering => MediaPlaybackStatus.Playing,
         PlaybackState.Stopped => MediaPlaybackStatus.Stopped,
         _ => MediaPlaybackStatus.Stopped
     };
@@ -181,8 +184,14 @@ public sealed class SmtcService : ISmtcService
             switch (args.Button)
             {
                 case SystemMediaTransportControlsButton.Play:
-                case SystemMediaTransportControlsButton.Pause:
                     _playback.PlayPause();
+                    break;
+                case SystemMediaTransportControlsButton.Pause:
+                    // Buffering maps to SMTC Playing, so the overlay offers Pause while a stream
+                    // is opening. That press means "silence now": cancel the open instead of
+                    // PlayPause's Buffering arm, which would resume the track the user paused.
+                    if (_playback.State == PlaybackState.Buffering) _playback.CancelPendingOpen();
+                    else _playback.PlayPause();
                     break;
                 case SystemMediaTransportControlsButton.Next:
                     await _playback.NextAsync().ConfigureAwait(false);

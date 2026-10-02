@@ -38,7 +38,9 @@ this marker).
 - **Internet radio** — Icecast/Shoutcast MP3 streaming with station/song info from ICY metadata.
   Lives in the Network tab: save stations as favorites, add a stream URL, and see the live
   station/song line in the player bar and SMTC. Title menu → Open network stream; URLs inside
-  M3U8 playlists work as-is
+  M3U8 playlists work as-is. Network streams (radio/DLNA/YouTube) show a buffering indicator in
+  the player bar while opening or stalling, and a dropped stream announces itself instead of
+  fading into unexplained silence
 - **DLNA browsing** — discover UPnP media servers on your network and play their music through the
   regular engine (gapless, EQ, exclusive WASAPI): pick a server, walk folders, play or queue
   tracks; album art is cached locally. Original formats preferred (FLAC/WAV/MP3/AAC…)

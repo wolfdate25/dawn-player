@@ -619,6 +619,37 @@ public class ControlsCalculatorTests
         Assert.Equal("MP3 · 320kbps", AudioFormatBadgeFormatter.FormatTrackBadgeText(mp3BitrateOnly));
     }
 
+    /// <summary>PT3-11: stream provenance must be explicit in the badge. Local files carry no
+    /// source label (the codec part already says everything), and a stream URL's extension still
+    /// feeds the codec fallback — "RADIO · MP3" says both provenance and format.</summary>
+    [Theory]
+    [InlineData(TrackSourceKind.File, "", "FLAC · 16bit/44.1kHz")]
+    [InlineData(TrackSourceKind.Radio, "RADIO", "RADIO · MP3")]
+    [InlineData(TrackSourceKind.Dlna, "DLNA", "DLNA · FLAC")]
+    [InlineData(TrackSourceKind.YouTube, "YouTube", "YouTube")]
+    public void AudioFormatBadgeFormatter_SourceLabel_PrependsStreamProvenance(
+        TrackSourceKind kind, string expectedLabel, string expectedBadge)
+    {
+        Assert.Equal(expectedLabel, AudioFormatBadgeFormatter.GetSourceLabel(kind));
+
+        var url = kind switch
+        {
+            TrackSourceKind.Radio => "http://stream.example.com/live.mp3",
+            TrackSourceKind.Dlna => "http://192.168.0.10:8222/Music/song.flac",
+            TrackSourceKind.YouTube => "https://www.youtube.com/watch?v=abc123",
+            _ => "C:\\Music\\song.flac"
+        };
+        var track = new Track
+        {
+            Path = url,
+            SourceKind = kind,
+            Codec = kind == TrackSourceKind.File ? "FLAC" : string.Empty,
+            BitsPerSample = kind == TrackSourceKind.File ? 16 : 0,
+            SampleRate = kind == TrackSourceKind.File ? 44100 : 0
+        };
+        Assert.Equal(expectedBadge, AudioFormatBadgeFormatter.FormatTrackBadgeText(track));
+    }
+
     [Fact]
     public void AudioFormatBadgeFormatter_FormatTrackBadgeText_NullsAndZeroValues()
     {

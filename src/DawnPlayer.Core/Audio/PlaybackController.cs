@@ -10,7 +10,15 @@ using NAudio.Wave;
 
 namespace DawnPlayer.Core.Audio;
 
-public enum PlaybackState { Stopped, Playing, Paused }
+/// <summary>
+/// Coarse transport state. <see cref="Buffering"/> is the open window for a stream that has to
+/// fetch and prebuffer before anything sounds (radio/YouTube connect, DLNA spool) — no audio is
+/// flowing yet, the previous session (if any) is still paused, and every failure path must leave
+/// the state via <see cref="RestoreFromBuffering"/> rather than sticking here. Mid-play stream
+/// stalls (silence served while the source is alive) are reported separately through
+/// <see cref="IsBuffering"/> so "Playing" keeps meaning the sequencer is running.
+/// </summary>
+public enum PlaybackState { Stopped, Playing, Paused, Buffering }
 
 /// <summary>Why playback left a track — drives play/skip counting in the stats sink.</summary>
 public enum PlaybackLeaveReason
@@ -65,7 +73,8 @@ public sealed partial class PlaybackController : IPlaybackController
         bool Exclusive,
         AudioDriverType Driver,
         string? DeviceKey,
-        bool IsDop = false);
+        bool IsDop = false,
+        IStreamStallSource? StallSource = null);
 
     private readonly object _sessionLock = new();
     private SessionSnapshot? _session;
@@ -102,6 +111,59 @@ public sealed partial class PlaybackController : IPlaybackController
     {
         get => (PlaybackState)Volatile.Read(ref _state);
         private set => Volatile.Write(ref _state, (int)value);
+    }
+
+    /// <summary>Buffering feedback for the UI: either an open is in flight from a non-playing
+    /// state (<see cref="PlaybackState.Buffering"/>) or the active stream reader is alive but
+    /// underrun and serving silence. Cheap volatile reads — safe to poll at UI timer rates.</summary>
+    public bool IsBuffering =>
+        State == PlaybackState.Buffering ||
+        (Volatile.Read(ref _session)?.StallSource?.IsStalled ?? false);
+
+    /// <summary>Cancels an open that is in flight and leaves the state honest (Paused when a
+    /// session survives it, Stopped when none does) — without resuming anything. This is the
+    /// "want silence now" primitive: the sleep timer's expiry must kill a buffering open but
+    /// must NOT un-pause the track the user had paused, which a PlayPause here would do.</summary>
+    public void CancelPendingOpen()
+    {
+        Interlocked.Increment(ref _commandGeneration);
+        RestoreFromBuffering();
+    }
+
+    /// <summary>Leaves a stuck <see cref="PlaybackState.Buffering"/> honestly. Paused when the
+    /// surviving session still holds a track; a drained sequencer (its track ended, the advance
+    /// that was in flight just cancelled) has nothing to resume and is torn down instead — the
+    /// same contract the PlayPause Buffering arm applies, so the two can never disagree about
+    /// what a silent session means. No-op when a newer command already moved the state on.</summary>
+    private void RestoreFromBuffering()
+    {
+        if (State != PlaybackState.Buffering) return;
+        lock (_sessionLock)
+        {
+            // Re-check under the lock: a newer command may have published a session (and set
+            // Playing) between our unlocked reads and this acquisition — its state owns now.
+            if (State != PlaybackState.Buffering) return;
+            if (Sequencer is { CurrentItem: not null })
+            {
+                State = PlaybackState.Paused;
+            }
+            else
+            {
+                TeardownSessionLocked();
+                State = PlaybackState.Stopped;
+            }
+        }
+        StateChanged?.Invoke();
+    }
+
+    /// <summary>Enters <see cref="PlaybackState.Buffering"/> for a command whose open window is
+    /// user-visible (nothing is sounding: Stopped or Paused). Already-buffering or playing →
+    /// no churn.</summary>
+    private void MaybeEnterBuffering()
+    {
+        if (State is PlaybackState.Playing or PlaybackState.Buffering) return;
+        State = PlaybackState.Buffering;
+        StateChanged?.Invoke();
     }
 
     public PlaybackQueue Queue { get; } = new();
@@ -212,7 +274,7 @@ public sealed partial class PlaybackController : IPlaybackController
     public TimeSpan Duration => Sequencer?.TotalTime ?? CurrentItem?.Track.Duration ?? TimeSpan.Zero;
 
     private TimeSpan HeldPosition() =>
-        State == PlaybackState.Stopped
+        State == PlaybackState.Stopped || (State == PlaybackState.Buffering && Sequencer == null)
             ? TimeSpan.Zero
             : new TimeSpan(Volatile.Read(ref _lastPositionTicks));
 
@@ -222,6 +284,15 @@ public sealed partial class PlaybackController : IPlaybackController
     public async Task PlayAsync(Playlist playlist, PlaylistItem item)
     {
         long cmdId = Interlocked.Increment(ref _commandGeneration);
+        // A stream's open can prebuffer for seconds (radio/YouTube) or spool the whole body
+        // (DLNA); say so instead of leaving the last state on screen. Local files open in
+        // milliseconds — the extra transitions would be pure churn on the hot double-click path.
+        // Playing keeps its state: the old session keeps sounding until the swap.
+        if (item.Track.SourceKind != TrackSourceKind.File && State != PlaybackState.Playing)
+        {
+            State = PlaybackState.Buffering;
+            StateChanged?.Invoke();
+        }
         PendingTrack pending;
         try
         {
@@ -236,6 +307,7 @@ public sealed partial class PlaybackController : IPlaybackController
         catch (AudioOpenException ex)
         {
             Warning?.Invoke(ex.Message);
+            RestoreFromBuffering();
             return;
         }
 
@@ -280,6 +352,28 @@ public sealed partial class PlaybackController : IPlaybackController
                 State = PlaybackState.Playing;
                 StateChanged?.Invoke();
                 break;
+            case PlaybackState.Buffering:
+                // Same contract as Playing: a press during the open window must not let the
+                // still-opening track start unpaused — cancel it and fall back to the surviving
+                // session (resume it) or to a clean stop when none exists. A drained sequencer
+                // (its track ended, the advance just cancelled) has nothing to resume: leaving
+                // it alive would show "Playing" over silence forever.
+                Interlocked.Increment(ref _commandGeneration);
+                {
+                    var seq = Sequencer;
+                    if (seq is { CurrentItem: not null })
+                    {
+                        seq.IsPaused = false;
+                        State = PlaybackState.Playing;
+                    }
+                    else
+                    {
+                        lock (_sessionLock) TeardownSessionLocked();
+                        State = PlaybackState.Stopped;
+                    }
+                }
+                StateChanged?.Invoke();
+                break;
             default:
                 var (pl, item) = LastPlayableContext();
                 if (item != null && pl != null) _ = PlayAsync(pl, item);
@@ -308,12 +402,18 @@ public sealed partial class PlaybackController : IPlaybackController
         long cmdId = Interlocked.Increment(ref _commandGeneration);
         // ResolveNextTrack opens the next audio file and can renegotiate the WASAPI format, both
         // of which touch the disk/driver. Running that inline froze the UI on every Next click.
+        // Nothing sounds while resolving from Stopped/Paused, so that open window is buffering.
+        MaybeEnterBuffering();
         var session = Volatile.Read(ref _session);
         PendingTrack? pending = await Task.Run(() => ResolveNextTrack(session, manualAdvance: true))
             .ConfigureAwait(false);
         if (pending == null)
         {
             Warning?.Invoke(CoreMessages.Encode(CoreMessageKey.NextTrackMissing));
+            // Unconditional and self-guarding: this command may have inherited Buffering from a
+            // superseded one (MaybeEnterBuffering is a no-op then), and the superseded command's
+            // ownership evaporated with its generation check — whoever terminates last restores.
+            RestoreFromBuffering();
             return;
         }
 
@@ -337,6 +437,7 @@ public sealed partial class PlaybackController : IPlaybackController
     public async Task PreviousAsync()
     {
         long cmdId = Interlocked.Increment(ref _commandGeneration);
+        MaybeEnterBuffering();
         (Playlist pl, PlaylistItem item)? target = null;
         lock (_stateLock)
         {
@@ -357,6 +458,9 @@ public sealed partial class PlaybackController : IPlaybackController
         if (target == null)
         {
             Seek(TimeSpan.Zero);
+            // See NextAsync: unconditional — this command may have inherited a superseded
+            // Buffering it never entered.
+            RestoreFromBuffering();
             if (State == PlaybackState.Stopped) PlayPause();
             return;
         }
@@ -375,6 +479,7 @@ public sealed partial class PlaybackController : IPlaybackController
         catch (AudioOpenException ex)
         {
             Warning?.Invoke(ex.Message);
+            RestoreFromBuffering();
             return;
         }
 
@@ -641,7 +746,10 @@ public sealed partial class PlaybackController : IPlaybackController
     {
         var item = CurrentItem;
         var pl = CurrentPlaylist;
-        if (State == PlaybackState.Stopped || item == null || pl == null) return;
+        // Buffering is excluded on purpose: an open in flight IS the user's newest intent, and a
+        // settings change must not kill it to resurrect the stale CurrentItem (pre-diff, the
+        // state was Stopped during open-from-stopped, so the restart returned here anyway).
+        if (State is PlaybackState.Stopped or PlaybackState.Buffering || item == null || pl == null) return;
 
         var seq = Sequencer;
         var pos = seq?.GetPosition() ?? TimeSpan.Zero;
@@ -673,6 +781,9 @@ public sealed partial class PlaybackController : IPlaybackController
                 // user — say what happened and continue on the current output.
                 Log.Warn($"[playback] restart aborted, keeping the current session: {ex.Message}");
                 Warning?.Invoke(CoreMessages.Encode(CoreMessageKey.RestartFailedContinue, ex.Message));
+                // The generation bump above also cancelled any open this restart superseded; if
+                // that open was the one holding Buffering, nobody else will restore it.
+                RestoreFromBuffering();
             }
             catch (Exception ex)
             {
@@ -681,6 +792,7 @@ public sealed partial class PlaybackController : IPlaybackController
                 // keep-playing contract applies.
                 Log.Warn($"[playback] restart failed unexpectedly, keeping the current session: {ex}");
                 Warning?.Invoke(CoreMessages.Encode(CoreMessageKey.RestartFailedContinue, ex.Message));
+                RestoreFromBuffering();
             }
         });
     }
@@ -756,14 +868,18 @@ public sealed partial class PlaybackController : IPlaybackController
             }
         }
         StateChanged?.Invoke();
-        if (started) OnRemoteTrackStarted(pending);
+        // OnRemoteTrackStarted moved into OnTrackStarted: the TrackStarted hook fires for every
+        // reader change (initial start, hot-swap, gapless chain, natural advance), while this
+        // method only saw double-click/restart starts. A single attach point also rules out a
+        // double-registered death warning.
     }
 
     /// <summary>
-    /// Post-start bookkeeping for remote sources: YouTube's -J resolve metadata is copied onto the
-    /// playing track (playlists stop showing the bare URL, and the thumbnail rides the existing
-    /// remote-art hook), and a mid-stream chain death is surfaced as a warning instead of a
-    /// silent skip to the next track.
+    /// Post-start bookkeeping for remote sources, invoked from OnTrackStarted (every reader
+    /// change passes through it). YouTube's -J resolve metadata is copied onto the playing track
+    /// (playlists stop showing the bare URL, and the thumbnail rides the existing remote-art
+    /// hook), a mid-stream chain death is surfaced as a warning instead of a silent skip, and a
+    /// dead radio stream announces itself once instead of decaying into unexplained silence.
     /// </summary>
     private void OnRemoteTrackStarted(PendingTrack pending)
     {
@@ -773,6 +889,14 @@ public sealed partial class PlaybackController : IPlaybackController
                 Warning?.Invoke(CoreMessages.Encode(CoreMessageKey.YouTubeEndedEarly,
                     string.IsNullOrEmpty(detail) ? pending.Item.Track.Path : detail));
             ApplyResolvedMeta(youTube.Meta, pending.Item.Track);
+        }
+        if (pending.Reader is RadioStreamReader radioStream)
+        {
+            // A dead radio fill loop keeps serving silence by design — the buffering badge stays
+            // honest — but silence without a word reads as a hung app. One warning says why.
+            radioStream.StreamDied += detail =>
+                Warning?.Invoke(CoreMessages.Encode(CoreMessageKey.StreamDied,
+                    string.IsNullOrEmpty(detail) ? pending.Item.Track.Path : detail));
         }
         ResolveRemoteArt(pending.Item.Track);
     }
@@ -833,6 +957,12 @@ public sealed partial class PlaybackController : IPlaybackController
             session.Sequencer.SwitchTo(pending);
             if (session.Output.PlaybackState != NAudio.Wave.PlaybackState.Playing)
                 session.Output.Play();
+            // The stall observer tracks the reader, and a hot-swap just replaced it — republish
+            // the snapshot so IsBuffering never asks a superseded reader about its stall state.
+            if (!ReferenceEquals(session.StallSource, pending.Reader as IStreamStallSource))
+            {
+                PublishSessionLocked(session with { StallSource = pending.Reader as IStreamStallSource });
+            }
             return;
         }
 
@@ -965,7 +1095,8 @@ public sealed partial class PlaybackController : IPlaybackController
         var session = _sessionFactory.Start(first);
         PublishSessionLocked(new SessionSnapshot(
             session.Sequencer, session.Output, session.Device,
-            session.Exclusive, session.Driver, session.DeviceKey, session.IsDop));
+            session.Exclusive, session.Driver, session.DeviceKey, session.IsDop,
+            first.Reader as IStreamStallSource));
 
         CurrentSessionInfo = session.Info;
         SessionStarted?.Invoke(session.Info);
@@ -1041,6 +1172,22 @@ public sealed partial class PlaybackController : IPlaybackController
             // one must not overwrite state that a newer session already published.
             if (!ReferenceEquals(Sequencer, raiser)) return;
 
+            // PT3-11: a gapless chain advance swapped readers entirely inside the sequencer —
+            // no StartOrSwitchLocked runs — so the snapshot still points at the previous track's
+            // stall observer and every underrun of the new stream would go unnoticed. Track
+            // starts are the one hook that fires for every reader change; republish under the
+            // session lock, re-guarded, exactly like the other session mutations.
+            lock (_sessionLock)
+            {
+                var session = _session;
+                var stall = pending.Reader as IStreamStallSource;
+                if (ReferenceEquals(session?.Sequencer, raiser) &&
+                    !ReferenceEquals(session.StallSource, stall))
+                {
+                    PublishSessionLocked(session with { StallSource = stall });
+                }
+            }
+
             PlaylistItem? prev;
             lock (_stateLock)
             {
@@ -1073,6 +1220,12 @@ public sealed partial class PlaybackController : IPlaybackController
             {
                 AbRepeatChanged?.Invoke();
             }
+
+            // Remote bookkeeping rides here — the one hook every reader change passes through
+            // (initial start, hot-swap, gapless chain, natural-advance rebuild) — so a radio
+            // station reached via Next or a natural advance still gets its death warning and
+            // a YouTube item its resolved metadata, not just double-click starts.
+            OnRemoteTrackStarted(pending);
 
             CurrentChanged?.Invoke(pending.Item);
         });
@@ -1114,24 +1267,36 @@ public sealed partial class PlaybackController : IPlaybackController
             // Opening the next file (and renegotiating the exclusive format) happens outside
             // _sessionLock. It used to run inside, which meant every track boundary could block
             // any UI interaction that needed the same lock for up to 25 file-open attempts.
-            var pending = raiser.TakePrefetched() ?? ResolveNextTrack(session, manualAdvance: false);
+            var pending = raiser.TakePrefetched();
             if (pending == null)
             {
-                lock (_sessionLock)
+                pending = ResolveNextTrack(session, manualAdvance: false);
+                if (pending == null)
                 {
-                    if (ReferenceEquals(_session, session))
+                    lock (_sessionLock)
                     {
-                        if (finished?.Track != null)
+                        if (ReferenceEquals(_session, session))
                         {
-                            TrackLeft?.Invoke(finished, finished.Track.Duration, PlaybackLeaveReason.NaturalEnd);
+                            if (finished?.Track != null)
+                            {
+                                TrackLeft?.Invoke(finished, finished.Track.Duration, PlaybackLeaveReason.NaturalEnd);
+                            }
+                            TeardownSessionLocked();
+                            State = PlaybackState.Stopped;
                         }
-                        TeardownSessionLocked();
-                        State = PlaybackState.Stopped;
                     }
+                    SetAbStage(AbRepeatStage.Off);
+                    StateChanged?.Invoke();
+                    return;
                 }
-                SetAbStage(AbRepeatStage.Off);
-                StateChanged?.Invoke();
-                return;
+                // The drained track is already silent, so a stream's connect/spool open is dead
+                // air the user can see: say "buffering" until StartSessionLocked flips to Playing.
+                // A prefetched reader was opened ahead of time — no window worth reporting.
+                if (pending.Item.Track.SourceKind != TrackSourceKind.File && State == PlaybackState.Playing)
+                {
+                    State = PlaybackState.Buffering;
+                    StateChanged?.Invoke();
+                }
             }
 
             lock (_sessionLock)

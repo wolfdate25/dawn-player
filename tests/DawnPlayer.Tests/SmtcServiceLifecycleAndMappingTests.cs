@@ -59,6 +59,7 @@ public class SmtcServiceLifecycleAndMappingTests : IDisposable
     {
         PlaybackState.Playing => SmtcPlaybackStatus.Playing,
         PlaybackState.Paused => SmtcPlaybackStatus.Paused,
+        PlaybackState.Buffering => SmtcPlaybackStatus.Playing,
         PlaybackState.Stopped => SmtcPlaybackStatus.Stopped,
         _ => SmtcPlaybackStatus.Stopped
     };
@@ -227,10 +228,29 @@ public class SmtcServiceLifecycleAndMappingTests : IDisposable
     [InlineData(PlaybackState.Stopped, SmtcPlaybackStatus.Stopped)]
     [InlineData(PlaybackState.Playing, SmtcPlaybackStatus.Playing)]
     [InlineData(PlaybackState.Paused, SmtcPlaybackStatus.Paused)]
+    [InlineData(PlaybackState.Buffering, SmtcPlaybackStatus.Playing)]
     public void MapPlaybackState_TranslatesExactEnumValues_Correctly(PlaybackState state, SmtcPlaybackStatus expected)
     {
         var result = MapPlaybackState(state);
         Assert.Equal(expected, result);
+    }
+
+    /// <summary>PT3-11: the mirror above can drift from the shipping code — SmtcService.cs is
+    /// not linked into this project (it drags in WinRT), so this source-scan gate asserts the
+    /// real mapper carries a Buffering arm that reports Playing. A silent `_ => Stopped` catch-all
+    /// would tell Windows a buffering stream is stopped while the in-app UI says otherwise.</summary>
+    [Fact]
+    public void RealSmtcService_Source_HandlesBufferingState()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null && !File.Exists(Path.Combine(dir.FullName, "DawnPlayer.slnx")))
+            dir = dir.Parent!;
+        Assert.NotNull(dir);
+
+        var source = File.ReadAllText(Path.Combine(dir!.FullName,
+            "src", "DawnPlayer.App", "Services", "SmtcService.cs"));
+
+        Assert.Contains("PlaybackState.Buffering => MediaPlaybackStatus.Playing", source);
     }
 
     [Theory]

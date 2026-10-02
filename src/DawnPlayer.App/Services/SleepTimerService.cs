@@ -109,9 +109,16 @@ public sealed class SleepTimerService : IDisposable
 
         AppServices.RunOnUi(() =>
         {
+            // Buffering must cancel WITHOUT resuming: PlayPause's Buffering arm un-pauses the
+            // surviving session, which would start music exactly when the user asked for
+            // silence. CancelPendingOpen kills the open and leaves the paused track paused.
             if (AppServices.Playback.State == Core.Audio.PlaybackState.Playing)
             {
                 AppServices.Playback.PlayPause();
+            }
+            else if (AppServices.Playback.State == Core.Audio.PlaybackState.Buffering)
+            {
+                AppServices.Playback.CancelPendingOpen();
             }
             Changed?.Invoke();
         });

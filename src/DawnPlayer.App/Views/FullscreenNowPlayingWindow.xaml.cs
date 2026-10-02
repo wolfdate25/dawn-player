@@ -156,7 +156,14 @@ public sealed partial class FullscreenNowPlayingWindow : Window
             Core.Audio.AbRepeatStage.Looping => "A\u2192B",
             _ => "A\u2013B"
         };
-        FsStateRow.Visibility = shuffle || repeat != Core.Persistence.RepeatMode.Off || stage != Core.Audio.AbRepeatStage.Off
+        // PT3-11: open window (Buffering state) or a live-stream underrun while actually playing
+        // — both read as dead air. Paused hides it: the buffer refills while paused and the flag
+        // would go stale with no per-frame state change.
+        var pbState = playback?.State ?? Core.Audio.PlaybackState.Stopped;
+        bool buffering = pbState == Core.Audio.PlaybackState.Buffering
+            || (pbState == Core.Audio.PlaybackState.Playing && playback!.IsBuffering);
+        FsBufferingLabel.Visibility = buffering ? Visibility.Visible : Visibility.Collapsed;
+        FsStateRow.Visibility = shuffle || repeat != Core.Persistence.RepeatMode.Off || stage != Core.Audio.AbRepeatStage.Off || buffering
             ? Visibility.Visible
             : Visibility.Collapsed;
     }
