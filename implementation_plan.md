@@ -281,6 +281,21 @@ Narrator 스모크. N3(YouTube)는 별도 승인 대기.
 - 게이트: 클린 리빌드 0경고 0오류, 전체 테스트 **2,170/2,170**(신규 19종: StreamStallTracker 4,
   컨트롤러 Buffering 계약 5, SMTC 미러+소스 스캔 게이트 2, 소스 배지 4, 팔레트 3:1 게이트 4).
 
+**타이틀바 좁은 창 겹침 수정 (2026-10-02, 사용자 스크린샷 보고 → 승인 후 수정)**:
+- 원인: AppTitleBar의 브랜드·상태 열과 내비 탭 열이 모두 Auto — 창이 ~870 유효 px 이하로 줄면
+  그리드가 오버픈하고 ExtendsContentIntoTitleBar의 시스템 캡션 버튼이 그 위에 덮여
+  Playlists·Network 탭과 최소화/닫기가 겹침.
+- 수정: 상태 텍스트를 유연(*) 열로 이동해 좁아지면 말줄임으로 먼저 흡수, 840/740 유효 px
+  임계값의 단계 숨김(상태 텍스트→브랜드, OnTitleBarSizeChanged), 창 최소 폭 620
+  (`OverlappedPresenter.PreferredMinimumWidth` — 미니 모드 진입 시 해제·복원).
+- 교훈 ①: WinUI `Window`에는 XAML MinWidth가 없고 최소 폭은 OverlappedPresenter 소속이다.
+  교훈 ②: AdaptiveTrigger가 이 창의 라이브 리사이즈에서 재평가되지 않는 확인 — 창 수준
+  단계 전환은 SizeChanged 직접 처리가 결정적. 교훈 ③: 테스트 하니스의 SetWindowPos 좌표는
+  프로세스 DPI 인식에 따라 해석이 달라진다.
+- 게이트: 클린 리빌드 0경고 0오류, 전체 테스트 2,173/2,173(+3 계약 게이트
+  `MainWindowTitleBarLayoutTests` — 1건 병렬 부하 플레이크, 격리 재실행 통과), 실행 육안
+  검증 670/760/988 유효 px 3구간.
+
 **수용·문서화된 항목(수정 안 함 — 잔여 아님)**: PT5-10의 YouTube 최근 카드 단일 클릭(상호작용
 규약상 의도적 예외), PT5-13의 액센트 value-fill 대비(Fluent 관례 범위, 감사 요구는 트랙), 스플리터
 키보드 방향 의미, 시크바 호버·드래그 툴팁 공존, UpdateTransportState 10Hz 호출, 빈 선택 경로.

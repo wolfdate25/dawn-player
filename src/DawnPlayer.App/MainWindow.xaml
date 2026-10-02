@@ -22,13 +22,20 @@
             <Rectangle x:Name="WallpaperDimOverlay" Fill="#9918181D" Opacity="0"/>
         </Grid>
 
-        <!-- 1. Eole Style Horizontal Top Bar & Navigation -->
+        <!-- 1. Eole Style Horizontal Top Bar & Navigation.
+             Column contract (pinned by MainWindowTitleBarLayoutTests): the status text owns the
+             flexible (*) column so narrowing ellipsizes it instead of pushing the nav tabs under
+             the system caption buttons; Auto columns hold only content that must not shrink.
+             The stepwise shedding (status → brand) lives in OnTitleBarSizeChanged —
+             AdaptiveTrigger did not re-evaluate on programmatic/live resizes in this window. -->
         <Grid x:Name="AppTitleBar" Grid.Row="0" Height="40" Padding="12,0,140,0"
-              BorderBrush="{ThemeResource SeparatorSubtleBrush}" BorderThickness="0,0,0,1">
+              BorderBrush="{ThemeResource SeparatorSubtleBrush}" BorderThickness="0,0,0,1"
+              SizeChanged="OnTitleBarSizeChanged">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <!-- Brand & Status Text -->
@@ -67,17 +74,24 @@
                         </MenuFlyout>
                     </Button.Flyout>
                 </Button>
-                <TextBlock x:Uid="AppBrand" Text="Dawn Player" FontSize="{StaticResource FontBody}" FontWeight="SemiBold"
-                           Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                <TextBlock Text="|" FontSize="11" Foreground="{ThemeResource SeparatorSubtleBrush}" VerticalAlignment="Center"/>
-                <TextBlock x:Uid="MainWindow_TitleBarTrack" x:Name="TitleBarTrack" Text="No sound — Nothing played" FontSize="{StaticResource FontBodySmall}"
-                           Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"
-                           MaxWidth="320" TextTrimming="CharacterEllipsis"
-                           AutomationProperties.LiveSetting="Polite"/>
+                <StackPanel x:Name="AppBrandText" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <TextBlock x:Uid="AppBrand" Text="Dawn Player" FontSize="{StaticResource FontBody}" FontWeight="SemiBold"
+                               Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                    <TextBlock Text="|" FontSize="11" Foreground="{ThemeResource SeparatorSubtleBrush}" VerticalAlignment="Center"/>
+                </StackPanel>
             </StackPanel>
 
+            <!-- Live status text: the flexible column is also the drag surface (a non-interactive
+                 TextBlock never blocks dragging), so it ellipsizes away before the tabs move. -->
+            <Grid x:Name="AppTitleBarDragArea" Grid.Column="1" Background="Transparent">
+                <TextBlock x:Uid="MainWindow_TitleBarTrack" x:Name="TitleBarTrack" Text="No sound — Nothing played" FontSize="{StaticResource FontBodySmall}"
+                           Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Left"
+                           MaxWidth="320" Margin="0,0,24,0" TextTrimming="CharacterEllipsis"
+                           AutomationProperties.LiveSetting="Polite"/>
+            </Grid>
+
             <!-- Eole Horizontal Navigation Tabs (Library / Playlists / Network) -->
-            <StackPanel x:Name="TopNavPanel" Grid.Column="1" Orientation="Horizontal" Spacing="2" VerticalAlignment="Stretch"
+            <StackPanel x:Name="TopNavPanel" Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Stretch"
                         DoubleTapped="OnTabDoubleTapped">
                 <RadioButton x:Name="TabLibrary" GroupName="TopNavGroup" IsChecked="True"
                              AutomationProperties.AutomationId="TabLibrary"
@@ -109,18 +123,11 @@
             </StackPanel>
 
             <!-- 3. Dedicated Draggable Title Bar Area & Right Tools -->
-            <Grid Grid.Column="2">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <Grid x:Name="AppTitleBarDragArea" Grid.Column="0" Background="Transparent"/>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,4,0">
-                    <Button x:Uid="MainWindow_SettingsGearButton" x:Name="SettingsGearButton" Style="{StaticResource TitleMenuButtonStyle}" Click="OnMenuSettings" ToolTipService.ToolTip="환경설정">
-                        <FontIcon x:Name="SettingsGearIcon" Glyph="&#xE713;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
-                    </Button>
-                </StackPanel>
-            </Grid>
+            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,4,0">
+                <Button x:Uid="MainWindow_SettingsGearButton" x:Name="SettingsGearButton" Style="{StaticResource TitleMenuButtonStyle}" Click="OnMenuSettings" ToolTipService.ToolTip="환경설정">
+                    <FontIcon x:Name="SettingsGearIcon" Glyph="&#xE713;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                </Button>
+            </StackPanel>
         </Grid>
 
         <!-- 2. Main Content Viewport (Full Width).

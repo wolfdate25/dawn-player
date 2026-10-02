@@ -60,6 +60,16 @@ public sealed partial class MainWindow : Window
             AppWindow.SetIcon(iconPath);
         }
 
+        // Title-bar overflow defense (2026-10-02): below this the nav tabs slide under the
+        // system caption buttons no matter how the bar sheds content — enforce at the OS level.
+        // WinUI's Window has no MinWidth property, and the preferred-minimum lives on the
+        // OverlappedPresenter, not AppWindow. Mini mode relaxes this (it legally shrinks to
+        // 500px with the title bar hidden) and restores it on exit.
+        if (AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter overlapped)
+        {
+            overlapped.PreferredMinimumWidth = 620;
+        }
+
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBarDragArea);
         SystemBackdrop = new Microsoft.UI.Xaml.Media.MicaBackdrop();
@@ -125,6 +135,24 @@ public sealed partial class MainWindow : Window
 
         if (AppServices.Settings.Library is { ScanOnStartup: true, Folders.Count: > 0 })
             AppServices.StartLibraryScan();
+    }
+
+    // ---------------- title-bar overflow defense (2026-10-02) ----------------
+
+    // Stepwise shedding thresholds in effective px, pinned by MainWindowTitleBarLayoutTests.
+    // Below 840 the flexible status column can only show meaningless fragments ("No s…"), so
+    // the track hides; below 740 even the brand no longer fits beside nav (≈352px ko) + gear +
+    // the 140px caption reserve, leaving only ☰ + tabs. PreferredMinimumWidth (620) is the
+    // last line of defense. AdaptiveTrigger was tried first and did not re-evaluate on live
+    // resizes in this window, so the states are applied directly from SizeChanged.
+    private const double TrackVisibleMinWidth = 840;
+    private const double BrandVisibleMinWidth = 740;
+
+    private void OnTitleBarSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var width = e.NewSize.Width;
+        TitleBarTrack.Visibility = width >= TrackVisibleMinWidth ? Visibility.Visible : Visibility.Collapsed;
+        AppBrandText.Visibility = width >= BrandVisibleMinWidth ? Visibility.Visible : Visibility.Collapsed;
     }
 
     /// <summary>Real exit from the tray: pre-set the closing latch so AppWindow.Closing runs the
@@ -471,6 +499,8 @@ public sealed partial class MainWindow : Window
             RootGrid.RowDefinitions[1].Height = new GridLength(0);
 
             appWindow.Resize(new Windows.Graphics.SizeInt32(500, 104));
+            // Mini legally shrinks below the title bar's minimum — lift it, restore on exit.
+            if (presenter != null) presenter.PreferredMinimumWidth = 0;
             if (presenter != null) presenter.IsAlwaysOnTop = true;
             _isMiniMode = true;
         }
@@ -489,6 +519,7 @@ public sealed partial class MainWindow : Window
             {
                 appWindow.Resize(_preMiniSize);
             }
+            if (presenter != null) presenter.PreferredMinimumWidth = 620;
             if (presenter != null) presenter.IsAlwaysOnTop = _preMiniAlwaysOnTop;
             _isMiniMode = false;
         }
