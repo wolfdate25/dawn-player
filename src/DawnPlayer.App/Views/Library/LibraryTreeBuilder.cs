@@ -68,7 +68,11 @@ public static class LibraryTreeBuilder
     {
         bool expanded = model.DefaultExpanded
             || (expandedKeys?.Contains(ExpansionKey(model)) ?? false);
-        var node = new TreeViewNode { IsExpanded = expanded };
+        // Content MUST carry the model: the item template binds Content.Title/Glyph/CountText,
+        // and every lookup (filter match, deferred expansion, selection restore) pattern-matches
+        // node.Content as LibraryTreeNode. Dropping this assignment (as the PT2-05 refactor
+        // briefly did) turns the whole tree into blank rows — pinned by a source-scan gate.
+        var node = new TreeViewNode { Content = model, IsExpanded = expanded };
 
         if (lazy && model.DeferChildren)
         {

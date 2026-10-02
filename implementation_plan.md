@@ -296,6 +296,20 @@ Narrator 스모크. N3(YouTube)는 별도 승인 대기.
   `MainWindowTitleBarLayoutTests` — 1건 병렬 부하 플레이크, 격리 재실행 통과), 실행 육안
   검증 670/760/988 유효 px 3구간.
 
+**라이브러리 트리 빈 행(사이드바 글자 소실) 수정 (2026-10-03, 사용자 스크린샷 보고)**:
+- 원인: 460616e(L12)의 PT2-05 확장상태 유지 리팩터링에서 `LibraryTreeBuilder.ToTreeViewNode`의
+  `Content = model` 한 줄이 유실 — 모든 TreeViewNode의 Content가 null이 되어 템플릿 바인딩
+  (Content.Title/Glyph/CountText)이 빈 값을 그리고, `Content is LibraryTreeNode` 패턴매치에
+  의존하는 트리 클릭 필터링·지연 확장·선택 복원까지 전부 무기화. "글자가 안 보이는 사이드바"의
+  정체는 색 문제가 아니라 **빈 데이터**였다.
+- 수정: `Content = model` 복원 + 소스 스캔 회귀 게이트(`LibraryTreeContentGateTests` —
+  템플릿이 Content.* 바인딩인데 팩토리가 Content를 안 할당하면 실패; 빌더는 WinUI 의존으로
+  테스트 프로젝트 링크 불가라 소스 스캔 방식).
+- 실행 검증: 트리 텍스트·카운트 복원, "All/한국" 노드 클릭 → 헤더·그리드 필터 전환 확인,
+  시작 시 선택 복원(일본 470)도 살아남 확인. 관찰(별도 과제): TreeViewItem 선택 인디케이터가
+  시스템 액센트(파랑) — 앱 액센트(앰버)와 불일치, DawnTheme의 TreeView 선택 리소스 미정의.
+- 게이트: 클린 리빌드 0경고 0오류, 전체 테스트 2,174/2,174(+1).
+
 **수용·문서화된 항목(수정 안 함 — 잔여 아님)**: PT5-10의 YouTube 최근 카드 단일 클릭(상호작용
 규약상 의도적 예외), PT5-13의 액센트 value-fill 대비(Fluent 관례 범위, 감사 요구는 트랙), 스플리터
 키보드 방향 의미, 시크바 호버·드래그 툴팁 공존, UpdateTransportState 10Hz 호출, 빈 선택 경로.
