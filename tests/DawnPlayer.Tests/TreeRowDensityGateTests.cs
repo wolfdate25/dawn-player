@@ -6,9 +6,11 @@ using Xunit;
 namespace DawnPlayer.Tests;
 
 /// <summary>
-/// Tree row-density gate: the library TreeView rows draw their own 26px template,
-/// so the TreeViewItem container must not add extra height or horizontal gutter
-/// beyond it (chevron column and indent stay template-owned).
+/// Tree row-density gate: the library TreeView rows draw their own 26px template, and the
+/// container geometry is a pinned contract — 2026-10-03 the user approved 셰브런 8px /
+/// 셰브런→제목 1px / 상하 패딩 1px, i.e. row total 28px (26 body + 1+1 padding) delivered by
+/// the EoleTreeItemStyle custom template (chevron column 8px, glyph 8x8, no presenter
+/// margin/padding). Keep this gate in step whenever the geometry changes again.
 /// </summary>
 public sealed class TreeRowDensityGateTests
 {
@@ -42,6 +44,10 @@ public sealed class TreeRowDensityGateTests
     public void LibraryTree_ContainerMatchesRowHeight()
     {
         var xaml = ReadLibraryPageXaml();
-        Assert.Contains("<Setter Property=\"MinHeight\" Value=\"26\"/>", xaml, StringComparison.Ordinal);
+        // Row total 28 = 26px template body + 1px top/bottom padding (EoleTreeItemStyle).
+        Assert.Contains("<Setter Property=\"MinHeight\" Value=\"28\"/>", xaml, StringComparison.Ordinal);
+        Assert.Contains("<Setter Property=\"Padding\" Value=\"1,1\"/>", xaml, StringComparison.Ordinal);
+        // The chevron geometry is template-owned and was hand-tuned — pin it too.
+        Assert.Contains("Width=\"8\"", xaml, StringComparison.Ordinal);
     }
 }

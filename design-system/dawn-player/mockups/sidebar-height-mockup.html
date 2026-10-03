@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dawn Player — 사이드바 항목 목업 (높이·간격·너비)</title>
+<style>
+  /* Eole Signature Slate — DawnTheme.xaml 토큰 재현 */
+  :root {
+    --bg: #18181D; --panel: #1F1F25; --card: #27272F; --card-hover: #32323C;
+    --text: #F3F3F6; --text2: #AEAEBC; --text3: #8F8FA0;
+    --accent: #E8A33D; --separator: #2F2F39;
+    --row-h: 26px;  --pad-v: 2px;  --pad-h: 0px;
+    --font-t: 12px; --font-c: 11px;
+    --chev-w: 12px; --gap-chev: 6px; --gap-count: 6px; --count-r: 6px;
+    --side-w: 220px;
+    --sel-color: #4CC2FF; /* 현재: 시스템 액센트(파랑) */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #121216; color: var(--text);
+    font-family: "Segoe UI", "Malgun Gothic", sans-serif;
+    padding: 24px; display: flex; flex-direction: column; gap: 16px; align-items: flex-start;
+  }
+  h1 { font-size: 17px; font-weight: 600; }
+  .sub { color: var(--text2); font-size: 12px; }
+  .layout { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+
+  /* ── 컨트롤 패널 ── */
+  .controls {
+    background: var(--panel); border: 1px solid var(--separator); border-radius: 8px;
+    padding: 14px 16px; width: 340px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .group-title { font-size: 11px; font-weight: 600; color: var(--accent); margin-top: 4px; }
+  .ctl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
+  .ctl label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .ctl label b { color: var(--text); font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .wide { grid-column: 1 / -1; }
+  .presets { display: flex; gap: 6px; flex-wrap: wrap; }
+  .presets button {
+    background: var(--card); color: var(--text2); border: 1px solid var(--separator);
+    border-radius: 5px; padding: 5px 10px; font-size: 11px; cursor: pointer;
+  }
+  .presets button:hover { background: var(--card-hover); color: var(--text); }
+  .readout {
+    background: #141419; border: 1px solid var(--separator); border-radius: 6px;
+    padding: 10px; font-family: Consolas, monospace; font-size: 10.5px; line-height: 1.75;
+    color: #C8C8D4; white-space: pre-wrap; user-select: all;
+  }
+  .readout .k { color: var(--accent); }
+  .readout .note { color: var(--text3); }
+
+  /* ── 미리보기: 앱 좌측 사이드바 재현 ── */
+  .preview-wrap { display: flex; gap: 16px; align-items: flex-start; }
+  .app-frame {
+    background: var(--bg); border: 1px solid var(--separator); border-radius: 8px;
+    width: var(--side-w); overflow: hidden; flex: none;
+  }
+  .titlebar {
+    height: 32px; display: flex; align-items: center; gap: 8px; padding: 0 10px;
+    border-bottom: 1px solid var(--separator); font-size: 11px; color: var(--text3);
+  }
+  .titlebar .brand { color: var(--text); font-weight: 600; font-size: 12px; }
+  .sidebar { padding: 10px 8px 8px; }
+  .side-header { font-size: 11px; font-weight: 600; color: var(--text3); margin: 0 4px 8px; }
+  .combo {
+    background: var(--card); border: 1px solid var(--separator); border-radius: 4px;
+    font-size: 12px; color: var(--text); padding: 5px 10px; margin: 0 2px 8px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .combo span::after { content: " ⌄"; color: var(--text3); }
+
+  .tree { list-style: none; }
+  .tree li { position: relative; }
+  .tree .row {
+    display: flex; align-items: center;
+    height: calc(var(--row-h) + 2 * var(--pad-v));
+    padding: 0 var(--pad-h);
+    border-radius: 4px; cursor: default;
+  }
+  .tree .row:hover { background: var(--card); }
+  .tree .row.sel { background: #26E8A33D; }
+  .tree .row.sel::before {
+    content: ""; position: absolute; left: 0; top: 15%; bottom: 15%;
+    width: 3px; border-radius: 2px; background: var(--sel-color);
+  }
+  .tree .chev {
+    width: var(--chev-w); margin-right: var(--gap-chev);
+    font-size: 9px; color: var(--text3); text-align: center; flex: none;
+  }
+  .tree .indent1 { margin-left: 16px; }
+  .tree .title {
+    font-size: var(--font-t); color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;
+    margin-right: var(--gap-count);
+  }
+  .tree .count {
+    font-size: var(--font-c); color: var(--text3); flex: none;
+    font-variant-numeric: tabular-nums; margin-right: var(--count-r);
+  }
+
+  /* ── 참조: 트랙 목록 행 (현재 앱 값 고정) ── */
+  .ref {
+    background: var(--bg); border: 1px solid var(--separator); border-radius: 8px;
+    width: 340px; overflow: hidden; flex: none;
+  }
+  .ref h2 { font-size: 12px; color: var(--text3); font-weight: 600; padding: 10px 12px 6px; }
+  .ref .thead {
+    display: flex; font-size: 11px; color: var(--text3); padding: 4px 8px;
+    border-bottom: 1px solid var(--separator); gap: 8px;
+  }
+  .ref .trow {
+    display: flex; align-items: center; gap: 8px;
+    height: 34px; padding: 0 8px; margin: 1px 0; border-radius: 4px; font-size: 12px;
+  }
+  .ref .trow:hover { background: var(--card); }
+  .ref .trow .no { width: 30px; color: var(--text3); }
+  .ref .trow .t { flex: 1; color: var(--text); }
+  .ref .trow .d { color: var(--text3); }
+  .ref .cap { padding: 8px 12px 12px; font-size: 11px; color: var(--text3); }
+</style>
+</head>
+<body>
+  <div>
+    <h1>사이드바 항목 목업 — 높이 · 간격 · 너비</h1>
+    <div class="sub">브라우저 배율 <b>100%</b> 기준 실제 크기 · 슬라이더 → 미리보기 + 아래 XAML 값 동시 갱신 · 값을 정하면 그대로 말씀해 주세요</div>
+  </div>
+
+  <div class="layout">
+    <div class="controls">
+      <div class="group-title">행 (Row)</div>
+      <div class="ctl-grid">
+        <div class="ctl">
+          <label>행 높이 <b id="v-h">26px</b></label>
+          <input type="range" id="s-h" min="18" max="40" step="1" value="26">
+        </div>
+        <div class="ctl">
+          <label>상하 패딩 <b id="v-pv">2px</b></label>
+          <input type="range" id="s-pv" min="0" max="6" step="1" value="2">
+        </div>
+        <div class="ctl">
+          <label>글자 크기 <b id="v-ft">12px</b></label>
+          <input type="range" id="s-ft" min="10" max="14" step="1" value="12">
+        </div>
+        <div class="ctl">
+          <label>카운트 글자 <b id="v-fc">11px</b></label>
+          <input type="range" id="s-fc" min="9" max="13" step="1" value="11">
+        </div>
+      </div>
+
+      <div class="group-title">컴포넌트 간격 · 너비</div>
+      <div class="ctl-grid">
+        <div class="ctl">
+          <label>셰브런 폭 <b id="v-cw">12px</b></label>
+          <input type="range" id="s-cw" min="8" max="20" step="1" value="12">
+        </div>
+        <div class="ctl">
+          <label>셰브런–제목 간격 <b id="v-gc">6px</b></label>
+          <input type="range" id="s-gc" min="0" max="14" step="1" value="6">
+        </div>
+        <div class="ctl">
+          <label>제목–카운트 간격 <b id="v-gt">6px</b></label>
+          <input type="range" id="s-gt" min="0" max="16" step="1" value="6">
+        </div>
+        <div class="ctl">
+          <label>카운트 오른쪽 여백 <b id="v-cr">6px</b></label>
+          <input type="range" id="s-cr" min="0" max="16" step="1" value="6">
+        </div>
+        <div class="ctl">
+          <label>좌우 패딩 <b id="v-ph">0px</b></label>
+          <input type="range" id="s-ph" min="0" max="12" step="1" value="0">
+        </div>
+        <div class="ctl">
+          <label>사이드바 너비 <b id="v-w">220px</b></label>
+          <input type="range" id="s-w" min="140" max="550" step="5" value="220">
+        </div>
+      </div>
+
+      <div class="group-title">기타</div>
+      <div class="ctl-grid">
+        <div class="ctl wide">
+          <label>선택 표시 색 <b id="v-a">시스템(파랑) — 현재 앱 상태</b></label>
+          <input type="range" id="s-a" min="0" max="1" step="1" value="0">
+        </div>
+      </div>
+
+      <div class="presets">
+        <button data-v="26,2,12,11,12,6,6,6,0,220">현재</button>
+        <button data-v="28,2,12,11,12,6,6,6,0,220">목록 통일(28)</button>
+        <button data-v="22,0,11,10,10,4,4,4,2,180">촘촘</button>
+        <button data-v="32,4,13,12,14,8,10,8,4,280">여유</button>
+      </div>
+
+      <div class="readout" id="readout"></div>
+    </div>
+
+    <div class="preview-wrap">
+      <div class="app-frame">
+        <div class="titlebar"><span class="brand">Dawn Player</span><span>— 사이드바 미리보기</span></div>
+        <div class="sidebar">
+          <div class="side-header">Library Tree</div>
+          <div class="combo"><span>Folder Structure</span></div>
+          <ul class="tree" id="tree"></ul>
+        </div>
+      </div>
+
+      <div class="ref">
+        <h2>참조 — 트랙 목록 행 (현재 앱 값 고정: 28+6 = 34px)</h2>
+        <div class="thead"><span class="no">#</span><span class="t">제목</span><span class="d">길이</span></div>
+        <div class="trow"><span class="no">01</span><span class="t">Elf</span><span class="d">4:24</span></div>
+        <div class="trow"><span class="no">02</span><span class="t">Show</span><span class="d">3:41</span></div>
+        <div class="trow"><span class="no">03</span><span class="t">Usseewa</span><span class="d">3:18</span></div>
+        <div class="trow"><span class="no">04</span><span class="t">Ibara</span><span class="d">3:55</span></div>
+        <div class="cap">사이드바(트리)와 목록 행의 높이를 나란히 비교하세요.</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const treeData = [
+  { t: "All", c: "1,309", chev: "˅" },
+  { t: "C:\\Users\\kongdol\\AppDat…", c: "109", chev: "˅" },
+  { t: "DawnPlayer_Concur…", c: "450" },
+  { t: "DawnPlayer_Concur…", c: "10" },
+  { t: "DawnPlayer_SpecialChats…", c: "6" },
+  { t: "DawnPlayer_Stress_Disk…", c: "16" },
+  { t: "DawnPlayer_Stress_Disk…", c: "17" },
+  { t: "DawnPlayer_Stress_IoLo…", c: "20" },
+  { t: "DawnPlayer_Stress_IoLo…", c: "20" },
+  { t: "DawnPlayer_TestLib_0154a…", c: "2" },
+  { t: "DawnPlayer_TestLib_aa8f…", c: "2" },
+  { t: "나음악소장", c: "1,199", chev: "˅" },
+  { t: "일본", c: "405", indent: true },
+  { t: "일본", c: "470", indent: true, sel: true },
+  { t: "한국", c: "324", indent: true },
+];
+
+const tree = document.getElementById("tree");
+tree.innerHTML = treeData.map(d => `
+  <li><div class="row ${d.sel ? "sel" : ""}">
+    <span class="chev">${d.chev ?? ""}</span>
+    <span class="title ${d.indent ? "indent1" : ""}">${d.t}</span>
+    <span class="count">${d.c}</span>
+  </div></li>`).join("");
+
+const ids = ["s-h","s-pv","s-ft","s-fc","s-cw","s-gc","s-gt","s-cr","s-ph","s-w","s-a"];
+const $ = id => document.getElementById(id);
+
+function apply() {
+  const [, h, pv, ft, fc, cw, gc, gt, cr, ph, w, a] = [0, ...ids.map(id => +$(id).value)];
+  // 모든 수치 변수는 px 단위 문자열로 설정 — CSS에서 곱셈 없이 직접 사용(단위 이중 곱 방지)
+  const r = document.documentElement.style;
+  r.setProperty("--row-h", h + "px");     r.setProperty("--pad-v", pv + "px");
+  r.setProperty("--pad-h", ph + "px");    r.setProperty("--font-t", ft + "px");
+  r.setProperty("--font-c", fc + "px");   r.setProperty("--chev-w", cw + "px");
+  r.setProperty("--gap-chev", gc + "px"); r.setProperty("--gap-count", gt + "px");
+  r.setProperty("--count-r", cr + "px");  r.setProperty("--side-w", w + "px");
+  r.setProperty("--sel-color", a ? "#E8A33D" : "#4CC2FF");
+  $("v-h").textContent = h + "px";   $("v-pv").textContent = pv + "px";
+  $("v-ft").textContent = ft + "px"; $("v-fc").textContent = fc + "px";
+  $("v-cw").textContent = cw + "px"; $("v-gc").textContent = gc + "px";
+  $("v-gt").textContent = gt + "px"; $("v-cr").textContent = cr + "px";
+  $("v-ph").textContent = ph + "px"; $("v-w").textContent = w + "px";
+  $("v-a").textContent = a ? "앱 액센트(앰버) — 제안" : "시스템(파랑) — 현재 앱 상태";
+
+  const total = h + 2 * pv;
+  $("readout").innerHTML =
+`<span class="k">&lt;!-- LibraryPage.xaml :125-167, ColLeft :77 --&gt;</span>
+<span class="k">&lt;Setter Property="MinHeight" Value="${Math.max(h, total)}"/&gt;</span>
+<span class="k">&lt;Setter Property="Padding" Value="${ph},${pv}"/&gt;</span>
+<span class="k">&lt;Grid Height="${h}" ColumnSpacing="0"&gt;</span>
+  <span class="k">&lt;FontIcon Margin="0,0,${gc},0" FontSize="11"/&gt;</span> <span class="note">← 아이콘 행</span>
+  <span class="k">&lt;TextBlock Title FontSize="${ft}"/&gt;</span>
+  <span class="k">&lt;TextBlock Count Margin="${gt},0,${cr},0" FontSize="${fc}"/&gt;</span>
+<span class="k">&lt;ColumnDefinition x:Name="ColLeft" Width="${w}"
+    MinWidth="140" MaxWidth="550"/&gt;</span>
+
+행 전체 높이: <span class="k">${total}px</span> (본체 ${h} + 패딩 ${2 * pv})
+트랙 목록 행(34px) 대비: ${total - 34 >= 0 ? "+" : ""}${total - 34}px
+셰브런 폭은 TreeViewItem 템플릿 소유 — 바꾸려면 재템플릿 필요`;
+}
+ids.forEach(id => $(id).addEventListener("input", apply));
+document.querySelectorAll(".presets button").forEach(b =>
+  b.addEventListener("click", () => {
+    b.dataset.v.split(",").forEach((v, i) => $(ids[i]).value = v);
+    apply();
+  }));
+apply();
+</script>
+</body>
+</html>

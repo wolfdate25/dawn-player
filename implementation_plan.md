@@ -310,6 +310,15 @@ Narrator 스모크. N3(YouTube)는 별도 승인 대기.
   시스템 액센트(파랑) — 앱 액센트(앰버)와 불일치, DawnTheme의 TreeView 선택 리소스 미정의.
 - 게이트: 클린 리빌드 0경고 0오류, 전체 테스트 2,174/2,174(+1).
 
+**트리 행 기하학 사용자 지정 (2026-10-03, 목업 슬라이더로 값 확정 → 적용)**:
+- 사용자 지정 값: 셰브런 폭 8px, 셰브런→제목 간격 1px, 상하 패딩 1px → 행 전체 28px
+  (본체 26 + 1×2). WinUI 기본 TreeViewItem 템플릿은 셰브런 칸에 Padding 14,0(하드코딩) +
+  글리프 12px + PresenterMargin 4,2 / PresenterPadding 0,3,0,5 테마 리소스라 간격 조절 불가 —
+  MUX_TreeViewItemStyle(WinUI 2.3.6 generic.xaml)을 통째로 복제해 기하학 3곳만 수정한
+  `EoleTreeItemStyle`(LibraryPage 리소스)로 교체. 시각 상태·선택 색은 원본 그대로.
+- TreeRowDensityGateTests 계약 갱신: MinHeight 28 + Padding 1,1 + 셰브런 Width 8 고정.
+- 게이트: 클린 리빌드 0경고 0오류, 전체 테스트 2,174/2,174, 실행 육안 검증(트렌드·클릭 필터).
+
 **수용·문서화된 항목(수정 안 함 — 잔여 아님)**: PT5-10의 YouTube 최근 카드 단일 클릭(상호작용
 규약상 의도적 예외), PT5-13의 액센트 value-fill 대비(Fluent 관례 범위, 감사 요구는 트랙), 스플리터
 키보드 방향 의미, 시크바 호버·드래그 툴팁 공존, UpdateTransportState 10Hz 호출, 빈 선택 경로.
