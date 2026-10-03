@@ -311,13 +311,18 @@ Narrator 스모크. N3(YouTube)는 별도 승인 대기.
 - 게이트: 클린 리빌드 0경고 0오류, 전체 테스트 2,174/2,174(+1).
 
 **트리 행 기하학 사용자 지정 (2026-10-03, 목업 슬라이더로 값 확정 → 적용)**:
-- 사용자 지정 값: 셰브런 폭 8px, 셰브런→제목 간격 1px, 상하 패딩 1px → 행 전체 28px
-  (본체 26 + 1×2). WinUI 기본 TreeViewItem 템플릿은 셰브런 칸에 Padding 14,0(하드코딩) +
-  글리프 12px + PresenterMargin 4,2 / PresenterPadding 0,3,0,5 테마 리소스라 간격 조절 불가 —
-  MUX_TreeViewItemStyle(WinUI 2.3.6 generic.xaml)을 통째로 복제해 기하학 3곳만 수정한
-  `EoleTreeItemStyle`(LibraryPage 리소스)로 교체. 시각 상태·선택 색은 원본 그대로.
-- TreeRowDensityGateTests 계약 갱신: MinHeight 28 + Padding 1,1 + 셰브런 Width 8 고정.
-- 게이트: 클린 리빌드 0경고 0오류, 전체 테스트 2,174/2,174, 실행 육안 검증(트렌드·클릭 필터).
+- 1차 적용(셰브런 8/간격 1/패딩 1 = 28px) 후 사용자가 "이전 레이아웃과 달라 재판단 필요" —
+  ui-ux-pro-max 근거의 4변형 목업(A 이전 복원 · B 현재 컴팩트 · C 목록 리듬 통일 · D 카드형)을
+  제시하고 사용자가 **D 카드형 여유**를 선택.
+- 최종 기하학: 행 32px 카드 + 1px 공극(피치 34 = 트랙 목록 리듬), 카드 배경 Panel 40%,
+  호버 카드(CardHover), 선택 앰버 틴트(ListViewItemBackgroundSelected* 26/3D/4D 재사용),
+  셰브런 칸 10px, 셰브런→제목 5px, 카운트 여백 8px, 코너 5px.
+- 구현: MUX_TreeViewItemStyle 복제 템플릿의 기하학 교체 + 카드 브러시는 **DawnTheme 토큰으로
+  승격**(`TreeRowCardBrush` 다크 #661F1F25 / 라이트 #66F0EFEB — 뷰 XAML 하드코딩 hex 게이트
+  준수), 선택 틴트는 기존 ListViewItemBackgroundSelected* 토큰 재사용.
+- TreeRowDensityGateTests 계약 갱신(변형 D 값 + 토큰화 검증 2종).
+- 게이트: 클린 리빌드 0경고 0오류, 전체 테스트 2,175/2,175(+1), 실행 육안 검증(카드 룩·클릭
+  필터·선택 표시). UIA 실측 행 40 물리 px(32 논리)·피치 43(34.4 논리) 확인.
 
 **수용·문서화된 항목(수정 안 함 — 잔여 아님)**: PT5-10의 YouTube 최근 카드 단일 클릭(상호작용
 규약상 의도적 예외), PT5-13의 액센트 value-fill 대비(Fluent 관례 범위, 감사 요구는 트랙), 스플리터

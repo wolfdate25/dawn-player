@@ -70,24 +70,22 @@
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
         </Style>
 
-        <!-- 2026-10-03 (사용자 지정 기하학): 셰브런 폭 8px, 셰브런→제목 간격 1px, 상하 패딩 1px.
-             WinUI 기본 템플릿은 셰브런 칸에 하드코딩 Padding 14,0 + 글리프 12px, 그리고
-             PresenterMargin 4,2 / PresenterPadding 0,3,0,5 테마 리소스를 더해 간격을 못 좞는다.
-             기본 템플릿(WinUI 2.3.6 generic.xaml MUX_TreeViewItemStyle)을 그대로 복제하고
-             세 기하학 값만 바꿨다 — 시각 상태(선택·호버·드래그)와 색은 원본 그대로다. -->
+        <!-- 2026-10-03 (사용자 선택: 변형 D 카드형 여유): 행 32px + 1px 공극(피치 34 = 트랙 목록
+             리듬), 카드 배경(TreeRowCardBrush — DawnTheme 토큰) + 호버 카드, 셰브런 칸 10px,
+             셰브런→제목 5px, 카운트 여백 8px. 기본 템플릿(WinUI 2.3.6 MUX_TreeViewItemStyle)을
+             복제해 기하학만 수정 — 선택/호버 배경은 DawnTheme 토큰을 ThemeResource로 소비. -->
         <Style x:Key="EoleTreeItemStyle" TargetType="TreeViewItem">
-            <Setter Property="Padding" Value="1,1"/>
-            <Setter Property="Background" Value="{ThemeResource TreeViewItemBackground}"/>
+            <Setter Property="Background" Value="{ThemeResource TreeRowCardBrush}"/>
             <Setter Property="BorderBrush" Value="{ThemeResource TreeViewItemBorderBrush}"/>
             <Setter Property="BorderThickness" Value="{ThemeResource TreeViewItemBorderThemeThickness}"/>
             <Setter Property="GlyphBrush" Value="{ThemeResource TreeViewItemForeground}"/>
-            <Setter Property="MinHeight" Value="28"/>
-            <Setter Property="CornerRadius" Value="{ThemeResource ControlCornerRadius}"/>
+            <Setter Property="MinHeight" Value="32"/>
+            <Setter Property="CornerRadius" Value="5"/>
             <Setter Property="FocusVisualMargin" Value="0,-1,0,-1"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TreeViewItem">
-                        <Grid x:Name="ContentPresenterGrid" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Margin="0" Padding="0" CornerRadius="{TemplateBinding CornerRadius}">
+                        <Grid x:Name="ContentPresenterGrid" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Margin="4,1" Padding="0" CornerRadius="{TemplateBinding CornerRadius}">
 
                             <VisualStateManager.VisualStateGroups>
                                 <VisualStateGroup x:Name="CommonStates">
@@ -95,7 +93,7 @@
 
                                     <VisualState x:Name="PointerOver">
                                         <VisualState.Setters>
-                                            <Setter Target="ContentPresenterGrid.Background" Value="{ThemeResource TreeViewItemBackgroundPointerOver}"/>
+                                            <Setter Target="ContentPresenterGrid.Background" Value="{ThemeResource CardHoverBrush}"/>
                                             <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TreeViewItemForegroundPointerOver}"/>
                                             <Setter Target="SelectionIndicator.Fill" Value="{ThemeResource TreeViewItemSelectionIndicatorForegroundPointerOver}"/>
                                             <Setter Target="CollapsedGlyph.Foreground" Value="{ThemeResource TreeViewItemForegroundPointerOver}"/>
@@ -107,7 +105,7 @@
 
                                     <VisualState x:Name="Pressed">
                                         <VisualState.Setters>
-                                            <Setter Target="ContentPresenterGrid.Background" Value="{ThemeResource TreeViewItemBackgroundPressed}"/>
+                                            <Setter Target="ContentPresenterGrid.Background" Value="{ThemeResource CardPressedBrush}"/>
                                             <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TreeViewItemForegroundPressed}"/>
                                             <Setter Target="SelectionIndicator.Fill" Value="{ThemeResource TreeViewItemSelectionIndicatorForegroundPressed}"/>
                                             <Setter Target="CollapsedGlyph.Foreground" Value="{ThemeResource TreeViewItemForegroundPressed}"/>
@@ -119,7 +117,7 @@
 
                                     <VisualState x:Name="Selected">
                                         <VisualState.Setters>
-                                            <Setter Target="ContentPresenterGrid.Background" Value="{ThemeResource TreeViewItemBackgroundSelected}"/>
+                                            <Setter Target="ContentPresenterGrid.Background" Value="{ThemeResource ListViewItemBackgroundSelected}"/>
                                             <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TreeViewItemForegroundSelected}"/>
                                             <Setter Target="SelectionIndicator.Fill" Value="{ThemeResource TreeViewItemSelectionIndicatorForeground}"/>
                                             <Setter Target="CollapsedGlyph.Foreground" Value="{ThemeResource TreeViewItemForegroundSelected}"/>
@@ -142,7 +140,7 @@
 
                                     <VisualState x:Name="PointerOverSelected">
                                         <VisualState.Setters>
-                                            <Setter Target="ContentPresenterGrid.Background" Value="{ThemeResource TreeViewItemBackgroundSelectedPointerOver}"/>
+                                            <Setter Target="ContentPresenterGrid.Background" Value="{ThemeResource ListViewItemBackgroundSelectedPointerOver}"/>
                                             <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TreeViewItemForegroundSelectedPointerOver}"/>
                                             <Setter Target="SelectionIndicator.Fill" Value="{ThemeResource TreeViewItemSelectionIndicatorForegroundPointerOver}"/>
                                             <Setter Target="CollapsedGlyph.Foreground" Value="{ThemeResource TreeViewItemForegroundSelectedPointerOver}"/>
@@ -154,7 +152,7 @@
 
                                     <VisualState x:Name="PressedSelected">
                                         <VisualState.Setters>
-                                            <Setter Target="ContentPresenterGrid.Background" Value="{ThemeResource TreeViewItemBackgroundSelectedPressed}"/>
+                                            <Setter Target="ContentPresenterGrid.Background" Value="{ThemeResource ListViewItemBackgroundSelectedPressed}"/>
                                             <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TreeViewItemForegroundSelectedPressed}"/>
                                             <Setter Target="SelectionIndicator.Fill" Value="{ThemeResource TreeViewItemSelectionIndicatorForegroundPressed}"/>
                                             <Setter Target="CollapsedGlyph.Foreground" Value="{ThemeResource TreeViewItemForegroundSelectedPressed}"/>
@@ -195,6 +193,7 @@
                             </VisualStateManager.VisualStateGroups>
 
                             <Rectangle x:Name="SelectionIndicator" Width="3" Height="16" Fill="{ThemeResource TreeViewItemSelectionIndicatorForeground}" Opacity="0" HorizontalAlignment="Left" VerticalAlignment="Center" RadiusX="2" RadiusY="2"/>
+                            <!-- 바깥 마진 4,1 = 카드 사이 공극(피치 34) + 좌우 여백 -->
                             <Grid x:Name="MultiSelectGrid" Margin="{ThemeResource TreeViewItemMultiSelectSelectedItemBorderMargin}" Padding="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=TreeViewItemTemplateSettings.Indentation}" BorderBrush="Transparent" BorderThickness="{ThemeResource TreeViewItemBorderThemeThickness}" CornerRadius="{ThemeResource ControlCornerRadius}">
 
                                 <Grid.ColumnDefinitions>
@@ -208,13 +207,13 @@
                                         <TextBlock x:Name="MultiArrangeOverlayText" Text="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=TreeViewItemTemplateSettings.DragItemsCount}" Style="{ThemeResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemControlForegroundChromeWhiteBrush}" IsHitTestVisible="False" VerticalAlignment="Center" HorizontalAlignment="Center" AutomationProperties.AccessibilityView="Raw"/>
                                     </Border>
                                 </Grid>
-                                <!-- 셰브런 칸 8px 고정(원본 Auto + Padding 14,0), 글리프 8×8(원본 12×12 + 내부 패딩 2) -->
-                                <Grid x:Name="ExpandCollapseChevron" Grid.Column="1" Padding="0" Width="8" Opacity="{TemplateBinding GlyphOpacity}" Background="Transparent">
+                                <!-- 셰브런 칸 10px(변형 D), 글리프 8×8 -->
+                                <Grid x:Name="ExpandCollapseChevron" Grid.Column="1" Padding="0" Width="10" Opacity="{TemplateBinding GlyphOpacity}" Background="Transparent">
                                     <TextBlock x:Name="CollapsedGlyph" Foreground="{TemplateBinding GlyphBrush}" Width="8" Height="8" Visibility="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=TreeViewItemTemplateSettings.CollapsedGlyphVisibility}" FontSize="8" Text="{TemplateBinding CollapsedGlyph}" FontFamily="{StaticResource SymbolThemeFontFamily}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" IsTextScaleFactorEnabled="False" IsHitTestVisible="False"/>
                                     <TextBlock x:Name="ExpandedGlyph" Foreground="{TemplateBinding GlyphBrush}" Width="8" Height="8" Visibility="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=TreeViewItemTemplateSettings.ExpandedGlyphVisibility}" FontSize="8" Text="{TemplateBinding ExpandedGlyph}" FontFamily="{StaticResource SymbolThemeFontFamily}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" IsTextScaleFactorEnabled="False" IsHitTestVisible="False"/>
                                 </Grid>
-                                <!-- Padding이 여기 흘러든다: 좌 1px = 셰브런→제목 간격, 상하 1px -->
-                                <ContentPresenter x:Name="ContentPresenter" Grid.Column="2" ContentTransitions="{TemplateBinding ContentTransitions}" ContentTemplate="{TemplateBinding ContentTemplate}" Content="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" MinHeight="{TemplateBinding MinHeight}" Margin="{TemplateBinding Padding}"/>
+                                <!-- 좌 5px = 셰브런→제목 간격(변형 D) · MinHeight 32로 행 높이 결정 -->
+                                <ContentPresenter x:Name="ContentPresenter" Grid.Column="2" ContentTransitions="{TemplateBinding ContentTransitions}" ContentTemplate="{TemplateBinding ContentTemplate}" Content="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" MinHeight="{TemplateBinding MinHeight}" Margin="5,0,0,0"/>
 
                             </Grid>
 
@@ -277,14 +276,14 @@
                 <!-- A: container diet — rows draw their own 26px template, so the
                      TreeViewItem adds no extra height or horizontal gutter.
                      Chevron column and indent stay template-owned. -->
-                <!-- 2026-10-03 사용자 지정 기하학: EoleTreeItemStyle(페이지 리소스) — 셰브런 8px,
-                     셰브런→제목 1px, 상하 패딩 1px. 행 본체는 아래 26px 템플릿. -->
+                <!-- 2026-10-03 사용자 지정 기하학: EoleTreeItemStyle(페이지 리소스) — 셰브런 10px,
+                     셰브런→제목 5px, 카드형 행 32px. 행 본체는 아래 32px 템플릿. -->
                 <TreeView.ItemContainerStyle>
                     <Style TargetType="TreeViewItem" BasedOn="{StaticResource EoleTreeItemStyle}"/>
                 </TreeView.ItemContainerStyle>
                 <TreeView.ItemTemplate>
                     <DataTemplate>
-                        <Grid Height="26" ColumnSpacing="0" Background="Transparent" DoubleTapped="OnTreeItemDoubleTapped"
+                        <Grid Height="32" ColumnSpacing="0" Background="Transparent" DoubleTapped="OnTreeItemDoubleTapped"
                               AutomationProperties.Name="{Binding Content.Title}">
                             <Grid.ContextFlyout>
                                 <MenuFlyout Opening="OnTreeContextMenuOpening">
@@ -315,7 +314,7 @@
                                        Foreground="{ThemeResource TextPrimaryBrush}"/>
                             <TextBlock Grid.Column="2" Text="{Binding Content.CountText}" FontSize="{StaticResource FontCaption}"
                                        Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"
-                                       Margin="6,0,6,0"/>
+                                       Margin="8,0,8,0"/>
                         </Grid>
                     </DataTemplate>
                 </TreeView.ItemTemplate>

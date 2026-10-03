@@ -74,6 +74,10 @@
             <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="#1FFFFFFF"/>
             <SolidColorBrush x:Key="ListViewItemBackgroundPressed" Color="#28FFFFFF"/>
 
+            <!-- 라이브러리 트리 카드 행 (2026-10-03 변형 D): Panel 40% — 항상 깔리는 카드 배경.
+                 선택 틴트는 ListViewItemBackgroundSelected*를 재사용한다. -->
+            <SolidColorBrush x:Key="TreeRowCardBrush" Color="#661F1F25"/>
+
             <!-- PT5-13 (3:1 convergence): the unplayed track is a boundary, not decor — the rest
                  value clears 3:1 against every surface a slider sits on (Panel/LayerBg/Card, the
                  card being the binding constraint at 3.02:1), and hover widens the gap. -->
@@ -180,6 +184,10 @@
             <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#44C77F1B"/>
             <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="#12000000"/>
             <SolidColorBrush x:Key="ListViewItemBackgroundPressed" Color="#1A000000"/>
+
+            <!-- 라이브러리 트리 카드 행 (2026-10-03 변형 D): Panel 40% — 항상 깔리는 카드 배경.
+                 선택 틴트는 ListViewItemBackgroundSelected*를 재사용한다. -->
+            <SolidColorBrush x:Key="TreeRowCardBrush" Color="#66F0EFEB"/>
 
             <!-- PT5-13 (3:1 convergence): the rest value clears 3:1 against every surface a
                  slider sits on (the card being the binding constraint at 3.01:1); hover darkens

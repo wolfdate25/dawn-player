@@ -6,11 +6,12 @@ using Xunit;
 namespace DawnPlayer.Tests;
 
 /// <summary>
-/// Tree row-density gate: the library TreeView rows draw their own 26px template, and the
-/// container geometry is a pinned contract — 2026-10-03 the user approved 셰브런 8px /
-/// 셰브런→제목 1px / 상하 패딩 1px, i.e. row total 28px (26 body + 1+1 padding) delivered by
-/// the EoleTreeItemStyle custom template (chevron column 8px, glyph 8x8, no presenter
-/// margin/padding). Keep this gate in step whenever the geometry changes again.
+/// Tree row-density gate: the container geometry is a pinned contract. 2026-10-03 the user
+/// picked 변형 D (card-style) from the mockups: 32px card rows with 1px gap (pitch 34 = the
+/// track-list rhythm), card background #1F1F25@40% with hover/amber-tinted selected, chevron
+/// column 10px, chevron→title 5px, count margins 8px — delivered by the EoleTreeItemStyle
+/// custom template + TreeView-scoped background brushes. Keep this gate in step whenever the
+/// geometry changes again.
 /// </summary>
 public sealed class TreeRowDensityGateTests
 {
@@ -44,10 +45,26 @@ public sealed class TreeRowDensityGateTests
     public void LibraryTree_ContainerMatchesRowHeight()
     {
         var xaml = ReadLibraryPageXaml();
-        // Row total 28 = 26px template body + 1px top/bottom padding (EoleTreeItemStyle).
-        Assert.Contains("<Setter Property=\"MinHeight\" Value=\"28\"/>", xaml, StringComparison.Ordinal);
-        Assert.Contains("<Setter Property=\"Padding\" Value=\"1,1\"/>", xaml, StringComparison.Ordinal);
-        // The chevron geometry is template-owned and was hand-tuned — pin it too.
-        Assert.Contains("Width=\"8\"", xaml, StringComparison.Ordinal);
+        // 변형 D: 32px card row (pitch 34 with the 1px gap), chevron column 10px.
+        Assert.Contains("<Setter Property=\"MinHeight\" Value=\"32\"/>", xaml, StringComparison.Ordinal);
+        Assert.Contains("x:Name=\"ExpandCollapseChevron\" Grid.Column=\"1\" Padding=\"0\" Width=\"10\"", xaml, StringComparison.Ordinal);
+        // Card look consumes the token (hexes live in DawnTheme — token-layer gate).
+        Assert.Contains("<Setter Property=\"Background\" Value=\"{ThemeResource TreeRowCardBrush}\"/>", xaml, StringComparison.Ordinal);
+        Assert.Contains("Value=\"{ThemeResource CardHoverBrush}\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Value=\"{ThemeResource ListViewItemBackgroundSelected}\"", xaml, StringComparison.Ordinal);
+        // The row template matches the card height and the widened count margins.
+        Assert.Contains("<Grid Height=\"32\" ColumnSpacing=\"0\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Margin=\"8,0,8,0\"", xaml, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TreeRowCardBrush_IsTokenized_ForBothThemes()
+    {
+        // The card token must exist per theme (dark = Panel@40% slate, light = Panel@40% warm).
+        var root = FindRepoRoot();
+        Assert.True(root != null);
+        var theme = File.ReadAllText(Path.Combine(root!.FullName, "src", "DawnPlayer.App", "DawnTheme.xaml"));
+        Assert.Contains("x:Key=\"TreeRowCardBrush\" Color=\"#661F1F25\"", theme, StringComparison.Ordinal);
+        Assert.Contains("x:Key=\"TreeRowCardBrush\" Color=\"#66F0EFEB\"", theme, StringComparison.Ordinal);
     }
 }
