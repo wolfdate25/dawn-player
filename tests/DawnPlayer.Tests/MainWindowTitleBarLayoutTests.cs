@@ -46,50 +46,54 @@ public class MainWindowTitleBarLayoutTests
     }
 
     [Fact]
-    public void StatusText_LivesInFlexibleColumn_NotInsideBrandStackPanel()
+    public void StatusText_SitsBeforeTabs_InTitleBarContent()
     {
         var xaml = ReadMainWindowXaml();
         var bar = AppTitleBarBlock(xaml);
 
-        // The old defect: TitleBarTrack sat inside the brand StackPanel (an Auto column) and
-        // its fixed MaxWidth pushed the nav tabs into the caption buttons on narrow windows.
-        var brandPanel = bar.IndexOf("Brand & Status Text", StringComparison.Ordinal);
-        var brandPanelEnd = bar.IndexOf("</StackPanel>", brandPanel, StringComparison.Ordinal);
-        Assert.True(brandPanel >= 0 && brandPanelEnd > brandPanel, "brand StackPanel not found");
-        Assert.DoesNotContain("TitleBarTrack", bar[brandPanel..brandPanelEnd]);
+        // 변형 OLD (2026-10-03): 상태 텍스트가 탭 왼쪽 — Content 슬롯 안에서 TitleBarTrack이
+        // TopNavPanel보다 앞에 온다(문서 순서 계약). 이전 결함(상태가 브랜드 패널 안에 있어
+        // 탭을 캡션 쪽으로 밀던 것)의 재발 방지.
+        var track = bar.IndexOf("x:Name=\"TitleBarTrack\"", StringComparison.Ordinal);
+        var nav = bar.IndexOf("x:Name=\"TopNavPanel\"", StringComparison.Ordinal);
+        Assert.True(track >= 0 && nav > track, "TitleBarTrack must precede TopNavPanel in the TitleBar content");
 
-        // 변형 OLD (2026-10-03 사용자 선택): 상태는 탭 왼쪽의 자체 열(Grid.Column=1), 탭이 그
-        // 다음(Column=2) — 스크린샷의 원래 배치. 열은 여전히 4개지만 상태 열이 유연(*)이 아니라
-        // Auto이고, 남은 공간이 3열 드래그 영역이 된다.
-        var columns = Regex.Matches(bar, @"<ColumnDefinition Width=""([^""]+)""/>")
-            .Select(m => m.Groups[1].Value).ToList();
-        Assert.Equal(new[] { "Auto", "Auto", "*", "Auto" }, columns);
-        Assert.Contains("x:Name=\"AppTitleBarDragArea\" Grid.Column=\"1\"", bar, StringComparison.Ordinal);
-        Assert.Contains("x:Name=\"TopNavPanel\" Grid.Column=\"2\"", bar, StringComparison.Ordinal);
+        // 브랜드 패널(LeftHeader) 안에는 상태 텍스트가 없어야 한다.
+        var brandStart = bar.IndexOf("x:Name=\"AppBrandText\"", StringComparison.Ordinal);
+        var brandEnd = brandStart >= 0 ? bar.IndexOf("</StackPanel>", brandStart, StringComparison.Ordinal) : -1;
+        Assert.True(brandStart >= 0 && brandEnd > brandStart, "brand StackPanel not found");
+        Assert.DoesNotContain("TitleBarTrack", bar[brandStart..brandEnd]);
+
         Assert.Matches(@"x:Name=""TitleBarTrack""[^>]*TextTrimming=""\w+""", bar);
     }
 
     [Fact]
-    public void CustomCaptionButtons_ReplaceSystemOnes()
+    public void TitleBarControl_WithThemedSystemCaptions_IsUsed()
     {
-        // 커스텀 캡션(─ □ ✕): 앱 토큰 스타일 버튼 3종이 있고, 시스템 캡션은 투명화된다.
+        // 2026-10-03 (3차 수정): WinUI TitleBar 컨트롤 + 시스템 캡션 색 튜닝. 공식 문서 계약상
+        // 캡션 글리프 전경은 투명화 불가·캡션 영역 입력은 시스템 독점이라 "앱이 캡션을 직접
+        // 그리는" 패턴(1~2차 시도)은 불가능 — 앱 버튼 + 시스템 글리프가 겹쳐 보였던 것이 그
+        // 증상이었다. 정석은 TitleBar 컨트롤(레이아웃/인셋 관리) + StyleSystemCaptionButtons
+        // (배경 투명 = 재질 통일, 글리프 색 = 테마 팔레트). 앱 캡션 버튼 요소는 존재해선 안 된다.
         var xaml = ReadMainWindowXaml();
-        Assert.Contains("x:Name=\"CaptionMinimize\"", xaml, StringComparison.Ordinal);
-        Assert.Contains("x:Name=\"CaptionMaximize\"", xaml, StringComparison.Ordinal);
-        Assert.Contains("x:Name=\"CaptionClose\"", xaml, StringComparison.Ordinal);
-        Assert.Contains("CaptionButtonStyle", xaml, StringComparison.Ordinal);
-        Assert.Contains("CaptionCloseButtonStyle", xaml, StringComparison.Ordinal);
+        Assert.Contains("<TitleBar x:Name=\"AppTitleBar\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("<TitleBar.LeftHeader>", xaml, StringComparison.Ordinal);
+        Assert.Contains("<TitleBar.Content>", xaml, StringComparison.Ordinal);
+        Assert.Contains("<TitleBar.RightHeader>", xaml, StringComparison.Ordinal);
+        // The overlap regression guard: no app-drawn caption buttons may exist.
+        Assert.DoesNotContain("CaptionMinimize", xaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("CaptionMaximize", xaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("CaptionClose", xaml, StringComparison.Ordinal);
 
         for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir != null; dir = dir.Parent)
         {
             if (!File.Exists(Path.Combine(dir.FullName, "DawnPlayer.slnx"))) continue;
             var source = File.ReadAllText(Path.Combine(dir.FullName, "src", "DawnPlayer.App", "MainWindow.xaml.cs"));
-            // 시스템 캡션 투명화 + 앱 창 기능 처리 + 최대화 글리프 추적이 모두 있어야 한다.
-            Assert.Contains("ButtonBackgroundColor = Microsoft.UI.Colors.Transparent", source, StringComparison.Ordinal);
-            Assert.Contains("OnCaptionMinimize", source, StringComparison.Ordinal);
-            Assert.Contains("OnCaptionMaximize", source, StringComparison.Ordinal);
-            Assert.Contains("OnCaptionClose", source, StringComparison.Ordinal);
-            Assert.Contains("UpdateCaptionMaximizeGlyph", source, StringComparison.Ordinal);
+            Assert.Contains("StyleSystemCaptionButtons", source, StringComparison.Ordinal);
+            // Material unification: caption backgrounds must be transparent (the doc-allowed set).
+            Assert.Contains("t.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent", source, StringComparison.Ordinal);
+            // Glyph colors are opaque-only by contract — themed, never transparent.
+            Assert.DoesNotContain("t.ButtonForegroundColor = Microsoft.UI.Colors.Transparent", source, StringComparison.Ordinal);
             return;
         }
         Assert.Fail("repository root not found; the gate needs a source checkout");

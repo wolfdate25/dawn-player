@@ -22,128 +22,106 @@
             <Rectangle x:Name="WallpaperDimOverlay" Fill="#9918181D" Opacity="0"/>
         </Grid>
 
-        <!-- 1. Eole Style Horizontal Top Bar & Navigation.
-             Column contract (pinned by MainWindowTitleBarLayoutTests): the status text owns the
-             flexible (*) column so narrowing ellipsizes it instead of pushing the nav tabs under
-             the system caption buttons; Auto columns hold only content that must not shrink.
-             The stepwise shedding (status → brand) lives in OnTitleBarSizeChanged —
-             AdaptiveTrigger did not re-evaluate on programmatic/live resizes in this window. -->
-        <Grid x:Name="AppTitleBar" Grid.Row="0" Height="40" Padding="12,0,0,0"
-              BorderBrush="{ThemeResource SeparatorSubtleBrush}" BorderThickness="0,0,0,1"
-              SizeChanged="OnTitleBarSizeChanged">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- Brand & Status Text -->
-            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Spacing="8" Margin="0,0,24,0">
-                <Button x:Uid="MainWindow_TitleMenuButton" Style="{StaticResource TitleMenuButtonStyle}" ToolTipService.ToolTip="메뉴">
-                    <FontIcon Glyph="&#xE700;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
-                    <Button.Flyout>
-                        <MenuFlyout Opening="OnTitleMenuOpening">
-                            <MenuFlyoutItem x:Uid="MainWindow_Menu_Rescan" Text="라이브러리 새로고침" Click="OnMenuRescan">
-                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE72C;"/></MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
-                            <MenuFlyoutItem x:Uid="MainWindow_Menu_OpenUrl" Text="네트워크 스트림 열기 (라디오)..." Click="OnMenuOpenUrl">
-                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE968;"/></MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
-                            <MenuFlyoutSubItem x:Uid="MainWindow_Menu_SleepTimer" x:Name="SleepTimerMenu" Text="수면 타이머">
-                                <MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xE708;"/></MenuFlyoutSubItem.Icon>
-                                <ToggleMenuFlyoutItem x:Uid="MainWindow_Menu_Sleep_Off" x:Name="SleepOffItem" Text="끔" Click="OnSleepTimerOff"/>
-                                <ToggleMenuFlyoutItem x:Uid="MainWindow_Menu_Sleep_15" x:Name="Sleep15Item" Text="15분" Click="OnSleepTimer15"/>
-                                <ToggleMenuFlyoutItem x:Uid="MainWindow_Menu_Sleep_30" x:Name="Sleep30Item" Text="30분" Click="OnSleepTimer30"/>
-                                <ToggleMenuFlyoutItem x:Uid="MainWindow_Menu_Sleep_60" x:Name="Sleep60Item" Text="1시간" Click="OnSleepTimer60"/>
-                                <ToggleMenuFlyoutItem x:Uid="MainWindow_Menu_Sleep_Track" x:Name="SleepTrackItem" Text="현재 곡 끝나고" Click="OnSleepTimerAfterTrack"/>
-                            </MenuFlyoutSubItem>
-                            <MenuFlyoutItem x:Uid="MainWindow_Menu_Mini" x:Name="MiniModeMenuItem" Text="미니 플레이어 (Mini Player)" Click="OnMenuMiniToggle">
-                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE740;"/></MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
-                            <MenuFlyoutItem x:Uid="MainWindow_Menu_Fullscreen" x:Name="FullscreenMenuItem" Text="풀스크린 Now Playing (Full-screen Now Playing)" Click="OnMenuFullscreen">
-                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE7F4;"/></MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
-                            <MenuFlyoutItem x:Uid="MainWindow_Menu_Report" Text="청취 리포트 (Listening Report)..." Click="OnMenuReport">
-                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE9D9;"/></MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
-                            <MenuFlyoutSeparator/>
-                            <MenuFlyoutItem x:Uid="MainWindow_Menu_Exit" Text="종료" Click="OnMenuExit">
-                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE711;"/></MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
-                        </MenuFlyout>
-                    </Button.Flyout>
-                </Button>
-                <StackPanel x:Name="AppBrandText" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                    <TextBlock x:Uid="AppBrand" Text="Dawn Player" FontSize="{StaticResource FontBody}" FontWeight="SemiBold"
-                               Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                    <TextBlock Text="|" FontSize="11" Foreground="{ThemeResource SeparatorSubtleBrush}" VerticalAlignment="Center"/>
+        <!-- 2026-10-03 (3차 수정): WinUI TitleBar 컨트롤(WASDK 1.7+)로 전환.
+             근거(공식 문서 /windows/apps/develop/title-bar): 시스템 캡션 버튼의 전경색은
+             알파 채널이 무시되어(투명화 불가) 글리프를 숨일 수 없고, 캡션 영역은 시스템이
+             입력을 독점하므로 앱 버튼을 올리는 패턴도 공식 금지. TitleBar 컨트롤은 캡션
+             버튼을 XAML로 자체 렌더링해 겹침이 원천 불가하고 스타일도 앱 테마를 따른다.
+             레이아웃(변형 OLD)은 Header(☰·브랜드) / Content(상태·탭) / Footer(톱니)로 동일
+             배치를 유지하고, 단계 숨김(OnTitleBarSizeChanged)도 그대로 작동한다. -->
+        <TitleBar x:Name="AppTitleBar" Grid.Row="0" MinHeight="40"
+                  BorderBrush="{ThemeResource SeparatorSubtleBrush}" BorderThickness="0,0,0,1"
+                  SizeChanged="OnTitleBarSizeChanged">
+            <TitleBar.LeftHeader>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+                    <Button x:Uid="MainWindow_TitleMenuButton" Style="{StaticResource TitleMenuButtonStyle}" ToolTipService.ToolTip="메뉴">
+                        <FontIcon Glyph="&#xE700;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                        <Button.Flyout>
+                            <MenuFlyout Opening="OnTitleMenuOpening">
+                                <MenuFlyoutItem x:Uid="MainWindow_Menu_Rescan" Text="라이브러리 새로고침" Click="OnMenuRescan">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE72C;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem x:Uid="MainWindow_Menu_OpenUrl" Text="네트워크 스트림 열기 (라디오)..." Click="OnMenuOpenUrl">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE968;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutSubItem x:Uid="MainWindow_Menu_SleepTimer" x:Name="SleepTimerMenu" Text="수면 타이머">
+                                    <MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xE708;"/></MenuFlyoutSubItem.Icon>
+                                    <ToggleMenuFlyoutItem x:Uid="MainWindow_Menu_Sleep_Off" x:Name="SleepOffItem" Text="끔" Click="OnSleepTimerOff"/>
+                                    <ToggleMenuFlyoutItem x:Uid="MainWindow_Menu_Sleep_15" x:Name="Sleep15Item" Text="15분" Click="OnSleepTimer15"/>
+                                    <ToggleMenuFlyoutItem x:Uid="MainWindow_Menu_Sleep_30" x:Name="Sleep30Item" Text="30분" Click="OnSleepTimer30"/>
+                                    <ToggleMenuFlyoutItem x:Uid="MainWindow_Menu_Sleep_60" x:Name="Sleep60Item" Text="1시간" Click="OnSleepTimer60"/>
+                                    <ToggleMenuFlyoutItem x:Uid="MainWindow_Menu_Sleep_Track" x:Name="SleepTrackItem" Text="현재 곡 끝나고" Click="OnSleepTimerAfterTrack"/>
+                                </MenuFlyoutSubItem>
+                                <MenuFlyoutItem x:Uid="MainWindow_Menu_Mini" x:Name="MiniModeMenuItem" Text="미니 플레이어 (Mini Player)" Click="OnMenuMiniToggle">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE740;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem x:Uid="MainWindow_Menu_Fullscreen" x:Name="FullscreenMenuItem" Text="풀스크린 Now Playing (Full-screen Now Playing)" Click="OnMenuFullscreen">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE7F4;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem x:Uid="MainWindow_Menu_Report" Text="청취 리포트 (Listening Report)..." Click="OnMenuReport">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE9D9;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutSeparator/>
+                                <MenuFlyoutItem x:Uid="MainWindow_Menu_Exit" Text="종료" Click="OnMenuExit">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE711;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                    <StackPanel x:Name="AppBrandText" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <TextBlock x:Uid="AppBrand" Text="Dawn Player" FontSize="{StaticResource FontBody}" FontWeight="SemiBold"
+                                   Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="|" FontSize="11" Foreground="{ThemeResource SeparatorSubtleBrush}" VerticalAlignment="Center"/>
+                    </StackPanel>
                 </StackPanel>
-            </StackPanel>
+            </TitleBar.LeftHeader>
 
-            <!-- Live status text (2026-10-03 변형 OLD): 탭 왼쪽의 좌측 그룹 소속. 여전히 비대화형
-                 TextBlock이라 드래그를 막지 않으며, 좁아지면 먼저 말줄임→숨김이 된다. -->
-            <Grid x:Name="AppTitleBarDragArea" Grid.Column="1" Background="Transparent">
-                <TextBlock x:Uid="MainWindow_TitleBarTrack" x:Name="TitleBarTrack" Text="No sound — Nothing played" FontSize="{StaticResource FontBodySmall}"
-                           Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Left"
-                           MaxWidth="320" Margin="0,0,18,0" TextTrimming="CharacterEllipsis"
-                           AutomationProperties.LiveSetting="Polite"/>
-            </Grid>
+            <TitleBar.Content>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="0">
+                    <TextBlock x:Uid="MainWindow_TitleBarTrack" x:Name="TitleBarTrack" Text="No sound — Nothing played" FontSize="{StaticResource FontBodySmall}"
+                               Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"
+                               MaxWidth="320" Margin="0,0,18,0" TextTrimming="CharacterEllipsis"
+                               AutomationProperties.LiveSetting="Polite"/>
+                    <StackPanel x:Name="TopNavPanel" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center"
+                                DoubleTapped="OnTabDoubleTapped">
+                        <RadioButton x:Name="TabLibrary" GroupName="TopNavGroup" IsChecked="True"
+                                     AutomationProperties.AutomationId="TabLibrary"
+                                     Style="{StaticResource EoleNavTabStyle}" Click="OnTabLibraryClick"
+                                     DoubleTapped="OnTabDoubleTapped">
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <FontIcon Glyph="&#xE8B9;" FontSize="12"/>
+                                <TextBlock x:Uid="MainWindow_Tab_Library" Text="Library" FontSize="{StaticResource FontBody}"/>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton x:Name="TabPlaylists" GroupName="TopNavGroup"
+                                     AutomationProperties.AutomationId="TabPlaylists"
+                                     Style="{StaticResource EoleNavTabStyle}" Click="OnTabPlaylistsClick"
+                                     DoubleTapped="OnTabDoubleTapped">
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <FontIcon Glyph="&#xE90B;" FontSize="12"/>
+                                <TextBlock x:Uid="MainWindow_Tab_Playlists" Text="Playlists" FontSize="{StaticResource FontBody}"/>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton x:Name="TabNetwork" GroupName="TopNavGroup"
+                                     AutomationProperties.AutomationId="TabNetwork"
+                                     Style="{StaticResource EoleNavTabStyle}" Click="OnTabNetworkClick"
+                                     DoubleTapped="OnTabDoubleTapped">
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <FontIcon Glyph="&#xE777;" FontSize="12"/>
+                                <TextBlock x:Uid="MainWindow_Tab_Network" Text="Network" FontSize="{StaticResource FontBody}"/>
+                            </StackPanel>
+                        </RadioButton>
+                    </StackPanel>
+                </StackPanel>
+            </TitleBar.Content>
 
-            <!-- Eole Horizontal Navigation Tabs (Library / Playlists / Network) —
-                 2026-10-03 사용자 선택(변형 OLD): 탭을 좌측 그룹(상태 옆)으로 복원. -->
-            <StackPanel x:Name="TopNavPanel" Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Stretch"
-                        DoubleTapped="OnTabDoubleTapped">
-                <RadioButton x:Name="TabLibrary" GroupName="TopNavGroup" IsChecked="True"
-                             AutomationProperties.AutomationId="TabLibrary"
-                             Style="{StaticResource EoleNavTabStyle}" Click="OnTabLibraryClick"
-                             DoubleTapped="OnTabDoubleTapped">
-                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                        <FontIcon Glyph="&#xE8B9;" FontSize="12"/>
-                        <TextBlock x:Uid="MainWindow_Tab_Library" Text="Library" FontSize="{StaticResource FontBody}"/>
-                    </StackPanel>
-                </RadioButton>
-                <RadioButton x:Name="TabPlaylists" GroupName="TopNavGroup"
-                             AutomationProperties.AutomationId="TabPlaylists"
-                             Style="{StaticResource EoleNavTabStyle}" Click="OnTabPlaylistsClick"
-                             DoubleTapped="OnTabDoubleTapped">
-                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                        <FontIcon Glyph="&#xE90B;" FontSize="12"/>
-                        <TextBlock x:Uid="MainWindow_Tab_Playlists" Text="Playlists" FontSize="{StaticResource FontBody}"/>
-                    </StackPanel>
-                </RadioButton>
-                <RadioButton x:Name="TabNetwork" GroupName="TopNavGroup"
-                             AutomationProperties.AutomationId="TabNetwork"
-                             Style="{StaticResource EoleNavTabStyle}" Click="OnTabNetworkClick"
-                             DoubleTapped="OnTabDoubleTapped">
-                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                        <FontIcon Glyph="&#xE777;" FontSize="12"/>
-                        <TextBlock x:Uid="MainWindow_Tab_Network" Text="Network" FontSize="{StaticResource FontBody}"/>
-                    </StackPanel>
-                </RadioButton>
-            </StackPanel>
-
-            <!-- 3. Right Tools + Custom Caption Buttons (2026-10-03): 시스템 캡션을 투명화하고 앱이
-                 동일 스타일(톱니와 같은 토큰·호버)로 ─ □ ✕를 그린다. 창 기능은 코드비하인드에서
-                 AppWindow로 처리. 드래그/더블클릭은 입력이 콘텐츠에 닿지 않는 한 시스템이 처리. -->
-            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Stretch">
+            <TitleBar.RightHeader>
                 <Button x:Uid="MainWindow_SettingsGearButton" x:Name="SettingsGearButton" Style="{StaticResource TitleMenuButtonStyle}"
                         VerticalAlignment="Center" Margin="0,0,8,0" Click="OnMenuSettings" ToolTipService.ToolTip="환경설정">
                     <FontIcon x:Name="SettingsGearIcon" Glyph="&#xE713;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
                 </Button>
-                <Button x:Name="CaptionMinimize" x:Uid="MainWindow_Caption_Minimize" Style="{StaticResource CaptionButtonStyle}"
-                        Click="OnCaptionMinimize" AutomationProperties.AcceleratorKey="Alt+F4 아님 — Win+Down 없음"/>
-                <Button x:Name="CaptionMaximize" x:Uid="MainWindow_Caption_Maximize" Style="{StaticResource CaptionButtonStyle}"
-                        Click="OnCaptionMaximize">
-                    <FontIcon x:Name="CaptionMaximizeIcon" Glyph="&#xE922;" FontSize="10"
-                              Foreground="{ThemeResource TextSecondaryBrush}"/>
-                </Button>
-                <Button x:Name="CaptionClose" x:Uid="MainWindow_Caption_Close" Style="{StaticResource CaptionCloseButtonStyle}"
-                        Click="OnCaptionClose">
-                    <FontIcon Glyph="&#xE8BB;" FontSize="10" Foreground="{ThemeResource TextSecondaryBrush}"/>
-                </Button>
-            </StackPanel>
-        </Grid>
+            </TitleBar.RightHeader>
+        </TitleBar>
 
         <!-- 2. Main Content Viewport (Full Width).
              The lyrics pane lives inside LibraryPage and PlaylistPage, which own their own

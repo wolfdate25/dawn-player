@@ -70,11 +70,11 @@ public sealed partial class MainWindow : Window
             overlapped.PreferredMinimumWidth = 620;
         }
 
+        // 2026-10-03 (3차 수정): WinUI TitleBar 컨트롤 전환 — ExtendsContentIntoTitleBar만
+        // 설정하고 SetTitleBar는 호출하지 않는다(TitleBar 컨트롤이 드래그 영역과 캡션 버튼을
+        // 자체 처리; 공식 문서의 권장 패턴). 시스템 캡션 투명화/영역 조작 코드는 전면 제거.
         ExtendsContentIntoTitleBar = true;
-        SetTitleBar(AppTitleBarDragArea);
         SystemBackdrop = new Microsoft.UI.Xaml.Media.MicaBackdrop();
-
-        ConfigureCustomCaptionButtons();
 
         ApplyTheme();
         // ThemeMode.System follows the OS: re-apply the custom palette when Windows flips its
@@ -157,93 +157,6 @@ public sealed partial class MainWindow : Window
         AppBrandText.Visibility = width >= BrandVisibleMinWidth ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    // ---------------- custom caption buttons (2026-10-03) ----------------
-
-    // 커스텀 캡션(─ □ ✕): 하단바·타이틀바 아이콘과 동일한 토큰/호버로 통일하기 위해 시스템
-    // 캡션 버튼을 투명화하고 앱이 그린다. 창 기능은 AppWindow presenter로 직접 처리하고,
-    // 드래그/스냅/더블클릭 최대화는 SetTitleBar가 지정한 드래그 영역이 시스템에 맡긴다.
-    // 단축키(Win+↓/↑/D, Alt+F4, Win+M)는 OS가 계속 처리한다.
-    private Microsoft.UI.Windowing.OverlappedPresenter? _captionPresenter;
-
-    private void ConfigureCustomCaptionButtons()
-    {
-        // 시스템 캡션 버튼을 투명 배경/투명 전경으로 숨긴다(여전히 히트 영역은 남지만
-        // 보이지 않고, 앱 버튼이 정확히 같은 자리를 덮는다). 숨기는 대신 없애지 않는 이유는
-        // 시스템 드래그·스냅·Alt+Space 시스템 메뉴 처리를 유지하기 위해서다.
-        var t = AppWindow.TitleBar;
-        t.BackgroundColor = Microsoft.UI.Colors.Transparent;
-        t.ForegroundColor = Microsoft.UI.Colors.Transparent;
-        t.InactiveBackgroundColor = Microsoft.UI.Colors.Transparent;
-        t.InactiveForegroundColor = Microsoft.UI.Colors.Transparent;
-        t.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent;
-        t.ButtonForegroundColor = Microsoft.UI.Colors.Transparent;
-        t.ButtonInactiveBackgroundColor = Microsoft.UI.Colors.Transparent;
-        t.ButtonInactiveForegroundColor = Microsoft.UI.Colors.Transparent;
-        t.ButtonHoverBackgroundColor = Microsoft.UI.Colors.Transparent;
-        t.ButtonPressedBackgroundColor = Microsoft.UI.Colors.Transparent;
-
-        _captionPresenter = AppWindow.Presenter as Microsoft.UI.Windowing.OverlappedPresenter;
-
-        HoverTheme(CaptionMinimize);
-        HoverTheme(CaptionMaximize);
-        HoverClose(CaptionClose);
-
-        UpdateCaptionMaximizeGlyph();
-        // 최대화 상태 글리프 추적: OverlappedPresenter에 상태 변경 이벤트가 없어 SizeChanged로
-        // 판별한다(최대화↔복원은 반드시 크기 변화를 수반).
-        SizeChanged += (_, _) => UpdateCaptionMaximizeGlyph();
-    }
-
-    private static Microsoft.UI.Xaml.Media.SolidColorBrush Solid(byte a, byte r, byte g, byte b) =>
-        new() { Color = Microsoft.UI.ColorHelper.FromArgb(a, r, g, b) };
-
-    /// <summary>앱 호버 토큰(HoverBrush)으로 캡션 버튼의 마우스 반응을 칠한다.</summary>
-    private static void HoverTheme(Microsoft.UI.Xaml.Controls.Button b)
-    {
-        b.PointerEntered += (_, _) => b.Background = ThemeResourceHelper.GetBrush("CardHoverBrush");
-        b.PointerExited += (_, _) => b.Background = Solid(0, 0, 0, 0);
-    }
-
-    /// <summary>닫기 버튼만 Windows 관례 빨강 호버 — 사용자가 위험 동작임을 즉시 알 수 있게.
-    /// (액센트로 바꾸면 '일반 버튼'처럼 읽힌다는 UX 리서치가 많다.)</summary>
-    private static void HoverClose(Microsoft.UI.Xaml.Controls.Button b)
-    {
-        var closeBrush = Solid(255, 0xC4, 0x2B, 0x1C);
-        b.PointerEntered += (_, _) =>
-        {
-            b.Background = closeBrush;
-            if (b.Content is Microsoft.UI.Xaml.Controls.FontIcon fi) fi.Foreground = Solid(255, 255, 255, 255);
-        };
-        b.PointerExited += (_, _) =>
-        {
-            b.Background = Solid(0, 0, 0, 0);
-            if (b.Content is Microsoft.UI.Xaml.Controls.FontIcon fi) fi.Foreground = ThemeResourceHelper.GetBrush("TextSecondaryBrush");
-        };
-    }
-
-    private void UpdateCaptionMaximizeGlyph()
-    {
-        if (CaptionMaximizeIcon == null || _captionPresenter == null) return;
-        bool maximized = _captionPresenter.State == Microsoft.UI.Windowing.OverlappedPresenterState.Maximized;
-        CaptionMaximizeIcon.Glyph = maximized ? "\uE923" : "\uE922"; // 복원 / 최대화
-        ToolTipService.SetToolTip(CaptionMaximize, maximized ? "이전 크기로 복원" : "최대화");
-    }
-
-    private void OnCaptionMinimize(object sender, RoutedEventArgs e) => _captionPresenter?.Minimize();
-
-    private void OnCaptionMaximize(object sender, RoutedEventArgs e)
-    {
-        if (_captionPresenter == null) return;
-        if (_captionPresenter.State == Microsoft.UI.Windowing.OverlappedPresenterState.Maximized)
-            _captionPresenter.Restore();
-        else
-            _captionPresenter.Maximize();
-    }
-
-    /// <summary>커스텀 닫기: tray 숨김 설정을 포함한 기존 닫기 파이프라인을 그대로 탄다
-    /// (Close() → AppWindow.Closing → CloseToTray 분기). 시스템 닫기와 동일한 경로다.</summary>
-    private void OnCaptionClose(object sender, RoutedEventArgs e) => Close();
-
     /// <summary>Real exit from the tray: pre-set the closing latch so AppWindow.Closing runs the
     /// shutdown path instead of hiding to the tray again.</summary>
     public void CloseFromTray()
@@ -272,10 +185,47 @@ public sealed partial class MainWindow : Window
 
     // ---------------- theme & wallpaper ----------------
 
+    /// <summary>시스템 캡션 버튼(─ □ ✕)을 앱 테마에 맞춘다(2026-10-03 3차 수정).
+    /// 공식 문서(/windows/apps/develop/title-bar) 계약: 배경 계열 4종만 투명/반투명 가능하고
+    /// 글리프 색은 불투명 색상만 — 글리프를 숨기거나 앱 버튼을 캡션 영역에 올리는 것은
+    /// 불가(입력을 시스템이 독점). 따라서 캡션은 시스템 렌더를 유지하되 재질·색만 통일한다:
+    /// 배경 투명 → Mica가 비쳐 타이틀바와 동일 재질, 글리프/호버 색은 테마 팔레트. 닫기
+    /// 호버·누름은 시스템 빨강 고정(문서 명시). 테마 전환 시마다 재적용.</summary>
+    private void StyleSystemCaptionButtons(UiSettings ui)
+    {
+        var t = AppWindow.TitleBar;
+        bool light = ThemeService.IsEffectiveLight(this, ui);
+
+        // 재질 통일: 캡션 배경은 모두 투명(타이틀바 Mica가 그대로 비침).
+        t.BackgroundColor = Microsoft.UI.Colors.Transparent;
+        t.InactiveBackgroundColor = Microsoft.UI.Colors.Transparent;
+        t.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent;
+        t.ButtonInactiveBackgroundColor = Microsoft.UI.Colors.Transparent;
+        t.ButtonHoverBackgroundColor = light
+            ? Microsoft.UI.ColorHelper.FromArgb(0x12, 0x00, 0x00, 0x00)   // HoverColor 톤
+            : Microsoft.UI.ColorHelper.FromArgb(0x14, 0xFF, 0xFF, 0xFF);  // 흰색 8%
+        t.ButtonPressedBackgroundColor = light
+            ? Microsoft.UI.ColorHelper.FromArgb(0x1A, 0x00, 0x00, 0x00)
+            : Microsoft.UI.ColorHelper.FromArgb(0x1F, 0xFF, 0xFF, 0xFF);
+
+        // 글리프 색: 텍스트 팔레트와 동일 계열 (불투명만 허용 — 알파는 무시됨).
+        t.ForegroundColor = light
+            ? Microsoft.UI.ColorHelper.FromArgb(0xFF, 0x1A, 0x1A, 0x20)   // TextPrimary light
+            : Microsoft.UI.ColorHelper.FromArgb(0xFF, 0xF3, 0xF3, 0xF6);  // TextPrimary dark
+        t.InactiveForegroundColor = light
+            ? Microsoft.UI.ColorHelper.FromArgb(0xFF, 0x62, 0x62, 0x6F)   // TextTertiary light
+            : Microsoft.UI.ColorHelper.FromArgb(0xFF, 0x8F, 0x8F, 0xA0);  // TextTertiary dark
+        t.ButtonForegroundColor = t.ForegroundColor;
+        t.ButtonInactiveForegroundColor = t.InactiveForegroundColor;
+        t.ButtonHoverForegroundColor = t.ForegroundColor;
+        t.ButtonPressedForegroundColor = t.ForegroundColor;
+    }
+
     public void ApplyTheme()
     {
         var ui = AppServices.Settings.Ui;
         ThemeService.ApplyTheme(this, ui, RootGrid);
+        StyleSystemCaptionButtons(ui);
 
         if (ui.Backdrop == BackdropMode.AlbumArtBlur)
         {
