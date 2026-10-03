@@ -804,6 +804,10 @@
   <data name="Settings_Layout_Reset_Title.Text" xml:space="preserve"><value>サイドバーレイアウトの初期化</value></data>
   <data name="Settings_Layout_Reset_Desc.Text" xml:space="preserve"><value>左右のサイドバーおよび歌詞パネルの幅をデフォルト値に復元</value></data>
   <data name="Settings_Layout_Reset_Button.Content" xml:space="preserve"><value>レイアウトの初期化</value></data>
+  <data name="Settings_Layout_Rating_Title" xml:space="preserve"><value>下バーの評価ボタン</value></data>
+  <data name="Settings_Layout_Rating_Desc" xml:space="preserve"><value>再生トラックのスター評価ボタンを下バーに表示</value></data>
+  <data name="Settings_Layout_Rating_Toggle.OnContent" xml:space="preserve"><value>表示</value></data>
+  <data name="Settings_Layout_Rating_Toggle.OffContent" xml:space="preserve"><value>非表示</value></data>
 
   <!-- Shortcuts -->
   <data name="Settings_Shortcuts_Header.Text" xml:space="preserve"><value>ショートカット (Keyboard Shortcuts)</value></data>

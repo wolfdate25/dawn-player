@@ -176,6 +176,20 @@ public sealed class AppearanceSettingsViewModel : ViewModelBase
         }
     }
 
+    /// <summary>Show the star-rating button on the Now Playing bar (2026-10-03 user toggle).</summary>
+    public bool ShowNowPlayingRating
+    {
+        get => _settings.Ui.ShowNowPlayingRating;
+        set
+        {
+            if (_settings.Ui.ShowNowPlayingRating != value)
+            {
+                _appearanceSettingsService.SetNowPlayingRatingVisible(value);
+                OnPropertyChanged();
+            }
+        }
+    }
+
     /// <summary>Non-essential UI motion master toggle (U1). OS animations are honored separately.</summary>
     public bool MotionEnabled
     {

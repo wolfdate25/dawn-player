@@ -146,8 +146,11 @@
                                     </StackPanel>
                                 </Flyout>
                             </Button.Flyout>
-                            <TextBlock x:Name="TrackRatingText" FontSize="{StaticResource FontCaption}" Foreground="{ThemeResource DawnAccentTextBrush}"
-                                       VerticalAlignment="Center"/>
+                            <!-- 2026-10-03 (아이콘 이질감 수정): 텍스트 별(★☆) → Segoe Fluent 아이콘.
+                                 미평점 E735(회색, 다른 하단바 아이콘과 동일 무채색), 평점 o E734(앰버) —
+                                 상태 전환은 UpdateTrackRatingCell이 담당. -->
+                            <FontIcon x:Name="TrackRatingIcon" Glyph="&#xE735;" FontSize="12"
+                                      Foreground="{ThemeResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                         </Button>
                     </Grid>
 

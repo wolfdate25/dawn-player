@@ -804,6 +804,10 @@
   <data name="Settings_Layout_Reset_Title.Text" xml:space="preserve"><value>Reset Sidebar Layout</value></data>
   <data name="Settings_Layout_Reset_Desc.Text" xml:space="preserve"><value>Reset left/right sidebars and lyrics panel widths to default values</value></data>
   <data name="Settings_Layout_Reset_Button.Content" xml:space="preserve"><value>Reset Layout</value></data>
+  <data name="Settings_Layout_Rating_Title" xml:space="preserve"><value>Now Playing bar rating button</value></data>
+  <data name="Settings_Layout_Rating_Desc" xml:space="preserve"><value>Show the star-rating button for the playing track on the bottom bar</value></data>
+  <data name="Settings_Layout_Rating_Toggle.OnContent" xml:space="preserve"><value>Show</value></data>
+  <data name="Settings_Layout_Rating_Toggle.OffContent" xml:space="preserve"><value>Hide</value></data>
 
   <!-- Shortcuts -->
   <data name="Settings_Shortcuts_Header.Text" xml:space="preserve"><value>Keyboard Shortcuts</value></data>

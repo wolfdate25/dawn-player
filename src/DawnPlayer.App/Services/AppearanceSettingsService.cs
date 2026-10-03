@@ -64,6 +64,12 @@ public sealed class AppearanceSettingsService : IAppearanceSettingsService
         SaveAndNotify();
     }
 
+    public void SetNowPlayingRatingVisible(bool enabled)
+    {
+        _settings.Ui.ShowNowPlayingRating = enabled;
+        SaveAndNotify();
+    }
+
     public void SetMotionEnabled(bool enabled)
     {
         _settings.Ui.MotionEnabled = enabled;

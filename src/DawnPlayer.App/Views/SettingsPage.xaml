@@ -1780,6 +1780,21 @@
                                     </StackPanel>
                                     <Button x:Uid="Settings_Layout_Reset_Button" Content="레이아웃 초기화" Grid.Column="1" HorizontalAlignment="Right" Click="OnResetLayoutClick"/>
                                 </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="320"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock x:Uid="Settings_Layout_Rating_Title" Text="하단바 평점 버튼" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Layout_Rating_Desc" Text="재생 중 트랙의 별점 버튼을 하단 바에 표시" Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch x:Uid="Settings_Layout_Rating_Toggle" Grid.Column="1" HorizontalAlignment="Right"
+                                                  IsOn="{x:Bind ViewModel.Appearance.ShowNowPlayingRating, Mode=TwoWay}"/>
+                                </Grid>
                             </StackPanel>
                         </Border>
                     </StackPanel>

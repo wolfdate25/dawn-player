@@ -47,6 +47,7 @@ public interface IAppearanceSettingsService
     /// Sets whether the window close button hides to the notification area instead of exiting.
     /// </summary>
     void SetCloseToTray(bool enabled);
+    void SetNowPlayingRatingVisible(bool enabled);
 
     /// <summary>
     /// Sets whether the app plays non-essential UI motion (U1). The OS-level animation setting

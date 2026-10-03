@@ -324,6 +324,22 @@ Narrator 스모크. N3(YouTube)는 별도 승인 대기.
 - 게이트: 클린 리빌드 0경고 0오류, 전체 테스트 2,175/2,175(+1), 실행 육안 검증(카드 룩·클릭
   필터·선택 표시). UIA 실측 행 40 물리 px(32 논리)·피치 43(34.4 논리) 확인.
 
+**하단바 평점 아이콘 이질감 수정 + 표시 토글 (2026-10-03, 사용자 보고 → 4안 목업 → A안 + 토글)**:
+- 원인: 하단바 평점이 텍스트 별(★☆, 본문 폰트)을 앰버로 렌더링 — 하단바의 다른 아이콘은 전부
+  Segoe Fluent FontIcon 무채색이라 ①폰트 계열 ②색 ③제목 행 끝 홀로 배치의 삼중 이질감.
+- 수정(A안): `TrackRatingButton` 내용을 Segoe Fluent FontIcon으로 교체 — 미평점 E735
+  (TextSecondary, 다른 아이콘과 동일 무채색), 평점 있음 E734(DawnAccentTextBrush). 자동명은
+  기존 컨버터 그대로.
+- 토글: `UiSettings.ShowNowPlayingRating`(기본 true) + `AppearanceSettingsService
+  .SetNowPlayingRatingVisible` + AppearanceSettingsViewModel 속성 + 설정 "레이아웃 & 디스플레이"
+  섹션 토글 행(resw 3개 국어) + NowPlayingBar가 AppearanceChanged를 구독해 즉시 반영(테마/액센트
+  변경 시 아이콘 브러시 새로 고침 겸용). 라이브러리·재생목록 표의 별점 셀은 영향 없음.
+- 교훈: NowPlayingBar 생성자는 MainWindow InitializeComponent 도중에 돈다 — AppServices 초기화
+  후에만 접근 가능한 서비스 구독은 InitializeState로 (생성자 구독이 XAML instance-creation
+  크래시를 냈었음).
+- 게이트: 클린 리빌드 0경고 0오류, 전체 테스트 2,175/2,175(+서비스 토글 테스트), 실행 검증:
+  새 아이콘(회색/앰버) 확인, 토글 Hide → 하단바 별 즉시 소실 + settings.json false 저장, Show
+  복원 → 별 돌아옴.
 **수용·문서화된 항목(수정 안 함 — 잔여 아님)**: PT5-10의 YouTube 최근 카드 단일 클릭(상호작용
 규약상 의도적 예외), PT5-13의 액센트 value-fill 대비(Fluent 관례 범위, 감사 요구는 트랙), 스플리터
 키보드 방향 의미, 시크바 호버·드래그 툴팁 공존, UpdateTransportState 10Hz 호출, 빈 선택 경로.

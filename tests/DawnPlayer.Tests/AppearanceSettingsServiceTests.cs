@@ -42,6 +42,23 @@ public class AppearanceSettingsServiceTests
 
     #endregion
 
+    // ---------- 1b. Now Playing bar rating visibility (2026-10-03 user toggle) ----------
+
+    [Fact]
+    public void SetNowPlayingRatingVisible_TogglesSetting_AndRaisesAppearanceChanged()
+    {
+        Assert.True(_settings.Ui.ShowNowPlayingRating); // default: shown (existing behavior)
+
+        var raised = 0;
+        _service.AppearanceChanged += () => raised++;
+
+        _service.SetNowPlayingRatingVisible(false);
+        Assert.False(_settings.Ui.ShowNowPlayingRating);
+        _service.SetNowPlayingRatingVisible(true);
+        Assert.True(_settings.Ui.ShowNowPlayingRating);
+        Assert.Equal(2, raised); // SaveAndNotify raises once per call
+    }
+
     #region 2. Theme Mode Switching
 
     [Theory]

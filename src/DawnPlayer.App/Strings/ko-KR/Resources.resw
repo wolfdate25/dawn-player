@@ -804,6 +804,10 @@
   <data name="Settings_Layout_Reset_Title.Text" xml:space="preserve"><value>사이드바 레이아웃 초기화</value></data>
   <data name="Settings_Layout_Reset_Desc.Text" xml:space="preserve"><value>좌/우측 사이드바 및 가사 패널 너비를 기본값으로 복원</value></data>
   <data name="Settings_Layout_Reset_Button.Content" xml:space="preserve"><value>레이아웃 초기화</value></data>
+  <data name="Settings_Layout_Rating_Title" xml:space="preserve"><value>하단바 평점 버튼</value></data>
+  <data name="Settings_Layout_Rating_Desc" xml:space="preserve"><value>재생 중 트랙의 별점 버튼을 하단 바에 표시</value></data>
+  <data name="Settings_Layout_Rating_Toggle.OnContent" xml:space="preserve"><value>표시</value></data>
+  <data name="Settings_Layout_Rating_Toggle.OffContent" xml:space="preserve"><value>숨김</value></data>
 
   <!-- Shortcuts -->
   <data name="Settings_Shortcuts_Header.Text" xml:space="preserve"><value>단축키 (Keyboard Shortcuts)</value></data>

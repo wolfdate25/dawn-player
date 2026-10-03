@@ -102,6 +102,11 @@ public sealed partial class NowPlayingBar : UserControl
     {
         VolumeSlider.Value = AppServices.Settings.Playback.Volume * 100;
         ShuffleButton.IsChecked = AppServices.Settings.Playback.Shuffle;
+        // 설정(하단바 평점 표시 토글)·테마/액센트 변경 → 평점 아이콘 상태 재계산.
+        // 구독은 생성자가 아니라 여기(InitializeState — AppServices 초기화 후 호출 보장)에 둔다:
+        // 생성자는 MainWindow InitializeComponent 도중에 돌기 때문에 AppearanceSettings가 아직
+        // null이라 XAML instance-creation 크래시가 났었다 (2026-10-03).
+        AppServices.AppearanceSettings.AppearanceChanged += OnAppearanceChanged;
         UpdateRepeatVisual();
         UpdateShuffleVisual();
         UpdateVolumeIcon(VolumeSlider.Value);
@@ -160,19 +165,31 @@ public sealed partial class NowPlayingBar : UserControl
 
     private bool _suppressTrackRatingValueChanged;
 
-    /// <summary>Shows the playing track's stars next to the title. Streams carry no tags and are
-    /// never rateable (RatingCommands is the second wall if one slips through), so the cell hides.</summary>
+    /// <summary>Shows the playing track's star on the title row. 2026-10-03 (아이콘 이질감 수정):
+    /// 텍스트 별(★☆) 대신 Segoe Fluent 아이콘 — 미평점 E735(회색, 하단바 아이콘과 같은 무채색),
+    /// 평점 있음 E734(앰버). 설정에서 하단바 평점 버튼을 숨기면 항상 Collapsed.</summary>
     private void UpdateTrackRatingCell(Track? track)
     {
-        if (track == null || !RatingCommands.IsRateable(track))
+        if (track == null || !RatingCommands.IsRateable(track) || !AppServices.Settings.Ui.ShowNowPlayingRating)
         {
             TrackRatingButton.Visibility = Visibility.Collapsed;
             return;
         }
 
-        TrackRatingText.Text = RatingToStarsConverter.DisplayText(track.Rating);
+        var rating = Math.Clamp(track.Rating, 0, 5);
+        TrackRatingIcon.Glyph = rating > 0 ? "\uE734" : "\uE735";
+        TrackRatingIcon.Foreground = rating > 0
+            ? ThemeResourceHelper.GetBrush("DawnAccentTextBrush")
+            : ThemeResourceHelper.GetBrush("TextSecondaryBrush");
         AutomationProperties.SetName(TrackRatingButton, RatingAccessibilityConverter.AccessibilityText(track.Rating));
         TrackRatingButton.Visibility = Visibility.Visible;
+    }
+
+    /// <summary>외관 설정 변경(표시 토글·테마·액센트) 시 평점 아이콘을 다시 계산 — 설정 즉시 반영과
+    /// 브러시 새로 고침을 한 번에 처리한다.</summary>
+    private void OnAppearanceChanged()
+    {
+        UpdateTrackRatingCell(AppServices.Playback?.CurrentItem?.Track);
     }
 
     private void OnRatingsApplied(IReadOnlyList<Track> tracks)

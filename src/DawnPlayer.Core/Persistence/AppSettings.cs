@@ -241,6 +241,9 @@ public sealed class UiSettings
     public int? WindowY { get; set; }
     public bool WindowMaximized { get; set; }
     public bool ShowLyricsPane { get; set; }
+
+    /// <summary>Show the star-rating button on the Now Playing bar (user toggle, 2026-10-03).</summary>
+    public bool ShowNowPlayingRating { get; set; } = true;
     public string LastNavTab { get; set; } = "Library";
     public bool PlaylistGroupedView { get; set; } = true;
 
