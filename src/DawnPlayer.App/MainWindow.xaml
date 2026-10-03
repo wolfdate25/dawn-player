@@ -28,13 +28,13 @@
              the system caption buttons; Auto columns hold only content that must not shrink.
              The stepwise shedding (status → brand) lives in OnTitleBarSizeChanged —
              AdaptiveTrigger did not re-evaluate on programmatic/live resizes in this window. -->
-        <Grid x:Name="AppTitleBar" Grid.Row="0" Height="40" Padding="12,0,140,0"
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Height="40" Padding="12,0,0,0"
               BorderBrush="{ThemeResource SeparatorSubtleBrush}" BorderThickness="0,0,0,1"
               SizeChanged="OnTitleBarSizeChanged">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
@@ -81,16 +81,17 @@
                 </StackPanel>
             </StackPanel>
 
-            <!-- Live status text: the flexible column is also the drag surface (a non-interactive
-                 TextBlock never blocks dragging), so it ellipsizes away before the tabs move. -->
+            <!-- Live status text (2026-10-03 변형 OLD): 탭 왼쪽의 좌측 그룹 소속. 여전히 비대화형
+                 TextBlock이라 드래그를 막지 않으며, 좁아지면 먼저 말줄임→숨김이 된다. -->
             <Grid x:Name="AppTitleBarDragArea" Grid.Column="1" Background="Transparent">
                 <TextBlock x:Uid="MainWindow_TitleBarTrack" x:Name="TitleBarTrack" Text="No sound — Nothing played" FontSize="{StaticResource FontBodySmall}"
                            Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Left"
-                           MaxWidth="320" Margin="0,0,24,0" TextTrimming="CharacterEllipsis"
+                           MaxWidth="320" Margin="0,0,18,0" TextTrimming="CharacterEllipsis"
                            AutomationProperties.LiveSetting="Polite"/>
             </Grid>
 
-            <!-- Eole Horizontal Navigation Tabs (Library / Playlists / Network) -->
+            <!-- Eole Horizontal Navigation Tabs (Library / Playlists / Network) —
+                 2026-10-03 사용자 선택(변형 OLD): 탭을 좌측 그룹(상태 옆)으로 복원. -->
             <StackPanel x:Name="TopNavPanel" Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Stretch"
                         DoubleTapped="OnTabDoubleTapped">
                 <RadioButton x:Name="TabLibrary" GroupName="TopNavGroup" IsChecked="True"
@@ -122,10 +123,24 @@
                 </RadioButton>
             </StackPanel>
 
-            <!-- 3. Dedicated Draggable Title Bar Area & Right Tools -->
-            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,4,0">
-                <Button x:Uid="MainWindow_SettingsGearButton" x:Name="SettingsGearButton" Style="{StaticResource TitleMenuButtonStyle}" Click="OnMenuSettings" ToolTipService.ToolTip="환경설정">
+            <!-- 3. Right Tools + Custom Caption Buttons (2026-10-03): 시스템 캡션을 투명화하고 앱이
+                 동일 스타일(톱니와 같은 토큰·호버)로 ─ □ ✕를 그린다. 창 기능은 코드비하인드에서
+                 AppWindow로 처리. 드래그/더블클릭은 입력이 콘텐츠에 닿지 않는 한 시스템이 처리. -->
+            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Stretch">
+                <Button x:Uid="MainWindow_SettingsGearButton" x:Name="SettingsGearButton" Style="{StaticResource TitleMenuButtonStyle}"
+                        VerticalAlignment="Center" Margin="0,0,8,0" Click="OnMenuSettings" ToolTipService.ToolTip="환경설정">
                     <FontIcon x:Name="SettingsGearIcon" Glyph="&#xE713;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                </Button>
+                <Button x:Name="CaptionMinimize" x:Uid="MainWindow_Caption_Minimize" Style="{StaticResource CaptionButtonStyle}"
+                        Click="OnCaptionMinimize" AutomationProperties.AcceleratorKey="Alt+F4 아님 — Win+Down 없음"/>
+                <Button x:Name="CaptionMaximize" x:Uid="MainWindow_Caption_Maximize" Style="{StaticResource CaptionButtonStyle}"
+                        Click="OnCaptionMaximize">
+                    <FontIcon x:Name="CaptionMaximizeIcon" Glyph="&#xE922;" FontSize="10"
+                              Foreground="{ThemeResource TextSecondaryBrush}"/>
+                </Button>
+                <Button x:Name="CaptionClose" x:Uid="MainWindow_Caption_Close" Style="{StaticResource CaptionCloseButtonStyle}"
+                        Click="OnCaptionClose">
+                    <FontIcon Glyph="&#xE8BB;" FontSize="10" Foreground="{ThemeResource TextSecondaryBrush}"/>
                 </Button>
             </StackPanel>
         </Grid>

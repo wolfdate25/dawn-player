@@ -74,6 +74,8 @@ public sealed partial class MainWindow : Window
         SetTitleBar(AppTitleBarDragArea);
         SystemBackdrop = new Microsoft.UI.Xaml.Media.MicaBackdrop();
 
+        ConfigureCustomCaptionButtons();
+
         ApplyTheme();
         // ThemeMode.System follows the OS: re-apply the custom palette when Windows flips its
         // theme while the app is running. ActualThemeChanged only fires on a real change, and
@@ -154,6 +156,93 @@ public sealed partial class MainWindow : Window
         TitleBarTrack.Visibility = width >= TrackVisibleMinWidth ? Visibility.Visible : Visibility.Collapsed;
         AppBrandText.Visibility = width >= BrandVisibleMinWidth ? Visibility.Visible : Visibility.Collapsed;
     }
+
+    // ---------------- custom caption buttons (2026-10-03) ----------------
+
+    // 커스텀 캡션(─ □ ✕): 하단바·타이틀바 아이콘과 동일한 토큰/호버로 통일하기 위해 시스템
+    // 캡션 버튼을 투명화하고 앱이 그린다. 창 기능은 AppWindow presenter로 직접 처리하고,
+    // 드래그/스냅/더블클릭 최대화는 SetTitleBar가 지정한 드래그 영역이 시스템에 맡긴다.
+    // 단축키(Win+↓/↑/D, Alt+F4, Win+M)는 OS가 계속 처리한다.
+    private Microsoft.UI.Windowing.OverlappedPresenter? _captionPresenter;
+
+    private void ConfigureCustomCaptionButtons()
+    {
+        // 시스템 캡션 버튼을 투명 배경/투명 전경으로 숨긴다(여전히 히트 영역은 남지만
+        // 보이지 않고, 앱 버튼이 정확히 같은 자리를 덮는다). 숨기는 대신 없애지 않는 이유는
+        // 시스템 드래그·스냅·Alt+Space 시스템 메뉴 처리를 유지하기 위해서다.
+        var t = AppWindow.TitleBar;
+        t.BackgroundColor = Microsoft.UI.Colors.Transparent;
+        t.ForegroundColor = Microsoft.UI.Colors.Transparent;
+        t.InactiveBackgroundColor = Microsoft.UI.Colors.Transparent;
+        t.InactiveForegroundColor = Microsoft.UI.Colors.Transparent;
+        t.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent;
+        t.ButtonForegroundColor = Microsoft.UI.Colors.Transparent;
+        t.ButtonInactiveBackgroundColor = Microsoft.UI.Colors.Transparent;
+        t.ButtonInactiveForegroundColor = Microsoft.UI.Colors.Transparent;
+        t.ButtonHoverBackgroundColor = Microsoft.UI.Colors.Transparent;
+        t.ButtonPressedBackgroundColor = Microsoft.UI.Colors.Transparent;
+
+        _captionPresenter = AppWindow.Presenter as Microsoft.UI.Windowing.OverlappedPresenter;
+
+        HoverTheme(CaptionMinimize);
+        HoverTheme(CaptionMaximize);
+        HoverClose(CaptionClose);
+
+        UpdateCaptionMaximizeGlyph();
+        // 최대화 상태 글리프 추적: OverlappedPresenter에 상태 변경 이벤트가 없어 SizeChanged로
+        // 판별한다(최대화↔복원은 반드시 크기 변화를 수반).
+        SizeChanged += (_, _) => UpdateCaptionMaximizeGlyph();
+    }
+
+    private static Microsoft.UI.Xaml.Media.SolidColorBrush Solid(byte a, byte r, byte g, byte b) =>
+        new() { Color = Microsoft.UI.ColorHelper.FromArgb(a, r, g, b) };
+
+    /// <summary>앱 호버 토큰(HoverBrush)으로 캡션 버튼의 마우스 반응을 칠한다.</summary>
+    private static void HoverTheme(Microsoft.UI.Xaml.Controls.Button b)
+    {
+        b.PointerEntered += (_, _) => b.Background = ThemeResourceHelper.GetBrush("CardHoverBrush");
+        b.PointerExited += (_, _) => b.Background = Solid(0, 0, 0, 0);
+    }
+
+    /// <summary>닫기 버튼만 Windows 관례 빨강 호버 — 사용자가 위험 동작임을 즉시 알 수 있게.
+    /// (액센트로 바꾸면 '일반 버튼'처럼 읽힌다는 UX 리서치가 많다.)</summary>
+    private static void HoverClose(Microsoft.UI.Xaml.Controls.Button b)
+    {
+        var closeBrush = Solid(255, 0xC4, 0x2B, 0x1C);
+        b.PointerEntered += (_, _) =>
+        {
+            b.Background = closeBrush;
+            if (b.Content is Microsoft.UI.Xaml.Controls.FontIcon fi) fi.Foreground = Solid(255, 255, 255, 255);
+        };
+        b.PointerExited += (_, _) =>
+        {
+            b.Background = Solid(0, 0, 0, 0);
+            if (b.Content is Microsoft.UI.Xaml.Controls.FontIcon fi) fi.Foreground = ThemeResourceHelper.GetBrush("TextSecondaryBrush");
+        };
+    }
+
+    private void UpdateCaptionMaximizeGlyph()
+    {
+        if (CaptionMaximizeIcon == null || _captionPresenter == null) return;
+        bool maximized = _captionPresenter.State == Microsoft.UI.Windowing.OverlappedPresenterState.Maximized;
+        CaptionMaximizeIcon.Glyph = maximized ? "\uE923" : "\uE922"; // 복원 / 최대화
+        ToolTipService.SetToolTip(CaptionMaximize, maximized ? "이전 크기로 복원" : "최대화");
+    }
+
+    private void OnCaptionMinimize(object sender, RoutedEventArgs e) => _captionPresenter?.Minimize();
+
+    private void OnCaptionMaximize(object sender, RoutedEventArgs e)
+    {
+        if (_captionPresenter == null) return;
+        if (_captionPresenter.State == Microsoft.UI.Windowing.OverlappedPresenterState.Maximized)
+            _captionPresenter.Restore();
+        else
+            _captionPresenter.Maximize();
+    }
+
+    /// <summary>커스텀 닫기: tray 숨김 설정을 포함한 기존 닫기 파이프라인을 그대로 탄다
+    /// (Close() → AppWindow.Closing → CloseToTray 분기). 시스템 닫기와 동일한 경로다.</summary>
+    private void OnCaptionClose(object sender, RoutedEventArgs e) => Close();
 
     /// <summary>Real exit from the tray: pre-set the closing latch so AppWindow.Closing runs the
     /// shutdown path instead of hiding to the tray again.</summary>

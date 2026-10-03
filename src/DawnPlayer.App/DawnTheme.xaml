@@ -551,6 +551,21 @@
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 
+    <!-- 커스텀 캡션 버튼 (2026-10-03): 시스템 캡션 대신 앱 토큰으로 그린 ─ □ ✕.
+         46×40 전폭 행 + 호버는 앱 HoverBrush, 닫기 호버는 시스템 관례 빨강(#C42B1C) 유지.
+         Windows 표준 키보드 단축키(Win+↓/↑/D, Alt+F4)는 그대로 동작한다. -->
+    <Style x:Key="CaptionButtonStyle" TargetType="Button">
+        <Setter Property="UseSystemFocusVisuals" Value="False"/>
+        <Setter Property="Width" Value="46"/>
+        <Setter Property="Height" Value="40"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="VerticalAlignment" Value="Stretch"/>
+    </Style>
+    <Style x:Key="CaptionCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource CaptionButtonStyle}"/>
+
     <!-- Accent Button Style -->
     <Style x:Key="AccentButtonStyle" TargetType="Button">
         <Setter Property="UseSystemFocusVisuals" Value="True"/>

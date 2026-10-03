@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dawn Player — 상단바 레이아웃 변형</title>
+<style>
+  :root {
+    --bg: #18181D; --panel: #1F1F25; --card: #27272F;
+    --text: #F3F3F6; --text2: #AEAEBC; --text3: #8F8FA0;
+    --accent: #E8A33D; --separator: #2F2F39; --sel: #4CC2FF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #121216; color: var(--text);
+    font-family: "Segoe UI", "Malgun Gothic", sans-serif;
+    padding: 20px 24px; display: flex; flex-direction: column; gap: 12px;
+  }
+  h1 { font-size: 16px; font-weight: 600; }
+  .sub { color: var(--text2); font-size: 12px; }
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tabs button {
+    background: var(--panel); border: 1px solid var(--separator); color: var(--text2);
+    border-radius: 6px; padding: 7px 13px; font-size: 12px; cursor: pointer; text-align: left;
+  }
+  .tabs button b { display: block; color: var(--text); margin-bottom: 2px; }
+  .tabs button.active { border-color: var(--accent); }
+  .tabs button.active b { color: var(--accent); }
+  .stage { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; }
+
+  /* ── 1256px 폭 하단바 재현 (축소 프레임) ── */
+  .bar {
+    background: var(--bg); border: 1px solid var(--separator); border-radius: 8px;
+    width: 100%; max-width: 100%; overflow: hidden; user-select: none;
+  }
+  .bar-inner {
+    display: flex; align-items: center; height: 40px; padding: 0 8px 0 12px;
+    font-size: 13px;
+  }
+  .tb { font-family: "Segoe Fluent Icons","Segoe MDL2 Assets"; color: var(--text2); font-size: 12px; }
+  .brand { font-weight: 600; margin-left: 10px; }
+  .sep { color: var(--separator); margin: 0 10px; font-size: 11px; }
+  .status { color: var(--text3); font-size: 12px; }
+  .grow { flex: 1; min-width: 12px; }
+  .tab {
+    display: flex; align-items: center; gap: 6px; padding: 0 14px; height: 40px;
+    color: var(--text2); position: relative; cursor: default;
+  }
+  .tab .tb { font-size: 12px; }
+  .tab.on { color: var(--accent); }
+  .tab.on::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: 0; height: 2px; background: var(--accent); }
+  .tab.narrow { padding: 0 10px; }
+  .gear { margin: 0 8px 0 4px; }
+  .caps { display: flex; height: 40px; margin-right: -8px; }
+  .caps span { width: 46px; display: flex; align-items: center; justify-content: center; color: var(--text2); font-size: 10px; font-family: "Segoe Fluent Icons","Segoe MDL2 Assets"; }
+  .caps span:hover { background: #FFFFFF14; }
+  .caps .close:hover { background: #C42B1C; color: #fff; }
+
+  .desc { max-width: 560px; }
+  .desc .name { font-size: 14px; font-weight: 600; margin: 14px 0 6px; }
+  .desc .why { font-size: 12px; color: var(--text2); line-height: 1.65; }
+  .desc .why b { color: var(--text); }
+  .geo { margin-top: 8px; font-family: Consolas, monospace; font-size: 10.5px; line-height: 1.7;
+    color: #C8C8D4; background: var(--panel); border: 1px solid var(--separator);
+    border-radius: 6px; padding: 8px; white-space: pre-wrap; user-select: all; }
+  .geo .k { color: var(--accent); }
+</style>
+</head>
+<body>
+  <div>
+    <h1>상단바 레이아웃 변형 — 하나를 선택하세요</h1>
+    <div class="sub">타이틀바 겹침 방지(좁으면 상태→브랜드 순 숨김, 최소 폭 620)는 모든 변형에 유지됩니다 · 배율 100%</div>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="stage">
+    <div style="flex:1;min-width:640px;">
+      <div class="bar"><div class="bar-inner" id="bar"></div></div>
+      <div class="desc">
+        <div class="name" id="d-name"></div>
+        <div class="why" id="d-why"></div>
+        <div class="geo" id="d-geo"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const ic = {
+  menu: "&#xE700;", playlists: "&#xE90B;", library: "&#xE8B9;", network: "&#xE777;",
+  gear: "&#xE713;", min: "&#xE921;", max: "&#xE922;", close: "&#xE8BB;",
+};
+const capBtns = `<span>${ic.min}</span><span>${ic.max}</span><span class="close">${ic.close}</span>`;
+const tab = (key, label, on, narrow) =>
+  `<div class="tab ${on ? "on" : ""} ${narrow ? "narrow" : ""}"><span class="tb">${ic[key]}</span><span class="t">${label}</span></div>`;
+const gear = `<span class="tb gear" style="font-size:13px;">${ic.gear}</span>`;
+const menu = `<span class="tb">${ic.menu}</span>`;
+
+const LAYOUTS = {
+  OLD: {
+    name: "이전 레이아웃 (스크린샷 그대로 복원)",
+    why: "첨부하신 스크린샷의 배치 — <b>좌측 그룹(☰ 브랜드 · 상태 · 탭 3개) + 우측(톱니 · 캡션)</b>. 탭이 콘텐츠 스위치 역할을 하고 좌측 정보 흐름(브랜드→상태→탐색)이 자연스럽습니다. 넓은 화면에서 균형이 좋았던 원래 모습.",
+    render(wide) {
+      return `${menu}<span class="brand">Dawn Player</span><span class="sep">|</span>` +
+        `<span class="status">No sound — Nothing played</span><span class="sep">|</span>` +
+        tab("library", "Library", true) + tab("playlists", "Playlists") + tab("network", "Network") +
+        `<div class="grow"></div>` + gear + `<div class="caps">${capBtns}</div>`;
+    },
+    geo: `열 구성: [Auto: 좌측 그룹] [Auto: 탭] [*: 드래그] [Auto: 톱니] (+캡션 여백 140px)
+적용: MainWindow.xaml 열 순서만 변경 (Grid.Column 1↔2 교환 수준)
++ 좁을 때 단계 숨김(상태→브랜드)은 그대로 유지`,
+  },
+  CUR: {
+    name: "현재 (탭 우측 정렬)",
+    why: "타이틀바 겹침 수정 때 함께 바뀐 배치 — 탭이 캡션 버튼 바로 옆. <b>탭↔콘텐츠 스위치 동선이 짧아지고</b> 캡션 버튼과의 실수 클릭 거리도 벌어집니다(잘못 누른 탭이 닫기가 되는 사고 방지). 현재 코드 상태 유지.",
+    render(wide) {
+      return `${menu}<span class="brand">Dawn Player</span><span class="sep">|</span>` +
+        `<span class="status">No sound — Nothing played</span><div class="grow"></div>` +
+        tab("library", "Library", true) + tab("playlists", "Playlists") + tab("network", "Network") +
+        gear + `<div class="caps">${capBtns}</div>`;
+    },
+    geo: `열 구성: [Auto: 좌측 그룹] [*: 드래그] [Auto: 탭] [Auto: 톱니]
+적용: 변경 없음 (현행 유지)`,
+  },
+  CENTER: {
+    name: "탭 중앙 정렬",
+    why: "탭을 상단바 <b>정중앙</b>에 — 브랜드(좌) · 탐색(중) · 도구(우)의 3역할이 축별로 분리되어 가장 '정돈된' 인상. 근거: 상단 중앙 탐색은 콘텐츠 앱 표준 패턴. 좌우 여백이 생겨 좁은 창에서는 상태 텍스트가 먼저 숨는다는 점이 트레이드오프.",
+    render(wide) {
+      return `${menu}<span class="brand">Dawn Player</span><span class="sep">|</span>` +
+        `<span class="status">No sound — Nothing played</span>` +
+        `<div class="grow"></div>` +
+        tab("library", "Library", true) + tab("playlists", "Playlists") + tab("network", "Network") +
+        `<div class="grow"></div>` + gear + `<div class="caps">${capBtns}</div>`;
+    },
+    geo: `열 구성: [Auto: 좌측] [*: 왼쪽 스페이서] [Auto: 탭] [*: 오른쪽 스페이서] [Auto: 톱니]
+적용: MainWindow.xaml 스페이서 열 2개 추가
+(좌/우 * 열이 균등 분할하므로 탭이 항상 중앙 — 톱니 폭 변화에도 중앙 유지)`,
+  },
+  OLD_COMPACT: {
+    name: "이전 레이아웃 + 상태 인라인 통합",
+    why: "이전 배치에서 한 걸음 더 — 상태 텍스트를 탭 왼쪽에 두되 <b>구분선 없이 여백으로만 분리</b>하고, 넓을 때만 보이게 합니다. 좌측이 하나의 정보 리듬(☰ 브랜드 → 상태 → 탭)으로 읽혀 이질감 없이 이전 느낌에 가장 가깝습니다.",
+    render(wide) {
+      return `${menu}<span class="brand">Dawn Player</span>` +
+        `<span class="status" style="margin-left:16px;">No sound — Nothing played</span>` +
+        `<span class="status" style="margin-left:24px;font-size:12px;">▸</span>` +
+        tab("library", "Library", true) + tab("playlists", "Playlists") + tab("network", "Network") +
+        `<div class="grow"></div>` + gear + `<div class="caps">${capBtns}</div>`;
+    },
+    geo: `열 구성: 이전 레이아웃과 동일 + '|' 구분선 2개 제거
+적용: MainWindow.xaml 구분선 TextBlock 삭제 + 상태 열 정렬 조정
+(상태→브랜드 단계 숨김은 그대로, 좁아지면 자연스럽게 탭만 남음)`,
+  },
+};
+
+const bar = document.getElementById("bar");
+const tabs = document.getElementById("tabs");
+Object.keys(LAYOUTS).forEach(k => {
+  const b = document.createElement("button");
+  b.innerHTML = `<b>${k}</b>${LAYOUTS[k].name.split(" (")[0]}`;
+  b.dataset.v = k;
+  b.addEventListener("click", () => select(k));
+  tabs.appendChild(b);
+});
+function select(k) {
+  const v = LAYOUTS[k];
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("active", b.dataset.v === k));
+  bar.innerHTML = v.render(true);
+  document.getElementById("d-name").textContent = v.name;
+  document.getElementById("d-why").innerHTML = v.why;
+  document.getElementById("d-geo").textContent = v.geo;
+}
+select("OLD");
+</script>
+</body>
+</html>

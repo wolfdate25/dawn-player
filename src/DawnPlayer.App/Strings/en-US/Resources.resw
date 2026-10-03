@@ -807,6 +807,12 @@
   <data name="Settings_Layout_Rating_Title" xml:space="preserve"><value>Now Playing bar rating button</value></data>
   <data name="Settings_Layout_Rating_Desc" xml:space="preserve"><value>Show the star-rating button for the playing track on the bottom bar</value></data>
   <data name="Settings_Layout_Rating_Toggle.OnContent" xml:space="preserve"><value>Show</value></data>
+  <data name="MainWindow_Caption_Minimize.AutomationProperties.Name" xml:space="preserve"><value>Minimize</value></data>
+  <data name="MainWindow_Caption_Minimize.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Minimize</value></data>
+  <data name="MainWindow_Caption_Maximize.AutomationProperties.Name" xml:space="preserve"><value>Maximize</value></data>
+  <data name="MainWindow_Caption_Maximize.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Maximize</value></data>
+  <data name="MainWindow_Caption_Close.AutomationProperties.Name" xml:space="preserve"><value>Close</value></data>
+  <data name="MainWindow_Caption_Close.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Close</value></data>
   <data name="Settings_Layout_Rating_Toggle.OffContent" xml:space="preserve"><value>Hide</value></data>
 
   <!-- Shortcuts -->
