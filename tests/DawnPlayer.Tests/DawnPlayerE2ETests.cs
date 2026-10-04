@@ -25,6 +25,21 @@ internal static class NativeMethods
     public static extern bool MoveWindow(IntPtr hWnd, int x, int y, int nWidth, int nHeight, bool bRepaint);
     [DllImport("user32.dll", SetLastError = true)]
     public static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint msg, IntPtr wp, IntPtr lp, uint flags, uint timeout, out IntPtr result);
+    [DllImport("user32.dll")]
+    public static extern bool IsZoomed(IntPtr hWnd);
+    [DllImport("user32.dll")]
+    public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+    public const int SW_RESTORE = 9;
+    [DllImport("user32.dll")]
+    public static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
+    public const uint MONITOR_DEFAULTTONEAREST = 2;
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+    [DllImport("user32.dll")]
+    public static extern bool SetProcessDpiAwarenessContext(IntPtr value);
+    public static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new(-4);
+    [DllImport("user32.dll")]
+    public static extern uint GetDpiForWindow(IntPtr hWnd);
 
     [StructLayout(LayoutKind.Sequential)]
     public struct RECT
@@ -33,6 +48,15 @@ internal static class NativeMethods
         public int Top;
         public int Right;
         public int Bottom;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MONITORINFO
+    {
+        public int cbSize;
+        public RECT rcMonitor;
+        public RECT rcWork;
+        public uint dwFlags;
     }
 }
 
@@ -118,6 +142,11 @@ public sealed class DawnPlayerE2ETests
 
     private static AppSession Launch()
     {
+        // E2E 좌표는 물리 픽셀로 통일한다 — SetWindowPos/GetWindowRect 좌표 해석은 호출 프로세스의
+        // DPI 인식에 종속된다(2026-10-04 v1.5.0 CI 실패 교훈). 이미 설정된 프로세스면 거부되지만,
+        // 거부돼도 가상화 좌표는 자기일관적이라 아래 작업 영역 클램프가 여전히 유효하다.
+        try { NativeMethods.SetProcessDpiAwarenessContext(NativeMethods.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); } catch { }
+
         Assert.False(string.IsNullOrEmpty(AppExePath),
             "DawnPlayer.App.exe was not found. Build the solution before running the E2E tests.");
 
@@ -275,6 +304,32 @@ public sealed class DawnPlayerE2ETests
         return false;
     }
 
+    /// <summary>
+    /// 표준 리사이즈 목표(1200×800)를 창 모니터의 작업 영역으로 클램프한다. 하한 760×560은 U3
+    /// 컴팩트 하단바 임계(730) 위를 보장하는 여유다 — 작업 영역이 하한보다 작으면 그대로 요청해
+    /// 클램프 결과가 진단 메시지에 남는다(러너 화면이 그렇게 작으면 셸 계약 자체가 검증 불가).
+    /// </summary>
+    private static (int W, int H, int WorkW, int WorkH) StandardResizeTarget(IntPtr hwnd)
+    {
+        var workW = 1920;
+        var workH = 1080;
+        try
+        {
+            var monitor = NativeMethods.MonitorFromWindow(hwnd, NativeMethods.MONITOR_DEFAULTTONEAREST);
+            if (monitor != IntPtr.Zero)
+            {
+                var info = new NativeMethods.MONITORINFO { cbSize = System.Runtime.InteropServices.Marshal.SizeOf<NativeMethods.MONITORINFO>() };
+                if (NativeMethods.GetMonitorInfo(monitor, ref info))
+                {
+                    workW = info.rcWork.Right - info.rcWork.Left;
+                    workH = info.rcWork.Bottom - info.rcWork.Top;
+                }
+            }
+        }
+        catch { }
+        return (Math.Min(1200, Math.Max(760, workW - 80)), Math.Min(800, Math.Max(560, workH - 80)), workW, workH);
+    }
+
     // ---------------- tests ----------------
 
     [Fact]
@@ -299,12 +354,36 @@ public sealed class DawnPlayerE2ETests
         // 저장 폭 608px) U3 컴팩트 하단바(<730px)가 VolumeSlider를 Collapsed로 만들어 셸 요구가
         // 실패한다. 셸 노출 계약은 저장 배치와 무관하게 표준 크기에서 검증한다. AdaptiveTrigger는
         // SizeChanged에서 즉시 재평가되지만 하단바 상태 전환 정착을 위해 잠깐 기다린다.
-        Assert.True(NativeMethods.MoveWindow(hwnd, 60, 60, 1200, 800, true), "MoveWindow failed for the main window.");
-        Assert.True(WaitUntil(() =>
+        //
+        // 표준 크기는 실행 환경의 화면 기하를 초과하면 안 된다 — MoveWindow는 최대 트랙·작업 영역을
+        // 넘는 요청도 true를 돌려주고 창만 클램프한다(2026-10-04 v1.5.0 CI 2연속 실패 원인: 러너
+        // 화면에서 1200×800이 클램프돼 폭 검증이 영원히 미달). 목표를 모니터 작업 영역으로 클램프하고
+        // "요청 크기 수용"을 상대 검증하며, 실패 시 숫자를 함께 보고한다.
+        if (NativeMethods.IsZoomed(hwnd))
+        {
+            NativeMethods.ShowWindow(hwnd, NativeMethods.SW_RESTORE);
+            Assert.True(WaitUntil(() => !NativeMethods.IsZoomed(hwnd), TimeSpan.FromSeconds(3)),
+                "The main window did not leave the maximized state for the standard resize.");
+        }
+
+        NativeMethods.GetWindowRect(hwnd, out var beforeResize);
+        var (targetW, targetH, workW, workH) = StandardResizeTarget(hwnd);
+        Assert.True(NativeMethods.MoveWindow(hwnd, 60, 60, targetW, targetH, false),
+            "MoveWindow failed for the main window.");
+        var accepted = WaitUntil(() =>
         {
             NativeMethods.GetWindowRect(hwnd, out var resized);
-            return resized.Right - resized.Left >= 1100;
-        }, TimeSpan.FromSeconds(3)), "The main window did not accept the standard resize.");
+            return resized.Right - resized.Left >= targetW - 40 && resized.Bottom - resized.Top >= targetH - 40;
+        }, TimeSpan.FromSeconds(6));
+        if (!accepted)
+        {
+            NativeMethods.GetWindowRect(hwnd, out var afterResize);
+            Assert.Fail(
+                "The main window did not accept the standard resize. " +
+                $"before={beforeResize.Right - beforeResize.Left}x{beforeResize.Bottom - beforeResize.Top}, " +
+                $"target={targetW}x{targetH}, after={afterResize.Right - afterResize.Left}x{afterResize.Bottom - afterResize.Top}, " +
+                $"workArea={workW}x{workH}, dpi={NativeMethods.GetDpiForWindow(hwnd)}");
+        }
         Thread.Sleep(200);
 
         // Every part of the shell the user needs in order to do anything at all.
