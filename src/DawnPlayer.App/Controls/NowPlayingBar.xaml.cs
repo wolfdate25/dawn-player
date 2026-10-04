@@ -42,6 +42,9 @@ public sealed partial class NowPlayingBar : UserControl
         SeekSlider.AddHandler(UIElement.PointerCanceledEvent, new PointerEventHandler((_, _) => CompleteSeek()), true);
         SeekSlider.ValueChanged += OnSeekChanged;
         SeekSlider.SizeChanged += (_, _) => UpdateAbRepeatOverlay();
+        // L15(변형 A): 제목 열이 Auto라 별-제목 인라인 배치에서 트리밍이 작동하지 않는다 —
+        // 행 폭이 바뀔 때마다 제목 MaxWidth를 다시 계산한다.
+        TitleRow.SizeChanged += (_, _) => UpdateTitleMaxWidth();
         SeekSlider.PointerMoved += OnSeekPointerMovedPreview;
         _timer.Tick += (_, _) => OnTimer();
         _abRejectionTimer.Tick += (_, _) =>
@@ -131,6 +134,10 @@ public sealed partial class NowPlayingBar : UserControl
 
     public void OnTrackChanged(Core.Models.PlaylistItem? item)
     {
+        // L15: 별점 대상 기준점 — 바가 "표시 중인" 트랙. 세션 복원 후 재생 전에는
+        // Playback.CurrentItem이 null이지만 바에는 복원된 트랙이 표시되므로, 별점 대상도
+        // 표시 중인 트랙을 따른다(아래 별점 핸들러들의 ?? _displayedTrack 폴백).
+        _displayedTrack = item?.Track;
         if (item == null)
         {
             TrackTitle.Text = AppStrings.Get("NowPlaying_TrackTitle_Empty.Text", "재생 중인 트랙 없음");
@@ -163,7 +170,10 @@ public sealed partial class NowPlayingBar : UserControl
 
     // ---------- rating cell (L11) ----------
 
-    private bool _suppressTrackRatingValueChanged;
+    /// <summary>바가 현재 표시 중인 트랙(OnTrackChanged에서 갱신). 별점 대상은 Playback.CurrentItem
+    /// 이 아니라 이 트랙을 기준으로 한다 — 세션 복원 후 재생 전에는 CurrentItem이 null이지만 바에는
+    /// 마지막 트랙이 표시되고, 그 별도 즉시 매기고 적용할 수 있어야 한다(L15 사용자 보고).</summary>
+    private Core.Models.Track? _displayedTrack;
 
     /// <summary>Shows the playing track's star on the title row. 2026-10-03 (아이콘 이질감 수정):
     /// 텍스트 별(★☆) 대신 Segoe Fluent 아이콘 — 미평점 E735(회색, 하단바 아이콘과 같은 무채색),
@@ -173,16 +183,50 @@ public sealed partial class NowPlayingBar : UserControl
         if (track == null || !RatingCommands.IsRateable(track) || !AppServices.Settings.Ui.ShowNowPlayingRating)
         {
             TrackRatingButton.Visibility = Visibility.Collapsed;
+            UpdateTitleMaxWidth();
             return;
         }
 
         var rating = Math.Clamp(track.Rating, 0, 5);
-        TrackRatingIcon.Glyph = rating > 0 ? "\uE734" : "\uE735";
-        TrackRatingIcon.Foreground = rating > 0
+        // 2026-10-04: 평점 부여 곡은 평점 수만큼 채운 별(E735×N) — 재생목록·라이브러리 표의
+        // DisplayText 계약과 동일 표현. 미평점은 외곽 별(E734) 1개(발견 어포던스).
+        // FontFamily를 Segoe MDL2 Assets로 고정 — 주의: MDL2와 Segoe Fluent Icons는 이 두
+        // 코드포인트의 채움 스타일이 서로 반대다(MDL2: E734=외곽, E735=채움 / Fluent: 반대).
+        // 사용자 육안 확인 기준으로 MDL2 매핑을 따른다(2026-10-04 스왑 — 뒤집혀 보인던 보고).
+        TrackRatingStars.Children.Clear();
+        var starGlyph = rating > 0 ? "\uE735" : "\uE734";
+        var starForeground = rating > 0
             ? ThemeResourceHelper.GetBrush("DawnAccentTextBrush")
             : ThemeResourceHelper.GetBrush("TextSecondaryBrush");
+        var starCount = rating > 0 ? rating : 1;
+        for (var i = 0; i < starCount; i++)
+        {
+            TrackRatingStars.Children.Add(new Microsoft.UI.Xaml.Controls.FontIcon
+            {
+                Glyph = starGlyph,
+                FontSize = 12,
+                FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe MDL2 Assets"),
+                // +2px 광학 정렬: 별 글리프가 em 박스 상단에 치우쳐 옆 13px 제목 텍스트보다
+                // 위로 떠 보인다(2026-10-04 사용자 지적, 확대 캡처로 측정) — 아래로 2px 내린다.
+                Foreground = starForeground,
+                Margin = new Microsoft.UI.Xaml.Thickness(0, 2, 0, 0)
+            });
+        }
         AutomationProperties.SetName(TrackRatingButton, RatingAccessibilityConverter.AccessibilityText(track.Rating));
         TrackRatingButton.Visibility = Visibility.Visible;
+        UpdateTitleMaxWidth();
+    }
+
+    /// <summary>L15(변형 A): 제목 열이 Auto여서 트리밍이 작동하지 않는다 — 제목 MaxWidth를
+    /// "행 폭 - 별(가시일 때 +6px 마진)"로 갱신해 긴 제목이 별을 행 밖으로 밀어내지 않게 한다.
+    /// TitleRow.SizeChanged(창 크기·폰트 변경)와 UpdateTrackRatingCell(별 가시성 변경 — Collapsed
+    /// 요소의 ActualWidth는 마지막 값이 남으므로 가시성으로 판단)에서 호출한다.</summary>
+    private void UpdateTitleMaxWidth()
+    {
+        var starWidth = TrackRatingButton.Visibility == Visibility.Visible
+            ? TrackRatingButton.ActualWidth + 6
+            : 0;
+        TrackTitle.MaxWidth = Math.Max(24, TitleRow.ActualWidth - starWidth);
     }
 
     /// <summary>외관 설정 변경(표시 토글·테마·액센트) 시 평점 아이콘을 다시 계산 — 설정 즉시 반영과
@@ -194,7 +238,7 @@ public sealed partial class NowPlayingBar : UserControl
 
     private void OnRatingsApplied(IReadOnlyList<Track> tracks)
     {
-        var current = AppServices.Playback?.CurrentItem?.Track;
+        var current = AppServices.Playback?.CurrentItem?.Track ?? _displayedTrack;
         if (current == null) return;
         if (!tracks.Any(t => ReferenceEquals(t, current))) return;
         UpdateTrackRatingCell(current);
@@ -202,19 +246,46 @@ public sealed partial class NowPlayingBar : UserControl
 
     private void OnTrackRatingFlyoutOpening(object? sender, object e)
     {
-        var t = AppServices.Playback?.CurrentItem?.Track;
-        if (t == null) return;
-        _suppressTrackRatingValueChanged = true;
-        try { TrackRatingSelector.Value = Math.Clamp(t.Rating, 0, 5); }
-        finally { _suppressTrackRatingValueChanged = false; }
+        var t = AppServices.Playback?.CurrentItem?.Track ?? _displayedTrack;
+        UpdateFlyoutStarRow(Math.Clamp(t?.Rating ?? 0, 0, 5));
     }
 
-    private void OnTrackRatingSelectorValueChanged(RatingControl sender, object args)
+    /// <summary>L15 후속: 플라이아웃 별 행(5개 버튼)의 채움 상태를 평점에 맞춰 갱신한다 —
+    /// 미평점(0)은 5개 모두 외곽 별(사용자 요구: RatingControl은 미평점 렌더링이 불가). 각 별의
+    /// 접근 이름도 여기서 코드로 설정한다(XAML 리터럴 금지 게이트 준수). 글리프 매핑은
+    /// MDL2 기준: 채움=E735, 외곽=E734(Fluent와 반대 — 사용자 육안 확인).</summary>
+    private void UpdateFlyoutStarRow(int rating)
     {
-        if (_suppressTrackRatingValueChanged) return;
-        var t = AppServices.Playback?.CurrentItem?.Track;
+        var nameComposite = System.Text.CompositeFormat.Parse(
+            Localization.AppStrings.Get("Rating_Flyout_Star_Name.Text", "별 {0}점"));
+        var stars = new[] { FlyoutStar1, FlyoutStar2, FlyoutStar3, FlyoutStar4, FlyoutStar5 };
+        for (var i = 0; i < stars.Length; i++)
+        {
+            var starValue = i + 1;
+            var filled = starValue <= rating;
+            if (stars[i].Content is not Microsoft.UI.Xaml.Controls.FontIcon icon) continue;
+            icon.Glyph = filled ? "\uE735" : "\uE734";
+            icon.Foreground = filled
+                ? ThemeResourceHelper.GetBrush("DawnAccentTextBrush")
+                : ThemeResourceHelper.GetBrush("TextSecondaryBrush");
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(stars[i],
+                string.Format(System.Globalization.CultureInfo.CurrentCulture, nameComposite, starValue));
+        }
+    }
+
+    private void OnFlyoutStarClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Microsoft.UI.Xaml.Controls.Button button || button.Tag is not string tag) return;
+        if (!int.TryParse(tag, out var stars)) return;
+        var t = AppServices.Playback?.CurrentItem?.Track ?? _displayedTrack;
         if (t == null) return;
-        AppServices.RateTracks([t], (int)Math.Round(sender.Value));
+
+        // 같은 별 개수 재클릭 → 평점 지우기(RatingControl IsClearEnabled 계약 유지)
+        var current = Math.Clamp(t.Rating, 0, 5);
+        var next = stars == current ? 0 : stars;
+        AppServices.RateTracks([t], next);
+        UpdateFlyoutStarRow(next);
+        UpdateTrackRatingCell(t);
         TrackRatingFlyout.Hide();
     }
 

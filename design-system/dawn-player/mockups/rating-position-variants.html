@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dawn Player — 하단바 별점 위치 변형 (A·C·D·현행)</title>
+<style>
+  :root {
+    --bg: #18181D; --panel: #1F1F25; --card: #27272F; --hover: #30303A;
+    --separator: #2F2F39; --separator-subtle: #24242D;
+    --text: #F3F3F6; --text2: #AEAEBC; --text3: #8F8FA0;
+    --accent: #E8A33D; --sel: rgba(232,163,61,0.15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #121216; color: var(--text);
+    font-family: "Segoe UI", "Malgun Gothic", sans-serif;
+    padding: 20px 24px; display: flex; flex-direction: column; gap: 14px;
+  }
+  h1 { font-size: 16px; font-weight: 600; }
+  .sub { color: var(--text2); font-size: 12px; line-height: 1.6; }
+  .sub b { color: var(--accent); }
+
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tabs button {
+    background: var(--panel); border: 1px solid var(--separator); color: var(--text2);
+    border-radius: 6px; padding: 8px 14px; font-size: 12px; cursor: pointer; text-align: left;
+  }
+  .tabs button b { display: block; color: var(--text); font-size: 12.5px; margin-bottom: 2px; }
+  .tabs button.active { border-color: var(--accent); background: rgba(232,163,61,0.12); }
+  .tabs button.active b { color: var(--accent); }
+
+  .stage { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .frame {
+    background: var(--bg); border: 1px solid var(--separator); border-radius: 8px;
+    width: 720px; overflow: hidden; flex: none;
+  }
+  .f-title { height: 26px; display: flex; align-items: center; padding: 0 10px;
+    border-bottom: 1px solid var(--separator-subtle); font-size: 11px; color: var(--text3); }
+
+  /* ── 하단바 미니 렌더 (NowPlayingBar 재현) ── */
+  .bar { border-top: 1px solid var(--separator-subtle); padding: 0 18px 10px; }
+  .seek { display: flex; align-items: center; gap: 10px; padding: 8px 0 2px;
+    font-size: 10px; color: var(--text3); }
+  .seek .track { flex: 1; height: 3px; border-radius: 2px; background: #707079; position: relative; }
+  .seek .track::after { content: ""; position: absolute; left: 0; top: 0; width: 6px; height: 3px;
+    border-radius: 2px; background: var(--accent); }
+  .main { display: flex; align-items: center; padding-top: 4px; }
+  .cover { width: 44px; height: 44px; border-radius: 6px; background: #3a2a1a;
+    border: 1px solid var(--separator); flex: none; }
+  .meta { flex: 1; min-width: 0; margin: 0 12px; }
+  .titlerow { display: flex; align-items: center; }
+  .title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; }
+  .artist { font-size: 12px; color: var(--text2); margin-top: 1px; }
+  .badges { display: flex; gap: 4px; margin-top: 3px; }
+  .badge { font-size: 10px; padding: 1px 6px; border-radius: 4px;
+    background: var(--card); border: 1px solid var(--separator); color: var(--text3); }
+  .badge.acc { color: var(--accent); }
+  .star { font-size: 13px; color: var(--text2); line-height: 1; flex: none; }
+  .star.demo-rated { color: var(--accent); }
+  .tbtn { min-width: 30px; height: 30px; border-radius: 15px; display: inline-flex;
+    align-items: center; justify-content: center; font-size: 12px; color: var(--text2);
+    border: 1px solid transparent; flex: none; }
+  .tbtn:hover { background: var(--hover); }
+  .play { width: 44px; height: 44px; border-radius: 50%; background: var(--accent);
+    color: #221A0B; font-size: 16px; }
+  .transport { display: flex; align-items: center; gap: 6px; flex: none; }
+  .tools { display: flex; align-items: center; gap: 6px; flex: none; margin-left: 12px; }
+  .vol { width: 72px; height: 3px; border-radius: 2px; background: #707079; position: relative; flex: none; }
+  .vol::after { content: ""; position: absolute; left: 0; top: 0; width: 70%; height: 3px;
+    border-radius: 2px; background: var(--accent); }
+  .divider { width: 1px; height: 18px; background: var(--separator); margin: 0 4px; flex: none; }
+  .hint { font-size: 10px; color: var(--text3); }
+
+  /* ── 변형 주입 ── */
+  /* 기본: 현행(기준) — 제목 행 끝 Auto */
+  .cur-star { margin-left: auto; }   /* 제목 행 우측 고정 */
+  body:not([data-v="cur"]) .cur-star { display: none; }
+
+  /* A — 제목 인라인: 별이 제목 텍스트 바로 뒤 */
+  body[data-v="A"] .title { flex: none; max-width: 60%; overflow: hidden; text-overflow: ellipsis; }
+  body:not([data-v="A"]) .inline-star { display: none; }
+  .inline-star { margin-left: 6px; }
+
+  /* B — 정보 블록 우측 세로 중앙 */
+  .B-star { display: none; }
+  body[data-v="B"] .B-star { display: flex; }
+  body[data-v="B"] .meta { display: flex; align-items: center; gap: 12px; }
+  body[data-v="B"] .meta-inner { flex: 1; min-width: 0; }
+  .meta-inner { width: 100%; }
+
+  /* C — 우측 Tools 편입 */
+  body:not([data-v="C"]) .tools-star { display: none; }
+
+  /* D — 트랜스포트 행 끝 */
+  body:not([data-v="D"]) .transport-star { display: none; }
+
+  .desc { width: 360px; display: flex; flex-direction: column; gap: 10px; }
+  .desc .name { font-size: 15px; font-weight: 600; }
+  .desc .why { font-size: 12px; color: var(--text2); line-height: 1.65; }
+  .desc .why b { color: var(--text); }
+  .desc .procon { font-size: 11.5px; line-height: 1.6; display: flex; flex-direction: column; gap: 4px; }
+  .desc .pro { color: #7BC47F; } .desc .con { color: #D4887A; }
+  .geo {
+    background: var(--panel); border: 1px solid var(--separator); border-radius: 6px;
+    padding: 10px; font-family: Consolas, monospace; font-size: 11px; line-height: 1.7;
+    color: #C8C8D4; white-space: pre-wrap; user-select: all;
+  }
+  .geo .k { color: var(--accent); }
+  .pick { font-size: 12px; color: var(--text3); }
+</style>
+</head>
+<body data-v="A">
+  <div>
+    <h1>하단바 별점 위치 — 변형 비교</h1>
+    <div class="sub">브라우저 배율 <b>100%</b> · 405f07f에서 아이콘 언어는 Segoe로 통일됐지만 <b>위치</b>가 제목 행 끝(정보 블록과 트랜스포트의 경계)에 떠 있다는 보고. 별은 <b>미평점(회색 E735)</b> 기준이며 평점 시 앰버(E734)로 바뀌는 것은 모든 변형 동일합니다. 선택 = <b>변형 ID</b>만 말씀하시면 적용합니다.</div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="stage">
+    <div class="frame">
+      <div class="f-title">NowPlayingBar (하단바) — L14 수리 후 실제 인셋(18px)</div>
+      <div class="bar">
+        <div class="seek"><span>0:00</span><div class="track"></div><span>4:24</span></div>
+        <div class="main">
+          <div class="cover"></div>
+          <div class="meta">
+            <div class="meta-inner">
+              <div class="titlerow">
+                <span class="title">Elf</span>
+                <span class="star inline-star" title="A">☆</span>
+                <span class="star cur-star" title="현행">☆</span>
+              </div>
+              <div class="artist">Ado</div>
+              <div class="badges">
+                <span class="badge acc">FLAC · 24bit/48kHz</span>
+                <span class="badge">WASAPI 배타</span>
+              </div>
+            </div>
+          </div>
+          <span class="star B-star" style="margin-right:12px" title="B">☆</span>
+          <div class="transport">
+            <span class="tbtn">⇄</span>
+            <span class="tbtn">◀</span>
+            <span class="tbtn play">▶</span>
+            <span class="tbtn">▶|</span>
+            <span class="tbtn">■</span>
+            <span class="tbtn">↻</span>
+            <span class="tbtn" style="font-size:10px;font-weight:600">A–B</span>
+            <span class="divider transport-star"></span>
+            <span class="star transport-star">☆</span>
+          </div>
+          <div class="tools">
+            <span class="tbtn">🔇</span>
+            <div class="vol"></div>
+            <span class="tbtn">☰</span>
+            <span class="tbtn">♪</span>
+            <span class="tbtn tools-star" style="border:1px solid var(--separator)">☆</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="desc">
+      <div class="name" id="d-name"></div>
+      <div class="why" id="d-why"></div>
+      <div class="procon"><span class="pro" id="d-pro"></span><span class="con" id="d-con"></span></div>
+      <div class="geo" id="d-geo"></div>
+    </div>
+  </div>
+
+  <div class="pick">↖ 별은 미평점 상태(회색) 기준입니다. 탭을 전환해 위치를 비교하고 <b>변형 ID</b>를 선택하세요.</div>
+
+<script>
+const B = "★";
+const VARIANTS = {
+  A: {
+    label: "A 제목 인라인 — 추천",
+    name: "A — 별점을 제목 바로 뒤에 붙이기",
+    why: "별점은 \u2018이 곡의 속성\u2019이므로 가장 가까운 참조물은 <b>제목 텍스트</b>입니다. 스포티파이·유튜브 뮤직이 제목 옆에 하트/별을 두는 패턴과 같고, 지금의 \u2018경계에 떠 있는\u2019 느낌을 구조적으로 해소합니다. 구현: 제목 열을 Auto로 바꾸고 별 뒤에 여백 열 — <b>긴 제목이 별을 밀어내지 않게</b> 코드비하인드에서 제목 MaxWidth를 갱신합니다(약 10줄, SizeChanged/Loaded).",
+    pro: "장점: 제목-별 의미 연결 최강, 트랜스포트·도구 클러스터 오염 없음, 플라이아웃(Top) 그대로.",
+    con: "단점: 긴 제목 처리용 코드비하인드 한 조각 필요(없으면 별이 밀려나 보이지 않을 수 있음).",
+    geo: "구조\n  제목열  [제목 Auto(MaxWidth=가용-별)] [★ 6px] [여백 *]\n  스트림  별 숨김(기존 계약 유지 — IsRateable)\n\n크기\n  RatingCellButton 유지(20px 셀·아이콘 12)\n  제목 ellipsis 유지 — 별 잘림 없음"
+  },
+  B: {
+    label: "B 정보 블록 우측 세로 중앙",
+    name: "B — 현재 x에서 세로 중앙으로 (최소 변경)",
+    why: "별을 제목 행이 아니라 <b>커버+정보 블록 전체의 세로 중앙</b>으로 옮겨 \u2018이 블록의 속성\u2019으로 읽히게 합니다. 제목 한 줄에 걸쳐 있어 생기는 떠 있는 느낌을 절반 해소하고, XAML 요소 이동만으로 끝나는 가장 안전한 안입니다.",
+    pro: "장점: 변경 최소·회귀 위험 0, 좁은 창에서도 안정.",
+    con: "단점: 여전히 정보 블록과 트랜스포트의 경계 x — \u2018떠 있다\u2019 느낌이 절반만 해소됨.",
+    geo: "구조\n  [아트 56][정보 *][★ Auto]  ← ★ 세로 중앙\n\n크기\n  RatingCellButton 유지\n  제목 열은 기존 * 트리밍 그대로"
+  },
+  C: {
+    label: "C 우측 Tools 클러스터 편입",
+    name: "C — 음소거·볼륨·대기열·가사 줄에 편입",
+    why: "별을 <b>유틸리티 클러스터</b>(대기열·가사 토글이 있는 우측)에 TransportButton 크기로 편입합니다. 하단바의 모든 상호작용이 자기 자리를 갖는 그리드 정합이 가장 좋은 안입니다.",
+    pro: "장점: 그리드 정합 최고·구현 단순(요소 이동+스타일 교체), 컴팩트(<730px)에서도 안정.",
+    con: "단점: 메타데이터 편집이 유틸 토글 사이에 놓여 의미 연결이 약함. 대기열 배지와 시각 경쟁 가능.",
+    geo: "구조\n  Tools  [음소거][볼륨][★?][대기열][가사]\n  별 = TransportButton 30px로 재스타일\n  (미평점 E735 회색 — 클러스터 무채색과 일치)\n\n플라이아웃  Placement=Top 유지"
+  },
+  D: {
+    label: "D 트랜스포트 행 끝",
+    name: "D — A-B 반복 뒤 구분선 + 별",
+    why: "재생 보조 클러스터(A-B 뒤, 얇은 구분선)에 별을 추가해 <b>손이 가는 행</b>에서 바로 평점을 열게 합니다. 접근 빈도 관점에선 최고지만, 재생 제어 7개 뒤에 8번째 요소가 붙고 중앙 열이 넓어져 좁은 창에서 압박이 생깁니다.",
+    pro: "장점: 접근성(손 위치) 최고, 평점을 자주 매기는 사용자에게 유리.",
+    con: "단점: 재생 제어와 메타데이터 편집의 역할 혼합, 좁은 창에서 중앙 열 압박, 7개 버튼 뒤 시각 소음.",
+    geo: "구조\n  Transport  [⇄][◀][▶][▶|][■][↻][A–B] │ [★]\n  별 = TransportButton 크기 재스타일\n\n리스크\n  중앙 열 폭 +38px — 미니 모드 압박"
+  },
+  cur: {
+    label: "현행 (기준)",
+    name: "현행 — 제목 행 끝 Auto 열 (405f07f)",
+    why: "405f07f에서 아이콘 언어(텍스트 별 → Segoe Fluent)는 고쳐졌지만 <b>위치</b>는 제목 행 끝 Auto 열 그대로 — 정보 블록과 트랜스포트의 경계에 제목 한 줄만 걸쳐 떠 있어 어느 클러스터에도 속하지 않습니다. 이번 보고(\u2018위치가 별로\u2019)의 원인 그대로입니다.",
+    pro: "장점: 이미 구현된 상태(변경 0), 제목이 길어도 별이 밀려나지 않음.",
+    con: "단점: 경계에 떠 있는 느낌 — 보고 원인 그대로.",
+    geo: "구조\n  제목열  [제목 *][★ Auto(우측 고정)]\n  ★ 세로 = 제목 행 한 줄만 걸침\n\n상태\n  미평점 E735 회색 / 평점 E734 앰버\n  스트림 재생 시 숨김(IsRateable 계약)"
+  }
+};
+
+const tabsEl = document.getElementById("tabs");
+const order = ["A", "B", "C", "D", "cur"];
+order.forEach((k) => {
+  const b = document.createElement("button");
+  b.innerHTML = "<b>" + (k === "cur" ? "현행" : k) + "</b>" + VARIANTS[k].label;
+  b.onclick = () => pick(k);
+  b.id = "tab-" + k;
+  tabsEl.appendChild(b);
+});
+function pick(k) {
+  document.body.setAttribute("data-v", k);
+  const v = VARIANTS[k];
+  document.getElementById("d-name").innerHTML = v.name;
+  document.getElementById("d-why").innerHTML = v.why;
+  document.getElementById("d-pro").innerHTML = v.pro;
+  document.getElementById("d-con").innerHTML = v.con;
+  document.getElementById("d-geo").textContent = v.geo;
+  order.forEach(x => document.getElementById("tab-" + x).classList.toggle("active", x === k));
+}
+pick("A");
+</script>
+</body>
+</html>

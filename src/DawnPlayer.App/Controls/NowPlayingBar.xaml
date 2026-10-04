@@ -124,22 +124,44 @@
 
                 <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center" Spacing="1">
                     <!-- L11 title row: inline rating cell for the playing track, hidden for streams
-                         (stream URLs carry no tags — RatingCommands.IsRateable mirrors this). -->
-                    <Grid>
+                         (stream URLs carry no tags — RatingCommands.IsRateable mirrors this).
+                         L15(변형 A): 별은 제목 텍스트 바로 뒤에 붙는다 — [제목 Auto][별 Auto][여백 *].
+                         Auto 열은 트리밍이 작동하지 않으므로 제목 MaxWidth는 코드비하인드
+                         UpdateTitleMaxWidth가 갱신한다(긴 제목이 별을 행 밖으로 밀어내지 않게). -->
+                    <Grid x:Name="TitleRow">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock x:Uid="NowPlaying_TrackTitle_Empty" x:Name="TrackTitle" Text="재생 중인 트랙 없음" FontSize="13" FontWeight="SemiBold"
+                        <TextBlock x:Uid="NowPlaying_TrackTitle_Empty" x:Name="TrackTitle" Grid.Column="0" Text="재생 중인 트랙 없음" FontSize="13" FontWeight="SemiBold"
                                    Foreground="{ThemeResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
                         <Button x:Name="TrackRatingButton" x:Uid="Rating_Cell" Grid.Column="1" Style="{StaticResource RatingCellButton}"
                                 Visibility="Collapsed" Margin="6,0,0,0">
                             <Button.Flyout>
+                                <!-- L15 후속: WinUI RatingControl은 미평점(0) 렌더링이 불가능해(값 0이
+                                     최소 1 채움으로 강제돼 사용자 보고 "빈 별이어야 한다"와 충돌) —
+                                     앱이 별 5개 버튼을 직접 렌더링한다. 미평점 = 모두 외곽 별,
+                                     평점 N = N개 채움, 같은 별 재클릭 = 지우기(IsClearEnabled 계약 유지). -->
                                 <Flyout x:Name="TrackRatingFlyout" Placement="Top" Opening="OnTrackRatingFlyoutOpening">
                                     <StackPanel Spacing="6" MinWidth="190">
-                                        <RatingControl x:Name="TrackRatingSelector" x:Uid="Rating_Selector"
-                                                       MaxRating="5" IsClearEnabled="True"
-                                                       ValueChanged="OnTrackRatingSelectorValueChanged"/>
+                                        <StackPanel x:Name="FlyoutStarRow" Orientation="Horizontal" Spacing="2" HorizontalAlignment="Center">
+                                            <Button x:Name="FlyoutStar1" Tag="1" Click="OnFlyoutStarClick" Style="{StaticResource RatingCellButton}">
+                                                <FontIcon Glyph="&#xE735;" FontSize="16" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                                            </Button>
+                                            <Button x:Name="FlyoutStar2" Tag="2" Click="OnFlyoutStarClick" Style="{StaticResource RatingCellButton}">
+                                                <FontIcon Glyph="&#xE735;" FontSize="16" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                                            </Button>
+                                            <Button x:Name="FlyoutStar3" Tag="3" Click="OnFlyoutStarClick" Style="{StaticResource RatingCellButton}">
+                                                <FontIcon Glyph="&#xE735;" FontSize="16" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                                            </Button>
+                                            <Button x:Name="FlyoutStar4" Tag="4" Click="OnFlyoutStarClick" Style="{StaticResource RatingCellButton}">
+                                                <FontIcon Glyph="&#xE735;" FontSize="16" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                                            </Button>
+                                            <Button x:Name="FlyoutStar5" Tag="5" Click="OnFlyoutStarClick" Style="{StaticResource RatingCellButton}">
+                                                <FontIcon Glyph="&#xE735;" FontSize="16" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                                            </Button>
+                                        </StackPanel>
                                         <TextBlock x:Uid="Rating_ClearHint" Text="선택한 별을 다시 누르면 평점이 지워집니다."
                                                    FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
                                                    TextWrapping="Wrap" HorizontalAlignment="Center"/>
@@ -147,10 +169,11 @@
                                 </Flyout>
                             </Button.Flyout>
                             <!-- 2026-10-03 (아이콘 이질감 수정): 텍스트 별(★☆) → Segoe Fluent 아이콘.
-                                 미평점 E735(회색, 다른 하단바 아이콘과 동일 무채색), 평점 o E734(앰버) —
-                                 상태 전환은 UpdateTrackRatingCell이 담당. -->
-                            <FontIcon x:Name="TrackRatingIcon" Glyph="&#xE735;" FontSize="12"
-                                      Foreground="{ThemeResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                 2026-10-04: 평점 부여 곡은 단일 아이콘이 아니라 평점 수만큼 채운 별
+                                 (E734×N, 3점 → 3개)을 표시 — UpdateTrackRatingCell이 컨테이너를
+                                 채운다. 미평점은 외곽 별(E735) 1개 유지(발견 어포던스). -->
+                            <StackPanel x:Name="TrackRatingStars" Orientation="Horizontal" Spacing="2"
+                                        VerticalAlignment="Center"/>
                         </Button>
                     </Grid>
 
