@@ -13,7 +13,8 @@ and the design of the [Eole theme](https://github.com/Ottodix/Eole-foobar-theme)
 
 Get the latest installer or portable ZIP from
 [GitHub Releases](https://github.com/wolfdate25/dawn-player/releases/latest)
-(SHA256 checksums are published alongside). Requires Windows 10 19041 or later.
+(SHA256 checksums are published alongside). Requires Windows 10 19041 or later;
+x64 and native ARM64 builds are published.
 
 - **Installer (`.exe`)** — per-user (default) or per-machine installation. Registers shortcuts,
   a startup entry, audio file associations (.mp3, .flac, .wav, .m4a etc.) and the Explorer

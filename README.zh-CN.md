@@ -12,7 +12,7 @@
 ## 下载
 
 可从 [GitHub Releases](https://github.com/wolfdate25/dawn-player/releases/latest) 下载最新的
-安装程序或便携 ZIP（SHA256 校验和一并发布）。需要 Windows 10 19041 或更高版本。
+安装程序或便携 ZIP（SHA256 校验和一并发布）。需要 Windows 10 19041 或更高版本；同时发布 x64 与原生 ARM64 构建。
 
 - **安装程序（`.exe`）** — 支持按用户（默认）或按机器安装；自动注册快捷方式、开机启动、
   音频文件关联（.mp3、.flac、.wav、.m4a 等）和资源管理器右键播放菜单；会检测正在运行的

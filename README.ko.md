@@ -12,7 +12,7 @@ foobar2000의 기능성과 [Eole 테마](https://github.com/Ottodix/Eole-foobar-
 ## 다운로드
 
 [GitHub Releases](https://github.com/wolfdate25/dawn-player/releases/latest)에서 최신 인스톨러나
-포터블 ZIP을 내려받을 수 있습니다 (SHA256 체크섬도 함께 게시). Windows 10 19041 이상이 필요합니다.
+포터블 ZIP을 내려받을 수 있습니다 (SHA256 체크섬도 함께 게시). Windows 10 19041 이상이 필요하며, x64 빌드와 네이티브 ARM64 빌드를 함께 게시합니다.
 
 - **설치 프로그램 (`.exe`)** — 비관리자(기본) 또는 관리자 모드 설치. 바로가기·시작프로그램 등록,
   오디오 확장자 연결(.mp3, .flac, .wav, .m4a 등), 탐색기 우클릭 재생 메뉴를 등록하고, 실행 중인

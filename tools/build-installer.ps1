@@ -15,7 +15,8 @@
     빌드 구성 (기본값: "Release")
 
 .PARAMETER Runtime
-    타겟 런타임 식별자 (기본값: "win-x64")
+    타겟 런타임 식별자 ("win-x64" 또는 "win-arm64", 기본값: "win-x64").
+    win-arm64는 x64 호스트에서도 크로스 컴파일된다.
 
 .PARAMETER SkipPublish
     이미 생성된 publish 디렉토리를 재사용하고 dotnet publish를 건너뜁니다.
@@ -42,6 +43,17 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Supported target runtimes. $Platform feeds the WinUI/WindowsAppSDK build (output layout and
+# self-contained native bits), $Arch feeds the Inno Setup script (ISPP MyAppArch: the
+# ArchitecturesAllowed/InstallIn64BitMode values and the installer exe filename).
+switch ($Runtime) {
+    "win-x64"   { $Platform = "x64";   $Arch = "x64" }
+    "win-arm64" { $Platform = "ARM64"; $Arch = "arm64" }
+    default {
+        Write-Error "Unsupported -Runtime '$Runtime'. Supported values: win-x64, win-arm64."
+    }
+}
+
 # 1. 경로 설정
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RootDir = Split-Path -Parent $ScriptDir
@@ -55,7 +67,7 @@ Write-Host "==========================================================" -Foregro
 Write-Host "   Dawn Player Packaging & Installer Build Tool" -ForegroundColor Cyan
 Write-Host "   Version:       $Version" -ForegroundColor Yellow
 Write-Host "   Configuration: $Configuration" -ForegroundColor Yellow
-Write-Host "   Runtime:       $Runtime" -ForegroundColor Yellow
+Write-Host "   Runtime:       $Runtime ($Platform)" -ForegroundColor Yellow
 Write-Host "==========================================================" -ForegroundColor Cyan
 
 # 2. Dotnet Publish 실행
@@ -73,6 +85,7 @@ if (-not $SkipPublish) {
         $AppProjPath,
         "-c", $Configuration,
         "-r", $Runtime,
+        "-p:Platform=$Platform",
         "--self-contained", "true",
         "-p:WindowsPackageType=None",
         "-p:WindowsAppSDKSelfContained=true",
@@ -179,6 +192,7 @@ if (-not $SkipInstaller) {
 
     $isccArgs = @(
         "/DMyAppVersion=$Version",
+        "/DMyAppArch=$Arch",
         "/DMySourceDir=$PublishDir",
         "/DMyOutputDir=$InstallerOutDir",
         $IssScriptPath
@@ -192,7 +206,7 @@ if (-not $SkipInstaller) {
         exit $LASTEXITCODE
     }
 
-    $InstallerExePath = Join-Path $InstallerOutDir "DawnPlayer-Setup-v$Version-x64.exe"
+    $InstallerExePath = Join-Path $InstallerOutDir "DawnPlayer-Setup-v$Version-$Arch.exe"
     if (Test-Path $InstallerExePath) {
         $exeSizeMb = [math]::Round((Get-Item $InstallerExePath).Length / 1MB, 2)
         Write-Host "  Installer EXE created: $InstallerExePath ($exeSizeMb MB)" -ForegroundColor Green
@@ -209,7 +223,7 @@ if (Test-Path $PortableZipPath) {
     $Artifacts += (Get-Item $PortableZipPath)
 }
 
-$InstallerExePath = Join-Path $InstallerOutDir "DawnPlayer-Setup-v$Version-x64.exe"
+$InstallerExePath = Join-Path $InstallerOutDir "DawnPlayer-Setup-v$Version-$Arch.exe"
 if (Test-Path $InstallerExePath) {
     $Artifacts += (Get-Item $InstallerExePath)
 }
@@ -234,9 +248,10 @@ if ($Artifacts.Count -eq 0) {
     Write-Warning "No artifacts were produced (both -SkipZip and -SkipInstaller?). Skipping SHA256SUMS.txt."
 } else {
     $ChecksumFilePath = Join-Path $DistDir "SHA256SUMS.txt"
-    # WriteAllLines, not Out-File -Encoding utf8: the latter emits a BOM under Windows
-    # PowerShell 5.1, which makes `sha256sum -c` reject the first line.
-    [System.IO.File]::WriteAllLines($ChecksumFilePath, $ChecksumLines)
+    # WriteAllText with explicit LF, not WriteAllLines: the latter emits CRLF on Windows and a
+    # BOM under Windows PowerShell 5.1; either makes `sha256sum -c` reject lines.
+    $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+    [System.IO.File]::WriteAllText($ChecksumFilePath, (($ChecksumLines -join "`n") + "`n"), $utf8NoBom)
     Write-Host "Checksum file written: $ChecksumFilePath" -ForegroundColor Gray
 }
 

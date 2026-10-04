@@ -25,9 +25,10 @@ permissions:
   contents: write
 
 jobs:
-  build-and-release:
-    name: Build & Publish Release
+  validate:
+    name: Build & Test
     runs-on: windows-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
@@ -39,9 +40,6 @@ jobs:
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
-
-      - name: Install Inno Setup 6
-        run: choco install innosetup --no-progress
 
       - name: Build Solution (Release)
         run: dotnet build DawnPlayer.slnx -c Release
@@ -58,6 +56,31 @@ jobs:
           }
           exit 1
 
+  build:
+    name: Build Packages (${{ matrix.runtime }})
+    runs-on: windows-latest
+    timeout-minutes: 60
+    needs: validate
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # win-arm64 is cross-compiled on the x64 runner; the app itself is pure managed plus
+        # system-DLL P/Invoke, so no native ARM64 build step is needed.
+        runtime: [win-x64, win-arm64]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install Inno Setup 6
+        run: choco install innosetup --no-progress
+
       - name: Determine Release Version
         id: get_version
         shell: pwsh
@@ -70,10 +93,61 @@ jobs:
           Write-Host "Resolved Version: $ver"
           "version=$ver" >> $env:GITHUB_OUTPUT
 
-      - name: Build Installer & Portable Packages
+      - name: Build Installer & Portable Package
+        shell: pwsh
+        run: pwsh -File tools/build-installer.ps1 -Version "${{ steps.get_version.outputs.version }}" -Runtime "${{ matrix.runtime }}"
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ matrix.runtime }}
+          path: |
+            dist/installer/*.exe
+            dist/*.zip
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+
+  release:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build
+
+    steps:
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: release-*
+          path: staging
+
+      - name: Stage Release Files & Merge Checksums
         shell: pwsh
         run: |
-          pwsh -File tools/build-installer.ps1 -Version "${{ steps.get_version.outputs.version }}"
+          $dist = "dist"
+          New-Item -ItemType Directory -Path $dist -Force | Out-Null
+          Get-ChildItem staging -Directory | ForEach-Object {
+            Get-ChildItem $_.FullName -File |
+              Where-Object { $_.Name -ne 'SHA256SUMS.txt' } |
+              Copy-Item -Destination $dist
+          }
+          # One checksum file across all architectures. Lines are "hash *filename", so a plain
+          # concatenation of the per-runtime files is valid for `sha256sum -c`.
+          $sums = Get-ChildItem staging -Recurse -Filter SHA256SUMS.txt |
+            ForEach-Object { Get-Content $_.FullName }
+          [System.IO.File]::WriteAllLines((Join-Path $dist "SHA256SUMS.txt"), $sums)
+          Get-ChildItem $dist
+
+      - name: Determine Release Version
+        id: get_version
+        shell: pwsh
+        run: |
+          $ver = "${{ github.event.inputs.version }}"
+          if ([string]::IsNullOrWhiteSpace($ver)) {
+              $tag = "${{ github.ref_name }}"
+              $ver = $tag -replace '^v', ''
+          }
+          Write-Host "Resolved Version: $ver"
+          "version=$ver" >> $env:GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
@@ -84,8 +158,10 @@ jobs:
           prerelease: ${{ github.event.inputs.prerelease || false }}
           generate_release_notes: true
           files: |
-            dist/installer/DawnPlayer-Setup-v${{ steps.get_version.outputs.version }}-x64.exe
+            dist/DawnPlayer-Setup-v${{ steps.get_version.outputs.version }}-x64.exe
+            dist/DawnPlayer-Setup-v${{ steps.get_version.outputs.version }}-arm64.exe
             dist/DawnPlayer-v${{ steps.get_version.outputs.version }}-portable-win-x64.zip
+            dist/DawnPlayer-v${{ steps.get_version.outputs.version }}-portable-win-arm64.zip
             dist/SHA256SUMS.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

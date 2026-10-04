@@ -29,6 +29,23 @@
   #define MyOutputDir "..\dist\installer"
 #endif
 
+; Payload architecture, set by tools/build-installer.ps1 (/DMyAppArch=arm64 for the
+; ARM64 build). ISPP "Architecture Identifiers": x64compatible matches x64 Windows and
+; Arm64 Windows 11 (x64 emulation); arm64 matches Arm64 Windows only.
+#ifndef MyAppArch
+  #define MyAppArch "x64"
+#endif
+
+#if MyAppArch == "arm64"
+  #define MyAppArchAllowed "arm64"
+  #define MyAppArchInstallIn64BitMode "arm64"
+#elif MyAppArch == "x64"
+  #define MyAppArchAllowed "x64compatible"
+  #define MyAppArchInstallIn64BitMode "x64compatible"
+#else
+  #error Unsupported MyAppArch: must be "x64" or "arm64"
+#endif
+
 [Setup]
 ; App Identity
 AppId={{8E37E3E5-A98B-4B3B-8C47-5D4C3A3B4401}}
@@ -40,16 +57,17 @@ AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 
-; Architecture & Platform
-ArchitecturesAllowed=x64compatible
-ArchitecturesInstallIn64BitMode=x64compatible
+; Architecture & Platform (64-bit install mode resolves {autopf} and HKLM to the native
+; 64-bit locations; on Arm64 this is the Arm64-native Program Files)
+ArchitecturesAllowed={#MyAppArchAllowed}
+ArchitecturesInstallIn64BitMode={#MyAppArchInstallIn64BitMode}
 
 ; Target Directory & Group
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 OutputDir={#MyOutputDir}
-OutputBaseFilename=DawnPlayer-Setup-v{#MyAppVersion}-x64
+OutputBaseFilename=DawnPlayer-Setup-v{#MyAppVersion}-{#MyAppArch}
 SetupIconFile=..\src\DawnPlayer.App\Assets\app.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 UninstallDisplayName={#MyAppName}
