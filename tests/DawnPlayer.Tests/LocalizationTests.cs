@@ -221,6 +221,31 @@ public class LocalizationTests
     }
 
     [Fact]
+    public void Xaml_XUid_Values_HaveApplicablePropertyEntries()
+    {
+        // A bare '<uid>' resw entry is only reachable through ResourceLoader/AppStrings lookups;
+        // the x:Uid pipeline applies '<uid>.<Property>' entries exclusively. An element whose uid
+        // owns no suffixed entry therefore keeps its hard-coded XAML text in EVERY language —
+        // the 2026-10-04 rating-row title/desc, the sleep-timer menu items, the DLNA preparing
+        // label and 42 '*_A11yName' automation names all shipped that way: the base-name-only
+        // gate above sees the bare key and stays green.
+        var applicableBases = ReswKeySet()
+            .Where(k => k.Contains('.'))
+            .Select(k => k.Split('.')[0])
+            .ToHashSet();
+        var missing = ScanAppSources(".xaml", XUidPattern)
+            .Select(h => h.Value)
+            .Distinct()
+            .Where(uid => !applicableBases.Contains(uid))
+            .ToList();
+
+        Assert.True(missing.Count == 0,
+            "x:Uid values with no '<uid>.<Property>' resw entry — the element keeps its hard-coded text in every language.\n"
+            + "Rename the key to '<uid>.<Property>', or keep the bare key for AppStrings lookups and add a suffixed duplicate:\n"
+            + string.Join("\n", missing.Select(m => "  " + m)));
+    }
+
+    [Fact]
     public void CSharp_LiteralLookupKeys_Exist_InResw()
     {
         var keys = ReswKeySet();

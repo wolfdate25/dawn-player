@@ -44,15 +44,15 @@ public sealed class SleepTimerService : IDisposable
                     SleepTimerOption.Minutes30 => 30,
                     _ => 60
                 };
-                var label = AppStrings.Get($"MainWindow_Menu_Sleep_{total}", total == 60 ? "1시간" : $"{total}분");
+                var label = AppStrings.Get($"MainWindow_Menu_Sleep_{total}.Text", total == 60 ? "1시간" : $"{total}분");
                 var remaining = TimeSpan.FromMilliseconds(Math.Max(0, Volatile.Read(ref _deadlineTick64) - Environment.TickCount64));
                 return AppStrings.Format("MainWindow_Menu_Sleep_RemainingFormat", "{0} ({1:mm\\:ss})", label, remaining);
 
             case SleepTimerOption.AfterCurrentTrack:
-                return AppStrings.Get("MainWindow_Menu_Sleep_Track", "현재 곡 끝나고");
+                return AppStrings.Get("MainWindow_Menu_Sleep_Track.Text", "현재 곡 끝나고");
 
             default:
-                return AppStrings.Get("MainWindow_Menu_Sleep_Off", "끔");
+                return AppStrings.Get("MainWindow_Menu_Sleep_Off.Text", "끔");
         }
     }
 

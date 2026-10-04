@@ -42,12 +42,12 @@
   <data name="MainWindow_TitleMenuButton.AutomationProperties.Name" xml:space="preserve"><value>Menu</value></data>
   <data name="MainWindow_TitleMenuButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Menu</value></data>
   <data name="MainWindow_Menu_Rescan.Text" xml:space="preserve"><value>Rescan Library</value></data>
-  <data name="MainWindow_Menu_SleepTimer" xml:space="preserve"><value>Sleep Timer</value></data>
-  <data name="MainWindow_Menu_Sleep_Off" xml:space="preserve"><value>Off</value></data>
-  <data name="MainWindow_Menu_Sleep_15" xml:space="preserve"><value>15 min</value></data>
-  <data name="MainWindow_Menu_Sleep_30" xml:space="preserve"><value>30 min</value></data>
-  <data name="MainWindow_Menu_Sleep_60" xml:space="preserve"><value>1 hour</value></data>
-  <data name="MainWindow_Menu_Sleep_Track" xml:space="preserve"><value>After current track</value></data>
+  <data name="MainWindow_Menu_SleepTimer.Text" xml:space="preserve"><value>Sleep Timer</value></data>
+  <data name="MainWindow_Menu_Sleep_Off.Text" xml:space="preserve"><value>Off</value></data>
+  <data name="MainWindow_Menu_Sleep_15.Text" xml:space="preserve"><value>15 min</value></data>
+  <data name="MainWindow_Menu_Sleep_30.Text" xml:space="preserve"><value>30 min</value></data>
+  <data name="MainWindow_Menu_Sleep_60.Text" xml:space="preserve"><value>1 hour</value></data>
+  <data name="MainWindow_Menu_Sleep_Track.Text" xml:space="preserve"><value>After current track</value></data>
   <data name="MainWindow_Menu_Sleep_RemainingFormat" xml:space="preserve"><value>{0} ({1:mm\:ss})</value></data>
   <data name="MainWindow_Menu_Exit.Text" xml:space="preserve"><value>Exit</value></data>
   <data name="MainWindow_TitleBarTrack.Text" xml:space="preserve"><value>No sound — Nothing played</value></data>
@@ -446,48 +446,48 @@
   <data name="Msg_ExportedPlaylist" xml:space="preserve"><value>Exported to '{0}'.</value></data>
   <data name="Settings_Lastfm_ApiKeyBox.Header" xml:space="preserve"><value>API key</value></data>
   <data name="Settings_Lastfm_ApiSecretBox.Header" xml:space="preserve"><value>Shared secret</value></data>
-  <data name="Settings_Audio_Driver_A11yName" xml:space="preserve"><value>Audio Output Driver</value></data>
-  <data name="Settings_Audio_Device_A11yName" xml:space="preserve"><value>Output Device</value></data>
-  <data name="Settings_Audio_BitDepth_A11yName" xml:space="preserve"><value>Exclusive Mode Bit Depth</value></data>
-  <data name="Settings_Audio_RateMismatch_A11yName" xml:space="preserve"><value>Sample rate mismatch handling (exclusive mode)</value></data>
-  <data name="Settings_Audio_DsdMode_A11yName" xml:space="preserve"><value>DSD playback mode (DSF/DFF)</value></data>
-  <data name="Settings_Audio_AllowVolume_A11yName" xml:space="preserve"><value>Allow Volume / ReplayGain in Exclusive Mode</value></data>
-  <data name="Settings_Audio_Latency_A11yName" xml:space="preserve"><value>Output Buffer Latency</value></data>
-  <data name="Settings_Eq_Profile_A11yName" xml:space="preserve"><value>Select Profile to Edit</value></data>
-  <data name="Settings_Eq_Preamp_A11yName" xml:space="preserve"><value>Preamp</value></data>
-  <data name="Settings_Eq_TargetDevice_A11yName" xml:space="preserve"><value>Target Audio Output Device</value></data>
-  <data name="Settings_Eq_BoundProfile_A11yName" xml:space="preserve"><value>Profile Bound to Device</value></data>
-  <data name="Settings_Playback_NormMode_A11yName" xml:space="preserve"><value>Normalization Mode</value></data>
-  <data name="Settings_Playback_TargetLevel_A11yName" xml:space="preserve"><value>Target Volume Level</value></data>
-  <data name="Settings_Playback_MaxBoost_A11yName" xml:space="preserve"><value>Max Boost Limit</value></data>
-  <data name="Settings_Playback_Speed_A11yName" xml:space="preserve"><value>Response Speed</value></data>
-  <data name="Settings_Playback_ReplayGain_A11yName" xml:space="preserve"><value>ReplayGain Mode</value></data>
-  <data name="Settings_Playback_RgPreamp_A11yName" xml:space="preserve"><value>ReplayGain Preamp</value></data>
-  <data name="Settings_Playback_PreventClipping_A11yName" xml:space="preserve"><value>Prevent Clipping</value></data>
-  <data name="Settings_Playback_CrossfeedStrength_A11yName" xml:space="preserve"><value>Crossfeed Strength</value></data>
-  <data name="Settings_Library_StartupScan_A11yName" xml:space="preserve"><value>Scan on Startup</value></data>
-  <data name="Settings_Library_Rg_R128_A11yName" xml:space="preserve"><value>Also write ReplayGain 2.0 (R128_*) tags</value></data>
-  <data name="Settings_Lyrics_Font_A11yName" xml:space="preserve"><value>Lyrics Font Family</value></data>
-  <data name="Settings_Lyrics_FontSize_A11yName" xml:space="preserve"><value>Base Lyrics Font Size</value></data>
-  <data name="Settings_Lyrics_ActiveFontSize_A11yName" xml:space="preserve"><value>Active Lyrics Font Size</value></data>
-  <data name="Settings_Lyrics_CharSpacing_A11yName" xml:space="preserve"><value>Character Spacing</value></data>
-  <data name="Settings_Lyrics_LineHeight_A11yName" xml:space="preserve"><value>Line Height</value></data>
-  <data name="Settings_Lyrics_Alignment_A11yName" xml:space="preserve"><value>Text Alignment</value></data>
-  <data name="Settings_Lyrics_FocusDimming_A11yName" xml:space="preserve"><value>Focus Dimming Effect</value></data>
-  <data name="Settings_Lyrics_Embedded_A11yName" xml:space="preserve"><value>Read Embedded Lyrics</value></data>
-  <data name="Settings_Lyrics_LrcPattern_A11yName" xml:space="preserve"><value>.lrc File Search Patterns</value></data>
-  <data name="Settings_OnlineLyrics_SaveLoc_A11yName" xml:space="preserve"><value>Save Location</value></data>
-  <data name="Settings_OnlineLyrics_Template_A11yName" xml:space="preserve"><value>Filename Template</value></data>
-  <data name="Settings_Appearance_Lang_A11yName" xml:space="preserve"><value>Language</value></data>
-  <data name="Settings_Appearance_Tray_A11yName" xml:space="preserve"><value>Close to Tray</value></data>
-  <data name="Settings_Appearance_Motion_A11yName" xml:space="preserve"><value>UI Motion</value></data>
-  <data name="Settings_Appearance_FsAcrylic_A11yName" xml:space="preserve"><value>Full-screen Acrylic</value></data>
-  <data name="Settings_Appearance_Theme_A11yName" xml:space="preserve"><value>Theme Mode</value></data>
-  <data name="Settings_Appearance_Backdrop_A11yName" xml:space="preserve"><value>Window Backdrop Material</value></data>
-  <data name="Settings_Appearance_DynamicAccent_A11yName" xml:space="preserve"><value>Dynamic Album Art Accent</value></data>
-  <data name="Settings_Appearance_Accent_A11yName" xml:space="preserve"><value>Accent Color Presets</value></data>
-  <data name="Settings_Appearance_CustomAccent_A11yName" xml:space="preserve"><value>Custom Accent Color</value></data>
-  <data name="Settings_Layout_CoverSize_A11yName" xml:space="preserve"><value>Default Album Cover Size</value></data>
+  <data name="Settings_Audio_Driver_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Audio Output Driver</value></data>
+  <data name="Settings_Audio_Device_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Output Device</value></data>
+  <data name="Settings_Audio_BitDepth_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Exclusive Mode Bit Depth</value></data>
+  <data name="Settings_Audio_RateMismatch_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Sample rate mismatch handling (exclusive mode)</value></data>
+  <data name="Settings_Audio_DsdMode_A11yName.AutomationProperties.Name" xml:space="preserve"><value>DSD playback mode (DSF/DFF)</value></data>
+  <data name="Settings_Audio_AllowVolume_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Allow Volume / ReplayGain in Exclusive Mode</value></data>
+  <data name="Settings_Audio_Latency_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Output Buffer Latency</value></data>
+  <data name="Settings_Eq_Profile_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Select Profile to Edit</value></data>
+  <data name="Settings_Eq_Preamp_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Preamp</value></data>
+  <data name="Settings_Eq_TargetDevice_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Target Audio Output Device</value></data>
+  <data name="Settings_Eq_BoundProfile_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Profile Bound to Device</value></data>
+  <data name="Settings_Playback_NormMode_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Normalization Mode</value></data>
+  <data name="Settings_Playback_TargetLevel_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Target Volume Level</value></data>
+  <data name="Settings_Playback_MaxBoost_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Max Boost Limit</value></data>
+  <data name="Settings_Playback_Speed_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Response Speed</value></data>
+  <data name="Settings_Playback_ReplayGain_A11yName.AutomationProperties.Name" xml:space="preserve"><value>ReplayGain Mode</value></data>
+  <data name="Settings_Playback_RgPreamp_A11yName.AutomationProperties.Name" xml:space="preserve"><value>ReplayGain Preamp</value></data>
+  <data name="Settings_Playback_PreventClipping_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Prevent Clipping</value></data>
+  <data name="Settings_Playback_CrossfeedStrength_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Crossfeed Strength</value></data>
+  <data name="Settings_Library_StartupScan_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Scan on Startup</value></data>
+  <data name="Settings_Library_Rg_R128_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Also write ReplayGain 2.0 (R128_*) tags</value></data>
+  <data name="Settings_Lyrics_Font_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Lyrics Font Family</value></data>
+  <data name="Settings_Lyrics_FontSize_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Base Lyrics Font Size</value></data>
+  <data name="Settings_Lyrics_ActiveFontSize_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Active Lyrics Font Size</value></data>
+  <data name="Settings_Lyrics_CharSpacing_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Character Spacing</value></data>
+  <data name="Settings_Lyrics_LineHeight_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Line Height</value></data>
+  <data name="Settings_Lyrics_Alignment_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Text Alignment</value></data>
+  <data name="Settings_Lyrics_FocusDimming_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Focus Dimming Effect</value></data>
+  <data name="Settings_Lyrics_Embedded_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Read Embedded Lyrics</value></data>
+  <data name="Settings_Lyrics_LrcPattern_A11yName.AutomationProperties.Name" xml:space="preserve"><value>.lrc File Search Patterns</value></data>
+  <data name="Settings_OnlineLyrics_SaveLoc_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Save Location</value></data>
+  <data name="Settings_OnlineLyrics_Template_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Filename Template</value></data>
+  <data name="Settings_Appearance_Lang_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Language</value></data>
+  <data name="Settings_Appearance_Tray_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Close to Tray</value></data>
+  <data name="Settings_Appearance_Motion_A11yName.AutomationProperties.Name" xml:space="preserve"><value>UI Motion</value></data>
+  <data name="Settings_Appearance_FsAcrylic_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Full-screen Acrylic</value></data>
+  <data name="Settings_Appearance_Theme_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Theme Mode</value></data>
+  <data name="Settings_Appearance_Backdrop_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Window Backdrop Material</value></data>
+  <data name="Settings_Appearance_DynamicAccent_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Dynamic Album Art Accent</value></data>
+  <data name="Settings_Appearance_Accent_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Accent Color Presets</value></data>
+  <data name="Settings_Appearance_CustomAccent_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Custom Accent Color</value></data>
+  <data name="Settings_Layout_CoverSize_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Default Album Cover Size</value></data>
   <data name="Msg_DeletePlaylistMessage" xml:space="preserve"><value>Delete '{0}'? This cannot be undone.</value></data>
   <data name="Msg_DeletePlaylistConfirm" xml:space="preserve"><value>Delete</value></data>
   <data name="Network_Radio_DeleteTitle" xml:space="preserve"><value>Delete station</value></data>
@@ -804,8 +804,8 @@
   <data name="Settings_Layout_Reset_Title.Text" xml:space="preserve"><value>Reset Sidebar Layout</value></data>
   <data name="Settings_Layout_Reset_Desc.Text" xml:space="preserve"><value>Reset left/right sidebars and lyrics panel widths to default values</value></data>
   <data name="Settings_Layout_Reset_Button.Content" xml:space="preserve"><value>Reset Layout</value></data>
-  <data name="Settings_Layout_Rating_Title" xml:space="preserve"><value>Now Playing bar rating button</value></data>
-  <data name="Settings_Layout_Rating_Desc" xml:space="preserve"><value>Show the star-rating button for the playing track on the bottom bar</value></data>
+  <data name="Settings_Layout_Rating_Title.Text" xml:space="preserve"><value>Now Playing bar rating button</value></data>
+  <data name="Settings_Layout_Rating_Desc.Text" xml:space="preserve"><value>Show the star-rating button for the playing track on the bottom bar</value></data>
   <data name="Settings_Layout_Rating_Toggle.OnContent" xml:space="preserve"><value>Show</value></data>
   <data name="MainWindow_Caption_Minimize.AutomationProperties.Name" xml:space="preserve"><value>Minimize</value></data>
   <data name="MainWindow_Caption_Minimize.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Minimize</value></data>
@@ -942,7 +942,7 @@
   <data name="Network_Dlna_Unplayable" xml:space="preserve"><value>No playable audio format available.</value></data>
   <data name="Network_Radio_PlayingBadge.Text" xml:space="preserve"><value>Playing</value></data>
   <data name="Network_Radio_Connecting" xml:space="preserve"><value>Connecting: {0}</value></data>
-  <data name="Network_Dlna_Preparing" xml:space="preserve"><value>Preparing playback… the whole file is downloaded before it plays</value></data>
+  <data name="Network_Dlna_Preparing.Text" xml:space="preserve"><value>Preparing playback… the whole file is downloaded before it plays</value></data>
   <data name="Network_Dlna_Retry.Content" xml:space="preserve"><value>Retry</value></data>
   <data name="Network_Section_YouTube.Text" xml:space="preserve"><value>YouTube</value></data>
   <data name="Network_YouTube_Header.Text" xml:space="preserve"><value>YouTube playback</value></data>

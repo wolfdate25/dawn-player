@@ -42,11 +42,19 @@ public sealed class MrtLocalizationService : LocalizationServiceBase
     {
         if (string.IsNullOrEmpty(key)) return null;
 
+        // Resw names nest at the dot ("Foo.Text" becomes PRI path Resources/Foo/Text) and MRT
+        // lookups address that nesting with slashes — windows-app-sdk localize-strings docs:
+        // "replace dots with forward slash ("/") characters in the resource name". Callers
+        // quote the key exactly as the resw catalog spells it. Verified 2026-10-04 with a
+        // ResourceLoader probe against DawnPlayer.App.pri: the dotted form throws
+        // NamedResourceNotFound, the slash form resolves.
+        var path = key.Replace('.', '/');
+
         try
         {
-            var value = _loader.GetString(key);
-            // GetString echoes the key (or returns empty) when the candidate is missing.
-            if (string.IsNullOrEmpty(value) || string.Equals(value, key, StringComparison.Ordinal))
+            var value = _loader.GetString(path);
+            // GetString echoes the requested path (or returns empty) when the candidate is missing.
+            if (string.IsNullOrEmpty(value) || string.Equals(value, path, StringComparison.Ordinal))
             {
                 return null;
             }

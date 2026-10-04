@@ -449,7 +449,7 @@ public sealed partial class MainWindow : Window
 
         // Header carries the live state ("수면 타이머 · 30분 (28:41)") so the countdown is visible
         // before committing to an option.
-        var header = AppStrings.Get("MainWindow_Menu_SleepTimer", "수면 타이머");
+        var header = AppStrings.Get("MainWindow_Menu_SleepTimer.Text", "수면 타이머");
         SleepTimerMenu.Text = active == SleepTimerOption.Off ? header : $"{header} · {AppServices.SleepTimer.DescribeActive()}";
     }
 

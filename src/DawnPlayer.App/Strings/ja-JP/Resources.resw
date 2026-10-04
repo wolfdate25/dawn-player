@@ -42,12 +42,12 @@
   <data name="MainWindow_TitleMenuButton.AutomationProperties.Name" xml:space="preserve"><value>メニュー</value></data>
   <data name="MainWindow_TitleMenuButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>メニュー</value></data>
   <data name="MainWindow_Menu_Rescan.Text" xml:space="preserve"><value>ライブラリを再スキャン</value></data>
-  <data name="MainWindow_Menu_SleepTimer" xml:space="preserve"><value>スリープタイマー</value></data>
-  <data name="MainWindow_Menu_Sleep_Off" xml:space="preserve"><value>オフ</value></data>
-  <data name="MainWindow_Menu_Sleep_15" xml:space="preserve"><value>15分</value></data>
-  <data name="MainWindow_Menu_Sleep_30" xml:space="preserve"><value>30分</value></data>
-  <data name="MainWindow_Menu_Sleep_60" xml:space="preserve"><value>1時間</value></data>
-  <data name="MainWindow_Menu_Sleep_Track" xml:space="preserve"><value>現在の曲の後</value></data>
+  <data name="MainWindow_Menu_SleepTimer.Text" xml:space="preserve"><value>スリープタイマー</value></data>
+  <data name="MainWindow_Menu_Sleep_Off.Text" xml:space="preserve"><value>オフ</value></data>
+  <data name="MainWindow_Menu_Sleep_15.Text" xml:space="preserve"><value>15分</value></data>
+  <data name="MainWindow_Menu_Sleep_30.Text" xml:space="preserve"><value>30分</value></data>
+  <data name="MainWindow_Menu_Sleep_60.Text" xml:space="preserve"><value>1時間</value></data>
+  <data name="MainWindow_Menu_Sleep_Track.Text" xml:space="preserve"><value>現在の曲の後</value></data>
   <data name="MainWindow_Menu_Sleep_RemainingFormat" xml:space="preserve"><value>{0} ({1:mm\:ss})</value></data>
   <data name="MainWindow_Menu_Exit.Text" xml:space="preserve"><value>終了</value></data>
   <data name="MainWindow_TitleBarTrack.Text" xml:space="preserve"><value>再生中の曲はありません</value></data>
@@ -446,48 +446,48 @@
   <data name="Msg_ExportedPlaylist" xml:space="preserve"><value>'{0}' にエクスポートしました。</value></data>
   <data name="Settings_Lastfm_ApiKeyBox.Header" xml:space="preserve"><value>APIキー</value></data>
   <data name="Settings_Lastfm_ApiSecretBox.Header" xml:space="preserve"><value>共有シークレット</value></data>
-  <data name="Settings_Audio_Driver_A11yName" xml:space="preserve"><value>オーディオ出力ドライバー</value></data>
-  <data name="Settings_Audio_Device_A11yName" xml:space="preserve"><value>出力デバイス (Device)</value></data>
-  <data name="Settings_Audio_BitDepth_A11yName" xml:space="preserve"><value>排他モードのビット深度</value></data>
-  <data name="Settings_Audio_RateMismatch_A11yName" xml:space="preserve"><value>サンプルレート不一致の処理 (排他モード)</value></data>
-  <data name="Settings_Audio_DsdMode_A11yName" xml:space="preserve"><value>DSD再生方式 (DSF/DFF)</value></data>
-  <data name="Settings_Audio_AllowVolume_A11yName" xml:space="preserve"><value>排他モードでの音量/ReplayGainを許可</value></data>
-  <data name="Settings_Audio_Latency_A11yName" xml:space="preserve"><value>出力バッファサイズ (Latency)</value></data>
-  <data name="Settings_Eq_Profile_A11yName" xml:space="preserve"><value>編集するプロファイルを選択</value></data>
-  <data name="Settings_Eq_Preamp_A11yName" xml:space="preserve"><value>プリアンプ (Preamp)</value></data>
-  <data name="Settings_Eq_TargetDevice_A11yName" xml:space="preserve"><value>対象オーディオ出力デバイス</value></data>
-  <data name="Settings_Eq_BoundProfile_A11yName" xml:space="preserve"><value>このデバイスに関連付けられたプロファイル</value></data>
-  <data name="Settings_Playback_NormMode_A11yName" xml:space="preserve"><value>ノーマライズ動作モード</value></data>
-  <data name="Settings_Playback_TargetLevel_A11yName" xml:space="preserve"><value>目標音量レベル (Target Level)</value></data>
-  <data name="Settings_Playback_MaxBoost_A11yName" xml:space="preserve"><value>最大増幅限界 (Max Boost Limit)</value></data>
-  <data name="Settings_Playback_Speed_A11yName" xml:space="preserve"><value>応答速度 (Response Speed)</value></data>
-  <data name="Settings_Playback_ReplayGain_A11yName" xml:space="preserve"><value>ReplayGain モード</value></data>
-  <data name="Settings_Playback_RgPreamp_A11yName" xml:space="preserve"><value>ReplayGain プリアンプ (Preamp)</value></data>
-  <data name="Settings_Playback_PreventClipping_A11yName" xml:space="preserve"><value>クリッピング防止 (Prevent Clipping)</value></data>
-  <data name="Settings_Playback_CrossfeedStrength_A11yName" xml:space="preserve"><value>クロスフィード強度</value></data>
-  <data name="Settings_Library_StartupScan_A11yName" xml:space="preserve"><value>起動時に自動スキャン</value></data>
-  <data name="Settings_Library_Rg_R128_A11yName" xml:space="preserve"><value>ReplayGain 2.0 タグ (R128_*) も書き込む</value></data>
-  <data name="Settings_Lyrics_Font_A11yName" xml:space="preserve"><value>歌詞フォント (Font Family)</value></data>
-  <data name="Settings_Lyrics_FontSize_A11yName" xml:space="preserve"><value>基本歌詞フォントサイズ</value></data>
-  <data name="Settings_Lyrics_ActiveFontSize_A11yName" xml:space="preserve"><value>再生中の強調歌詞サイズ</value></data>
-  <data name="Settings_Lyrics_CharSpacing_A11yName" xml:space="preserve"><value>文字間隔 (Character Spacing)</value></data>
-  <data name="Settings_Lyrics_LineHeight_A11yName" xml:space="preserve"><value>行の高さ (Line Height)</value></data>
-  <data name="Settings_Lyrics_Alignment_A11yName" xml:space="preserve"><value>歌詞の配置方法</value></data>
-  <data name="Settings_Lyrics_FocusDimming_A11yName" xml:space="preserve"><value>歌詞フォーカス演出 (Focus Dimming)</value></data>
-  <data name="Settings_Lyrics_Embedded_A11yName" xml:space="preserve"><value>音源内蔵歌詞(Embedded Lyrics)の自動読み込み</value></data>
-  <data name="Settings_Lyrics_LrcPattern_A11yName" xml:space="preserve"><value>.lrc ファイル検索パターン</value></data>
-  <data name="Settings_OnlineLyrics_SaveLoc_A11yName" xml:space="preserve"><value>保存場所</value></data>
-  <data name="Settings_OnlineLyrics_Template_A11yName" xml:space="preserve"><value>ファイル名テンプレート</value></data>
-  <data name="Settings_Appearance_Lang_A11yName" xml:space="preserve"><value>言語 (Language)</value></data>
-  <data name="Settings_Appearance_Tray_A11yName" xml:space="preserve"><value>トレイに格納 (Close to Tray)</value></data>
-  <data name="Settings_Appearance_Motion_A11yName" xml:space="preserve"><value>UI モーション (UI Motion)</value></data>
-  <data name="Settings_Appearance_FsAcrylic_A11yName" xml:space="preserve"><value>フルスクリーン アクリル</value></data>
-  <data name="Settings_Appearance_Theme_A11yName" xml:space="preserve"><value>テーマモード</value></data>
-  <data name="Settings_Appearance_Backdrop_A11yName" xml:space="preserve"><value>ウィンドウ背景マテリアル (Backdrop)</value></data>
-  <data name="Settings_Appearance_DynamicAccent_A11yName" xml:space="preserve"><value>アルバムアート動的テーマ (Dynamic Theme)</value></data>
-  <data name="Settings_Appearance_Accent_A11yName" xml:space="preserve"><value>アクセントカラー プリセット</value></data>
-  <data name="Settings_Appearance_CustomAccent_A11yName" xml:space="preserve"><value>カスタム アクセントカラー</value></data>
-  <data name="Settings_Layout_CoverSize_A11yName" xml:space="preserve"><value>アルバムジャケット基本サイズ</value></data>
+  <data name="Settings_Audio_Driver_A11yName.AutomationProperties.Name" xml:space="preserve"><value>オーディオ出力ドライバー</value></data>
+  <data name="Settings_Audio_Device_A11yName.AutomationProperties.Name" xml:space="preserve"><value>出力デバイス (Device)</value></data>
+  <data name="Settings_Audio_BitDepth_A11yName.AutomationProperties.Name" xml:space="preserve"><value>排他モードのビット深度</value></data>
+  <data name="Settings_Audio_RateMismatch_A11yName.AutomationProperties.Name" xml:space="preserve"><value>サンプルレート不一致の処理 (排他モード)</value></data>
+  <data name="Settings_Audio_DsdMode_A11yName.AutomationProperties.Name" xml:space="preserve"><value>DSD再生方式 (DSF/DFF)</value></data>
+  <data name="Settings_Audio_AllowVolume_A11yName.AutomationProperties.Name" xml:space="preserve"><value>排他モードでの音量/ReplayGainを許可</value></data>
+  <data name="Settings_Audio_Latency_A11yName.AutomationProperties.Name" xml:space="preserve"><value>出力バッファサイズ (Latency)</value></data>
+  <data name="Settings_Eq_Profile_A11yName.AutomationProperties.Name" xml:space="preserve"><value>編集するプロファイルを選択</value></data>
+  <data name="Settings_Eq_Preamp_A11yName.AutomationProperties.Name" xml:space="preserve"><value>プリアンプ (Preamp)</value></data>
+  <data name="Settings_Eq_TargetDevice_A11yName.AutomationProperties.Name" xml:space="preserve"><value>対象オーディオ出力デバイス</value></data>
+  <data name="Settings_Eq_BoundProfile_A11yName.AutomationProperties.Name" xml:space="preserve"><value>このデバイスに関連付けられたプロファイル</value></data>
+  <data name="Settings_Playback_NormMode_A11yName.AutomationProperties.Name" xml:space="preserve"><value>ノーマライズ動作モード</value></data>
+  <data name="Settings_Playback_TargetLevel_A11yName.AutomationProperties.Name" xml:space="preserve"><value>目標音量レベル (Target Level)</value></data>
+  <data name="Settings_Playback_MaxBoost_A11yName.AutomationProperties.Name" xml:space="preserve"><value>最大増幅限界 (Max Boost Limit)</value></data>
+  <data name="Settings_Playback_Speed_A11yName.AutomationProperties.Name" xml:space="preserve"><value>応答速度 (Response Speed)</value></data>
+  <data name="Settings_Playback_ReplayGain_A11yName.AutomationProperties.Name" xml:space="preserve"><value>ReplayGain モード</value></data>
+  <data name="Settings_Playback_RgPreamp_A11yName.AutomationProperties.Name" xml:space="preserve"><value>ReplayGain プリアンプ (Preamp)</value></data>
+  <data name="Settings_Playback_PreventClipping_A11yName.AutomationProperties.Name" xml:space="preserve"><value>クリッピング防止 (Prevent Clipping)</value></data>
+  <data name="Settings_Playback_CrossfeedStrength_A11yName.AutomationProperties.Name" xml:space="preserve"><value>クロスフィード強度</value></data>
+  <data name="Settings_Library_StartupScan_A11yName.AutomationProperties.Name" xml:space="preserve"><value>起動時に自動スキャン</value></data>
+  <data name="Settings_Library_Rg_R128_A11yName.AutomationProperties.Name" xml:space="preserve"><value>ReplayGain 2.0 タグ (R128_*) も書き込む</value></data>
+  <data name="Settings_Lyrics_Font_A11yName.AutomationProperties.Name" xml:space="preserve"><value>歌詞フォント (Font Family)</value></data>
+  <data name="Settings_Lyrics_FontSize_A11yName.AutomationProperties.Name" xml:space="preserve"><value>基本歌詞フォントサイズ</value></data>
+  <data name="Settings_Lyrics_ActiveFontSize_A11yName.AutomationProperties.Name" xml:space="preserve"><value>再生中の強調歌詞サイズ</value></data>
+  <data name="Settings_Lyrics_CharSpacing_A11yName.AutomationProperties.Name" xml:space="preserve"><value>文字間隔 (Character Spacing)</value></data>
+  <data name="Settings_Lyrics_LineHeight_A11yName.AutomationProperties.Name" xml:space="preserve"><value>行の高さ (Line Height)</value></data>
+  <data name="Settings_Lyrics_Alignment_A11yName.AutomationProperties.Name" xml:space="preserve"><value>歌詞の配置方法</value></data>
+  <data name="Settings_Lyrics_FocusDimming_A11yName.AutomationProperties.Name" xml:space="preserve"><value>歌詞フォーカス演出 (Focus Dimming)</value></data>
+  <data name="Settings_Lyrics_Embedded_A11yName.AutomationProperties.Name" xml:space="preserve"><value>音源内蔵歌詞(Embedded Lyrics)の自動読み込み</value></data>
+  <data name="Settings_Lyrics_LrcPattern_A11yName.AutomationProperties.Name" xml:space="preserve"><value>.lrc ファイル検索パターン</value></data>
+  <data name="Settings_OnlineLyrics_SaveLoc_A11yName.AutomationProperties.Name" xml:space="preserve"><value>保存場所</value></data>
+  <data name="Settings_OnlineLyrics_Template_A11yName.AutomationProperties.Name" xml:space="preserve"><value>ファイル名テンプレート</value></data>
+  <data name="Settings_Appearance_Lang_A11yName.AutomationProperties.Name" xml:space="preserve"><value>言語 (Language)</value></data>
+  <data name="Settings_Appearance_Tray_A11yName.AutomationProperties.Name" xml:space="preserve"><value>トレイに格納 (Close to Tray)</value></data>
+  <data name="Settings_Appearance_Motion_A11yName.AutomationProperties.Name" xml:space="preserve"><value>UI モーション (UI Motion)</value></data>
+  <data name="Settings_Appearance_FsAcrylic_A11yName.AutomationProperties.Name" xml:space="preserve"><value>フルスクリーン アクリル</value></data>
+  <data name="Settings_Appearance_Theme_A11yName.AutomationProperties.Name" xml:space="preserve"><value>テーマモード</value></data>
+  <data name="Settings_Appearance_Backdrop_A11yName.AutomationProperties.Name" xml:space="preserve"><value>ウィンドウ背景マテリアル (Backdrop)</value></data>
+  <data name="Settings_Appearance_DynamicAccent_A11yName.AutomationProperties.Name" xml:space="preserve"><value>アルバムアート動的テーマ (Dynamic Theme)</value></data>
+  <data name="Settings_Appearance_Accent_A11yName.AutomationProperties.Name" xml:space="preserve"><value>アクセントカラー プリセット</value></data>
+  <data name="Settings_Appearance_CustomAccent_A11yName.AutomationProperties.Name" xml:space="preserve"><value>カスタム アクセントカラー</value></data>
+  <data name="Settings_Layout_CoverSize_A11yName.AutomationProperties.Name" xml:space="preserve"><value>アルバムジャケット基本サイズ</value></data>
   <data name="Msg_DeletePlaylistMessage" xml:space="preserve"><value>'{0}'を削除しますか？この操作は元に戻せません。</value></data>
   <data name="Msg_DeletePlaylistConfirm" xml:space="preserve"><value>削除</value></data>
   <data name="Network_Radio_DeleteTitle" xml:space="preserve"><value>ステーションの削除</value></data>
@@ -804,8 +804,8 @@
   <data name="Settings_Layout_Reset_Title.Text" xml:space="preserve"><value>サイドバーレイアウトの初期化</value></data>
   <data name="Settings_Layout_Reset_Desc.Text" xml:space="preserve"><value>左右のサイドバーおよび歌詞パネルの幅をデフォルト値に復元</value></data>
   <data name="Settings_Layout_Reset_Button.Content" xml:space="preserve"><value>レイアウトの初期化</value></data>
-  <data name="Settings_Layout_Rating_Title" xml:space="preserve"><value>下バーの評価ボタン</value></data>
-  <data name="Settings_Layout_Rating_Desc" xml:space="preserve"><value>再生トラックのスター評価ボタンを下バーに表示</value></data>
+  <data name="Settings_Layout_Rating_Title.Text" xml:space="preserve"><value>下バーの評価ボタン</value></data>
+  <data name="Settings_Layout_Rating_Desc.Text" xml:space="preserve"><value>再生トラックのスター評価ボタンを下バーに表示</value></data>
   <data name="Settings_Layout_Rating_Toggle.OnContent" xml:space="preserve"><value>表示</value></data>
   <data name="MainWindow_Caption_Minimize.AutomationProperties.Name" xml:space="preserve"><value>最小化</value></data>
   <data name="MainWindow_Caption_Minimize.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>最小化</value></data>
@@ -942,7 +942,7 @@
   <data name="Network_Dlna_Unplayable" xml:space="preserve"><value>再生可能なオーディオ形式がありません。</value></data>
   <data name="Network_Radio_PlayingBadge.Text" xml:space="preserve"><value>再生中</value></data>
   <data name="Network_Radio_Connecting" xml:space="preserve"><value>接続中: {0}</value></data>
-  <data name="Network_Dlna_Preparing" xml:space="preserve"><value>再生準備中… ファイルをすべてダウンロードしてから再生します</value></data>
+  <data name="Network_Dlna_Preparing.Text" xml:space="preserve"><value>再生準備中… ファイルをすべてダウンロードしてから再生します</value></data>
   <data name="Network_Dlna_Retry.Content" xml:space="preserve"><value>再試行</value></data>
   <data name="Network_Section_YouTube.Text" xml:space="preserve"><value>YouTube</value></data>
   <data name="Network_YouTube_Header.Text" xml:space="preserve"><value>YouTube再生</value></data>

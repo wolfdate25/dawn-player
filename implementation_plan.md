@@ -1205,3 +1205,63 @@ kind=Dlna — 인프라 그대로), 재생목록 편집 무결성, 콜드 리빌
 | 빌드·스위트 | 클린 리빌드 **0경고 0오류**, 전체 스위트 **2,199/2,199**(신규 3종 반영 — 1차 실행의 1건 실패는 병렬 부하 플레이크: E2E 격리 2/2 + 재실행 전수 그린으로 판별) | 2026-10-04 실측 |
 | 실행 검증 | Network 페이지 Radio/DLNA/YouTube 전환 캡처 — 세 헤더 모두 제목 동일 x/y, 메타+액션 우측 끝 동일 앵커, DLNA 첫 방문 지연 활성화·자동 스캔 정상 | 컴퓨터 사용 캡처 |
 | 미확인 | Light 테마 렌더, 좁은 폭에서 긴 지역화 문자열(독일어류) 헤더 줄바꿈 동작 | — |
+
+### ARM64(win-arm64) 지원 (2026-10-04 질의 → 조사 보고 → 승인·구현 — **커밋 대기**)
+
+> 사용자 질의("arm64 지원 작업 가능해?") → 조사 결과 보고 → 승인 후 구현. 조사 결론: 소스 P/Invoke는
+> user32/gdi32/kernel32/shell32/comctl32뿐(ARM64 Windows 네이티브 탑재 시스템 DLL, x64와 포인터
+> 크기 동일), 벤더링 NAudio 패치 패키지는 순수 관리형(lib/net9.0만 존재), Microsoft.Data.Sqlite는
+> win-arm64 e_sqlite3 네이티브를 포함한 SQLitePCLRaw 번들 사용, WASDK 2.5.1·.NET 10
+> self-contained 모두 win-arm64 지원, 네이티브 종속이 있는 NAudio.Asio는 미사용 — **C# 코드 변경
+> 없이 빌드 구성·스크립트·CI만으로 지원 가능**. Inno Setup은 문서 원본(isetup.xml Architecture
+> Identifiers)에서 사양 확정: `arm64`는 "Arm64 Windows 실행 시스템", `x64compatible`는 "x64 바이너리
+> 실행 가능 시스템(x64 Windows + ARM64 W11 에뮬레이션)". ISPP는 #if/#elif/#error·문자열 `==` 지원.
+
+| 단계 | 내용 | 상태 |
+|---|---|---|
+| 1 | 사전 조사(네이티브 의존성 전수 스캔) + Inno Setup 아키텍처 사양 확정 | 완료 |
+| 2 | App.csproj ARM64 플랫폼·RID 추가 + 빌드 스크립트 Platform 파생·ISCC 아키텍처 전달 + iss 매개변수화 | 완료 |
+| 3 | release.yml 3-잡 재구성(validate → build 매트릭스 → release 병합) + ci.yml windows-11-arm 잡·드라이런 매트릭스 | 완료 |
+| 4 | 로컬 검증: 클린 win-arm64 publish PE 머신 검사 + win-x64 회귀 + 전체 스위트 | 완료 |
+
+**실행 기록 (2026-10-04 — 커밋 대기)**
+
+| 항목 | 내용 | 검증 |
+|---|---|---|
+| App.csproj | `Platforms` x64→x64;ARM64, `RuntimeIdentifiers` win-x64→win-x64;win-arm64, `RuntimeIdentifier`는 조건부 기본값(win-x64) — `-r win-arm64 -p:Platform=ARM64` 오버라이드 경로 확보 | 클린 퍼블리시 2회 성공 |
+| build-installer.ps1 | `-Runtime` 검증(win-x64/win-arm64 외 Write-Error), Platform(x64/ARM64)·Arch(x64/arm64) 파생, publish 인자에 `-p:Platform` 추가, ISCC에 `/DMyAppArch` 전달, 인스톨러 검증 경로 `-{arch}.exe`, SHA256SUMS를 LF+UTF-8 no BOM으로 정규화(기존 WriteAllLines의 CRLF는 Linux `sha256sum -c`에서 파일명 오류 유발) | 파서 0오류, 양쪽 아키텍처 종단 실행 |
+| DawnPlayer.iss | `MyAppArch` 매개변수화(ISPP) — arm64: `ArchitecturesAllowed`/`ArchitecturesInstallIn64BitMode`=`arm64`, x64: `x64compatible`(현행 유지), `OutputBaseFilename=…-{#MyAppArch}`. Setup 스텁 자체는 기본(32비트 x86, ARM64에서 x86 에뮬레이션) 유지 — 64비트 설치 모드가 ARM64 네이티브 Program Files/HKLM 해석 | ISCC 6.7.3에서 양쪽 아키텍처 컴파일 성공(성공 메시지+파일명 확인) |
+| release.yml | 단일 잡 → 3-잡: validate(Release 빌드+전체 테스트·재시도, x64) → build(매트릭스 win-x64/win-arm64, 각자 인스톨러+ZIP+체크섬 업로드) → release(ubuntu, 아티팩트 병합·SHA256SUMS 통합·릴리스 게시 5파일[x64/arm64 인스톨러·ZIP+체크섬]) | YAML 재구성(푸시 후 CI 1회 검증 대상) |
+| ci.yml | `test-arm64` 잡 신설(windows-11-arm 무료 호스티드 러너 — public 저장소 대상, Release 빌드+전체 테스트, 릴리스와 동일 2회 재시도 계약) + `package-dry-run` 매트릭스화(win-x64/win-arm64 — ARM64 크로스 퍼블리시를 매 푸시에 검증, 아티팩트 명명 `dawnplayer-ci-build-{runtime}`) | 동일 |
+| 로컬 검증 | 클린 win-arm64 publish — DawnPlayer.App.exe·coreclr.dll·hostfxr.dll·e_sqlite3.dll·Microsoft.WindowsAppRuntime.Bootstrap.dll·Microsoft.ui.xaml.dll 전부 PE Machine=ARM64 확인, **0경고 0오류**. 클린 win-x64 전체 패키징 회귀 — **0경고 0오류**, `-x64.exe` 명명 유지. SHA256SUMS LF·BOM 없음 확인 | 2026-10-04 실측 |
+| 산출물(로컬 시험) | win-arm64: 포터블 ZIP 104.4MB + 인스톨러 67.9MB / win-x64: ZIP 108.0MB + 인스톨러 71.3MB | dist/ |
+| 전체 스위트 | Release 전체 실행 **2,199/2,199 통과**(0경고 0오류) — C# 소스 무변경이므로 신규 테스트 없음 | 2026-10-04 |
+| 미확인 | **ARM64 실기기 실행·청음**(로컬 x64 호스트로 불가) — windows-11-arm CI 러너 테스트가 빌드·로직을 대체 검증하고, WASAPI 출력·DSD는 ARM64 실기기에서 최종 확인 필요 | — |
+
+### 하단바 평점 설정 다국어 누락 → x:Uid 베어 키 + MRT 점 조회 결함 전수 수리 (2026-10-04, 사용자 보고 — 커밋 대기)
+
+- 보고: 설정 "레이아웃 & 디스플레이"의 "하단바 평점 버튼" 행(토글·설명)이 영어·일본어 UI에서도
+  한국어로 표시.
+- 원인 1(x:Uid 베어 키): `Settings_Layout_Rating_Title/_Desc`가 resw에 속성 접미사 없는 베어 키로
+  등록됨 — x:Uid 파이프라인은 `<uid>.<속성>` 항목만 요소에 적용하므로 XAML 하드코딩 한국어가 세
+  언어 모두에서 그대로 노출. 전수 스캔으로 동일 결함 총 51건 확인: 수면 타이머 메뉴 6·DLNA 재생
+  준비 문구 1·평점 설정 행 2·`*_A11yName` 42(후자는 스크린리더 자동명이 아예 미적용 상태).
+- 원인 2(MRT 점 조회): `AppStrings.Get("....Text")` 형태의 기존 호출 11곳(라이브러리 헤더 5·
+  플레이리스트 평점 메뉴·빈 트랙 문구·L15 평점 플라이아웃 별 자동명·타이틀바 텍스트·설정 톱니
+  툴팁·창 제목)이 `ResourceLoader.GetString`에 점 키를 그대로 넘기는데, MRT는 네스티드 키를
+  슬래시로만 조회한다. **DawnPlayer.App.pri 프로브 실험으로 확정**: 점 형태는 NamedResourceNotFound
+  예외 → 서비스가 null 반환 → 하드코딩 폴백 (windows-app-sdk localize-strings 문서 "replace dots
+  with forward slash"). 즉 11곳도 전부 조용히 폴백으로 동작하고 있었음.
+- 수리: ① resw 3개 국어 51건 속성 접미사화(`.Text`/`.AutomationProperties.Name`). 코드 조회와 공유
+  돼 베어 키를 유지하던 3건은 베어+`.Text` 병기 시도가 PRI175("entity defined as both resource and
+  scope") 빌드 실패를 유발 — 전면 `.Text`화로 해소(빌드 실패가 원인 2의 실증이 되기도 함).
+  ② `MrtLocalizationService.GetExact`에 점→슬래시 번역 1곳 추가 — 호출부는 resw 표기 그대로 인용,
+  기존 11곳은 호출부 무수정으로 자동 수리. ③ 수면 타이머 조회 4곳을 `.Text` 표기로 전환(플라이아웃
+  카운트다운 헤더까지 단일 출처화). ④ `Xaml_XUid_Values_HaveApplicablePropertyEntries` 게이트 신설 —
+  접미사 없는 uid 재유입을 빌드 때 적색화(기존 베이스명 게이트는 베어 키를 히트로 보고 못 잡았음).
+- 게이트: 클린 리빌드 0경고 0오류, LocalizationTests 15/15, 전체 스위트 **2,200/2,200**(신규 게이트
+  1건 반영), 프로브 재검증 — 수면 타이머 6건 + 기존 11건이 슬래시 형태로 en-US 값 전부 조회 성공.
+- 실행 검증: settings.json Language=EnUS로 앱 기동(CUA) — 설정 "Layout & Sizing"에 **"Now Playing
+  bar rating button"/"Show the star-rating button…"** 영문 노출 확인, 메뉴 Sleep Timer 하위
+  "Off/15 min/30 min/1 hour/After current track" 전부 영문 확인, 타이틀바 "No sound — Nothing
+  played"·슬라이더 자동명 "Default Album Cover Size" 적용 확인. 검증 후 settings.json 원복.
