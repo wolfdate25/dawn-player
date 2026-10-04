@@ -304,6 +304,28 @@
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 
+    <!-- L13 아웃라인 통일(2026-10-04 변형 A 승인): 섹션·사이드바 헤더 단일 스타일 — 14px SemiBold
+         (DesignTokens FontSubtitle과 동일 값), Italic 없음(사용자 결정). Playlist 사이드바·재생목록
+         제목·앨범 그룹 헤더와 Network 사이드바·Radio/DLNA/YouTube 섹션 헤더가 공용한다.
+         DawnTheme의 다른 텍스트 스타일과 마찬가지로 리터럴 14를 쓴다(DesignTokens가 뒤쪽 머지라
+         StaticResource FontSubtitle은 여기서 해석되지 않는다). -->
+    <Style x:Key="SectionHeaderText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{ThemeResource TextPrimaryBrush}"/>
+    </Style>
+
+    <!-- 헤더 위계 사다리(2026-10-04, L16): 14 SemiBold Primary(섹션, 위 SectionHeaderText) >
+         12 SemiBold Secondary(섹션 안의 그룹·리스트 라벨) > 11.5 SemiBold Tertiary(테이블 컬럼,
+         아래 ColumnHeaderText). YouTube "최근 항목"이 섹션 제목과 동급으로 보이던 위계 붕괴의
+         수정단. 리터럴 12는 SectionHeaderText의 14와 같은 이유(머지 순서상 StaticResource 토큰
+         미해석)다. -->
+    <Style x:Key="GroupHeaderText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{ThemeResource TextSecondaryBrush}"/>
+    </Style>
+
     <!-- ==================== SHARED CONTROL STYLES ==================== -->
 
     <!-- Transport round button -->
@@ -326,7 +348,7 @@
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding" Value="3,1"/>
-        <Setter Property="CornerRadius" Value="3"/>
+        <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="MinWidth" Value="20"/>
         <Setter Property="MinHeight" Value="20"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -531,7 +553,7 @@
     <!-- Eole Album Year Badge Overlay -->
     <Style x:Key="YearBadgeStyle" TargetType="Border">
         <Setter Property="Background" Value="#A6000000"/>
-        <Setter Property="CornerRadius" Value="3"/>
+        <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="Padding" Value="5,1"/>
         <Setter Property="VerticalAlignment" Value="Top"/>
         <Setter Property="HorizontalAlignment" Value="Left"/>
@@ -551,21 +573,6 @@
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 
-    <!-- 커스텀 캡션 버튼 (2026-10-03): 시스템 캡션 대신 앱 토큰으로 그린 ─ □ ✕.
-         46×40 전폭 행 + 호버는 앱 HoverBrush, 닫기 호버는 시스템 관례 빨강(#C42B1C) 유지.
-         Windows 표준 키보드 단축키(Win+↓/↑/D, Alt+F4)는 그대로 동작한다. -->
-    <Style x:Key="CaptionButtonStyle" TargetType="Button">
-        <Setter Property="UseSystemFocusVisuals" Value="False"/>
-        <Setter Property="Width" Value="46"/>
-        <Setter Property="Height" Value="40"/>
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Padding" Value="0"/>
-        <Setter Property="CornerRadius" Value="0"/>
-        <Setter Property="VerticalAlignment" Value="Stretch"/>
-    </Style>
-    <Style x:Key="CaptionCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource CaptionButtonStyle}"/>
-
     <!-- Accent Button Style -->
     <Style x:Key="AccentButtonStyle" TargetType="Button">
         <Setter Property="UseSystemFocusVisuals" Value="True"/>
@@ -580,28 +587,41 @@
         <Setter Property="BorderThickness" Value="0"/>
     </Style>
 
-    <!-- Eole Nav Tab Style (Sleek text+icon with bottom active accent underline) -->
-    <Style x:Key="EoleNavTabStyle" TargetType="RadioButton">
+    <!-- 상단바 탭 카드 칩 (2026-10-03 변형 A, 사용자 승인): 사이드바 트리 D 카드형과 같은 언어 —
+         28px 칩·코너 5, 호버 CardHover, 체크 = 선택 틴트(ListViewItemBackgroundSelected — 액센트
+         변경을 따라간다) + DawnAccentText. 밑줄·SemiBold 언어는 은퇴. 네트워크 페이지 섹션 탭
+         (EoleNavTabStyle)은 L13(2026-10-04)에서 데이터 소스 사이드바 전환과 함께 삭제됐다.
+         48px Tall 타이틀바 안에서 세로 중앙. -->
+    <Style x:Key="TitleBarTabStyle" TargetType="RadioButton">
         <Setter Property="UseSystemFocusVisuals" Value="True"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{ThemeResource TextSecondaryBrush}"/>
-        <Setter Property="Padding" Value="14,0"/>
-        <Setter Property="MinHeight" Value="40"/>
-        <Setter Property="VerticalAlignment" Value="Stretch"/>
-        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="CornerRadius" Value="5"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
-                    <Grid Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                    <Grid x:Name="Root"
+                          Background="{TemplateBinding Background}"
+                          CornerRadius="{TemplateBinding CornerRadius}"
+                          Padding="{TemplateBinding Padding}">
+                        <!-- 호버·체크·누름 배경은 반드시 서로 다른 요소를 쓴다 — 한 프로퍼티를
+                             여러 시각 상태가 지정하면 상태 종료 시의 스냅샷 복원이 다른 상태의
+                             쓰기를 덮어써 체크 틴트가 사라진다(2026-10-03 사용자 재보고 결함).
+                             피드백은 배경만 — 트리 카드 행과 동일. -->
+                        <Border x:Name="HoverBackground" Background="{ThemeResource CardHoverBrush}"
+                                Opacity="0" CornerRadius="{TemplateBinding CornerRadius}"/>
+                        <Border x:Name="CheckedBackground" Background="{ThemeResource ListViewItemBackgroundSelected}"
+                                Opacity="0" CornerRadius="{TemplateBinding CornerRadius}"/>
+                        <Border x:Name="PressedBackground" Background="{ThemeResource CardPressedBrush}"
+                                Opacity="0" CornerRadius="{TemplateBinding CornerRadius}"/>
                         <ContentPresenter x:Name="ContentPresenter"
                                           Content="{TemplateBinding Content}"
                                           ContentTemplate="{TemplateBinding ContentTemplate}"
                                           VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                        <!-- Eole Active Indicator Underline (2px) -->
-                        <Border x:Name="ActiveIndicator" Height="2" VerticalAlignment="Bottom"
-                                Background="{ThemeResource DawnAccentBrush}" Opacity="0"
-                                CornerRadius="1"/>
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="CommonStates">
                                 <VisualStateGroup.Transitions>
@@ -611,18 +631,21 @@
                                 <VisualState x:Name="Normal"/>
                                 <VisualState x:Name="PointerOver">
                                     <VisualState.Setters>
-                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextPrimaryBrush}"/>
+                                        <Setter Target="HoverBackground.Opacity" Value="1"/>
                                     </VisualState.Setters>
                                 </VisualState>
-                                <VisualState x:Name="Pressed"/>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="PressedBackground.Opacity" Value="1"/>
+                                    </VisualState.Setters>
+                                </VisualState>
                                 <VisualState x:Name="Disabled"/>
                             </VisualStateGroup>
                             <VisualStateGroup x:Name="CheckStates">
                                 <VisualState x:Name="Checked">
                                     <VisualState.Setters>
-                                        <Setter Target="ActiveIndicator.Opacity" Value="1"/>
-                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextPrimaryBrush}"/>
-                                        <Setter Target="ContentPresenter.FontWeight" Value="SemiBold"/>
+                                        <Setter Target="CheckedBackground.Opacity" Value="1"/>
+                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource DawnAccentTextBrush}"/>
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Unchecked"/>
@@ -643,7 +666,7 @@
         <Setter Property="Padding" Value="8,4"/>
         <Setter Property="MinHeight" Value="24"/>
         <Setter Property="MinWidth" Value="28"/>
-        <Setter Property="CornerRadius" Value="3"/>
+        <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Template">
             <Setter.Value>

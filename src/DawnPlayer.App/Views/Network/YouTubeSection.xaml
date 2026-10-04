@@ -18,23 +18,32 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header: title + dependency badge + single configure entry (re-check happens on open
-             and after every path change, so it needs no dedicated button) -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-            <TextBlock x:Uid="Network_YouTube_Header" Text="YouTube" FontSize="{StaticResource FontTitle}" FontWeight="SemiBold"
-                       Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-            <TextBlock x:Name="DependencyBadge" Text="" FontSize="{StaticResource FontBodySmall}" VerticalAlignment="Center"
+        <!-- Header (L16 공용 계약 — Radio/DLNA와 동일 3존 골격): 아이콘+제목(좌) | 필러 |
+             의존성 배지(우측 메타 클러스터 — Radio 카운트와 같은 자리) | 구성 버튼(우측 끝 앵커).
+             re-check happens on open and after every path change, so it needs no dedicated button -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <FontIcon Glyph="&#xE8F2;" FontSize="14" Foreground="{ThemeResource DawnAccentTextBrush}" VerticalAlignment="Center"/>
+            <TextBlock x:Uid="Network_YouTube_Header" Grid.Column="1" Text="YouTube" Style="{StaticResource SectionHeaderText}"
+                       Margin="8,0,0,0" VerticalAlignment="Center"/>
+            <TextBlock x:Name="DependencyBadge" Grid.Column="2" Text="" FontSize="{StaticResource FontBodySmall}"
+                       VerticalAlignment="Center" Margin="0,0,12,0"
                        Foreground="{ThemeResource TextSecondaryBrush}"/>
-            <Button x:Uid="Network_YouTube_Paths" x:Name="PathsButton" Padding="10,5" CornerRadius="4"
+            <Button x:Uid="Network_YouTube_Paths" x:Name="PathsButton" Grid.Column="3" Padding="10,6" CornerRadius="4"
                     VerticalAlignment="Center">
-                <TextBlock x:Uid="Network_YouTube_PathsText" Text="구성…" FontSize="12"/>
+                <TextBlock x:Uid="Network_YouTube_PathsText" Text="구성…" FontSize="{StaticResource FontBodySmall}"/>
                 <Button.Flyout>
                     <Flyout Placement="Bottom" Opened="OnPathsFlyoutOpened">
                         <StackPanel Width="340" Spacing="10">
                             <TextBlock x:Uid="Network_YouTube_PathsHeader" Text="yt-dlp / ffmpeg 경로"
                                        FontSize="{StaticResource FontSubtitle}" FontWeight="SemiBold"/>
                             <StackPanel Spacing="4">
-                                <TextBlock x:Uid="Network_YouTube_YtDlpLabel" Text="yt-dlp" FontSize="12"
+                                <TextBlock x:Uid="Network_YouTube_YtDlpLabel" Text="yt-dlp" FontSize="{StaticResource FontBodySmall}"
                                            Foreground="{ThemeResource TextSecondaryBrush}"/>
                                 <Grid ColumnSpacing="6">
                                     <Grid.ColumnDefinitions>
@@ -42,17 +51,17 @@
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="YtDlpPathBox" Grid.Column="0" IsReadOnly="True" FontSize="12"/>
+                                    <TextBox x:Name="YtDlpPathBox" Grid.Column="0" IsReadOnly="True" FontSize="{StaticResource FontBodySmall}"/>
                                     <Button x:Uid="Network_YouTube_Browse" Grid.Column="1" Click="OnBrowseYtDlpClick"
-                                            Padding="10,5" CornerRadius="4"/>
+                                            Padding="10,6" CornerRadius="4"/>
                                     <Button x:Uid="Network_YouTube_Default" Grid.Column="2" Click="OnDefaultYtDlpClick"
-                                            Padding="10,5" CornerRadius="4"/>
+                                            Padding="10,6" CornerRadius="4"/>
                                 </Grid>
-                                <TextBlock x:Name="YtDlpRowStatus" Text="" FontSize="11" TextWrapping="Wrap"
+                                <TextBlock x:Name="YtDlpRowStatus" Text="" FontSize="{StaticResource FontCaption}" TextWrapping="Wrap"
                                            Foreground="{ThemeResource TextSecondaryBrush}"/>
                             </StackPanel>
                             <StackPanel Spacing="4">
-                                <TextBlock x:Uid="Network_YouTube_FfmpegLabel" Text="ffmpeg" FontSize="12"
+                                <TextBlock x:Uid="Network_YouTube_FfmpegLabel" Text="ffmpeg" FontSize="{StaticResource FontBodySmall}"
                                            Foreground="{ThemeResource TextSecondaryBrush}"/>
                                 <Grid ColumnSpacing="6">
                                     <Grid.ColumnDefinitions>
@@ -60,26 +69,26 @@
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="FfmpegPathBox" Grid.Column="0" IsReadOnly="True" FontSize="12"/>
+                                    <TextBox x:Name="FfmpegPathBox" Grid.Column="0" IsReadOnly="True" FontSize="{StaticResource FontBodySmall}"/>
                                     <Button x:Uid="Network_YouTube_Browse" Grid.Column="1" Click="OnBrowseFfmpegClick"
-                                            Padding="10,5" CornerRadius="4"/>
+                                            Padding="10,6" CornerRadius="4"/>
                                     <Button x:Uid="Network_YouTube_Default" Grid.Column="2" Click="OnDefaultFfmpegClick"
-                                            Padding="10,5" CornerRadius="4"/>
+                                            Padding="10,6" CornerRadius="4"/>
                                 </Grid>
-                                <TextBlock x:Name="FfmpegRowStatus" Text="" FontSize="11" TextWrapping="Wrap"
+                                <TextBlock x:Name="FfmpegRowStatus" Text="" FontSize="{StaticResource FontCaption}" TextWrapping="Wrap"
                                            Foreground="{ThemeResource TextSecondaryBrush}"/>
                             </StackPanel>
-                            <TextBlock x:Uid="Network_YouTube_PythonNote" Text="" FontSize="11" TextWrapping="Wrap"
+                            <TextBlock x:Uid="Network_YouTube_PythonNote" Text="" FontSize="{StaticResource FontCaption}" TextWrapping="Wrap"
                                        Foreground="{ThemeResource TextTertiaryBrush}"/>
                         </StackPanel>
                     </Flyout>
                 </Button.Flyout>
             </Button>
-        </StackPanel>
+        </Grid>
 
         <!-- URL form: visible label, Enter submits (Play is the default button), live feedback -->
         <StackPanel Grid.Row="1" Spacing="4">
-            <TextBlock x:Uid="Network_YouTube_UrlLabel" Text="YouTube 주소" FontSize="12"
+            <TextBlock x:Uid="Network_YouTube_UrlLabel" Text="YouTube 주소" FontSize="{StaticResource FontBodySmall}"
                        Foreground="{ThemeResource TextSecondaryBrush}"/>
             <Grid ColumnSpacing="6">
                 <Grid.ColumnDefinitions>
@@ -105,15 +114,14 @@
                        Foreground="{ThemeResource TextSecondaryBrush}"/>
         </StackPanel>
 
-        <!-- Recent grid -->
-        <TextBlock Grid.Row="2" x:Uid="Network_YouTube_RecentHeader" Text="최근 항목" FontSize="{StaticResource FontSubtitle}"
-                   FontWeight="SemiBold" Foreground="{ThemeResource TextPrimaryBrush}"/>
+        <!-- Recent grid (L16: 그룹 라벨은 섹션 제목과 동급이면 안 된다 — GroupHeaderText 12 단계) -->
+        <TextBlock Grid.Row="2" x:Uid="Network_YouTube_RecentHeader" Text="최근 항목" Style="{StaticResource GroupHeaderText}"/>
 
         <Grid Grid.Row="3">
-            <StackPanel x:Name="RecentEmpty" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4">
+            <StackPanel x:Name="RecentEmpty" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
                 <FontIcon Glyph="&#xE8D6;" FontSize="28" Foreground="{ThemeResource TextTertiaryBrush}"/>
-                <TextBlock x:Uid="Network_YouTube_RecentEmpty" Text="" FontSize="12" TextWrapping="Wrap"
-                           TextAlignment="Center" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                <TextBlock x:Uid="Network_YouTube_RecentEmpty" Text="" FontSize="{StaticResource FontBodySmall}" TextWrapping="Wrap"
+                           TextAlignment="Center" MaxWidth="380" Foreground="{ThemeResource TextSecondaryBrush}"/>
             </StackPanel>
             <GridView x:Name="RecentGrid" SelectionMode="Single" IsItemClickEnabled="True"
                       ItemClick="OnRecentItemClick" SingleSelectionFollowsFocus="False"
@@ -133,18 +141,18 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            <Grid Grid.Row="0" Height="92" CornerRadius="6" Background="{ThemeResource CardBrush}">
+                            <Grid Grid.Row="0" Height="92" CornerRadius="4" Background="{ThemeResource CardBrush}">
                                 <FontIcon Glyph="&#xE8D6;" FontSize="22" Foreground="{ThemeResource TextTertiaryBrush}"/>
                                 <Image Source="{x:Bind Art, Mode=OneWay}" Stretch="UniformToFill"/>
                                 <Border HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,4,4"
-                                        CornerRadius="3" Background="{ThemeResource LayerBgBrush}" Padding="4,1"
+                                        CornerRadius="4" Background="{ThemeResource LayerBgBrush}" Padding="4,1"
                                         Visibility="{x:Bind DurationBadgeVisibility, Mode=OneWay}">
                                     <TextBlock Text="{x:Bind DurationBadge}" FontSize="{StaticResource FontCaption}"
                                                Foreground="{ThemeResource TextPrimaryBrush}"/>
                                 </Border>
                             </Grid>
                             <StackPanel Grid.Row="1" Spacing="1">
-                                <TextBlock Text="{x:Bind Title}" FontSize="12" FontWeight="SemiBold"
+                                <TextBlock Text="{x:Bind Title}" FontSize="{StaticResource FontBodySmall}" FontWeight="SemiBold"
                                            MaxLines="2" TextTrimming="CharacterEllipsis" TextWrapping="Wrap"
                                            Foreground="{ThemeResource TextPrimaryBrush}"
                                            ToolTipService.ToolTip="{x:Bind Title}"/>
@@ -164,7 +172,7 @@
         </Grid>
 
         <!-- ToS / lossy notice: single line, always visible -->
-        <TextBlock Grid.Row="5" x:Uid="Network_YouTube_TosNotice" Text="" FontSize="11" TextWrapping="Wrap"
+        <TextBlock Grid.Row="5" x:Uid="Network_YouTube_TosNotice" Text="" FontSize="{StaticResource FontCaption}" TextWrapping="Wrap"
                    Foreground="{ThemeResource TextTertiaryBrush}"/>
     </Grid>
 </UserControl>

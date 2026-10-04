@@ -21,6 +21,8 @@ internal static class NativeMethods
     public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
     [DllImport("user32.dll")]
     public static extern bool SetForegroundWindow(IntPtr hWnd);
+    [DllImport("user32.dll")]
+    public static extern bool MoveWindow(IntPtr hWnd, int x, int y, int nWidth, int nHeight, bool bRepaint);
     [DllImport("user32.dll", SetLastError = true)]
     public static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint msg, IntPtr wp, IntPtr lp, uint flags, uint timeout, out IntPtr result);
 
@@ -292,6 +294,18 @@ public sealed class DawnPlayerE2ETests
         Assert.True(NativeMethods.GetWindowRect(hwnd, out var rect), "GetWindowRect failed for the main window.");
         Assert.True(rect.Right - rect.Left >= 400, $"Main window is only {rect.Right - rect.Left}px wide.");
         Assert.True(rect.Bottom - rect.Top >= 300, $"Main window is only {rect.Bottom - rect.Top}px tall.");
+
+        // 저장된 배치가 좁으면(사용자가 마지막에 좁은 창으로 닫았다면 — 2026-10-04 실제 원인:
+        // 저장 폭 608px) U3 컴팩트 하단바(<730px)가 VolumeSlider를 Collapsed로 만들어 셸 요구가
+        // 실패한다. 셸 노출 계약은 저장 배치와 무관하게 표준 크기에서 검증한다. AdaptiveTrigger는
+        // SizeChanged에서 즉시 재평가되지만 하단바 상태 전환 정착을 위해 잠깐 기다린다.
+        Assert.True(NativeMethods.MoveWindow(hwnd, 60, 60, 1200, 800, true), "MoveWindow failed for the main window.");
+        Assert.True(WaitUntil(() =>
+        {
+            NativeMethods.GetWindowRect(hwnd, out var resized);
+            return resized.Right - resized.Left >= 1100;
+        }, TimeSpan.FromSeconds(3)), "The main window did not accept the standard resize.");
+        Thread.Sleep(200);
 
         // Every part of the shell the user needs in order to do anything at all.
         foreach (var id in new[] { "TabLibrary", "TabPlaylists", "PlayButton", "SeekSlider", "VolumeSlider", "LyricsButton", "QueueButton", "SearchBox" })

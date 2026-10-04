@@ -38,4 +38,23 @@ public static class DesignTokenValues
         public const double NormalMs = 180;
         public const double SlowMs = 280;
     }
+
+    /// <summary>
+    /// Outline radius scale (L13, WinUI Geometry convention): 0 = flush bands (straight edges
+    /// touching), 4 = rows/boxes/segments (ControlCornerRadius), 5 = chips (the approved shell
+    /// tab look), 8 = overlay surfaces (system-managed). Page XAML gates literal radii to this
+    /// scale — 3과 6은 L13에서 퇴출됐다 (OutlineUnityGateTests).
+    /// </summary>
+    public static class Radius
+    {
+        public const double Row = 4;
+        public const double Chip = 5;
+    }
+
+    /// <summary>Row metrics beyond the density-scaled track row. Media rows carry a thumbnail,
+    /// so they own a fixed height instead of the TrackRowMinHeight density token.</summary>
+    public static class Rows
+    {
+        public const double Media = 44;
+    }
 }

@@ -877,6 +877,7 @@
   <data name="Msg_RatingTagWriteFailed" xml:space="preserve"><value>파일 태그에 평점을 쓰지 못했습니다 ({0}곡) — 평점은 앱 라이브러리에만 저장되었습니다.</value></data>
   <data name="Rating_Selector.AutomationProperties.Name" xml:space="preserve"><value>평점 지정</value></data>
   <data name="Rating_ClearHint.Text" xml:space="preserve"><value>선택한 별을 다시 누르면 평점이 지워집니다.</value></data>
+  <data name="Rating_Flyout_Star_Name.Text" xml:space="preserve"><value>별 {0}점</value></data>
   <data name="Rating_Cell.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>평점 지정</value></data>
   <data name="Rating_Cell.AutomationProperties.Name" xml:space="preserve"><value>평점 지정</value></data>
   <data name="Smart_Dialog_CreateTitle" xml:space="preserve"><value>스마트 재생목록 만들기</value></data>
@@ -913,6 +914,8 @@
   <data name="Settings_Playback_Convolution_Empty" xml:space="preserve"><value>(임펄스 없음)</value></data>
   <data name="MainWindow_Menu_OpenUrl.Text" xml:space="preserve"><value>네트워크 스트림 열기 (라디오)...</value></data>
   <data name="Network_PageHeader.Text" xml:space="preserve"><value>네트워크</value></data>
+  <data name="Network_SidebarHeader.Text" xml:space="preserve"><value>데이터 소스</value></data>
+  <data name="Network_Dlna_Title.Text" xml:space="preserve"><value>DLNA 서버</value></data>
   <data name="Network_Radio_Title.Text" xml:space="preserve"><value>라디오</value></data>
   <data name="Network_Radio_Add.AutomationProperties.Name" xml:space="preserve"><value>방송국 추가</value></data>
   <data name="Network_Radio_AddText.Text" xml:space="preserve"><value>방송국 추가</value></data>

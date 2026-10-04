@@ -35,3 +35,6 @@ THIRD-PARTY-NOTICES.md
 # Local-only agent pointers (canonical work rules live in tracked AGENTS.md)
 CLAUDE.md
 crash-dumps/
+
+# Visual Studio cache
+.vs/

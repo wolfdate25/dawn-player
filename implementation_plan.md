@@ -375,6 +375,70 @@ Narrator 스모크. N3(YouTube)는 별도 승인 대기.
   불가능하다 — "되는 것처럼 보이는" 비공식 경로는 시스템 글리프와 겹친다. 1.7+ TitleBar 컨트롤이
   정석 진입점.
 
+**타이틀바 문서 정합 리팩터링 (2026-10-03, 공식 문서 3건 학습 → 승인 후 수정)**:
+- 배경: 3차 수정 뒤 미커밋 상태로 LeftHeader 재배치(상태·탭을 Content→LeftHeader 이동)와 창 폭
+  기준 숨김 전환이 진행됐으나 ①게이트 2건이 구 계약(`<TitleBar.Content>` 존재, XAML
+  `SizeChanged` 연결)과 충돌해 실패 중이었고 ②**Window.SizeChanged에 컨트롤용 시그니처
+  (`SizeChangedEventArgs`)를 연결한 CS0123으로 App 프로젝트 빌드 자체가 깨진 채**였다
+  (`WindowSizeChangedEventArgs.Size`가 정답 — 테스트는 MainWindow를 링크 컴파일하지 않고 소스
+  텍스트만 스캔하므로 게이트가 잡지 못했다).
+- 문서 정합 수정 4건:
+  ① 캡션 색 단일 진실 원천 — MainWindow `StyleSystemCaptionButtons`(사용자 튜닝값)를
+  `ThemeService.UpdateTitleBar`로 통합. 글리프 색은 하드코딩 hex → 팔레트 리소스(TextPrimary/
+  TextTertiaryColor) 구동으로 변경, 보조 창과 메인 창의 값 갈라짐(불일치 결함) 해소.
+  ② 고대비 문서 준수(titlebar-design "colors should adjust for high contrast") — HC 활성 시 커스텀
+  캡션 색을 전부 null 리셋(문서 계약: null = 시스템 기본 복귀)으로 걷어내고, ApplyTheme의 HC
+  분기도 캡션 리셋을 경유. 기존에는 HC에서도 커스텀 팔레트를 덧칠했다.
+  ③ 비활성 디밍(문서 "Do": 창 비활성 시 타이틀바 모든 요소 반투명) — Window.Activated에서
+  `AppTitleBar.Opacity = 0.5` 토글(시스템 캡션은 자체 디밍, 커스텀 Left/RightHeader 콘텐츠 대상).
+  ④ 생성자의 무조건 `SystemBackdrop = Mica` 제거 — ApplyTheme가 설정값(Mica/Acrylic/Solid/
+  AlbumArtBlur)으로 즉시 덮어쓰는 죽은 코드(경우에 따라 Solid 모드에서 Mica 섬광 위험).
+- XAML은 사용자 선택 OLD 배치를 픽셀 단위 보존하고, 반복 수정으로 겹치던 주석을 단일 기록으로
+  정리(잔여 공백 아티팩트 제거).
+- 게이트: MainWindowTitleBarLayoutTests 계약 갱신 4종 + 신규 2종(캡션 단일 구현·HC null 리셋,
+  비활성 디밍) = 6종. 클린 리빌드 0경고 0오류, 전체 테스트 **2,179/2,179**.
+- 교훈: ① 소스 텍스트 스캔 게이트는 컴파일 오류를 못 잡는다 — App 프로젝트 빌드가 최종 진실.
+  ② `UIElement.SizeChanged`(SizeChangedEventArgs)와 `Window.SizeChanged`(
+  WindowSizeChangedEventArgs)는 다른 대리자·다른 Size 프로퍼티다.
+
+**상단바 통일 — 변형 A(트리 카드 칩) + Tall 48 적용 (2026-10-03, 4안 목업 → 사용자 승인)**:
+- 진단: 상단바 안에 선택 언어 3종 공존(탭 밑줄+SemiBold `EoleNavTabStyle` / 트리 D 카드형 / 라이브러리
+  Grid·List 토글), 앱 어디에도 없는 텍스트 구분자 `|`(브랜드–상태), 4의 배수가 아닌 간격(2·6·8·10·14),
+  **높이 불일치(바 40px vs 시스템 캡션 32px — 사용자 스크린샷 빨간 선 지적, 8px 괴리로 캡션 호버
+  배경이 바 하단에 못 미침)**, 1~2차 커스텀 캡션 잔재 스타일 2종이 통일감을 깼다.
+- 적용(목업 titlebar-unity-variants.html에서 사용자가 **A + Tall 48** 선택):
+  ① 탭 = `TitleBarTabStyle` 신설(트리 D 카드형과 동일 언어: 28px 칩·코너 5·호버 CardHover·체크 =
+  선택 틴트 `ListViewItemBackgroundSelected`(액센트 연동) + `DawnAccentTextBrush`, 밑줄·SemiBold 은퇴).
+  **`EoleNavTabStyle`은 네트워크 페이지 섹션 탭이 쓰므로 승인 범위(상단바) 밖 — 별도 남김.**
+  ② 높이 = 생성자에서 `ExtendsContentIntoTitleBar=true` 이후 `PreferredHeightOption = Tall`(문서
+  경고 순서 준수) + XAML 행·MinHeight 40→48 + 미니 모드 복원 하드코딩 40 → `TitleBarRowHeight`
+  상수 + **미니 진입 시 Standard로 낮추고 복귀 시 Tall 복원**(104px 창에서 48px 캡션 잠식 방지).
+  ③ 리듬 = `|` 제거(브랜드–상태 12px), 상태–탭 10→12px, 탭 간 2→4px.
+  ④ `CaptionButtonStyle`·`CaptionCloseButtonStyle` 삭제(사용처 0 확인).
+- 게이트: 신규 2종(높이 일치 계약 — XAML 48·Tall 설정 순서·미니 Standard/Tall, 탭 카드 언어 —
+  토큰·ActiveIndicator/FontWeight 부재·EoleNavTabStyle 역참조 금지). 클린 리빌드 0경고 0오류,
+  전체 테스트 **2,181/2,181**.
+- 결함 수선(적용 직후 사용자 실시 보고 2건 → 즉시 수선):
+  ① **클릭 후 탭 하이라이트 소실** — TitleBarTabStyle 초판이 호버·체크·누름 배경을 전부
+  `Root.Background` 한 프로퍼티에 지정해, 상태 종료 시의 스냅샷 복원이 체크 틴트를 덮어썼다.
+  수정: 배경을 전용 오버레이 3종(Hover/Checked/Pressed Border의 Opacity)으로 분리 — 한 프로퍼티는
+  한 상태 그룹만 쓰는 계약. 피드백은 배경만(트리 카드 행과 동일, 호버 글자색 변경도 제거).
+  게이트에 `Target="Root.Background"` 금지 단언 추가.
+  ② **설정 톱니 위치 마커 잔존** — 주황 톱니는 PT1-03의 "설정 중 위치 표시자"(의도)지만, 색 갱신이
+  `ContentFrame.Navigated` 한 곳에만 있어 탭 클릭으로 설정을 나가면(탐색 미발생) 주황이 세션 내내
+  남았다. 수정: `UpdateSettingsGearMarker()` 추출 — `ApplyNavigationState`(탭 전환 경로)에서도
+  호출. 게이트 +1(두 경로 호출 계약).
+- 최종 게이트: 클린 리빌드 0경고 0오류, 전체 테스트 **2,182/2,182**.
+- 캡션 커스텀 토큰 통일(동일 날 사용자 "─□✕가 윈도우 기본 같다" 요청): 플랫폼 제약 재확인 —
+  글리프 **모양**은 교체 API가 없음(전경 알파 무시·입력 독점, 1~2차 실증·문서 명시). 문서 허용
+  집합 내 최대치로 캡션 호버·누름 배경을 중립 알파 틴트 → 앱 `CardHoverColor`/`CardPressedColor`
+  토큰으로 교체 — 캡션에 올리면 탭 칩·트리 카드와 동일한 호버 표면이 뜬다. 글리프 색(팔레트)·
+  배경 투명(재질)·닫기 호버 시스템 빨강(문서 고정) 유지. 모양 교체를 원하면 Win32
+  WM_NCHITTEST 서브클래싱만 가능하나 비공식·스냅 레이아웃 플라이아웃 상실로 비추천 제시.
+  `Tint` 헬퍼 삭제, 게이트에 CardHover/CardPressed 토큰 계약 추가. 2,182/2,182 유지.
+- 잔여(별도 제안): 네트워크 페이지 섹션 탭(EoleNavTabStyle, 밑줄 언어)도 카드 언어로 통일할지 —
+  승인 범위 밖이라 미적용. 실행 육안 확인: 48px 바 + 캡션 꽉 참, 탭 카드 칩, 미니 모드 진입·복귀.
+
 **수용·문서화된 항목(수정 안 함 — 잔여 아님)**: PT5-10의 YouTube 최근 카드 단일 클릭(상호작용
 규약상 의도적 예외), PT5-13의 액센트 value-fill 대비(Fluent 관례 범위, 감사 요구는 트랙), 스플리터
 키보드 방향 의미, 시크바 호버·드래그 툴팁 공존, UpdateTransportState 10Hz 호출, 빈 선택 경로.
@@ -930,3 +994,214 @@ kind=Dlna — 인프라 그대로), 재생목록 편집 무결성, 콜드 리빌
 | 순수 결정 | `PlaylistViewModel.SelectionAfterContextClick` — 선택 외 행 클릭→그 행 1개로 축소, 선택 내 행 클릭→다중 선택 보존, 행 밖/해석 실패→선택 불변 | `PlaylistAndLibraryViewModelTests` +4(빈 선택 축소·다른 선택 교체·멀티 보존·행 밖 불변) |
 | 게이트 | 순수 계층 필터 테스트 통과, 트리 일관 시점 전체 스위트 2,073/2,073 3회 연속(v1 포함)·클린 리빌드 0경고 0오류(14:24 기준). **RightTapped 재배선(v2) 이후 클린 게이트·전체 스위트는 미실행** — 같은 파일(PlaylistPage)에 동시 진행 중인 평점 기능 작업이 있어 트리 정착 후 재실행 필요 | 2026-09-27 실측 |
 | 미확인 | 다중 선택 보존은 순수 함수 테스트로 고정(GUI 육안 미확인), 키보드 Shift+F10 경로 미실측 | — |
+
+### L13. Library·Playlist·Network 아웃라인 통일 (2026-10-03 제안 → 2026-10-04 변형 A 승인·구현 — **커밋 대기**)
+
+> 사용자 지시("세 페이지 디자인이 통일되지 않은 느낌 — outline을 통일감 있게, UI/UX 우선 설계,
+> WinUI 3 문서 참고"). 서브 에이전트 전수 조사(LibraryPage 1,077행·PlaylistPage 482행·NetworkPage
+> 52행+섹션 UserControl 3종·DawnTheme/DesignTokens)로 불일치를 확정하고, WinUI 3 공식 문서 2종으로
+> 근거를 확보한 뒤 변형 4종 HTML 목업
+> ([outline-unity-variants.html](design-system/dawn-player/mockups/outline-unity-variants.html),
+> 브라우저 배율 100%)를 제작. 이어 사용자가 **"네트워크 탭의 데이터 소스 사이드바로 마이그레이션"을
+> 지시(2026-10-04)**해 네트워크 구조는 탭→사이드바로 확정, **변형 A(전면 플랫)+Playlist Italic 제거를
+> 승인**해 같은 날 구현·검증까지 마쳤다. 검증 근거는 아래 실행 기록 표.
+
+**불일치 확정 목록 (조사 결과)**
+
+| # | 항목 | Library | Playlist | Network |
+|---|---|---|---|---|
+| 1 | 리스트 프레임 | 플랫(테두리 없음) | 플랫 | 박스형: PanelSubtle+1px+**R6**(토큰 없는 값) |
+| 2 | 행 기하 | 28/R4, 24/R3, 트리 32/R5 | 28/R3, 사이드바 32/R4 | ItemContainerStyle **미설정**(기본 ~46+/기본 R) |
+| 3 | 구분선 토큰 | SeparatorSubtle(341·756) vs BorderSubtle(934) **혼용** | BorderSubtle(237·387) | 없음 |
+| 4 | 섹션 헤더 | 11 캡션+컬럼헤더 11.5 | 14 SemiBold **Italic**(유일) | 없음(DLNA)/14(Radio)/17(YouTube) 공존 |
+| 5 | 페이지 타이틀 | 없음 | 없음 | 있음 — 17px 하드코딩(FontTitle 토큰 미사용) |
+| 6 | 섹션 탭 | SegmentedTabStyle(박스 칩) | 없음 | EoleNavTabStyle(밑줄 40px — 셸 칩 탭과 이질, DawnTheme 623–626행이 "승인 범위 밖" 잔존 명시) |
+| 7 | 재생 하이라이트 | 좌측 큐(Muted+Glow 박스) | 동일 패턴 | 별도 패턴 + 배지 글자 TextPrimary(→OnAccent 규약 위반) |
+| 8 | 리스트 외부 패딩 | 4종 서로 다름 |  | 없음 |
+| 9 | 반경 값 분포 | 3/4/5 혼재 (토큰 없음) | 3/4 | 6/기본값 |
+| 10 | 숫자 리터럴 | FontSize 등 56곳(3페이지 합계) |  | 페이지 패딩·그리드 셀 크기 하드코딩 |
+
+**WinUI 3 공식 근거 (2026-10-03 학습 문서)**
+
+- **Geometry** (learn.microsoft.com → windows/apps/design/signature-experiences/geometry): 모서리 반경 3단 —
+  **8px** 최상위 컨테이너(창·플라이아웃·대화상자), **4px** 인페이지 요소(버튼·리스트 백플레이트·바),
+  **0px** 직선 모서리가 다른 직선 모서리와 맞닿는 경우. 전역 리소스 `ControlCornerRadius`(기본 4)·
+  `OverlayCornerRadius`(기본 8). → 앱의 산포한 3/5/6은 문서 체계와 무관한 자의 값.
+- **SelectorBar** (windows-app-sdk API 문서, SDK 1.5+ 도입·앱은 2.4.0이라 사용 가능): "소수의 옵션 중
+  하나를 선택해 **표시되는 콘텐츠를 변경**하는" 공식 컨트롤. 공식 예시(Recent/Shared/Favorites 뷰 전환)가
+  네트워크 섹션 전환과 동일 용도 — 구 B-2(SelectorBar 탭)안의 근거였으나 **사이드바 구조 확정으로
+  미채택**(탭 자체가 소멸해 필요성도 소멸).
+- **NavigationView 디자인 가이드 + WinUI generic.xaml**(design/controls/navigationview ·
+  `microsoft.windowsappsdk.winui` 2.3.6 로컬 템플릿 대조): 왼쪽 모드에서 **선택 항목이 왼쪽 가장자리를
+  따라 선택 인디케이터**를 그린다(공식 선택 언어). 콘텐츠 격리 기본값 — `NavigationViewContentGridCornerRadius`
+  =**8,0,0,0**, `NavigationViewContentGridBorderThickness`=**1,1,0,0**, `NavigationViewContentGridBorderBrush`
+  =**CardStrokeColorDefaultBrush**, 배경은 LayerFill(`LayerFillColorDefault` 다크 **#4C3A3A3A**), 기본
+  `ListViewItemMinHeight`=**40**. 템플릿 수정보다 **light-weight styling(리소스 재정의) 권장**. — **D안의 근거**.
+
+**구조 결정 (2026-10-04 사용자 지시 — 네트워크 탭 → 데이터 소스 사이드바)**
+
+| 항목 | 설계 |
+|---|---|
+| 골격 | NetworkPage 3행(타이틀/탭/콘텐츠) → 2열(사이드바 200px + 콘텐츠 `*`) — **3페이지가 모두 "좌측 사이드바 + 콘텐츠" 동일 구조** |
+| 사이드바 표면 | `PanelSubtleBrush` + 우측 `SeparatorSubtleBrush` 1px(플러시 — 코너 0·테두리 없음, Library/Playlist 사이드바와 동일 표면). 헤더 "데이터 소스"(Playlist 사이드바 헤더와 동일 타이포 — Italic 여부는 공통 결정에 연동) |
+| 사이드바 행 | 소스 3종(인터넷 라디오/DLNA/YouTube) — 아이콘+이름(+보유 카운트), 높이 32·R4·선택 틴트 `ListViewItemBackgroundSelected*`(Playlist 사이드바 행과 동일 토큰), 키보드·자동화 이름은 Playlist 사이드바 관례 준용 |
+| 전환 메커니즘 | 기존 섹션 UserControl 3종 겹침+Visibility 전환 **유지** — 선택 소스만 RadioButton 탭에서 사이드바 행으로 교체(바인딩·상태 최소 변경) |
+| 제거 | 섹션 탭 행, 페이지 타이틀 행(Library와 동일 — 사이드바가 구조 역할 흡수), `EoleNavTabStyle`(Network 전용 스타일 → 미사용화 후 삭제, 죽은 스타일 잔존 금지 — CaptionButtonStyle 삭제 전례) |
+| UX 근거 | (1) Library/Playlist와 동일 골격이라 구조 통일 — 탭 문법 논쟁 자체 소멸. (2) 소스 추가(팟캐스트·WebDAV 등)가 행 1개 — 탭 개수 한계 해소. (3) 콘텐츠 폭 확보(DLNA 탐색·YouTube 그리드) |
+
+**변형 (사이드바 공통 구조 위에서 콘텐츠 프레임 처리만 선택 — 목업 갱신 완료)**
+
+| 변형 | 정의 | 판정 |
+|---|---|---|
+| A 전면 플랫 | 콘텐츠 리스트 박스 제거 → 3페이지 전부 플랫 | 콘텐츠 영역에 떠 있는 리스트가 경계 없이 뭉개짐. 0px 규칙은 "맞닿는 경우" 한정이라 문서 취지와 어긋남 |
+| **B-1 역할 기반(박스 콘텐츠)** | 플러시 밴드=0px 유지 / 콘텐츠 묶음=PanelSubtle+BorderSubtle 1px+**R4** 토큰화 | **추천** — Geometry 규칙 부합 + 최소 침습 + 짧은 묶음 리스트(라디오 24개국 등)의 덩어리 가독성 |
+| C 전면 카드 | Library·Playlist 중앙까지 전부 박스화 | 통일감은 최대이나 박스 중첩·밀집 리스트 소음·대규모 재작업, 0px 규칙 충돌 지점 발생 |
+| **D WinUI 공식 패턴(모범 사례)** | 콘텐츠=**NavigationView 콘텐츠 레이어 기본값**(LayerFillColorDefaultBrush 시트(다크 #4C3A3A3A) + CardStrokeColorDefaultBrush 스트로크 1,1,0,0 + 코너 8,0,0,0), 시트 안 리스트=플랫폼 기본 ListViewItem(호버·선택·키보드·내레이터 상태 기본) / 반경·표면은 공식 리소스(ControlCornerRadius 4·OverlayCornerRadius 8·LayerFill) 우선 — 커스텀 토큰·스타일 최소화(light-weight styling 권장). **사이드바는 공통안(Playlist 언어) 그대로 — 변형 간 차이는 콘텐츠 처리만**(초판 목업에서 D의 사이드바 행까지 왼쪽 필로 바꿨던 것은 비교 축 혼합 — 사용자 지적으로 공통화 정리) | **모범 사례 준수 최강** — 접근성·키보드 상태 기본 제공, SDK 업데이트 따라감, 설정 앱 질감. 단, Eole 커스텀 팔레트와 반투명 LayerFill 질감 갈림 + 앱 토큰 밖 공식 리소스 1종(표면) 추가 |
+
+**공통 정비 (변형 무관 6건)** — ⓪ 구조 마이그레이션: 위 "구조 결정" 표 그대로(탭·타이틀·EoleNavTabStyle 제거, 데이터 소스 사이드바 신설). ① 구분선 역할 분리: 내부 헤어라인=SeparatorSubtleBrush 단일 / 박스 외곽=BorderSubtleBrush 1px 단일. ② 반경 스케일 토큰화: **0(플러시)/4(행·박스·세그먼트)/5(칩)/8(오버레이 — 시스템 관리)** 만 허용, R3·R6 제거. 칩 R5는 방금 승인된 셸 탭 룩 보존을 위한 명시적 예외 토큰(셸 변경은 범위 밖). ③ `SectionHeaderText`(FontSubtitle 14 SemiBold) 신설 — 4종 헤더 스케일 수렴, DLNA 헤더 부재 해소(사이드바 전환 후 콘텐츠 헤더로 존재), 페이지 타이틀은 구조 결정으로 제거(토큰화 불요). 부속 결정: Playlist 헤더 Italic(유일) 유지/제거는 사용자 선택 대기. ④ Network 행 정비: ItemContainerStyle 신설 + `MediaRowMinHeight 44` 토큰(28 밀도행과 병존) + 선택 틴트 ListViewItemBackgroundSelected* 통일 + Radio 재생 배지 전경 OnAccentBrush. ⑤ 리터럴 제거: FontSize 56곳→Font* 토큰, 간격→Space* 토큰.
+
+**검증 전략 (§3 규약 — 실패 시나리오 테스트 선설계)**
+
+- 소스 스캔 게이트 테스트 신설(AutomationNameScan 관례 준용, bin/obj 제외): (1) 3페이지+Network 섹션 XAML에 토큰 없는 `CornerRadius` 리터럴 금지(허용: 토큰 참조 또는 {0,4,5}), (2) 섹션 헤어라인의 `BorderBrush`는 SeparatorSubtleBrush·박스 외곽은 BorderSubtleBrush 이외 금지, (3) `FontSize` 리터럴 금지(Font* 토큰만), (4) `EoleNavTabStyle` 정의·참조 금지(삭제 확인) + NetworkPage에 섹션 탭·페이지 타이틀 행 잔존 금지. 위반 시 파일:행 목록 반환.
+- 불변식: 플러시 밴드는 코너·테두리 0 / 플로팅 박스는 PanelSubtle+BorderSubtle+R4 / 재생 배지 전경=OnAccentBrush / 섹션 헤더=SectionHeaderText. — "보고 토큰 ≠ 실제 적용값 금지"(8ebfe12 교훈의 XAML 판).
+- 신설 토큰은 `DesignTokenValues.cs` 미러 + `DesignTokenTests` 확장. 클린 리빌드 0경고 0오류 + 전체 스위트 1회(§4·§5 절차).
+
+**실행 기록 (2026-10-04, 변형 A + Italic 제거 — 커밋 대기)**
+
+| 항목 | 내용 | 검증 |
+|---|---|---|
+| 게이트 선설계 | `OutlineUnityGateTests` 5종 신설(① 반경 스케일 0/1/2/4/5 — 3·6 재유입 금지, ② Network 사이드바 골격+탭·타이틀·EoleNavTabStyle 퇴출, ③ Radio/DLNA 플랫 리스트+미디어 행 44/R4+재생 배지 OnAccent, ④ 텍스트 FontSize 토큰 전용(FontIcon·고정 글리프 상자 예외)+SectionHeaderText(Italic 금지) 수렴, ⑤ 1px 헤어라인=SeparatorSubtle 단일) — **구현 전 5/5 실패(레드) 확인 후 착수** | 레드→그린 |
+| 토큰 | DesignTokens `RowCornerRadius 4`·`ChipCornerRadius 5`·`MediaRowMinHeight 44` 신설 + `DesignTokenValues.Radius/Rows` 미러 + DesignTokenTests 확장. 게이트가 리터럴 값을 미러 상수로 단언 | `DesignTokenTests` |
+| Network 구조 | NetworkPage 2열 재작성 — 데이터 소스 사이드바(200px 고정, Playlist 사이드바 동일 언어: PanelSubtle+헤어라인, 행 32/R4·선택 틴트 ListView) + `SelectionChanged` 전환(**파싱 중 IsSelected 기동 시 섹션 컨트롤 null 가드** — 첫 행 IsSelected가 파스 도중 이벤트를 일으킨다). 섹션 탭·페이지 타이틀 제거, `EoleNavTabStyle` 삭제(정의+주석 정리) | 게이트 ② + 실행 육안 |
+| Network 섹션 | Radio/DLNA 리스트 플랫화(PanelSubtle+1px+R6 박스 제거)+ItemContainerStyle 신설(MinHeight 44·R4), Radio 재생 배지 전경 OnAccent·R4, **DLNA 헤더 신설**(`Network_Dlna_Title`), Radio/YouTube 헤더 SectionHeaderText 수렴(YouTube 17→14), YouTube 썸네일 R6·duration 배지 R3→4 | 게이트 ③④ + 스크린샷 |
+| Playlist/Library | Playlist Italic 3곳(사이드바·제목·앨범 그룹) 제거→SectionHeaderText, 헤어라인 BorderSubtle→SeparatorSubtle ×2(Library 큐 패널·Playlist 중앙), R3→4 ×5(재생 하이라이트·이미지 클립·행 Setter), **FontSize 리터럴 53건 토큰화**(스크립트 일괄 — FontIcon·고정 W/H 글리프 상자 제외, 값 등가 치환이므로 무시각 변화) | 게이트 ①④ + diff 전수 확인 |
+| resw | `Network_SidebarHeader`·`Network_Dlna_Title` 3개 국어(en-US/ko-KR/ja-JP) | 실행 렌더(en 확인) |
+| 게이트 | 클린 리빌드 **0경고 0오류**(obj 삭제 후 — 실행 중 앱 인스턴스가 bin 잠금해 종료 후 진행), 전체 스위트 **2,187/2,187**(신규 5종) | 2026-10-04 실측 |
+| 실행 검증 | 앱 구동 → Network 탭: 사이드바 렌더·Radio/DLNA 전환(**실제 입력 이벤트+UIA Select 이중 확인** — CUA 기본 AXPress는 ListViewItem에서 no-op인 자동화 계층 현상, 앱 결함 아님)·DLNA 신설 헤더·플랫 빈 상태·en resw 렌더 확인 | 컴퓨터 사용 캡처 |
+| 수반 수정 | E2E `App_Launches`가 **저장 창 배치에 의존**(당시 608px<730 → U3 컴팩트 하단바가 VolumeSlider Collapsed → Require 실패) — 플레이크가 아닌 환경-의존 결함으로, 하니스가 Require 전 표준 크기(1200×800)로 리사이즈하도록 견고화(앱 코드 무변경). 격리 재실행 2회 실패로 근거 확인 후 수선 | 격리 재실행 → settings.json 근거 → 수선 후 E2E 2/2 |
+| 미확인 | Light 테마 렌더·고DPI 실기기 육안, DLNA 실서버 탐색은 N2 검증 절차 그대로 | — |
+
+### L14. 페이지 콘텐츠 인셋·간격 리듬 통일 (2026-10-04 감사 → **전부 승인·구현 — 커밋 대기**)
+
+> 사용자 보고("Network 탭에 메인 window padding이 없다")로 ui-ux-pro-max 감사 실시 — 세 메인
+> 페이지+Network 섹션 6파일의 Margin/Padding/Spacing 리터럴 **164건 전수 조사**. 근원: L13 사이드바
+> 전환에서 구 탭 구조의 루트 `Padding="24,16,24,12"`가 소실(F1). 비-제로 간격 성분 246개 중
+> **61%가 4px 토큰 그리드 이탈**(6·10·14·5·22류), `Space*` 토큰의 페이지 소비는 0회.
+
+| ID | 내용 | 위치 | 심각도 |
+|---|---|---|---|
+| F1 | **Network 콘텐츠 4방향 인셋 0** — 사이드바 헤어라인·창 위/우측·하단바 헤어라인에 0px 밀착(구 패딩 소실) | NetworkPage:71 | **P0** |
+| F2 | 헤더 액션 버튼(추가/새로고침/구성) 우측 플러시 — 하단바 버튼은 18px 인셋과 수준 차 | Radio:35 / Dlna:39 / YT:28 | P1 |
+| F3 | Radio/DLNA 리스트 right 0 — 선택 하이라이트 카드가 창 끝까지, 스크롤바가 행 위 겹침(Library right 8/10, Playlist 20) | Radio:48 / Dlna:86 | P1 |
+| F4 | 페이지 헤더 좌우 인셋 3패밀리 분열 — Library 14 / Playlist 22 / Network 0 | L:341·756, P:165 | P1 |
+| F5 | Network 섹션 제목(x=8) vs 첫 행 텍스트(x=16) 8px 어긋남 — 3페이지가 2/4/-8px로 제각각 | Radio:24-26·60 | P1 |
+| F6 | 620px 최소폭 창에서 Network 콘텐츠 420px+right 0 — compact 하단바(12px 인셋)와 우측 리듬 어긋 | MW:70·560 | P1 |
+| F7 | Library 뷰 전환 시 인셋 14→8 이동 + 컬럼헤더/행 2px 어긋 | L:427·791·756 | P2 |
+| F8 | Playlist 헤더 22 vs 헤어라인·리스트 20 | P:165·236 | P2 |
+| F9 | Library 트리 헤더만 `12,10` — Playlist/Network 사이드바 헤더 `16,14`와 이격 | L:249 | P2 |
+| F10 | 빈 상태 5종 제각각(아이콘 22/28/36, Spacing 4/8/10, MaxWidth 무/380/420/440) | 5곳 | P2 |
+| F11 | 스플리터 히트존 Library 10px vs Playlist 8px | L:324, P:149 | P2 |
+| F12 | YouTube 섹션 헤더만 선행 FontIcon 누락(Radio/DLNA는 있음) | YT:23-25 | P2 |
+| F13 | 버튼 패딩 `10,5`×9 vs `10,6`×4, 아이콘 Spacing 7 vs 8 혼용 | 6파일 | P2 |
+| F14 | 리스트 bottom 16/20/24 혼재, YouTube ToS 문구 하단 0px 밀착 | YT:166 | P2 |
+
+**수리안(제안)** — Network 콘텐츠 열에 `Padding="20,14,20,16"`(**Playlist 패밀리**: 사이드바를 값까지 빌린 원본 패밀리, 하단바 18과 Δ2 — Library 14는 커버그리드·밀집 테이블 전용 패밀리) + Playlist 헤더 22→20 정규화 + F5 좌열 정렬 + F12 아이콘 보강 + 버튼 `10,6`/Spacing 8 통일 + 빈 상태 표준(아이콘 28/Spacing 8/MaxWidth 380) + F11 히트존 8 통일. 범위 선택지: **(1) P0+P1만 최소 수리 / (2) P0–P2 전부**. 옵션: `PageContentPadding`·`PageHeaderMargin` Thickness 토큰 신설(DesignTokenValues 미러+게이트 갱신 — Space* 미소비 문제의 의미 토큰 대응).
+
+**실행 기록 (2026-10-04, "전부 승인" — P0–P2 + 토큰 전체 구현, 커밋 대기)**
+
+| 항목 | 내용 | 검증 |
+|---|---|---|
+| 게이트 선설계 | `LayoutRhythmGateTests` 4종 신설(토큰 정의+소비 동시 단언, 오프그리드 `22,14,22,6`·`10,5`·`14,5`·`Spacing 7` 퇴출, Library 사이드바 헤더 원점 16,14·스플리터 10/-5 패턴 퇴출) — **구현 전 4/4 실패(레드) 확인** | 레드→그린 |
+| 토큰 | DesignTokens `PageContentPadding 20,14,20,16`·`PageHeaderMargin 20,14,20,6` (Thickness — 공식 NavigationViewHeaderMargin 패턴과 동일 방식, 스칼라 미러 대상 외) | 게이트 |
+| F1·F2·F6 | NetworkPage 콘텐츠 열 `Padding="{ThemeResource PageContentPadding}"` — 헤더 버튼·리스트가 20/14 인셋 안으로, 620px 창에서도 right 리듬 확보 | 실행 스크린샷 |
+| F3 | Radio/DLNA 리스트 패딩 유지(0,2,0,16) — 패널 인셋이 창 끝 20px을 확보해 하이라이트 카드·스크롤바 문제 해소 | 스크린샷 |
+| F5 | Radio/DLNA 행 컨테이너 4,1→**6,1**·행 Grid 12,9/12,8→**16,8** — 제목(x=42)과 행 텍스트(x=42) 정렬 | 스크린샷 |
+| F4·F8 | Playlist 헤더 `Margin="{ThemeResource PageHeaderMargin}"`(22→20) — 헤어라인 20·리스트 20과 동일 열 | 게이트 |
+| F7 | Library 트랙 리스트 8,4,8,20→**14,4,14,20** + 컨테이너 8,3→**4,3** — 컬럼헤더 텍스트(x=32)와 행 텍스트(x=32) 0px 정렬 + 뷰 전환 인셋 이동 6px→0 | 계산+스크린샷 |
+| F9 | Library 트리 헤더 12,10→**16,14,14,8** + 콤보박스 10,0,10,8→**16,0,14,8** + 트리 리스트 0,0,4,16→**6,2,6,16** — 사이드바 3종 동일 원점 | 게이트 + 스크린샷 |
+| F10 | 빈 상태 표준(아이콘 28·Spacing 8·MaxWidth 380) — Playlist 36/10/440, Radio 22, DLNA 22/420, YouTube Spacing 4·MaxWidth 무 → 전부 수렴 | 스크린샷 |
+| F11 | Library 좌측 스플리터 10px/-5 → **8px/-4**(Playlist 패턴 통일 — Width="10" 자체는 트리 셰브런 템플릿 정당 용례라 게이트는 결합 패턴만 민다) | 게이트 |
+| F12 | YouTube 섹션 헤더에 선행 FontIcon(E8F2 — 사이드바 행과 동일 글리프)+Spacing 8 — Radio/DLNA와 동일 패턴 | 스크린샷 |
+| F13 | 버튼 `10,5`×9→`10,6`·`14,5`×1→`14,6`·아이콘-라벨 `Spacing 7`×2→8 (스크립트 일괄) | 게이트 |
+| F14 | YouTube ToS·리스트 하단 — 패널 bottom 16이 확보(리스트 bottom 패딩 유지) | 스크린샷 |
+| 게이트 | 클린 리빌드 **0경고 0오류**, 전체 스위트 **2,191/2,191**(신규 4종) | 2026-10-04 실측 |
+| 실행 검증 | Network(Radio/DLNA)·Playlist·Library 캡처 — 콘텐츠 인셋 4방향 확보, DLNA 헤더-행 정렬, Playlist 제목 무이탤릭·20 정렬, Library 트리 헤더 원점 확인 | 컴퓨터 사용 캡처 |
+| 미확인 | Light 테마·고DPI 육안, 컴팩트(<730px) 하단바와의 우측 리듬은 620px 최소폭 수동 확인 잔여 | — |
+
+### 상단바 높이 44 완화 시도 → 48 롤백 (2026-10-04 — 커밋 대기)
+
+> 사용자 결정("살짝만 줄이자")으로 Tall 48 → 바 44 완화(XAML 행·TitleBar MinHeight·`TitleBarRowHeight`
+> 3곳, 시스템 캡션은 Tall 48 유지)를 구현했으나, 사용자가 "어떤 방식이 가장 자연스러운가 — 48 롤백?"
+> 으로 재판단 → **48 롤백 확정**. 근거: 캡션 높이는 플랫폼이 32/48만 제공하므로 44은 어느 쪽과도
+> 정합 불가(Tall 유지 시 호버 4px 블리드가 매 캡션 조작마다 반복, Standard 32는 글리프 6px 상승 —
+> 구 빨간 선 문제의 확대), 반면 44의 이득(콘텐츠 4px)은 사실상 지각 불가. **48 = 정합이 유일한
+> 자연스러운 높이**. 게이트: `MainWindowTitleBarLayoutTests` 계약 48 복원 + `TitleBarRowHeight = 44`
+> 금지 단언 추가(재시도 방지, 경위는 MainWindow.xaml/.cs 주석에 기록), 클린 리빌드 **0경고 0오류**,
+> 전체 스위트 **2,191/2,191**, 실행 캡처로 48 복원·캡션 정렬 확인.
+
+### L15. 하단바 별점 위치 이동 (2026-10-04 보고 → 변형 A 승인·구현 — **커밋 대기**)
+
+> 사용자 보고("하단바 별점 위치가 여전히 별로"). 원인: 405f07f의 별점 버튼이 제목 행 끝 Auto 열에
+> 고정돼 있어 **정보 블록과 트랜스포트의 경계에 떠 있음**(아이콘 언어는 L11에서 Segoe로 통일됐지만
+> 위치는 그대로). 목업
+> ([rating-position-variants.html](design-system/dawn-player/mockups/rating-position-variants.html),
+> 브라우저 배율 100%)에 4안 제시 — 미평점 회색 ☆ 기준, 플라이아웃(Top)·스트림 숨김(IsRateable)·
+> `ShowNowPlayingRating` 토글 계약은 전 안 불변.
+
+| 변형 | 정의 | 비고 |
+|---|---|---|
+| **A 제목 인라인** | 별을 제목 텍스트 바로 뒤로 — 제목 열 Auto+별+여백 `*` | **추천** — "이 곡의 속성" 의미 연결 최강(스포티파이/YTM 패턴). 긴 제목이 별을 밀어내지 않게 제목 MaxWidth 코드비하인드 갱신 필요(~10줄) |
+| B 정보 블록 세로 중앙 | 현재 x 유지, 제목 행 → 정보 블록 3줄 세로 중앙 | 최소 변경(요소 이동만) — 경계 떠있는 느낌 절반 해소 |
+| C 우측 Tools 편입 | 볼륨·대기열·가사 줄에 TransportButton 크기로 | 그리드 정합 최고·구현 단순 — 메타데이터 편집의 의미 연결 약화 |
+| D 트랜스포트 행 끝 | A-B 뒤 구분선+별 | 손 위치 최고 — 재생 제어 혼합·중앙 열 폭 압박 |
+
+| 단계 | 내용 | 상태 |
+|---|---|---|
+| 1 | 변형 선택(A/B/C/D) → 사용자 | **A 승인·구현 완료** |
+| 2 | 구현(+A인 경우 제목 MaxWidth 코드비하인드) + `UpdateTrackRatingCell` 상태 전환 회귀 확인 | 완료 |
+| 3 | 필터 테스트 → 전체 스위트 + 실행 육안 | 완료 |
+
+**실행 기록 (2026-10-04 변형 A 구현 — 커밋 대기)**
+
+| 항목 | 내용 | 검증 |
+|---|---|---|
+| 게이트 선설계 | `NowPlayingRatingInlineGateTests` 3종 신설(① 제목 행 3열 [제목 Auto][별 Auto][여백 *] — 구 [제목 *][별 Auto] 재유입 금지, ② 코드비하인드 `TrackTitle.MaxWidth` 갱신+`TitleRow.SizeChanged` 배선+별 가시성 반영 — Collapsed 요소 ActualWidth 잔존 함정, ③ 스트림 숨김·플라이아웃 계약 생존) — **구현 전 2/3 실패(레드, 기존 계약 1종은 통과) 확인** | 레드→그린 |
+| 구현 | NowPlayingBar.xaml 제목 행 `[Auto][Auto][*]` 3열 + `TitleRow` 명명 / 코드비하인드 `UpdateTitleMaxWidth()`(행 폭-별 가시 폭-6px 마진, 하한 24px) + `TitleRow.SizeChanged`·`UpdateTrackRatingCell` 양 경로 호출 | 게이트 3종 |
+| 게이트 | 클린 리빌드 **0경고 0오류**, 전체 스위트 **2,194/2,194**(신규 3종) | 2026-10-04 실측 |
+| 실행 검증 | 앱 구동 → 별이 제목("Elf ☆") 바로 뒤 배치 확인 + 별 클릭 → RatingControl 플라이아웃(Top) 정상 개방 | 컴퓨터 사용 캡처 |
+| 후속 표시 변경(같은 날 사용자 제안 승인) | 평점 부여 곡 = 단일 아이콘 대신 **평점 수만큼 채운 별**(E734×N, 3점 → 3개 — 재생목록·라이브러리 표의 DisplayText 계약과 동일 표현). 미평점은 외곽 별(E735) 1개 유지. 구현: 단일 `TrackRatingIcon` FontIcon → `TrackRatingStars` StackPanel(코드비하인드가 N개 채움) | 게이트 1종 추가(레드→그린): TrackRatingIcon 재유입 금지+컨테이너 채움+E734/E735 단언 |
+| 후속 렌더 수정(사용자 지적 "평점이 부여됐는데 별이 비어있어 보인다") | **원인 확정**: Segoe Fluent Icons의 E734(FavoriteStarFill)는 Fluent 스타일에서 **가운데 파인 도넛 모양**으로 렌더링돼 12px에서 빈 별로 읽힘(평점 2·3 부여 후 근접 캡처로 확인 — 개수는 정확, 모양이 문제). 수리: 별 아이콘 `FontFamily`를 **Segoe MDL2 Assets**로 고정(MDL2의 E734는 속이 찬 별, Win10/11 공용 시스템 글꼴) | 재실행 캡처: 평점 4 → 속이 찬 별 4개 렌더 확인 |
+| 후속 수정(사용자 보고 ①"미평점 곡인데 플라이아웃에 첫 별이 채워져 보인다" ②"플레이리스트 행의 별 위치가 밀린다") | ① 원인 확정: **WinUI 3 RatingControl은 미평점(0) 렌더링이 불가** — Opening의 Value=0이 최소값 1로 강제됨(라이브 AXSetValue("0") → "1 of 5" 재확인) + 세션 복원 후 재생 전엔 CurrentItem이 null이라 Opening이 early-return해 값 설정 자체가 생략됨. 수리: 플라이아웃의 RatingControl을 **앱 소유 별 5개 버튼 행**으로 교체 — 미평점 = 모두 외곽 별, 별 N 클릭 = N점 적용+하단바 즉시 갱신+플라이아웃 닫힘, 같은 별 재클릭 = 지우기(0), 접근 이름은 코드 설정(별 N점 — resw 3개 국어 추가). ② 원인 확정: 재생 강조 행의 후행 열 구조가 일반 행과 달라(Auto 재생시간+Padding 8,0 vs 54 고정+Padding 2,0) 별 x가 5px 밀림. 수리: 재생 행 후행 열을 일반 행과 동일([Auto 별][54]·Padding 2,0)로 정렬 | 스크린샷: 미평점 플라이아웃 전부 외곽 ✓, 재생 행 별 x 정렬 ✓, 별 3 클릭 → 하단바 ★★★ 즉시 갱신 ✓, 재클릭 → 지우기 ✓ |
+| 게이트(최종) | 클린 리빌드 **0경고 0오류**, 전체 스위트 **2,196/2,196**(신규 게이트 4종 반영 — E2E 1건은 이전 실행의 병렬 부하 플레이크, 중간 실행에서 격리 2/2 통과 확인) | 2026-10-04 실측 |
+| 실행 검증 | 미평점 플라이아웃 전부 외곽 ✓, 별 3 클릭 → 하단바 ★★★ 즉시 갱신 ✓, 재클릭 → 지우기 ✓ | 스크린샷 |
+| 미확인 | 긴 제목 말줄임(긴 이름 트랙 수동 확인), Light 테마 렌더 | — |
+
+### L16. Network 섹션 헤더 통일 (2026-10-04 보고 → 즉시 구현 — **커밋 대기**)
+
+> 사용자 보고("network 탭의 레이아웃이 통일감이 없다. radio, youtube, dlna 탭의 타이틀 크기와
+> 위치는 제각각이며 UI/UX도 그지같다"). 원인 3건: ① **액션 앵커 불일치** — Radio는 `*` 필러로
+> 추가 버튼을 우측 끝에 두는데 YouTube 헤더는 가로 StackPanel이라 구성 버튼이 제목 바로 옆에
+> 붙고, DLNA는 헤더에 액션이 아예 없다(새로고침이 아래 툴바 행). ② **메타 위치 불일치** —
+> Radio 방송국 수는 우측 클러스터, YouTube 의존성 배지는 제목 옆. ③ **위계 붕괴** — YouTube
+> "최근 항목"이 섹션 제목과 동일한 SectionHeaderText(14 SemiBold)라 한 화면에 동급 헤더 2개.
+> 이미 통일된 축(아이콘 14px accent, RowSpacing 10, 버튼 10,6·R4, 콘텐츠 원점
+> PageContentPadding)은 변경 없음. ui-ux-pro-max 자문: ux 도메인 직접 매치 없음(일반 탐색
+> 항목만 반환) — 스킬 우선순위 #4(일관성 must-have)·#6(위계는 스케일 단계 차이)과
+> design-system MASTER.md의 토큰 타이포 계약(Segoe UI Variable 11/12/13/14/17)을 근거로 사용.
+
+| 단계 | 내용 | 상태 |
+|---|---|---|
+| 1 | 공용 헤더 계약(3존 골격) 정의 + 세 섹션 수렴 | 완료 |
+| 2 | 위계 사다리 신설(GroupHeaderText) + 게이트 선설계·계약 갱신 | 완료 |
+| 3 | 필터 테스트 → 클린 리빌드 → 전체 스위트 + 실행 육안 | 완료 |
+
+**실행 기록 (2026-10-04 — 커밋 대기)**
+
+| 항목 | 내용 | 검증 |
+|---|---|---|
+| 공용 헤더 계약 | 3존 골격: 아이콘(14px accent)+SectionHeaderText(Margin 8,0,0,0) 좌측 \| `*` 필러 \| 메타(우측 클러스터, 액션 직전 12px 간격) \| 액션(Padding 10,6·R4, 마지막 컬럼 우측 끝 앵커). Radio 기준 유지 / YouTube StackPanel→Grid(배지 우측 메타, 구성 우측 끝) / DLNA 서버 새로고침을 헤더 우측 앵커로 승격(툴바는 ComboBox+BusyRing+재시도, 4열→3열 정리) | 실행 캡처 3종 |
+| 위계 사다리 | DawnTheme에 `GroupHeaderText`(12 SemiBold, TextSecondaryBrush) 신설 — 14 SemiBold Primary(섹션) > 12 SemiBold Secondary(그룹 라벨) > 11.5 SemiBold Tertiary(테이블 컬럼). "최근 항목"을 GroupHeaderText로 강등 | 실행 캡처: 제목 대비 작고 흐린 라벨 확인 |
+| 게이트 | `NetworkHeaderUnityGateTests` 3종 신설(① 3존 골격 공유 — Grid 뿌리+필러+아이콘→제목→액션 순서·액션 마지막 컬럼·10,6/R4, ② 메타 우측 클러스터 고정 — 구 인라인 배치 재유입 금지, ③ 위계 사다리 정의+최근 항목 소비) + `OutlineUnityGateTests` YouTube 계약 갱신(SectionHeaderText 2곳→**1곳**, 최근 항목 GroupHeaderText) | 필터 12/12 그린(초기 1건은 테스트 자체 결함 — 파일 정의 순서 단언을 스케일 단언으로 수리) |
+| 빌드·스위트 | 클린 리빌드 **0경고 0오류**, 전체 스위트 **2,199/2,199**(신규 3종 반영 — 1차 실행의 1건 실패는 병렬 부하 플레이크: E2E 격리 2/2 + 재실행 전수 그린으로 판별) | 2026-10-04 실측 |
+| 실행 검증 | Network 페이지 Radio/DLNA/YouTube 전환 캡처 — 세 헤더 모두 제목 동일 x/y, 메타+액션 우측 끝 동일 앵커, DLNA 첫 방문 지연 활성화·자동 스캔 정상 | 컴퓨터 사용 캡처 |
+| 미확인 | Light 테마 렌더, 좁은 폭에서 긴 지역화 문자열(독일어류) 헤더 줄바꿈 동작 | — |

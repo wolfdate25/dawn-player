@@ -132,6 +132,9 @@ public class DesignTokenTests
             ["MotionDurationFastMs"] = DesignTokenValues.Motion.FastMs,
             ["MotionDurationNormalMs"] = DesignTokenValues.Motion.NormalMs,
             ["MotionDurationSlowMs"] = DesignTokenValues.Motion.SlowMs,
+            ["RowCornerRadius"] = DesignTokenValues.Radius.Row,
+            ["ChipCornerRadius"] = DesignTokenValues.Radius.Chip,
+            ["MediaRowMinHeight"] = DesignTokenValues.Rows.Media,
         };
 
         foreach (var (key, value) in expected)

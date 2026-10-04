@@ -877,6 +877,7 @@
   <data name="Msg_RatingTagWriteFailed" xml:space="preserve"><value>ファイルタグに評価を書き込めませんでした（{0}曲）— 評価はアプリライブラリにのみ保存されました。</value></data>
   <data name="Rating_Selector.AutomationProperties.Name" xml:space="preserve"><value>評価を設定</value></data>
   <data name="Rating_ClearHint.Text" xml:space="preserve"><value>現在の星数をもう一度クリックすると評価が解除されます。</value></data>
+  <data name="Rating_Flyout_Star_Name.Text" xml:space="preserve"><value>星{0}つ</value></data>
   <data name="Rating_Cell.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>評価を設定</value></data>
   <data name="Rating_Cell.AutomationProperties.Name" xml:space="preserve"><value>評価を設定</value></data>
   <data name="Smart_Dialog_CreateTitle" xml:space="preserve"><value>スマートプレイリストを作成</value></data>
@@ -913,6 +914,8 @@
   <data name="Settings_Playback_Convolution_Empty" xml:space="preserve"><value>(インパルスなし)</value></data>
   <data name="MainWindow_Menu_OpenUrl.Text" xml:space="preserve"><value>ネットワークストリームを開く (ラジオ)...</value></data>
   <data name="Network_PageHeader.Text" xml:space="preserve"><value>ネットワーク</value></data>
+  <data name="Network_SidebarHeader.Text" xml:space="preserve"><value>データソース</value></data>
+  <data name="Network_Dlna_Title.Text" xml:space="preserve"><value>DLNAサーバー</value></data>
   <data name="Network_Radio_Title.Text" xml:space="preserve"><value>ラジオ</value></data>
   <data name="Network_Radio_Add.AutomationProperties.Name" xml:space="preserve"><value>放送局を追加</value></data>
   <data name="Network_Radio_AddText.Text" xml:space="preserve"><value>放送局を追加</value></data>

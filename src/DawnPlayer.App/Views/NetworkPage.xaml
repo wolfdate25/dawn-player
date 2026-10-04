@@ -6,44 +6,71 @@
     xmlns:network="using:DawnPlayer.App.Views.Network"
     NavigationCacheMode="Enabled">
 
-    <!-- Network sources live as sections inside one page; adding a source (DLNA, YouTube) adds a
-         section here without touching the shell's tab calculator again. -->
-    <Grid Background="{ThemeResource LayerBgBrush}" Padding="24,16,24,12" RowSpacing="12">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <!-- L13(2026-10-04): 네트워크 소스는 한 페이지 안의 섹션으로 살고, 전환은 데이터 소스
+         사이드바가 맡는다 — Library/Playlist와 같은 "좌측 사이드바 + 콘텐츠" 골격. 소스 추가는
+         여기에 행 1개+섹션 1개면 충분하고 셸 탭 계산기는 다시 만지지 않는다. -->
+    <Grid Background="{ThemeResource LayerBgBrush}">
+        <Grid.ColumnDefinitions>
+            <!-- Panel 1: 데이터 소스 사이드바(고정 — 소스 3종, 크기 조정 필요 없음) -->
+            <ColumnDefinition Width="200"/>
+            <!-- Panel 2: 선택된 섹션 콘텐츠 -->
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        <TextBlock x:Uid="Network_PageHeader" Text="Network" FontSize="17" FontWeight="SemiBold"
-                   Foreground="{ThemeResource TextPrimaryBrush}"/>
+        <!-- [Panel 1] 데이터 소스 사이드바 (Playlist 사이드바 언어: PanelSubtle + 헤어라인,
+             행 32px/R4, 선택 틴트) -->
+        <Grid Grid.Column="0" Background="{ThemeResource PanelSubtleBrush}"
+              BorderBrush="{ThemeResource SeparatorSubtleBrush}" BorderThickness="0,0,1,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-        <!-- Section switcher (same pattern as the shell's top tabs) -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="2">
-            <RadioButton x:Name="SectionRadio" GroupName="NetworkSectionGroup" IsChecked="True"
-                         Style="{StaticResource EoleNavTabStyle}" Click="OnSectionRadioClick">
-                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                    <FontIcon Glyph="&#xE968;" FontSize="12"/>
-                    <TextBlock x:Uid="Network_Section_Radio" Text="라디오" FontSize="{StaticResource FontBody}"/>
-                </StackPanel>
-            </RadioButton>
-            <RadioButton x:Name="SectionDlna" GroupName="NetworkSectionGroup"
-                         Style="{StaticResource EoleNavTabStyle}" Click="OnSectionDlnaClick">
-                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                    <FontIcon Glyph="&#xE8F1;" FontSize="12"/>
-                    <TextBlock x:Uid="Network_Section_Dlna" Text="DLNA" FontSize="{StaticResource FontBody}"/>
-                </StackPanel>
-            </RadioButton>
-            <RadioButton x:Name="SectionYouTube" GroupName="NetworkSectionGroup"
-                         Style="{StaticResource EoleNavTabStyle}" Click="OnSectionYouTubeClick">
-                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                    <FontIcon Glyph="&#xE8F2;" FontSize="12"/>
-                    <TextBlock x:Uid="Network_Section_YouTube" Text="YouTube" FontSize="{StaticResource FontBody}"/>
-                </StackPanel>
-            </RadioButton>
-        </StackPanel>
+            <TextBlock x:Uid="Network_SidebarHeader" Grid.Row="0" Text="데이터 소스"
+                       Style="{StaticResource SectionHeaderText}" Margin="16,14,14,8"/>
 
-        <Grid Grid.Row="2">
+            <ListView x:Name="SourceList" Grid.Row="1" SelectionMode="Single"
+                      SingleSelectionFollowsFocus="True"
+                      SelectionChanged="OnSourceSelectionChanged"
+                      Padding="6,2,6,16">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="Padding" Value="10,6"/>
+                        <Setter Property="MinHeight" Value="32"/>
+                        <Setter Property="CornerRadius" Value="4"/>
+                        <Setter Property="Margin" Value="0,1"/>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListViewItem IsSelected="True">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE968;" FontSize="12" Foreground="{ThemeResource TextTertiaryBrush}"/>
+                        <TextBlock x:Uid="Network_Section_Radio" Text="라디오" FontSize="{StaticResource FontBody}"
+                                   Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </ListViewItem>
+                <ListViewItem>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE8F1;" FontSize="12" Foreground="{ThemeResource TextTertiaryBrush}"/>
+                        <TextBlock x:Uid="Network_Section_Dlna" Text="DLNA" FontSize="{StaticResource FontBody}"
+                                   Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </ListViewItem>
+                <ListViewItem>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE8F2;" FontSize="12" Foreground="{ThemeResource TextTertiaryBrush}"/>
+                        <TextBlock x:Uid="Network_Section_YouTube" Text="YouTube" FontSize="{StaticResource FontBody}"
+                                   Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </ListViewItem>
+            </ListView>
+        </Grid>
+
+        <!-- [Panel 2] 섹션 3종은 겹침 유지 — 가시성만 사이드바 선택을 따른다. 지연 활성화 계약도
+             그대로(ActivatePage → 라디오, 첫 방문 → 나머지). L14: 콘텐츠 열 인셋은 의미 토큰
+             (Playlist 패밀리 20,14,20,16) — 창 모서리·하단바 헤어라인과의 리듬을 페이지와 무관하게
+             유지한다. -->
+        <Grid Grid.Column="1" Padding="{ThemeResource PageContentPadding}">
             <network:RadioSection x:Name="RadioSectionControl"/>
             <network:DlnaSection x:Name="DlnaSectionControl" Visibility="Collapsed"/>
             <network:YouTubeSection x:Name="YouTubeSectionControl" Visibility="Collapsed"/>

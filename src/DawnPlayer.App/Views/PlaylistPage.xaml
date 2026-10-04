@@ -29,7 +29,7 @@
                                MaxRating="5" IsClearEnabled="True"
                                ValueChanged="OnRatingSelectorValueChanged"/>
                 <TextBlock x:Uid="Rating_ClearHint" Text="선택한 별을 다시 누르면 평점이 지워집니다."
-                           FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                           FontSize="{StaticResource FontCaption}" Foreground="{ThemeResource TextTertiaryBrush}"
                            TextWrapping="Wrap" HorizontalAlignment="Center"/>
             </StackPanel>
         </Flyout>
@@ -61,8 +61,8 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock x:Uid="Playlist_SidebarHeader" Text="Playlists..." FontSize="{StaticResource FontSubtitle}" FontWeight="SemiBold" FontStyle="Italic"
-                           Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                <TextBlock x:Uid="Playlist_SidebarHeader" Text="Playlists..." Style="{StaticResource SectionHeaderText}"
+                           VerticalAlignment="Center"/>
                 <TextBlock x:Name="PlaylistsCountText" Grid.Column="1" Text="0" FontSize="{StaticResource FontBodySmall}"
                            Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>
             </Grid>
@@ -73,14 +73,14 @@
                         Padding="10,6" Background="Transparent" BorderThickness="0" CornerRadius="4">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon Glyph="&#xE710;" FontSize="12" Foreground="{ThemeResource DawnAccentTextBrush}"/>
-                        <TextBlock x:Uid="Playlist_CreateButtonText" Text="Create Playlist" FontSize="12" Foreground="{ThemeResource TextPrimaryBrush}"/>
+                        <TextBlock x:Uid="Playlist_CreateButtonText" Text="Create Playlist" FontSize="{StaticResource FontBodySmall}" Foreground="{ThemeResource TextPrimaryBrush}"/>
                     </StackPanel>
                 </Button>
                 <Button x:Uid="Playlist_CreateSmartButton" Click="OnCreateSmartPlaylistClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
                         Padding="10,6" Background="Transparent" BorderThickness="0" CornerRadius="4">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon Glyph="&#xE71C;" FontSize="12" Foreground="{ThemeResource DawnAccentTextBrush}"/>
-                        <TextBlock x:Uid="Playlist_CreateSmartButtonText" Text="Create Smart Playlist" FontSize="12" Foreground="{ThemeResource TextPrimaryBrush}"/>
+                        <TextBlock x:Uid="Playlist_CreateSmartButtonText" Text="Create Smart Playlist" FontSize="{StaticResource FontBodySmall}" Foreground="{ThemeResource TextPrimaryBrush}"/>
                     </StackPanel>
                 </Button>
             </StackPanel>
@@ -113,7 +113,7 @@
                             <FontIcon Grid.Column="0" Glyph="&#xE8B9;" FontSize="12" Foreground="{ThemeResource TextTertiaryBrush}"/>
                             <TextBlock Grid.Column="1" Text="{x:Bind Name, Mode=OneWay}" FontSize="{StaticResource FontBody}"
                                        Foreground="{ThemeResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="2" Text="{x:Bind Items.Count, Mode=OneWay}" FontSize="11"
+                            <TextBlock Grid.Column="2" Text="{x:Bind Items.Count, Mode=OneWay}" FontSize="{StaticResource FontCaption}"
                                        Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"/>
                         </Grid>
                     </DataTemplate>
@@ -161,8 +161,9 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- Top Header (Playlist Title & Summary Stats & Tools) -->
-            <Grid Grid.Row="0" Margin="22,14,22,6">
+            <!-- Top Header (Playlist Title & Summary Stats & Tools) — L14: 원점 토큰화(22→20 정규화,
+                 헤어라인 20·리스트 20과 같은 열) -->
+            <Grid Grid.Row="0" Margin="{ThemeResource PageHeaderMargin}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
@@ -170,8 +171,7 @@
 
                 <!-- Playlist Name (Italic) -->
                 <TextBlock x:Name="PlaylistTitleText" Text="Mixed selection"
-                           FontSize="{StaticResource FontSubtitle}" FontWeight="SemiBold" FontStyle="Italic"
-                           Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"
+                           Style="{StaticResource SectionHeaderText}" VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis"/>
 
                 <!-- Right: Summary Stats & Tools Menu Button -->
@@ -234,7 +234,7 @@
             </Grid>
 
             <!-- Hairline Divider -->
-            <Border Grid.Row="0" Height="1" VerticalAlignment="Bottom" Background="{ThemeResource BorderSubtleBrush}" Margin="20,0,20,0"/>
+            <Border Grid.Row="0" Height="1" VerticalAlignment="Bottom" Background="{ThemeResource SeparatorSubtleBrush}" Margin="20,0,20,0"/>
 
             <!-- Main Track List -->
             <Grid Grid.Row="1">
@@ -253,7 +253,7 @@
                             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                             <Setter Property="Padding" Value="6,2"/>
                             <Setter Property="MinHeight" Value="28"/>
-                            <Setter Property="CornerRadius" Value="3"/>
+                            <Setter Property="CornerRadius" Value="4"/>
                             <Setter Property="Margin" Value="0,1"/>
                         </Style>
                     </ListView.ItemContainerStyle>
@@ -283,8 +283,8 @@
                                         <TextBlock Text="{x:Bind Track.Title}" FontSize="{StaticResource FontBody}"
                                                    Foreground="{ThemeResource TextPrimaryBrush}"
                                                    TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text=" - " FontSize="12" Foreground="{ThemeResource TextTertiaryBrush}"/>
-                                        <TextBlock Text="{x:Bind Track.Artist}" FontSize="12" FontStyle="Italic"
+                                        <TextBlock Text=" - " FontSize="{StaticResource FontBodySmall}" Foreground="{ThemeResource TextTertiaryBrush}"/>
+                                        <TextBlock Text="{x:Bind Track.Artist}" FontSize="{StaticResource FontBodySmall}" FontStyle="Italic"
                                                    Foreground="{ThemeResource TextTertiaryBrush}"
                                                    TextTrimming="CharacterEllipsis" x:Phase="1"/>
                                         <Border Visibility="{x:Bind QueueIndex, Converter={StaticResource QueueVis}, Mode=OneWay}"
@@ -312,16 +312,18 @@
                                                Text="{x:Bind DurationDisplay, Mode=OneWay}" x:Phase="1"/>
                                 </Grid>
 
-                                <!-- Eole Active Playing Highlight Box (when playing) -->
-                                <Border Height="{ThemeResource TrackRowMinHeight}" CornerRadius="3"
+                                <!-- Eole Active Playing Highlight Box (when playing) — L15: 후행 열 구조를
+                                     일반 행([Auto 별][54 재생시간]·Padding 2,0)과 동일하게 맞춰 별·재생시간이
+                                     행 상태와 무관하게 같은 x에 정렬되게 한다. -->
+                                <Border Height="{ThemeResource TrackRowMinHeight}" CornerRadius="4"
                                         Background="{ThemeResource DawnAccentMutedBrush}" BorderBrush="{ThemeResource DawnAccentGlowBrush}" BorderThickness="1"
                                         Visibility="{x:Bind IsPlaying, Converter={StaticResource PlayingVis}, Mode=OneWay}">
-                                    <Grid ColumnSpacing="8" Padding="0,0,8,0">
+                                    <Grid Padding="2,0" ColumnSpacing="8">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="28"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="54"/>
                                         </Grid.ColumnDefinitions>
 
                                         <!-- Left Amber Accent Line -->
@@ -338,8 +340,8 @@
                                             <TextBlock Text="{x:Bind Track.Title}" FontSize="{StaticResource FontBody}" FontWeight="SemiBold"
                                                        Foreground="{ThemeResource TextPrimaryBrush}"
                                                        TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Text=" - " FontSize="12" Foreground="{ThemeResource TextSecondaryBrush}"/>
-                                            <TextBlock Text="{x:Bind Track.Artist}" FontSize="12" FontStyle="Italic"
+                                            <TextBlock Text=" - " FontSize="{StaticResource FontBodySmall}" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                                            <TextBlock Text="{x:Bind Track.Artist}" FontSize="{StaticResource FontBodySmall}" FontStyle="Italic"
                                                        Foreground="{ThemeResource TextSecondaryBrush}"
                                                        TextTrimming="CharacterEllipsis"/>
                                             <Border Visibility="{x:Bind QueueIndex, Converter={StaticResource QueueVis}, Mode=OneWay}"
@@ -387,7 +389,7 @@
                                                 BorderBrush="{ThemeResource BorderSubtleBrush}" BorderThickness="1">
                                             <Grid>
                                                 <FontIcon Glyph="&#xE90B;" FontSize="20" Foreground="{ThemeResource TextTertiaryBrush}"/>
-                                                <Border CornerRadius="3">
+                                                <Border CornerRadius="4">
                                                     <Image Source="{Binding Art}" Stretch="UniformToFill"/>
                                                 </Border>
                                             </Grid>
@@ -395,9 +397,9 @@
 
                                         <!-- Album Title & Artist -->
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                            <TextBlock Text="{Binding Album}" FontSize="{StaticResource FontSubtitle}" FontWeight="SemiBold" FontStyle="Italic"
-                                                       Foreground="{ThemeResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Text="{Binding Artist}" FontSize="12"
+                                            <TextBlock Text="{Binding Album}" Style="{StaticResource SectionHeaderText}"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="{Binding Artist}" FontSize="{StaticResource FontBodySmall}"
                                                        Foreground="{ThemeResource TextTertiaryBrush}" TextTrimming="CharacterEllipsis"/>
                                         </StackPanel>
 
@@ -405,7 +407,7 @@
                                         <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2" HorizontalAlignment="Right" Margin="0,0,4,0">
                                             <TextBlock Text="{Binding DurationFormatted}" FontSize="{StaticResource FontBodySmall}"
                                                        Foreground="{ThemeResource TextTertiaryBrush}" HorizontalAlignment="Right"/>
-                                            <TextBlock Text="{Binding YearFormatted}" FontSize="11"
+                                            <TextBlock Text="{Binding YearFormatted}" FontSize="{StaticResource FontCaption}"
                                                        Foreground="{ThemeResource TextTertiaryBrush}" HorizontalAlignment="Right"/>
                                         </StackPanel>
                                     </Grid>
@@ -455,15 +457,15 @@
                     </ListView.ContextFlyout>
                 </ListView>
 
-                <!-- Empty State Display -->
-                <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10"
+                <!-- Empty State Display (L14 F10 표준: 아이콘 28 · Spacing 8 · MaxWidth 380) -->
+                <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
                             Visibility="Collapsed" Margin="24">
-                    <FontIcon Glyph="&#xE90B;" FontSize="36" Foreground="{ThemeResource TextTertiaryBrush}"/>
-                    <TextBlock x:Uid="Playlist_EmptyTitle" Text="재생목록이 비어 있습니다" FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center"
+                    <FontIcon Glyph="&#xE90B;" FontSize="28" Foreground="{ThemeResource TextTertiaryBrush}"/>
+                    <TextBlock x:Uid="Playlist_EmptyTitle" Text="재생목록이 비어 있습니다" FontSize="{StaticResource FontSubtitle}" FontWeight="SemiBold" HorizontalAlignment="Center"
                                Foreground="{ThemeResource TextSecondaryBrush}"/>
                     <TextBlock x:Uid="Playlist_EmptyDesc" Text="음악 파일이나 폴더를 창으로 끌어다 놓거나 우측 상단 메뉴의 [파일 추가]·[폴더 추가]를 사용하세요.&#x0a;라이브러리에서 원하는 트랙을 선택해 추가할 수도 있습니다."
-                               FontSize="12" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
-                               Foreground="{ThemeResource TextTertiaryBrush}" MaxWidth="440"/>
+                               FontSize="{StaticResource FontBodySmall}" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
+                               Foreground="{ThemeResource TextTertiaryBrush}" MaxWidth="380"/>
                 </StackPanel>
             </Grid>
         </Grid>

@@ -12,7 +12,8 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Section header -->
+        <!-- Section header (L16 공용 계약의 기준 구현 — YouTube/DLNA도 이 3존 골격을 따른다):
+             아이콘+제목(좌) | 필러 | 메타(카운트·연결 상태) | 액션(우측 끝 앵커) -->
         <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
@@ -22,8 +23,8 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <FontIcon Glyph="&#xE968;" FontSize="14" Foreground="{ThemeResource DawnAccentTextBrush}" VerticalAlignment="Center"/>
-            <TextBlock x:Uid="Network_Radio_Title" Grid.Column="1" Text="라디오" FontSize="{StaticResource FontSubtitle}" FontWeight="SemiBold"
-                       Foreground="{ThemeResource TextPrimaryBrush}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+            <TextBlock x:Uid="Network_Radio_Title" Grid.Column="1" Text="라디오" Style="{StaticResource SectionHeaderText}"
+                       Margin="8,0,0,0" VerticalAlignment="Center"/>
             <TextBlock x:Name="StationCountText" Grid.Column="2" Text="0" FontSize="{StaticResource FontBodySmall}"
                        Foreground="{ThemeResource TextTertiaryBrush}" Margin="0,0,12,0" VerticalAlignment="Center"/>
             <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
@@ -33,23 +34,31 @@
                            Foreground="{ThemeResource TextSecondaryBrush}"/>
             </StackPanel>
             <Button x:Uid="Network_Radio_Add" x:Name="AddStationButton" Grid.Column="4" Click="OnAddStationClick"
-                    Padding="10,5" CornerRadius="4">
-                <StackPanel Orientation="Horizontal" Spacing="7">
+                    Padding="10,6" CornerRadius="4">
+                <StackPanel Orientation="Horizontal" Spacing="8">
                     <FontIcon Glyph="&#xE710;" FontSize="12" Foreground="{ThemeResource DawnAccentTextBrush}"/>
-                    <TextBlock x:Uid="Network_Radio_AddText" Text="방송국 추가" FontSize="12"/>
+                    <TextBlock x:Uid="Network_Radio_AddText" Text="방송국 추가" FontSize="{StaticResource FontBodySmall}"/>
                 </StackPanel>
             </Button>
         </Grid>
 
-        <!-- Station list -->
+        <!-- Station list (L13 변형 A: 플랫 — 박스 없음, 미디어 행 44/R4) -->
         <ListView x:Name="StationList" Grid.Row="1" SelectionMode="Single"
-                      KeyDown="OnStationKeyDown"
+                  KeyDown="OnStationKeyDown"
                   DoubleTapped="OnStationDoubleTapped"
-                  Background="{ThemeResource PanelSubtleBrush}"
-                  BorderBrush="{ThemeResource SeparatorSubtleBrush}" BorderThickness="1" CornerRadius="6">
+                  Padding="0,2,0,16">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="Padding" Value="6,1"/>
+                    <Setter Property="MinHeight" Value="44"/>
+                    <Setter Property="CornerRadius" Value="4"/>
+                    <Setter Property="Margin" Value="0,1"/>
+                </Style>
+            </ListView.ItemContainerStyle>
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="netw:RadioRow">
-                    <Grid Padding="12,9" Background="Transparent">
+                    <Grid Padding="16,8" Background="Transparent">
                         <Grid.ContextFlyout>
                             <MenuFlyout>
                                 <MenuFlyoutItem x:Uid="Network_Radio_Play" Text="재생" Click="OnPlayStationClick">
@@ -74,13 +83,13 @@
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <TextBlock Text="{x:Bind Station.Name}" FontSize="{StaticResource FontBody}" FontWeight="SemiBold"
                                            Foreground="{ThemeResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
-                                <Border CornerRadius="3" Padding="5,1" Background="{ThemeResource DawnAccentBrush}"
+                                <Border CornerRadius="4" Padding="5,1" Background="{ThemeResource DawnAccentBrush}"
                                         Visibility="{x:Bind PlayingBadgeVisibility, Mode=OneWay}">
                                     <TextBlock x:Uid="Network_Radio_PlayingBadge" Text="재생 중" FontSize="{StaticResource FontCaption}"
-                                               Foreground="{ThemeResource TextPrimaryBrush}"/>
+                                               Foreground="{ThemeResource OnAccentBrush}"/>
                                 </Border>
                             </StackPanel>
-                            <TextBlock Text="{x:Bind Station.Url}" FontSize="11"
+                            <TextBlock Text="{x:Bind Station.Url}" FontSize="{StaticResource FontCaption}"
                                        Foreground="{ThemeResource TextTertiaryBrush}" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
                     </Grid>
@@ -90,9 +99,9 @@
 
         <!-- Empty state (U2 pattern: message, no action — the header's add button is the action) -->
         <StackPanel x:Name="EmptyState" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-            <FontIcon Glyph="&#xE968;" FontSize="22" Foreground="{ThemeResource TextTertiaryBrush}" HorizontalAlignment="Center"/>
+            <FontIcon Glyph="&#xE968;" FontSize="28" Foreground="{ThemeResource TextTertiaryBrush}" HorizontalAlignment="Center"/>
             <TextBlock x:Uid="Network_Radio_Empty" Text="저장된 방송국이 없습니다. '방송국 추가'로 Icecast/Shoutcast MP3 스트림 URL을 등록하세요."
-                       FontSize="12" Foreground="{ThemeResource TextTertiaryBrush}" HorizontalAlignment="Center"
+                       FontSize="{StaticResource FontBodySmall}" Foreground="{ThemeResource TextTertiaryBrush}" HorizontalAlignment="Center"
                        TextWrapping="Wrap" MaxWidth="380" TextAlignment="Center"/>
         </StackPanel>
     </Grid>

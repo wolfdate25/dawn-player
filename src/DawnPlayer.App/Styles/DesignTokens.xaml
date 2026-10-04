@@ -93,4 +93,19 @@
     <x:Double x:Key="TrackRowSpacing">12</x:Double>
     <x:Double x:Key="ListCoverSize">32</x:Double>
 
+    <!-- Outline radius scale (L13, WinUI Geometry convention): 0 = flush bands (맞닿는 직선
+         모서리), 4 = 행·박스·세그먼트(ControlCornerRadius 관례), 5 = 칩(셸 탭 승인 룩),
+         8 = 오버레이(시스템 관리). 페이지 XAML의 리터럴 반경은 OutlineUnityGateTests가 이
+         스케일로 묶는다 — 3·6은 퇴출. 값의 C# 미러는 DesignTokenValues.Radius/Rows. -->
+    <x:Double x:Key="RowCornerRadius">4</x:Double>
+    <x:Double x:Key="ChipCornerRadius">5</x:Double>
+    <!-- Media rows (썸네일 행: Radio·DLNA) — 밀도 스케일과 무관한 고정 높이. -->
+    <x:Double x:Key="MediaRowMinHeight">44</x:Double>
+
+    <!-- L14 의미 인셋 토큰 (Thickness — 스칼라 미러 대상 아님, LayoutRhythmGateTests가 정의와
+         소비를 함께 단언). Network 콘텐츠 열과 Playlist 헤더 원점: Playlist 패밀리(20) 기준,
+         하단바 인셋 18과 Δ2. -->
+    <Thickness x:Key="PageContentPadding">20,14,20,16</Thickness>
+    <Thickness x:Key="PageHeaderMargin">20,14,20,6</Thickness>
+
 </ResourceDictionary>

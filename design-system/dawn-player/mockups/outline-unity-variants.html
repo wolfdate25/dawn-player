@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dawn Player — Library·Playlist·Network 아웃라인 통일 변형 (A·B-1·B-2·C)</title>
+<style>
+  :root {
+    /* DawnTheme.xaml 다크 팔레트 (Eole Signature Slate) */
+    --bg: #18181D; --panel: #1F1F25; --panel-subtle: #19191E; --card: #27272F;
+    --hover: #30303A; --separator: #2F2F39; --separator-subtle: #24242D;
+    --border-subtle: rgba(255,255,255,0.20);
+    --text: #F3F3F6; --text2: #AEAEBC; --text3: #8F8FA0;
+    --accent: #E8A33D; --sel: rgba(232,163,61,0.15); --sel-hover: rgba(232,163,61,0.24);
+    --muted: rgba(232,163,61,0.20); --glow: rgba(232,163,61,0.10);
+    --on-accent: #221A0B;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #121216; color: var(--text);
+    font-family: "Segoe UI", "Malgun Gothic", sans-serif;
+    padding: 20px 24px; display: flex; flex-direction: column; gap: 14px;
+  }
+  h1 { font-size: 16px; font-weight: 600; }
+  .sub { color: var(--text2); font-size: 12px; line-height: 1.6; }
+  .sub b { color: var(--accent); }
+
+  /* ── 변형 탭 ── */
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tabs button {
+    background: var(--panel); border: 1px solid var(--separator); color: var(--text2);
+    border-radius: 6px; padding: 8px 14px; font-size: 12px; cursor: pointer; text-align: left;
+  }
+  .tabs button b { display: block; color: var(--text); font-size: 12.5px; margin-bottom: 2px; }
+  .tabs button.active { border-color: var(--accent); background: rgba(232,163,61,0.12); }
+  .tabs button.active b { color: var(--accent); }
+
+  /* ── 무대 ── */
+  .stage { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .frame {
+    background: var(--bg); border: 1px solid var(--separator); border-radius: 8px;
+    width: 316px; overflow: hidden; flex: none;
+  }
+  .f-title {
+    height: 30px; display: flex; align-items: center; padding: 0 10px;
+    border-bottom: 1px solid var(--separator-subtle); font-size: 11px; color: var(--text3);
+  }
+  .f-title .pg { color: var(--text); font-weight: 600; }
+  .f-body { height: 308px; }
+
+  /* ══ Library 프레임 ══ */
+  .lib { display: flex; }
+  .lib-tree {
+    width: 88px; flex: none; border-right: 1px solid var(--separator-subtle);
+    padding: 8px 6px;
+  }
+  .tree-h { font-size: 10px; font-weight: 600; color: var(--text3); margin: 0 6px 6px; }
+  .trow {
+    height: 24px; display: flex; align-items: center; gap: 4px; padding: 0 6px;
+    border-radius: 5px; font-size: 10.5px; color: var(--text2);
+    background: rgba(31,31,37,0.40); margin-bottom: 1px;
+  }
+  .trow .chev { color: var(--text3); font-size: 8px; width: 8px; }
+  .trow.sel { background: var(--sel); color: var(--text); }
+  .lib-center { flex: 1; min-width: 0; padding: 8px 0 0; }
+  .subheader {
+    display: flex; align-items: baseline; gap: 6px; padding: 2px 14px 6px;
+    border-bottom: 1px solid var(--separator-subtle); font-size: 11px; font-weight: 600;
+  }
+  .subheader .cnt { font-weight: 400; font-size: 10px; color: var(--text3); }
+  .colhdr {
+    display: flex; gap: 8px; padding: 4px 14px 5px; font-size: 9.5px; font-weight: 600;
+    color: var(--text3); border-bottom: 1px solid var(--separator-subtle);
+  }
+  .colhdr .c1 { width: 16px; } .colhdr .c2 { flex: 1; } .colhdr .c3 { width: 26px; text-align: right; }
+  .track {
+    height: 28px; display: flex; align-items: center; gap: 8px; padding: 0 8px;
+    margin: 0 6px; border-radius: var(--row-r); font-size: 11px; cursor: default;
+  }
+  .track:hover { background: var(--hover); }
+  .track .num { width: 16px; color: var(--text3); font-size: 10px; }
+  .track .name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .track .dur { width: 26px; text-align: right; color: var(--text3); font-size: 10px; }
+  .track.sel { background: var(--sel); }
+  .track.playing {
+    background: var(--muted); box-shadow: inset 0 0 0 1px var(--glow);
+    position: relative;
+  }
+  .track.playing::before {
+    content: ""; position: absolute; left: 0; top: 18%; bottom: 18%;
+    width: 3px; border-radius: 2px; background: var(--accent);
+  }
+  .track.playing .name { color: var(--accent); }
+
+  /* ══ Playlist 프레임 ══ */
+  .pl { display: flex; }
+  .pl-side {
+    width: 86px; flex: none; border-right: 1px solid var(--separator-subtle); padding: 8px 6px;
+  }
+  .pl-side .side-h { font-size: 10.5px; font-weight: 600; font-style: italic; margin: 0 4px 6px; }
+  .pl-side .prow {
+    height: 24px; display: flex; align-items: center; padding: 0 6px; margin: 1px 2px;
+    border-radius: var(--row-r); font-size: 10.5px; color: var(--text2);
+  }
+  .pl-side .prow:hover { background: var(--hover); }
+  .pl-side .prow.sel { background: var(--sel); color: var(--text); }
+  .pl-center { flex: 1; min-width: 0; padding: 8px 0 0; }
+  .pl-h { padding: 2px 22px 6px; font-size: 12px; font-weight: 600; font-style: italic; }
+  .pl-h .hline { height: 1px; background: var(--border-subtle); margin-top: 6px; }
+  .pl-list { padding: 2px 6px 0; }
+  .pl-list .track { margin: 0; }
+
+  /* ══ Network 프레임 (구조 공통: 데이터 소스 사이드바 + 콘텐츠) ══ */
+  .net { display: flex; }
+  .net-side {
+    width: 74px; flex: none; background: var(--panel-subtle);
+    border-right: 1px solid var(--separator-subtle); padding: 8px 5px;
+  }
+  .net-side .side-h { font-size: 9px; font-weight: 600; color: var(--text3); margin: 0 3px 6px; }
+  .srow {
+    height: 22px; display: flex; align-items: center; padding: 0 6px; margin-bottom: 1px;
+    border-radius: 3px; font-size: 9.5px; color: var(--text2); white-space: nowrap;
+  }
+  .srow:hover { background: var(--hover); }
+  .srow.sel { background: var(--sel); color: var(--text); }
+  .net-main { flex: 1; min-width: 0; padding: 10px 10px 8px; }
+  .sec-h { display: flex; align-items: baseline; gap: 6px; font-size: 11px; font-weight: 600; margin: 0 2px 6px; }
+  .sec-h .cnt { font-weight: 400; font-size: 10px; color: var(--text3); }
+  .net-list {
+    background: var(--panel-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--box-r);
+    padding: 4px 2px;
+  }
+  .nrow {
+    height: 42px; display: flex; align-items: center; gap: 10px; padding: 0 8px;
+    border-radius: var(--row-r); font-size: 11px; cursor: default;
+  }
+  .nrow:hover { background: var(--hover); }
+  .nrow.sel { background: var(--sel); }
+  .nrow .thumb { width: 30px; height: 30px; border-radius: 4px; background: var(--card); border: 1px solid var(--separator-subtle); flex: none; }
+  .nrow .meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .nrow .meta b { font-weight: 600; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nrow .meta span { font-size: 10px; color: var(--text3); }
+  .play-badge {
+    font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 3px;
+    background: var(--accent); color: var(--on-accent); flex: none;
+  }
+
+  /* ══ 변형 주입 ══ */
+  body { --row-r: 4px; --box-r: 4px; }
+
+  /* A — Network 리스트 박스 제거(플랫) */
+  body[data-v="A"] .net-list { background: transparent; border: none; border-radius: 0; padding: 0; }
+
+  /* D — WinUI 공식 패턴 (NavigationView 콘텐츠 레이어 시트 + 공식 리소스 우선).
+     사이드바는 공통안 그대로 — 변형 차이는 콘텐츠 처리만. */
+  body[data-v="D"] .net-main {
+    background: rgba(58,58,58,0.30); /* LayerFillColorDefault 다크 #4C3A3A3A */
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px 0 0 0; /* NavigationViewContentGridCornerRadius */
+  }
+  body[data-v="D"] .net-list { background: transparent; border: none; border-radius: 0; padding: 0; }
+
+  /* C — Library·Playlist 중앙 리스트도 카드화 */
+  body[data-v="C"] .lib-center, body[data-v="C"] .pl-center {
+    margin: 8px; padding: 2px 0 6px;
+    background: var(--panel-subtle); border: 1px solid var(--border-subtle); border-radius: 4px;
+  }
+  body[data-v="C"] .subheader, body[data-v="C"] .pl-h { padding-left: 12px; padding-right: 12px; }
+  body[data-v="C"] .colhdr { padding-left: 12px; padding-right: 12px; }
+
+  /* ── 설명 패널 ── */
+  .desc { width: 380px; display: flex; flex-direction: column; gap: 10px; }
+  .desc .name { font-size: 15px; font-weight: 600; }
+  .desc .why { font-size: 12px; color: var(--text2); line-height: 1.65; }
+  .desc .why b { color: var(--text); }
+  .desc .procon { font-size: 11.5px; line-height: 1.6; display: flex; flex-direction: column; gap: 4px; }
+  .desc .pro { color: #7BC47F; } .desc .con { color: #D4887A; }
+  .geo {
+    background: var(--panel); border: 1px solid var(--separator); border-radius: 6px;
+    padding: 10px; font-family: Consolas, monospace; font-size: 11px; line-height: 1.7;
+    color: #C8C8D4; white-space: pre-wrap; user-select: all;
+  }
+  .geo .k { color: var(--accent); }
+  .pick { font-size: 12px; color: var(--text3); }
+  .common {
+    background: var(--panel); border: 1px solid var(--separator); border-radius: 8px;
+    padding: 12px 14px; font-size: 12px; color: var(--text2); line-height: 1.7;
+  }
+  .common b { color: var(--text); }
+  .common .h { font-weight: 600; color: var(--accent); font-size: 12.5px; margin-bottom: 6px; }
+</style>
+</head>
+<body data-v="B1">
+  <div>
+    <h1>Library·Playlist·Network 아웃라인 통일 — 변형 비교</h1>
+    <div class="sub">브라우저 배율 <b>100%</b> · <b>네트워크 구조는 확정</b>(데이터 소스 사이드바 — 3페이지 모두 "좌측 사이드바 + 콘텐츠" 골격)이고, 남은 선택은 콘텐츠 프레임 처리입니다. WinUI 3 공식 Geometry 규칙(인페이지 요소 <b>4px</b>, 직선 모서리가 맞닿는 곳 <b>0px</b>)을 기준으로 프레임·행·헤더·구분선을 하나의 규칙으로 묶습니다. 선택 = <b>변형 ID</b>만 말씀하시면 계획을 확정합니다 (예: "B-1로 진행해").</div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="stage">
+    <!-- Library -->
+    <div class="frame">
+      <div class="f-title"><span class="pg">Library</span>&nbsp;— 중앙 리스트 + 좌측 트리 축약</div>
+      <div class="f-body lib">
+        <div class="lib-tree">
+          <div class="tree-h">Library Tree</div>
+          <div class="trow"><span class="chev">▾</span>Artists</div>
+          <div class="trow"><span class="chev">▸</span>Albums</div>
+          <div class="trow sel"><span class="chev">▾</span>Folders</div>
+        </div>
+        <div class="lib-center">
+          <div class="subheader">All Tracks <span class="cnt">1,204곡</span></div>
+          <div class="colhdr"><span class="c1">#</span><span class="c2">제목</span><span class="c3">시간</span></div>
+          <div class="track"><span class="num">1</span><span class="name">Aurora Drive</span><span class="dur">4:12</span></div>
+          <div class="track sel"><span class="num">2</span><span class="name">Midnight Transit</span><span class="dur">3:48</span></div>
+          <div class="track playing"><span class="num">3</span><span class="name">Slate &amp; Amber</span><span class="dur">5:01</span></div>
+          <div class="track"><span class="num">4</span><span class="name">Quiet Machine</span><span class="dur">3:22</span></div>
+          <div class="track"><span class="num">5</span><span class="name">Afterglow</span><span class="dur">4:40</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Playlist -->
+    <div class="frame">
+      <div class="f-title"><span class="pg">Playlist</span>&nbsp;— 사이드바 + 중앙 축약</div>
+      <div class="f-body pl">
+        <div class="pl-side">
+          <div class="side-h">재생목록</div>
+          <div class="prow sel">심야 통근</div>
+          <div class="prow">집중 DSD</div>
+          <div class="prow">라디오 mix</div>
+        </div>
+        <div class="pl-center">
+          <div class="pl-h">심야 통근<div class="hline"></div></div>
+          <div class="pl-list">
+            <div class="track"><span class="num">1</span><span class="name">Night Bus</span><span class="dur">3:57</span></div>
+            <div class="track playing"><span class="num">2</span><span class="name">Last Train</span><span class="dur">4:25</span></div>
+            <div class="track"><span class="num">3</span><span class="name">Sodium Light</span><span class="dur">3:12</span></div>
+            <div class="track"><span class="num">4</span><span class="name">Blue Hour</span><span class="dur">5:16</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Network (구조 공통: 데이터 소스 사이드바 + 콘텐츠 — 2026-10-04 사용자 확정) -->
+    <div class="frame">
+      <div class="f-title"><span class="pg">Network</span>&nbsp;— 사이드바 + 콘텐츠 (구조 공통, 프레임만 변형)</div>
+      <div class="f-body net">
+        <div class="net-side">
+          <div class="side-h">데이터 소스</div>
+          <div class="srow sel">라디오</div>
+          <div class="srow">DLNA</div>
+          <div class="srow">YouTube</div>
+        </div>
+        <div class="net-main">
+          <div class="sec-h">인터넷 라디오 <span class="cnt">24개국</span></div>
+          <div class="net-list">
+            <div class="nrow sel"><div class="thumb"></div><div class="meta"><b>Dawn Jazz 24</b><span>Jazz · 128 kbps</span></div><div class="play-badge">재생 중</div></div>
+            <div class="nrow"><div class="thumb"></div><div class="meta"><b>LoFi Beats Radio</b><span>LoFi · 192 kbps</span></div></div>
+            <div class="nrow"><div class="thumb"></div><div class="meta"><b>Ambient Sleep</b><span>Ambient · 96 kbps</span></div></div>
+            <div class="nrow"><div class="thumb"></div><div class="meta"><b>K-Indie Stream</b><span>Indie · 128 kbps</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 설명 -->
+    <div class="desc">
+      <div class="name" id="d-name"></div>
+      <div class="why" id="d-why"></div>
+      <div class="procon"><span class="pro" id="d-pro"></span><span class="con" id="d-con"></span></div>
+      <div class="geo" id="d-geo"></div>
+    </div>
+  </div>
+
+  <div class="common">
+    <div class="h">모든 변형에 공통으로 적용되는 정비 (불일치 근본 해소)</div>
+    ⓪ <b>구조 마이그레이션(사용자 확정 2026-10-04)</b> — 네트워크를 <b>데이터 소스 사이드바</b>로 전환: 섹션 탭(Radio/DLNA/YouTube)·페이지 타이틀 제거, <b>EoleNavTabStyle 삭제</b>. 사이드바 200px·PanelSubtle+우측 헤어라인·행 32px/R4·선택 틴트(Playlist 사이드바 동일 언어)에서 소스 3종 전환 — 콘텐츠는 기존 섹션 UserControl Visibility 메커니즘 유지. 3페이지 모두 "좌측 사이드바 + 콘텐츠" 동일 골격.
+    ① <b>구분선 역할 분리</b> — 섹션 내부 헤어라인은 <b>SeparatorSubtleBrush</b> 단일, 박스 외곽선은 <b>BorderSubtleBrush</b> 1px 단일(현행 혼용 해소: Library 우측 패널 934행·Playlist 237·387행).
+    ② <b>반경 스케일 토큰화</b> — 0(플러시 밴드) / 4(행·박스·세그먼트, ControlCornerRadius 관례) / 5(칩 탭)만 허용. 토큰 없는 <b>R6</b>(Network 박스)·이면의 <b>R3</b>(드로어·하이라이트) 제거.
+    ③ <b>섹션 헤더 통일</b> — <b>SectionHeaderText</b>(14 SemiBold) 신설 공용 스타일. 4종 공존(없음 DLNA/11/14/17) 해소, DLNA 헤더 부재 해소(사이드바 전환 후 콘텐츠 헤더로), 페이지 타이틀은 구조 결정(사이드바)으로 제거.
+    ④ <b>Network 행 정비</b> — Radio·DLNA에 ItemContainerStyle 신설(28px 밀도행과 별개의 미디어행 44px 토큰, 선택 틴트 ListViewItemBackgroundSelected* 통일), Radio 재생 배지 글자색 <b>TextPrimary → OnAccent</b>(대비 규약 준수).
+    ⑤ <b>리터럴 제거</b> — 3페이지 FontSize 리터럴 56곳 → Font* 토큰, 간격 리터럴 → Space* 토큰.
+  </div>
+
+  <div class="pick">↖ 미리보기에서 행·사이드바에 마우스를 올려 촉감을 비교해 보세요. 변형 간 차이는 콘텐츠 프레임(박스 유무)입니다.</div>
+
+<script>
+const VARIANTS = {
+  B1: {
+    label: "B-1 역할 기반 (박스 콘텐츠) — 추천",
+    name: "B-1 — 역할 기반 통일 (콘텐츠 묶음 = 박스 R4)",
+    why: "<b>WinUI 3 공식 Geometry 규칙을 그대로 수용</b>: 직선 모서리가 맞닿는 플러시 밴드(0px — 세 페이지의 사이드바·Library/Playlist 리스트)와 콘텐츠 영역에 떠 있는 묶음(4px — 네트워크 라디오·DLNA 리스트)은 역할이 다르므로 모양도 달라집니다. 대신 <b>같은 토큰 체계</b>(PanelSubtle + BorderSubtle + R4)로 규칙화합니다. 네트워크는 데이터 소스 사이드바(공통 구조) 안에서 콘텐츠 리스트만 박스로 묶입니다.",
+    pro: "장점: WinUI 문서 부합 + 최소 침습(플러시 구조 보존) + 짧은 묶음 리스트(라디오 24개국 등)의 덩어리 가독성.",
+    con: "단점: 박스 유무가 페이지마다 달라 \u2018완전히 동일한 모양\u2019은 아님(단, 규칙은 하나).",
+    geo: "공통 구조 (사용자 확정 2026-10-04)\n  네트워크   데이터 소스 사이드바 + 콘텐츠\n             (탭·페이지 타이틀 제거, EoleNavTabStyle 삭제)\n  사이드바   PanelSubtle + 우측 헤어라인 · 행 32/R4 · 선택 틴트\n             (Playlist 사이드바와 동일 언어)\n\n표면 역할\n  플러시 밴드   코너 0 · 테두리 없음 · 헤어라인만\n  콘텐츠 박스   PanelSubtle + BorderSubtle 1px + R4\n\n행 기하\n  밀도 트랙행   MinHeight 28 · R4 (3·5 → 4 수렴)\n  미디어 행     MinHeight 44 · R4 (Radio·DLNA 신설)\n\n헤더\n  사이드바 헤더  14 SemiBold (Playlist와 동일)\n  섹션 헤더      SectionHeaderText(14 SemiBold) 신설"
+  },
+  A: {
+    label: "A 전면 플랫 통일",
+    name: "A — 콘텐츠 리스트도 플랫으로 (사이드바 골격만 공통)",
+    why: "네트워크 콘텐츠 리스트의 박스(PanelSubtle + 1px + R6)를 걷어내고 Library·Playlist와 같은 <b>백플레이트 없는 플랫 행</b>으로 맞춥니다. 사이드바 덕분에 \u2018좌측 사이드바 + 콘텐츠\u2019 골격은 3페이지 동일 — 프레임 처리가 가장 단순해집니다.",
+    pro: "장점: 세 페이지 표면이 가장 단순하게 동일해 보임. 요소 수 최소.",
+    con: "단점: 콘텐츠 영역에 <b>떠 있는</b> 플랫 리스트는 배경과 경계가 없어 뭉개져 보임 — WinUI의 0px 규칙은 \u2018맞닿는 경우\u2019에만 적용되므로 문서 취지와는 어긋남.",
+    geo: "공통 구조 = 위와 동일 (데이터 소스 사이드바)\n\n표면 역할\n  모든 리스트    코너 0 · 테두리 없음 (전면 플랫)\n\n행 기하\n  밀도 트랙행    MinHeight 28 · R4\n  미디어 행      MinHeight 44 · R4\n\n헤더\n  (B-1 공통 규칙과 동일)"
+  },
+  C: {
+    label: "C 전면 카드 통일",
+    name: "C — 세 페이지 모든 콘텐츠를 카드로",
+    why: "반대 방향: Library·Playlist의 중앙 리스트까지 박스(PanelSubtle + BorderSubtle + R4)로 감싸 세 페이지를 <b>카드 하나의 언어</b>로 통일합니다. 네트워크 사이드바 콘텐츠도 같은 카드. Windows 11의 콘텐츠 카드 룩.",
+    pro: "장점: 표면 통일감은 최대. 박스 토큰 하나로 3페이지 관리.",
+    con: "단점: 28px 밀집 트랙 리스트를 박스에 넣으면 시각 소음 증가, 좌측 트리·우측 큐 같은 패널 구조와 카드가 중첩(박스 안 박스) 위험, 최근 정착한 플러시 구조 대규모 재작업. WinUI 0px 규칙(맞닿는 요소는 라운딩 금지)과 충돌하는 지점 발생.",
+    geo: "공통 구조 = 위와 동일 (데이터 소스 사이드바)\n\n표면 역할\n  모든 콘텐츠    PanelSubtle + BorderSubtle 1px + R4\n\n행 기하·헤더\n  (B-1 공통 규칙과 동일)\n\n리스크\n  박스 중첩 · 밀집 리스트 소음 · 대규모 재작업"
+  },
+  D: {
+    label: "D WinUI 공식 패턴 — 모범 사례",
+    name: "D — WinUI 모범 사례 (공식 테마 리소스 우선, 사이드바는 공통안)",
+    why: "<b>커스텀 XAML을 최소화하고 공식 리소스로 표면을 구성</b>하는 안: 콘텐츠는 WinUI 표준 레이어링(윈도우 설정 앱 질감)인 <b>LayerFillColorDefaultBrush 시트</b>로 깔고 상단 모서리만 8px 라운딩 + 스트로크(NavigationView 콘텐츠 레이어의 공식 기본값), 시트 안 리스트는 플랫폼 기본 ListViewItem(호버·선택·키보드 포커스·내레이터 상태가 기본 제공). 반경·표면 색은 ControlCornerRadius(4)/OverlayCornerRadius(8)/LayerFill 등 공식 리소스 우선(light-weight styling 권장 준수). <b>사이드바는 확정된 공통안(Playlist 언어) 그대로</b> — 변형 간 차이는 콘텐츠 처리만입니다.",
+    pro: "장점: 공식 패턴이라 접근성·키보드 상태가 기본 충족, SDK 업데이트를 따라감(커스텀 스타일 유지보수 최소), 설정 앱과 같은 익숙한 질감.",
+    con: "단점: Eole 커스텀 팔레트와 공식 리소스(반투명 LayerFill)의 질감이 갈라질 수 있음. 박스(PanelSubtle+BorderSubtle) 대신 앱 토큰 밖 공식 리소스 1종이 표면으로 추가됨.",
+    geo: "공통 구조 = 데이터 소스 사이드바 (동일)\n  사이드바 행 = 공통안 그대로\n  (Playlist 언어 · 32/R4 · 선택 틴트)\n\n콘텐츠 시트 (NavigationView 콘텐츠 레이어 기본값)\n  LayerFillColorDefaultBrush (다크 #4C3A3A3A)\n  스트로크 CardStrokeColorDefaultBrush 1px (1,1,0,0)\n  코너 8,0,0,0 (NavigationViewContentGridCornerRadius)\n\n시트 안 리스트 행\n  플랫폼 기본 ListViewItem (MinHeight 40 · R4 ·\n  호버·포커스·내레이터 상태 기본)\n\n반경·색  ControlCornerRadius(4)·OverlayCornerRadius(8)\n  등 공식 리소스 우선 → 커스텀 토큰 최소화"
+  }
+};
+
+const tabsEl = document.getElementById("tabs");
+const order = ["B1", "A", "C", "D"];
+order.forEach((k, i) => {
+  const b = document.createElement("button");
+  b.innerHTML = "<b>" + k + "</b>" + VARIANTS[k].label;
+  b.onclick = () => pick(k);
+  b.id = "tab-" + k;
+  tabsEl.appendChild(b);
+});
+function pick(k) {
+  document.body.setAttribute("data-v", k);
+  const v = VARIANTS[k];
+  document.getElementById("d-name").innerHTML = v.name;
+  document.getElementById("d-why").innerHTML = v.why;
+  document.getElementById("d-pro").innerHTML = v.pro;
+  document.getElementById("d-con").innerHTML = v.con;
+  document.getElementById("d-geo").textContent = v.geo;
+  order.forEach(x => document.getElementById("tab-" + x).classList.toggle("active", x === k));
+}
+pick("B1");
+</script>
+</body>
+</html>
