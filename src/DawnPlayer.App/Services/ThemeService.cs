@@ -61,6 +61,9 @@ public static void ApplyTheme(Window window, UiSettings ui, Panel? rootGrid = nu
             {
                 hcElement.RequestedTheme = ElementTheme.Default;
             }
+            // Caption chrome follows HC too: hand the system colors back instead of leaving
+            // the custom palette painted over the user's accessibility setup.
+            UpdateTitleBar(window, isLight: false);
             return;
         }
 
@@ -171,7 +174,18 @@ public static void ApplyTheme(Window window, UiSettings ui, Panel? rootGrid = nu
          window.Content is FrameworkElement f && f.ActualTheme == ElementTheme.Light);
 
     /// <summary>
-    /// Synchronizes the Windows 11 AppWindow TitleBar caption buttons with current theme.
+    /// Synchronizes the Windows 11 AppWindow TitleBar caption chrome with the current theme.
+    /// Single source of truth for caption colors (2026-10-03 title-bar refactor, doc contract
+    /// of /windows/apps/develop/title-bar): MainWindow's divergent copy was removed and both
+    /// the main and auxiliary windows re-theme through here. Only the background-family
+    /// properties honor alpha — transparent lets the window material (Mica/acrylic/panel)
+    /// show through; glyph foregrounds ignore alpha and must stay opaque, so they ride the
+    /// text palette the ApplyStandard*/Oled passes wrote into resources moments earlier.
+    /// Hover/pressed backgrounds use the app's CardHover/CardPressed tokens — the same
+    /// surface tabs and tree cards show (the doc-allowed maximum of "custom" captions; the
+    /// glyph shapes and the close button's red hover/press are platform-fixed).
+    /// A high-contrast theme hands every color back to the system (null resets to the system
+    /// default), including the close button's fixed red hover/press, which stays system-drawn.
     /// </summary>
     public static void UpdateTitleBar(Window window, bool isLight)
     {
@@ -183,30 +197,52 @@ public static void ApplyTheme(Window window, UiSettings ui, Panel? rootGrid = nu
             if (titleBar == null) return;
 
             titleBar.ExtendsContentIntoTitleBar = true;
+
+            if (IsHighContrastActive())
+            {
+                titleBar.BackgroundColor = null;
+                titleBar.InactiveBackgroundColor = null;
+                titleBar.ForegroundColor = null;
+                titleBar.InactiveForegroundColor = null;
+                titleBar.ButtonBackgroundColor = null;
+                titleBar.ButtonHoverBackgroundColor = null;
+                titleBar.ButtonPressedBackgroundColor = null;
+                titleBar.ButtonInactiveBackgroundColor = null;
+                titleBar.ButtonForegroundColor = null;
+                titleBar.ButtonHoverForegroundColor = null;
+                titleBar.ButtonPressedForegroundColor = null;
+                titleBar.ButtonInactiveForegroundColor = null;
+                return;
+            }
+
+            // Material unification: transparency is doc-allowed exactly on this family.
+            titleBar.BackgroundColor = Colors.Transparent;
+            titleBar.InactiveBackgroundColor = Colors.Transparent;
             titleBar.ButtonBackgroundColor = Colors.Transparent;
             titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
 
-            if (isLight)
-            {
-                titleBar.ButtonForegroundColor = ColorFromHex("#FF1A1A20");
-                titleBar.ButtonHoverForegroundColor = ColorFromHex("#FF000000");
-                titleBar.ButtonHoverBackgroundColor = ColorFromHex("#15000000");
-                titleBar.ButtonPressedForegroundColor = ColorFromHex("#FF000000");
-                titleBar.ButtonPressedBackgroundColor = ColorFromHex("#25000000");
-                titleBar.ButtonInactiveForegroundColor = ColorFromHex("#FF8A8A94");
-            }
-            else
-            {
-                titleBar.ButtonForegroundColor = ColorFromHex("#FFF0F0F3");
-                titleBar.ButtonHoverForegroundColor = Colors.White;
-                titleBar.ButtonHoverBackgroundColor = ColorFromHex("#22FFFFFF");
-                titleBar.ButtonPressedForegroundColor = Colors.White;
-                titleBar.ButtonPressedBackgroundColor = ColorFromHex("#35FFFFFF");
-                titleBar.ButtonInactiveForegroundColor = ColorFromHex("#FF6E6E7A");
-            }
+            // Glyphs follow the text palette; hover/press ride the app's Card tokens — the
+            // exact surface a tab chip or tree card shows on hover (2026-10-03 "Dawn Player
+            // 커스텀" 캡션 계약, 문서 허용 집합 내 최대치). 글리프 모양 자체와 닫기 호버·누름의
+            // 시스템 빨강은 플랫폼 고정 — 교체 API가 없다(알파 무시·입력 독점, 1~2차 실증).
+            titleBar.ForegroundColor = PaletteColor("TextPrimaryColor", isLight, "#FF1A1A20", "#FFF3F3F6");
+            titleBar.InactiveForegroundColor = PaletteColor("TextTertiaryColor", isLight, "#FF62626F", "#FF8F8FA0");
+            titleBar.ButtonForegroundColor = titleBar.ForegroundColor;
+            titleBar.ButtonInactiveForegroundColor = titleBar.InactiveForegroundColor;
+            titleBar.ButtonHoverForegroundColor = titleBar.ForegroundColor;
+            titleBar.ButtonPressedForegroundColor = titleBar.ForegroundColor;
+            titleBar.ButtonHoverBackgroundColor = PaletteColor("CardHoverColor", isLight, "#FFDCDAD3", "#FF32323C");
+            titleBar.ButtonPressedBackgroundColor = PaletteColor("CardPressedColor", isLight, "#FFD2D0C8", "#FF3C3C48");
         }
         catch { }
     }
+
+    /// <summary>Reads a palette color the theme passes publish into Application.Resources; the
+    /// hex fallbacks cover a window themed before the first palette application.</summary>
+    private static Windows.UI.Color PaletteColor(string key, bool isLight, string lightHex, string darkHex) =>
+        Application.Current.Resources.TryGetValue(key, out var value) && value is Windows.UI.Color color
+            ? color
+            : ColorFromHex(isLight ? lightHex : darkHex);
 
     /// <summary>
     /// Applies the specified accent color preset or custom color to Application resources.

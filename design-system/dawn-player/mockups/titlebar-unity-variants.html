@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dawn Player — 상단바 통일 변형 비교 (A·B·C·D)</title>
+<style>
+  /* 토큰은 DawnTheme 다크/라이트 팔레트의 실측 값. CSS px = WinUI 논리 px (1:1, 배수 변환 없음). */
+  :root {
+    --bg: #18181D; --panel: #1F1F25; --card: #27272F; --card-hover: #32323C;
+    --text: #F3F3F6; --text2: #AEAEBC; --text3: #8F8FA0;
+    --accent: #E8A33D; --accent-text: #F0B456;          /* accent-text는 솔버 근사값 */
+    --separator: #2F2F39; --sep-subtle: #24242D;
+    --sel-tint: rgba(232,163,61,.15);                    /* ListViewItemBackgroundSelected #26E8A33D */
+    --tree-card: rgba(31,31,37,.40);                     /* TreeRowCardBrush #661F1F25 */
+    --bar-h: 48px; --cap-h: 48px;                        /* 기본 = Tall(문서 권장 수정안) */
+  }
+  body.h40 { --bar-h: 40px; --cap-h: 32px; }             /* 현상: 캡션이 바를 8px 못 채움 */
+  body.h32 { --bar-h: 32px; --cap-h: 32px; }             /* Standard: 바를 캡션에 맞춤 */
+  body.light {
+    --bg: #F7F6F3; --panel: #F0EFEB; --card: #E6E4DE; --card-hover: #DCDAD3;
+    --text: #1A1A20; --text2: #555562; --text3: #62626F;
+    --accent: #C77F1B; --accent-text: #96620F;
+    --separator: #D5D3CC; --sep-subtle: #E0DED8;
+    --sel-tint: rgba(199,127,27,.15);
+    --tree-card: rgba(240,239,235,.40);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #121216; color: var(--text);
+    font-family: "Segoe UI", "Malgun Gothic", sans-serif;
+    padding: 20px 24px 40px; display: flex; flex-direction: column; gap: 16px;
+    transition: background .15s, color .15s;
+  }
+  body.light { background: #ECEAE4; }
+  h1 { font-size: 16px; font-weight: 600; }
+  .sub { color: var(--text2); font-size: 12px; line-height: 1.55; max-width: 860px; }
+  .sub b { color: var(--accent-text); }
+
+  .toggle {
+    position: sticky; top: 12px; align-self: flex-end;
+    background: var(--panel); border: 1px solid var(--separator); color: var(--text2);
+    border-radius: 6px; padding: 6px 14px; font-size: 12px; cursor: pointer; z-index: 5;
+  }
+  .toggle:hover { color: var(--text); background: var(--card-hover); }
+  .switchbar {
+    position: sticky; top: 12px; z-index: 5; align-self: flex-end;
+    display: flex; gap: 6px;
+  }
+  .switchbar button {
+    background: var(--panel); border: 1px solid var(--separator); color: var(--text2);
+    border-radius: 6px; padding: 6px 12px; font-size: 12px; cursor: pointer;
+  }
+  .switchbar button:hover { color: var(--text); background: var(--card-hover); }
+  .switchbar button.active { border-color: var(--accent); color: var(--accent-text); }
+
+  /* ── 변형 섹션 ── */
+  .variant { display: flex; flex-direction: column; gap: 10px; }
+  .variant > h2 { font-size: 14px; font-weight: 600; }
+  .variant > h2 .tag {
+    display: inline-block; background: var(--accent); color: #141414; border-radius: 4px;
+    font-size: 11px; padding: 1px 7px; margin-right: 8px; vertical-align: 1px;
+  }
+  .desc { font-size: 12px; color: var(--text2); line-height: 1.6; max-width: 860px; }
+  .desc code {
+    background: var(--panel); border: 1px solid var(--separator); border-radius: 3px;
+    padding: 0 4px; font-size: 11px;
+  }
+  .reco { color: var(--accent-text); font-weight: 600; }
+
+  /* ── 창 프레임 목업 (실측 구성: 상단바 40 / 하단바 60) ── */
+  .frame {
+    width: 780px; max-width: 100%; border-radius: 8px; overflow: hidden;
+    border: 1px solid var(--separator); background: var(--bg);
+    box-shadow: 0 8px 28px rgba(0,0,0,.35); user-select: none;
+  }
+  body.light .frame { box-shadow: 0 8px 28px rgba(0,0,0,.12); }
+
+  /* 상단바 — 높이는 스위처로 변경 (현상 40 / Tall 48 / Standard 32) */
+  .titlebar {
+    height: var(--bar-h); display: flex; align-items: center;
+    border-bottom: 1px solid var(--sep-subtle); padding-right: 0;
+  }
+  .tb-iconbtn {
+    width: 32px; height: 32px; margin: 0 0 0 6px; flex: none;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 4px; color: var(--text2); font-size: 13px; cursor: default;
+  }
+  .tb-iconbtn:hover { background: var(--card-hover); color: var(--text); }
+  .tb-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .tb-brand { font-size: 13px; font-weight: 600; color: var(--text); flex: none; }
+  .tb-sep { font-size: 11px; color: var(--sep-subtle); }          /* "|" 구분자 — 현상 전용 */
+  .tb-status {
+    font-size: 12px; color: var(--text3); max-width: 320px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: none;
+  }
+  .tb-tabs { display: flex; align-items: center; margin-left: 10px; }
+  .tab {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--text2); cursor: default; white-space: nowrap;
+  }
+  .tab .g { font-size: 12px; }
+
+  /* 캡션(시스템 영역) — 모든 변형 공통 */
+  .tb-captions { margin-left: auto; display: flex; flex: none; }
+  .cap {
+    width: 46px; height: var(--cap-h); display: flex; align-items: center; justify-content: center;
+    color: var(--text2); font-size: 10px;
+  }
+  .cap.close:hover { background: #C42B1C; color: #fff; }
+  .cap:hover { background: var(--card-hover); }
+
+  /* 본문 힌트 — 트리(D 카드형)와의 정합을 보기 위한 최소 배경 */
+  .body-mock { display: flex; height: 150px; }
+  .side {
+    width: 190px; padding: 8px 6px; display: flex; flex-direction: column; gap: 2px;
+    background: var(--bg);
+  }
+  .side .row {
+    display: flex; align-items: center; height: 32px; border-radius: 5px;
+    padding: 0 8px; font-size: 12px; color: var(--text2); background: var(--tree-card);
+  }
+  .side .row:not(.on):hover { background: var(--card-hover); }
+  .side .row.on { background: var(--sel-tint); color: var(--accent-text); }
+  .side .row .n { margin-left: auto; font-size: 11px; color: var(--text3); }
+  .main { flex: 1; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; }
+  .main .ln { height: 10px; border-radius: 3px; background: var(--panel); }
+  .main .ln.s { width: 45%; }
+
+  .bottombar {
+    height: 60px; border-top: 1px solid var(--sep-subtle); background: var(--panel);
+    display: flex; align-items: center; gap: 14px; padding: 0 16px; color: var(--text2);
+  }
+  .bottombar .t { font-size: 12px; color: var(--text); }
+  .bottombar .ctrl { font-size: 14px; letter-spacing: 10px; }
+  .bottombar .bar { flex: 1; height: 4px; border-radius: 2px; background: var(--card); position: relative; }
+  .bottombar .bar::after { content:""; position:absolute; left:0; top:0; bottom:0; width:38%; border-radius:2px; background: var(--accent); }
+
+  /* ══ 변형별 탭 언어 ══ */
+
+  /* A — 트리 카드 칩: 코너 5 · 호버 CardHover · 선택 = 앰버 틴트 + 앰버 텍스트(볼드 없음) */
+  .v-a .tab { height: 28px; padding: 0 12px; border-radius: 5px; }
+  .v-a .tab:hover { background: var(--card-hover); color: var(--text); }
+  .v-a .tab.on { background: var(--sel-tint); color: var(--accent-text); }
+  .v-a .tb-tabs { gap: 4px; }
+
+  /* B — Windows 11 캡션 타이포: 전체 12px, 브랜드 regular, 밑줄 탭 유지 */
+  .v-b .tb-brand { font-size: 12px; font-weight: 400; }
+  .v-b .tab { font-size: 12px; height: var(--bar-h); padding: 0 12px; position: relative; }
+  .v-b .tab::after {
+    content: ""; position: absolute; left: 12px; right: 12px; bottom: 0; height: 2px;
+    border-radius: 1px; background: var(--accent); opacity: 0;
+  }
+  .v-b .tab:hover { color: var(--text); }
+  .v-b .tab.on { color: var(--text); font-weight: 600; }
+  .v-b .tab.on::after { opacity: 1; }
+
+  /* C — 세그먼트 컨테이너: 라이브러리 Grid/List 토글과 같은 언어 */
+  .v-c .tb-tabs {
+    margin-left: 8px; background: var(--tree-card); border-radius: 5px; padding: 3px; gap: 2px;
+  }
+  .v-c .tab { height: 26px; padding: 0 10px; border-radius: 4px; font-size: 12px; }
+  .v-c .tab:hover { background: var(--card-hover); color: var(--text); }
+  .v-c .tab.on { background: var(--card-hover); color: var(--accent-text); }
+
+  /* D — 현 유지(밑줄+SemiBold) + 공통 리듬 정리만 */
+  .v-d .tab { height: var(--bar-h); padding: 0 12px; position: relative; }
+  .v-d .tab::after {
+    content: ""; position: absolute; left: 12px; right: 12px; bottom: 0; height: 2px;
+    border-radius: 1px; background: var(--accent); opacity: 0;
+  }
+  .v-d .tab:hover { color: var(--text); }
+  .v-d .tab.on { color: var(--text); font-weight: 600; }
+  .v-d .tab.on::after { opacity: 1; }
+
+  /* 수치 표 */
+  table { border-collapse: collapse; font-size: 11.5px; color: var(--text2); }
+  th, td { border: 1px solid var(--separator); padding: 4px 10px; text-align: left; }
+  th { color: var(--text); font-weight: 600; background: var(--panel); }
+  td b { color: var(--text); }
+</style>
+</head>
+<body>
+  <h1>상단바 통일 변형 비교 (A · B · C · D)</h1>
+  <p class="sub">
+    현재 상단바에는 <b>선택 언어 3종</b>이 공존합니다 — 탭(밑줄+SemiBold) · 사이드바 트리(카드+앰버 틴트,
+    10-03 승인 D안) · 라이브러리 Grid/List 토글(세그먼트 칩). 여기에 앱 어디에도 없는 텍스트 구분자
+    <code>|</code>, 4의 배수가 아닌 간격(2·6·8·10·14), 그리고 <b>높이 불일치(바 40 vs 캡션 32)</b>가
+    겹쳐 통일감이 깨집니다. 아래 4안은 <b>공통 리듬 정리</b>(구분자 제거 → 간격 12, 탭 간격 4, 높이 일치)를
+    깔고 <b>탭의 시각 언어를 무엇에 맞출지만</b> 다릅니다. 탭과 사이드바 행을 클릭하면 상태가 바뀌고,
+    오른쪽 위 스위처에서 높이 3상태(현상 포함)를 비교할 수 있습니다.
+  </p>
+  <div class="switchbar">
+    <button id="h48" class="active" onclick="setBarH(48)">높이 48 — Tall (수정안·권장)</button>
+    <button id="h32" onclick="setBarH(32)">높이 32 — Standard</button>
+    <button id="h40" onclick="setBarH(40)">높이 40 — 현상(불일치)</button>
+    <button onclick="document.body.classList.toggle('light')">라이트 / 다크</button>
+  </div>
+
+  <!-- ═══ 높이 불일치 진단 ═══ -->
+  <div class="variant">
+    <h2><span class="tag">높이</span>캡션 32px vs 바 40px — 8px 괴리 (스크린샷 빨간 선 지점)</h2>
+    <p class="desc">
+      시스템 캡션 버튼(─ □ ✕)은 <code>TitleBarHeightOption.Standard</code>(<b>32px</b>)로 그려지는데
+      상단바 행은 <b>40px</b>(MinHeight + Grid 행)라서, 캡션의 호버 배경·글리프가 바 하단에 8px 못 미치고
+      뜨고 캡션 중심(16px)과 앱 콘텐츠 중심(20px)도 어긋납니다. 위 스위처에서 세 상태를 비교해 보세요.
+      문서(/windows/apps/develop/title-bar)의 수정책은 <code>AppWindow.TitleBar.PreferredHeightOption</code>로
+      둘을 일치시키는 것 — <b>Tall(48px)</b>은 인터랙티브 콘텐츠(메뉴·탭·톱니)가 있는 타이틀바의 문서 권장
+      높이라 캡션이 바를 꽉 채우고, <b>Standard(32px)</b>는 바를 캡션에 맞춰 줄입니다(컴팩트하지만 28px 칩·
+      32px 버튼이 빠듯). 구현 범위(공통): 생성자에서 <code>PreferredHeightOption = TitleBarHeightOption.Tall</code>
+      (문서 경고 — ExtendsContentIntoTitleBar=true <b>이후</b> 설정) + XAML 행·MinHeight 40→48 +
+      미니 모드 복원의 하드코딩 40 → 상수 1곳 통일. 단계 숨김(840/740)은 폭 기준이라 무영향.
+    </p>
+  </div>
+
+  <!-- ═══ A안 ═══ -->
+  <div class="variant v-a">
+    <h2><span class="tag">A</span>트리 카드 칩 — 사이드바와 같은 언어 <span class="reco">추천</span></h2>
+    <p class="desc">
+      탭을 최근 승인한 트리 D 카드형과 <b>완전히 동일한 언어</b>로: 카드 높이 28 · 코너 5 · 호버 CardHover ·
+      선택 = 앰버 틴트 배경 + 앰버 텍스트(SemiBold·밑줄 제거 — 트리가 색만으로 상태를 말하듯).
+      밑줄은 사라지지만 앱 안의 "선택"이 한 가지로 수렴합니다. 폰트 13은 유지.
+    </p>
+    <div class="frame">
+      <div class="titlebar">
+        <div class="tb-left">
+          <div class="tb-iconbtn">&#xE700;</div>
+          <div class="tb-brand">Dawn Player</div>
+          <div class="tb-status">IU — 무릎</div>
+          <div class="tb-tabs">
+            <div class="tab on"><span class="g">&#xE8B9;</span>Library</div>
+            <div class="tab"><span class="g">&#xE90B;</span>Playlists</div>
+            <div class="tab"><span class="g">&#xE777;</span>Network</div>
+          </div>
+        </div>
+        <div class="tb-captions"><div class="cap">&#xE921;</div><div class="cap">&#xE922;</div><div class="cap close">&#xE8BB;</div></div>
+      </div>
+      <div class="body-mock">
+        <div class="side">
+          <div class="row">전체 곡<span class="n">128</span></div>
+          <div class="row on">좋아요<span class="n">24</span></div>
+          <div class="row">최근 추가<span class="n">9</span></div>
+          <div class="row">아티스트<span class="n">17</span></div>
+        </div>
+        <div class="main"><div class="ln"></div><div class="ln s"></div><div class="ln"></div><div class="ln s"></div></div>
+      </div>
+      <div class="bottombar"><span class="t">IU — 무릎</span><span class="ctrl">&#xE768; &#xE769;</span><div class="bar"></div></div>
+    </div>
+  </div>
+
+  <!-- ═══ B안 ═══ -->
+  <div class="variant v-b">
+    <h2><span class="tag">B</span>Windows 11 캡션 타이포 — 문서 표준 톤</h2>
+    <p class="desc">
+      타이틀바 텍스트 전체를 문서 권고 <b>caption 스타일(12px)</b>로 낮추고 브랜드 볼드를 해제 —
+      조용한 시스템 타이틀바 톤. 탭은 현 밑줄 언어를 유지하되 라벨만 12px로 맞춥니다.
+      앱 고유 개성보다 <b>OS 기본 느낌과의 정합</b>이 우선일 때.
+    </p>
+    <div class="frame">
+      <div class="titlebar">
+        <div class="tb-left">
+          <div class="tb-iconbtn">&#xE700;</div>
+          <div class="tb-brand">Dawn Player</div>
+          <div class="tb-status">IU — 무릎</div>
+          <div class="tb-tabs">
+            <div class="tab on"><span class="g">&#xE8B9;</span>Library</div>
+            <div class="tab"><span class="g">&#xE90B;</span>Playlists</div>
+            <div class="tab"><span class="g">&#xE777;</span>Network</div>
+          </div>
+        </div>
+        <div class="tb-captions"><div class="cap">&#xE921;</div><div class="cap">&#xE922;</div><div class="cap close">&#xE8BB;</div></div>
+      </div>
+      <div class="body-mock">
+        <div class="side">
+          <div class="row">전체 곡<span class="n">128</span></div>
+          <div class="row on">좋아요<span class="n">24</span></div>
+          <div class="row">최근 추가<span class="n">9</span></div>
+          <div class="row">아티스트<span class="n">17</span></div>
+        </div>
+        <div class="main"><div class="ln"></div><div class="ln s"></div><div class="ln"></div><div class="ln s"></div></div>
+      </div>
+      <div class="bottombar"><span class="t">IU — 무릎</span><span class="ctrl">&#xE768; &#xE769;</span><div class="bar"></div></div>
+    </div>
+  </div>
+
+  <!-- ═══ C안 ═══ -->
+  <div class="variant v-c">
+    <h2><span class="tag">C</span>세그먼트 컨테이너 — 라이브러리 Grid/List 토글과 같은 언어</h2>
+    <p class="desc">
+      탭 3개를 하나의 <b>알약 컨테이너</b>(트리 카드 배경 40% + 코너 5)에 넣고 선택 칩은 CardHover +
+      앰버 텍스트. 라이브러리의 Grid/List 토글(SegmentedTabStyle)과 같은 계열이라 앱 내 패밀리가
+      하나 늘어나는 셈. 다만 트리와는 또 다른 언어가 됩니다.
+    </p>
+    <div class="frame">
+      <div class="titlebar">
+        <div class="tb-left">
+          <div class="tb-iconbtn">&#xE700;</div>
+          <div class="tb-brand">Dawn Player</div>
+          <div class="tb-status">IU — 무릎</div>
+          <div class="tb-tabs">
+            <div class="tab on"><span class="g">&#xE8B9;</span>Library</div>
+            <div class="tab"><span class="g">&#xE90B;</span>Playlists</div>
+            <div class="tab"><span class="g">&#xE777;</span>Network</div>
+          </div>
+        </div>
+        <div class="tb-captions"><div class="cap">&#xE921;</div><div class="cap">&#xE922;</div><div class="cap close">&#xE8BB;</div></div>
+      </div>
+      <div class="body-mock">
+        <div class="side">
+          <div class="row">전체 곡<span class="n">128</span></div>
+          <div class="row on">좋아요<span class="n">24</span></div>
+          <div class="row">최근 추가<span class="n">9</span></div>
+          <div class="row">아티스트<span class="n">17</span></div>
+        </div>
+        <div class="main"><div class="ln"></div><div class="ln s"></div><div class="ln"></div><div class="ln s"></div></div>
+      </div>
+      <div class="bottombar"><span class="t">IU — 무릎</span><span class="ctrl">&#xE768; &#xE769;</span><div class="bar"></div></div>
+    </div>
+  </div>
+
+  <!-- ═══ D안 ═══ -->
+  <div class="variant v-d">
+    <h2><span class="tag">D</span>현 유지 + 리듬 정리만 — 시각 언어 변경 없음</h2>
+    <p class="desc">
+      탭의 밑줄+SemiBold 언어는 그대로 두고 공통 리듬 정리만 적용. 변화 폭이 가장 작지만
+      트리·토글과의 <b>언어 분열은 그대로 남습니다.</b>
+    </p>
+    <div class="frame">
+      <div class="titlebar">
+        <div class="tb-left">
+          <div class="tb-iconbtn">&#xE700;</div>
+          <div class="tb-brand">Dawn Player</div>
+          <div class="tb-status">IU — 무릎</div>
+          <div class="tb-tabs">
+            <div class="tab on"><span class="g">&#xE8B9;</span>Library</div>
+            <div class="tab"><span class="g">&#xE90B;</span>Playlists</div>
+            <div class="tab"><span class="g">&#xE777;</span>Network</div>
+          </div>
+        </div>
+        <div class="tb-captions"><div class="cap">&#xE921;</div><div class="cap">&#xE922;</div><div class="cap close">&#xE8BB;</div></div>
+      </div>
+      <div class="body-mock">
+        <div class="side">
+          <div class="row">전체 곡<span class="n">128</span></div>
+          <div class="row on">좋아요<span class="n">24</span></div>
+          <div class="row">최근 추가<span class="n">9</span></div>
+          <div class="row">아티스트<span class="n">17</span></div>
+        </div>
+        <div class="main"><div class="ln"></div><div class="ln s"></div><div class="ln"></div><div class="ln s"></div></div>
+      </div>
+      <div class="bottombar"><span class="t">IU — 무릎</span><span class="ctrl">&#xE768; &#xE769;</span><div class="bar"></div></div>
+    </div>
+  </div>
+
+  <!-- ═══ 공통 적용 + 수치 ═══ -->
+  <div class="variant">
+    <h2>모든 안에 공통으로 적용되는 리듬 정리</h2>
+    <table>
+      <tr><th>항목</th><th>현상</th><th>정리 후</th></tr>
+      <tr><td>브랜드–상태 구분</td><td>텍스트 <b>|</b> (11px, SeparatorSubtle)</td><td>제거 → 간격 <b>12px</b>만</td></tr>
+      <tr><td>상태–탭 간격</td><td>10px (margin)</td><td><b>12px</b></td></tr>
+      <tr><td>탭 사이 간격</td><td>2px (D·B안 기준)</td><td><b>4px</b> 이상 (터치 8px 권고 대비 완화 — 상단바 마우스 영역)</td></tr>
+      <tr><td>간격 스케일</td><td>2·6·8·10·14 혼재</td><td><b>4 / 8 / 12</b> 리듬</td></tr>
+      <tr><td>아이콘 크기</td><td>버튼 13 · 탭 12 (역할별로는 이미 통일)</td><td>유지 (변경 없음)</td></tr>
+      <tr><td>죽은 스타일</td><td><b>CaptionButtonStyle · CaptionCloseButtonStyle</b> (1~2차 커스텀 캡션 잔재, 미사용)</td><td>DawnTheme에서 삭제</td></tr>
+      <tr><td>캡션·바 높이</td><td><b>바 40 + 캡션 32</b> — 8px 괴리(호버 배경·글리프가 하단에 못 미침)</td><td><b>48 = 48</b>(Tall, 권장) 또는 <b>32 = 32</b>(Standard) — 전 안 공통</td></tr>
+      <tr><td>문서 계약</td><td colspan="2">840/740 단계 숨김 · 최소 폭 620 · 비활성 디밍 — 전 안 공통 불변</td></tr>
+    </table>
+  </div>
+
+<script>
+  // 프레임마다 탭·사이드바 클릭으로 선택 상태 체험
+  document.querySelectorAll(".frame").forEach(f => {
+    f.querySelectorAll(".tb-tabs .tab").forEach(t => t.addEventListener("click", () => {
+      f.querySelectorAll(".tb-tabs .tab").forEach(x => x.classList.remove("on"));
+      t.classList.add("on");
+    }));
+    f.querySelectorAll(".side .row").forEach(r => r.addEventListener("click", () => {
+      f.querySelectorAll(".side .row").forEach(x => x.classList.remove("on"));
+      r.classList.add("on");
+    }));
+  });
+
+  // 상단바 높이 스위처: 48=Tall(수정안), 32=Standard, 40=현상(불일치)
+  function setBarH(h) {
+    document.body.classList.remove("h40", "h32");
+    if (h !== 48) document.body.classList.add("h" + h);
+    [48, 32, 40].forEach(v =>
+      document.getElementById("h" + v).classList.toggle("active", v === h));
+  }
+</script>
+</body>
+</html>

@@ -70,11 +70,32 @@ public sealed partial class MainWindow : Window
             overlapped.PreferredMinimumWidth = 620;
         }
 
-        // 2026-10-03 (3차 수정): WinUI TitleBar 컨트롤 전환 — ExtendsContentIntoTitleBar만
-        // 설정하고 SetTitleBar는 호출하지 않는다(TitleBar 컨트롤이 드래그 영역과 캡션 버튼을
-        // 자체 처리; 공식 문서의 권장 패턴). 시스템 캡션 투명화/영역 조작 코드는 전면 제거.
+        // 2026-10-03 (문서 정합 리팩터링): WinUI TitleBar 컨트롤(WASDK 1.7+)이 드래그 영역과
+        // 인터랙티브 패스스루를 자체 계산하므로 SetTitleBar 호출은 없다. ExtendsContentIntoTitleBar는
+        // 생성자에서 설정한다(문서 경고: 늦게 설정하면 시스템 타이틀바가 먼저 그려졌다가 사라질 수
+        // 있다). 배경 재질은 ApplyTheme가 설정값(Mica/Acrylic/Solid/AlbumArtBlur)에 따라 유일하게
+        // 결정하고, 시스템 캡션 색은 ThemeService.UpdateTitleBar 단일 구현이 담당한다.
         ExtendsContentIntoTitleBar = true;
-        SystemBackdrop = new Microsoft.UI.Xaml.Media.MicaBackdrop();
+        // 변형 A + Tall 48 (2026-10-03 사용자 승인): 인터랙티브 콘텐츠가 있는 타이틀바의 문서 권장
+        // 높이 — 시스템 캡션도 48px로 늘어나 바를 꽉 채운다(40px 바 + 32px 캡션의 8px 괴리 해소,
+        // 사용자 스크린샷 지적). 2026-10-04 바를 44로 완화했다가 롤백: 캡션 옵션은 32/48 둘뿐이라
+        // Tall을 유지하는 한 캡션 호버가 바 아래로 4px 블리드됐고, 32는 글리프를 바 중앙보다 6px
+        // 위로 밀었다(구 빨간 선 문제의 확대). 문서 경고: ExtendsContentIntoTitleBar=true 이후
+        // 설정해야 한다.
+        AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
+
+        // 단계 숨김(상태 840 → 브랜드 740)은 Window.SizeChanged의 창 논리 폭 기준 —
+        // TitleBar 컨트롤 자체의 SizeChanged는 좁은 창에서 보고 폭이 예측적이지 않아
+        // 720px에서 브랜드 숨김이 누락됐다(2026-10-03 4차 실측). 창 폭이 유일한 진실.
+        SizeChanged += OnTitleBarSizeChanged;
+
+        // 문서 "Do"(titlebar-design): 창이 비활성이면 타이틀바의 모든 요소가 반투명해야
+        // 활성/비활성이 구분된다. 시스템 캡션은 스스로 디밍되므로 커스텀 Left/RightHeader
+        // 콘텐츠만 여기서 함께 흐리게 한다.
+        Activated += (_, args) =>
+            AppTitleBar.Opacity = args.WindowActivationState == WindowActivationState.Deactivated
+                ? InactiveTitleBarOpacity
+                : 1.0;
 
         ApplyTheme();
         // ThemeMode.System follows the OS: re-apply the custom palette when Windows flips its
@@ -150,9 +171,20 @@ public sealed partial class MainWindow : Window
     private const double TrackVisibleMinWidth = 840;
     private const double BrandVisibleMinWidth = 740;
 
-    private void OnTitleBarSizeChanged(object sender, SizeChangedEventArgs e)
+    /// <summary>Semi-transparent title bar while the window is inactive — the titlebar-design
+    /// "Do" contract (active/inactive must be distinguishable at a glance).</summary>
+    private const double InactiveTitleBarOpacity = 0.5;
+
+    /// <summary>타이틀바 행 높이 — Tall 캡션(48px)과의 일치 계약. 2026-10-04 44 완화를 시도했다가
+    /// 캡션 호버 4px 블리드로 롤백(경위는 MainWindow.xaml 상단 주석). 미니 모드 복원이 리터럴 40으로
+    /// 어긋나던 것(PT1-12 교훈)의 상수화. XAML 행·MinHeight 48과 함께 높이 게이트가 고정한다.</summary>
+    private const double TitleBarRowHeight = 48;
+
+    // Window.SizeChanged는 WindowSizeChangedEventArgs(컨트롤의 SizeChanged가 쓰는
+    // SizeChangedEventArgs와 다른 타입 — CS0123 교훈)를 전달하고 창 논리 폭은 e.Size다.
+    private void OnTitleBarSizeChanged(object sender, WindowSizeChangedEventArgs e)
     {
-        var width = e.NewSize.Width;
+        var width = e.Size.Width;
         TitleBarTrack.Visibility = width >= TrackVisibleMinWidth ? Visibility.Visible : Visibility.Collapsed;
         AppBrandText.Visibility = width >= BrandVisibleMinWidth ? Visibility.Visible : Visibility.Collapsed;
     }
@@ -185,47 +217,12 @@ public sealed partial class MainWindow : Window
 
     // ---------------- theme & wallpaper ----------------
 
-    /// <summary>시스템 캡션 버튼(─ □ ✕)을 앱 테마에 맞춘다(2026-10-03 3차 수정).
-    /// 공식 문서(/windows/apps/develop/title-bar) 계약: 배경 계열 4종만 투명/반투명 가능하고
-    /// 글리프 색은 불투명 색상만 — 글리프를 숨기거나 앱 버튼을 캡션 영역에 올리는 것은
-    /// 불가(입력을 시스템이 독점). 따라서 캡션은 시스템 렌더를 유지하되 재질·색만 통일한다:
-    /// 배경 투명 → Mica가 비쳐 타이틀바와 동일 재질, 글리프/호버 색은 테마 팔레트. 닫기
-    /// 호버·누름은 시스템 빨강 고정(문서 명시). 테마 전환 시마다 재적용.</summary>
-    private void StyleSystemCaptionButtons(UiSettings ui)
-    {
-        var t = AppWindow.TitleBar;
-        bool light = ThemeService.IsEffectiveLight(this, ui);
-
-        // 재질 통일: 캡션 배경은 모두 투명(타이틀바 Mica가 그대로 비침).
-        t.BackgroundColor = Microsoft.UI.Colors.Transparent;
-        t.InactiveBackgroundColor = Microsoft.UI.Colors.Transparent;
-        t.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent;
-        t.ButtonInactiveBackgroundColor = Microsoft.UI.Colors.Transparent;
-        t.ButtonHoverBackgroundColor = light
-            ? Microsoft.UI.ColorHelper.FromArgb(0x12, 0x00, 0x00, 0x00)   // HoverColor 톤
-            : Microsoft.UI.ColorHelper.FromArgb(0x14, 0xFF, 0xFF, 0xFF);  // 흰색 8%
-        t.ButtonPressedBackgroundColor = light
-            ? Microsoft.UI.ColorHelper.FromArgb(0x1A, 0x00, 0x00, 0x00)
-            : Microsoft.UI.ColorHelper.FromArgb(0x1F, 0xFF, 0xFF, 0xFF);
-
-        // 글리프 색: 텍스트 팔레트와 동일 계열 (불투명만 허용 — 알파는 무시됨).
-        t.ForegroundColor = light
-            ? Microsoft.UI.ColorHelper.FromArgb(0xFF, 0x1A, 0x1A, 0x20)   // TextPrimary light
-            : Microsoft.UI.ColorHelper.FromArgb(0xFF, 0xF3, 0xF3, 0xF6);  // TextPrimary dark
-        t.InactiveForegroundColor = light
-            ? Microsoft.UI.ColorHelper.FromArgb(0xFF, 0x62, 0x62, 0x6F)   // TextTertiary light
-            : Microsoft.UI.ColorHelper.FromArgb(0xFF, 0x8F, 0x8F, 0xA0);  // TextTertiary dark
-        t.ButtonForegroundColor = t.ForegroundColor;
-        t.ButtonInactiveForegroundColor = t.InactiveForegroundColor;
-        t.ButtonHoverForegroundColor = t.ForegroundColor;
-        t.ButtonPressedForegroundColor = t.ForegroundColor;
-    }
-
     public void ApplyTheme()
     {
         var ui = AppServices.Settings.Ui;
+        // 시스템 캡션 색을 포함한 테마 파이프라인 전체는 ThemeService 단일 구현(고대비 분기
+        // 포함)이 처리한다 — MainWindow 전용 중복 구현은 2026-10-03 리팩터링에서 제거됐다.
         ThemeService.ApplyTheme(this, ui, RootGrid);
-        StyleSystemCaptionButtons(ui);
 
         if (ui.Backdrop == BackdropMode.AlbumArtBlur)
         {
@@ -414,6 +411,10 @@ public sealed partial class MainWindow : Window
             if (wasHidden && state.SettingsVisible) Helpers.MotionHelper.FadeIn(ContentFrame, motion);
         }
 
+        // 설정 표면에서 나오는 경로(탭 클릭)는 ContentFrame 탐색이 없어 Navigated가 불지 않는다 —
+        // 톱니 위치 마커는 여기서 직접 회복해야 남아있지 않다.
+        UpdateSettingsGearMarker();
+
         if (state.LibraryVisible) LibraryPageView?.SetLyricsVisibility(state.LibraryLyricsVisible);
         if (state.PlaylistsVisible) PlaylistPageView?.SetLyricsVisibility(state.PlaylistLyricsVisible);
     }
@@ -541,11 +542,13 @@ public sealed partial class MainWindow : Window
             // Mini legally shrinks below the title bar's minimum — lift it, restore on exit.
             if (presenter != null) presenter.PreferredMinimumWidth = 0;
             if (presenter != null) presenter.IsAlwaysOnTop = true;
+            // 미니(104px 창)에서 Tall 캡션이 절반을 잠식하지 않게 Standard로 — 복귀 시 Tall 복원.
+            appWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Standard;
             _isMiniMode = true;
         }
         else
         {
-            RootGrid.RowDefinitions[0].Height = new GridLength(40);
+            RootGrid.RowDefinitions[0].Height = new GridLength(TitleBarRowHeight);
             RootGrid.RowDefinitions[1].Height = new GridLength(1, GridUnitType.Star);
             AppTitleBar.Visibility = Visibility.Visible;
             ContentHost.Visibility = Visibility.Visible;
@@ -560,6 +563,7 @@ public sealed partial class MainWindow : Window
             }
             if (presenter != null) presenter.PreferredMinimumWidth = 620;
             if (presenter != null) presenter.IsAlwaysOnTop = _preMiniAlwaysOnTop;
+            appWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
             _isMiniMode = false;
         }
     }
@@ -757,13 +761,20 @@ public sealed partial class MainWindow : Window
 
         // PT1-03: the settings entry must carry the active-location marker while the tabs are
         // all unchecked, or nothing on the shell indicates where you are.
-        if (SettingsGearIcon != null)
-        {
-            var onSettings = ContentFrame.Content is SettingsPage;
-            SettingsGearIcon.Foreground = onSettings
-                ? Helpers.ThemeResourceHelper.GetBrush("DawnAccentTextBrush")
-                : Helpers.ThemeResourceHelper.GetBrush("TextSecondaryBrush");
-        }
+        UpdateSettingsGearMarker();
+    }
+
+    /// <summary>PT1-03: the settings entry carries the active-location marker (accent gear)
+    /// while the tabs are all unchecked. Runs on BOTH surface changes — ContentFrame.Navigated
+    /// (entering settings) and ApplyNavigationState (leaving via a tab click, which fires no
+    /// navigation and used to leave the gear amber until restart).</summary>
+    private void UpdateSettingsGearMarker()
+    {
+        if (SettingsGearIcon == null) return;
+        var onSettings = ContentFrame.Visibility == Visibility.Visible && ContentFrame.Content is SettingsPage;
+        SettingsGearIcon.Foreground = onSettings
+            ? Helpers.ThemeResourceHelper.GetBrush("DawnAccentTextBrush")
+            : Helpers.ThemeResourceHelper.GetBrush("TextSecondaryBrush");
     }
 
     // ---------------- keyboard shortcuts ----------------

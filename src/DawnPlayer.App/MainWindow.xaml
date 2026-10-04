@@ -10,7 +10,11 @@
     <Grid x:Name="RootGrid" AllowDrop="True" Background="Transparent"
           DragOver="OnRootDragOver" Drop="OnRootDrop" PointerPressed="OnRootPointerPressed" KeyDown="OnRootKeyDown">
         <Grid.RowDefinitions>
-            <RowDefinition Height="40"/>
+            <!-- 48 = PreferredHeightOption.Tall 캡션과의 일치 계약(높이 게이트 테스트 참조).
+                 2026-10-04 한때 44로 완화했다가 롤백 — 캡션(48) 호버 배경이 바 아래로 4px
+                 블리드되는 것이 매 캡션 조작마다 반복되는 노이즈였다. 32로 낮추는 것(글리프가
+                 바 중앙보다 6px 상승 — 구 빨간 선 문제의 확대)도 기각. -->
+            <RowDefinition Height="48"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -22,16 +26,18 @@
             <Rectangle x:Name="WallpaperDimOverlay" Fill="#9918181D" Opacity="0"/>
         </Grid>
 
-        <!-- 2026-10-03 (3차 수정): WinUI TitleBar 컨트롤(WASDK 1.7+)로 전환.
-             근거(공식 문서 /windows/apps/develop/title-bar): 시스템 캡션 버튼의 전경색은
-             알파 채널이 무시되어(투명화 불가) 글리프를 숨일 수 없고, 캡션 영역은 시스템이
-             입력을 독점하므로 앱 버튼을 올리는 패턴도 공식 금지. TitleBar 컨트롤은 캡션
-             버튼을 XAML로 자체 렌더링해 겹침이 원천 불가하고 스타일도 앱 테마를 따른다.
-             레이아웃(변형 OLD)은 Header(☰·브랜드) / Content(상태·탭) / Footer(톱니)로 동일
-             배치를 유지하고, 단계 숨김(OnTitleBarSizeChanged)도 그대로 작동한다. -->
-        <TitleBar x:Name="AppTitleBar" Grid.Row="0" MinHeight="40"
-                  BorderBrush="{ThemeResource SeparatorSubtleBrush}" BorderThickness="0,0,0,1"
-                  SizeChanged="OnTitleBarSizeChanged">
+        <!-- WinUI TitleBar 컨트롤(WASDK 1.7+, 공식 문서 /windows/apps/develop/title-bar).
+             컨트롤이 드래그 영역·캡션 여백·인터랙티브 패스스루를 자체 계산하므로 앱이 그리는
+             캡션 버튼은 존재하지 않는다(캡션 입력은 시스템 독점). 레이아웃(사용자 선택 OLD,
+             2026-10-03): LeftHeader = ☰ · 브랜드 · 상태 · 탭 / RightHeader = 톱니.
+             Content 슬롯은 의도적으로 비운다 — 중앙 배치 전용이라 탭이 창 한가운데로 밀린다.
+             2026-10-03 통일 승인(변형 A + Tall 48): 탭은 트리 D 카드형과 같은 언어
+             (TitleBarTabStyle), 높이 48 = PreferredHeightOption.Tall — 시스템 캡션이 바를 꽉 채운다.
+             2026-10-04 44 완화를 시도했으나 캡션 호버 4px 블리드로 48로 롤백(상단 주석).
+             좁은 창 단계 숨김(상태 840 → 브랜드 740)은 코드 비하인드의 Window.SizeChanged
+             기준이고, 비활성 디밍은 Window.Activated가 처리한다. -->
+        <TitleBar x:Name="AppTitleBar" Grid.Row="0" MinHeight="48"
+                  BorderBrush="{ThemeResource SeparatorSubtleBrush}" BorderThickness="0,0,0,1">
             <TitleBar.LeftHeader>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
                     <Button x:Uid="MainWindow_TitleMenuButton" Style="{StaticResource TitleMenuButtonStyle}" ToolTipService.ToolTip="메뉴">
@@ -68,25 +74,19 @@
                             </MenuFlyout>
                         </Button.Flyout>
                     </Button>
-                    <StackPanel x:Name="AppBrandText" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <StackPanel x:Name="AppBrandText" Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock x:Uid="AppBrand" Text="Dawn Player" FontSize="{StaticResource FontBody}" FontWeight="SemiBold"
                                    Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                        <TextBlock Text="|" FontSize="11" Foreground="{ThemeResource SeparatorSubtleBrush}" VerticalAlignment="Center"/>
                     </StackPanel>
-                </StackPanel>
-            </TitleBar.LeftHeader>
-
-            <TitleBar.Content>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="0">
                     <TextBlock x:Uid="MainWindow_TitleBarTrack" x:Name="TitleBarTrack" Text="No sound — Nothing played" FontSize="{StaticResource FontBodySmall}"
                                Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"
-                               MaxWidth="320" Margin="0,0,18,0" TextTrimming="CharacterEllipsis"
+                               MaxWidth="320" Margin="4,0,0,0" TextTrimming="CharacterEllipsis"
                                AutomationProperties.LiveSetting="Polite"/>
-                    <StackPanel x:Name="TopNavPanel" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center"
+                    <StackPanel x:Name="TopNavPanel" Orientation="Horizontal" Spacing="4" Margin="4,0,0,0" VerticalAlignment="Center"
                                 DoubleTapped="OnTabDoubleTapped">
                         <RadioButton x:Name="TabLibrary" GroupName="TopNavGroup" IsChecked="True"
                                      AutomationProperties.AutomationId="TabLibrary"
-                                     Style="{StaticResource EoleNavTabStyle}" Click="OnTabLibraryClick"
+                                     Style="{StaticResource TitleBarTabStyle}" Click="OnTabLibraryClick"
                                      DoubleTapped="OnTabDoubleTapped">
                             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                 <FontIcon Glyph="&#xE8B9;" FontSize="12"/>
@@ -95,7 +95,7 @@
                         </RadioButton>
                         <RadioButton x:Name="TabPlaylists" GroupName="TopNavGroup"
                                      AutomationProperties.AutomationId="TabPlaylists"
-                                     Style="{StaticResource EoleNavTabStyle}" Click="OnTabPlaylistsClick"
+                                     Style="{StaticResource TitleBarTabStyle}" Click="OnTabPlaylistsClick"
                                      DoubleTapped="OnTabDoubleTapped">
                             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                 <FontIcon Glyph="&#xE90B;" FontSize="12"/>
@@ -104,7 +104,7 @@
                         </RadioButton>
                         <RadioButton x:Name="TabNetwork" GroupName="TopNavGroup"
                                      AutomationProperties.AutomationId="TabNetwork"
-                                     Style="{StaticResource EoleNavTabStyle}" Click="OnTabNetworkClick"
+                                     Style="{StaticResource TitleBarTabStyle}" Click="OnTabNetworkClick"
                                      DoubleTapped="OnTabDoubleTapped">
                             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                 <FontIcon Glyph="&#xE777;" FontSize="12"/>
@@ -113,7 +113,7 @@
                         </RadioButton>
                     </StackPanel>
                 </StackPanel>
-            </TitleBar.Content>
+            </TitleBar.LeftHeader>
 
             <TitleBar.RightHeader>
                 <Button x:Uid="MainWindow_SettingsGearButton" x:Name="SettingsGearButton" Style="{StaticResource TitleMenuButtonStyle}"
