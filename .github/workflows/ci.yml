@@ -105,6 +105,14 @@ jobs:
       - name: Build Solution (Release)
         run: dotnet build DawnPlayer.slnx -c Release --no-restore
 
+      # The E2E tests launch the app exe itself, and it must match the runner: the solution
+      # build above defaults to the win-x64 RID (conditional csproj default), and an x64
+      # apphost cannot load this machine's ARM64 hostfxr (0x800700C1 BAD_EXE_FORMAT — the
+      # 2026-10-05 first-run failure). The harness probes the win-arm64 output when its own
+      # architecture is ARM64.
+      - name: Build App (win-arm64 native for E2E)
+        run: dotnet build src/DawnPlayer.App/DawnPlayer.App.csproj -c Release -r win-arm64 -p:Platform=ARM64
+
       - name: Run Unit Tests
         shell: pwsh
         run: |

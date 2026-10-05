@@ -97,15 +97,31 @@ public sealed class DawnPlayerE2ETests
 
     private static string? FindAppExePath()
     {
-        var relative = new[]
-        {
-            @"..\..\..\..\..\src\DawnPlayer.App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\DawnPlayer.App.exe",
-            @"..\..\..\..\src\DawnPlayer.App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\DawnPlayer.App.exe",
-            @"..\..\..\..\..\src\DawnPlayer.App\bin\Release\net10.0-windows10.0.19041.0\win-x64\DawnPlayer.App.exe",
-            @"..\..\..\..\src\DawnPlayer.App\bin\Release\net10.0-windows10.0.19041.0\win-x64\DawnPlayer.App.exe",
-            @"..\..\..\..\..\dist\publish\DawnPlayer.App.exe",
-            @"..\..\..\..\dist\publish\DawnPlayer.App.exe",
-        };
+        // The app must match the test host's architecture. On the ARM64 CI runner the x64 RID
+        // build cannot even start — its x64 apphost fails to load the machine's ARM64 hostfxr
+        // (0x800700C1 BAD_EXE_FORMAT, 2026-10-05) — so an ARM64 test host probes the win-arm64
+        // output first; everywhere else the win-x64 outputs probe exactly as before. The ARM64
+        // platform build (-p:Platform=ARM64) adds its own bin/ARM64 segment to the output path.
+        var rid = RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? "win-arm64" : "win-x64";
+        var relative = rid == "win-arm64"
+            ? new[]
+            {
+                @"..\..\..\..\..\src\DawnPlayer.App\bin\ARM64\Release\net10.0-windows10.0.19041.0\win-arm64\DawnPlayer.App.exe",
+                @"..\..\..\..\src\DawnPlayer.App\bin\ARM64\Release\net10.0-windows10.0.19041.0\win-arm64\DawnPlayer.App.exe",
+                @"..\..\..\..\..\src\DawnPlayer.App\bin\ARM64\Debug\net10.0-windows10.0.19041.0\win-arm64\DawnPlayer.App.exe",
+                @"..\..\..\..\src\DawnPlayer.App\bin\ARM64\Debug\net10.0-windows10.0.19041.0\win-arm64\DawnPlayer.App.exe",
+                @"..\..\..\..\..\dist\publish\DawnPlayer.App.exe",
+                @"..\..\..\..\dist\publish\DawnPlayer.App.exe",
+            }
+            : new[]
+            {
+                @"..\..\..\..\..\src\DawnPlayer.App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\DawnPlayer.App.exe",
+                @"..\..\..\..\src\DawnPlayer.App\bin\Debug\net10.0-windows10.0.19041.0\win-x64\DawnPlayer.App.exe",
+                @"..\..\..\..\..\src\DawnPlayer.App\bin\Release\net10.0-windows10.0.19041.0\win-x64\DawnPlayer.App.exe",
+                @"..\..\..\..\src\DawnPlayer.App\bin\Release\net10.0-windows10.0.19041.0\win-x64\DawnPlayer.App.exe",
+                @"..\..\..\..\..\dist\publish\DawnPlayer.App.exe",
+                @"..\..\..\..\dist\publish\DawnPlayer.App.exe",
+            };
 
         return relative
             .Select(r => Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, r)))
