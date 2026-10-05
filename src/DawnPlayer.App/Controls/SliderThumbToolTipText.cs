@@ -3,11 +3,13 @@ using System;
 namespace DawnPlayer.App.Controls;
 
 /// <summary>
-/// Pure contracts for the content of the Slider built-in drag tooltip (the floating box above
-/// the thumb while dragging). WinUI shows that tooltip by default but leaves its content empty
-/// unless a <c>ThumbToolTipValueConverter</c> supplies text — without one both the seek and the
-/// volume sliders dragged a blank box (2026-10-05 user report). The WinUI converter shells in
-/// Services/Converters.cs delegate here; this file is headless so the formats stay test-gated.
+/// Pure contracts for the app-owned drag readout that floats above a slider thumb. WinUI's
+/// built-in thumb tooltip is unusable for us: its content is a DataContext binding and the
+/// ToolTip never receives a DataContext (Slider_Partial.cpp creates it without one and the
+/// popup tree does not inherit the target's — with a null DataContext the converter is never
+/// invoked, which is the empty box the 2026-10-05 report captured). The bubble is drawn by
+/// NowPlayingBar instead and formats through this file; headless so the formats stay
+/// test-gated.
 /// </summary>
 public static class SliderThumbToolTipText
 {
@@ -21,4 +23,14 @@ public static class SliderThumbToolTipText
     /// <summary>Slider value (0-100) → "42%" — the volume thumb readout.</summary>
     public static string Percent(double value) =>
         $"{Math.Round(double.IsFinite(value) ? Math.Clamp(value, 0.0, 100.0) : 0.0):0}%";
+
+    /// <summary>Bubble left so its <em>center</em> sits on the thumb center, clamped to the track
+    /// bounds so the bubble can never hang off the slider edge. Reuses the A-B overlay's
+    /// thumb-center mapping (thumb travels from ThumbWidth/2 to trackWidth − ThumbWidth/2).</summary>
+    public static double BubbleLeft(double fraction, double trackWidth, double bubbleWidth)
+    {
+        var thumbX = AbRepeatOverlayCalculator.FractionToX(fraction, trackWidth);
+        var maxLeft = Math.Max(0.0, trackWidth - bubbleWidth);
+        return Math.Clamp(thumbX - bubbleWidth / 2.0, 0.0, maxLeft);
+    }
 }

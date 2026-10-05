@@ -23,6 +23,7 @@ public sealed partial class NowPlayingBar : UserControl
     private readonly SeekbarScrubbingCalculator _seekCalculator = new();
 
     private bool _updatingSliderFromTimer;
+    private bool _volumeDragging;
     private double _lastVolume = 0.8;
     private int _smtcTick;
     private string _formatBadgeText = "";
@@ -36,12 +37,19 @@ public sealed partial class NowPlayingBar : UserControl
     {
         InitializeComponent();
         // drag-to-seek via pointer events (Thumb routed-event fields are unavailable in WinUI 3)
-        SeekSlider.AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler((_, _) => _seekCalculator.BeginDrag()), true);
+        SeekSlider.AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler((_, _) => StartSeekBubble()), true);
         SeekSlider.AddHandler(UIElement.PointerReleasedEvent, new PointerEventHandler((_, _) => CompleteSeek()), true);
         SeekSlider.AddHandler(UIElement.PointerCaptureLostEvent, new PointerEventHandler((_, _) => CompleteSeek()), true);
         SeekSlider.AddHandler(UIElement.PointerCanceledEvent, new PointerEventHandler((_, _) => CompleteSeek()), true);
         SeekSlider.ValueChanged += OnSeekChanged;
-        SeekSlider.SizeChanged += (_, _) => UpdateAbRepeatOverlay();
+        SeekSlider.SizeChanged += (_, _) => { UpdateAbRepeatOverlay(); if (_seekCalculator.IsDragging) UpdateSeekBubble(); };
+        SeekBubble.SizeChanged += (_, _) => { if (_seekCalculator.IsDragging) UpdateSeekBubble(); };
+        // volume drag readout — same pointer-event lifecycle as the seek bubble
+        VolumeSlider.AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler((_, _) => StartVolumeBubble()), true);
+        VolumeSlider.AddHandler(UIElement.PointerReleasedEvent, new PointerEventHandler((_, _) => HideVolumeBubble()), true);
+        VolumeSlider.AddHandler(UIElement.PointerCaptureLostEvent, new PointerEventHandler((_, _) => HideVolumeBubble()), true);
+        VolumeSlider.AddHandler(UIElement.PointerCanceledEvent, new PointerEventHandler((_, _) => HideVolumeBubble()), true);
+        VolumeBubble.SizeChanged += (_, _) => { if (_volumeDragging) UpdateVolumeBubble(); };
         // L15(변형 A): 제목 열이 Auto라 별-제목 인라인 배치에서 트리밍이 작동하지 않는다 —
         // 행 폭이 바뀔 때마다 제목 MaxWidth를 다시 계산한다.
         TitleRow.SizeChanged += (_, _) => UpdateTitleMaxWidth();
@@ -98,6 +106,59 @@ public sealed partial class NowPlayingBar : UserControl
         {
             AppServices.Playback?.Seek(target.Value);
         }
+        SeekBubbleOverlay.Visibility = Visibility.Collapsed;
+    }
+
+    // ---------- drag readout bubbles ----------
+
+    // WinUI's built-in thumb tooltip is unusable here: its content is a DataContext binding the
+    // ToolTip never gets a source for (platform Slider_Partial.cpp creates it without a
+    // DataContext and the popup tree does not inherit the target's), so the converter never
+    // runs and the box floats empty. These bubbles are app-owned overlay elements; text and
+    // geometry both come from the headless SliderThumbToolTipText contract.
+
+    private void StartSeekBubble()
+    {
+        _seekCalculator.BeginDrag();
+        UpdateSeekBubble();
+        SeekBubbleOverlay.Visibility = Visibility.Visible;
+    }
+
+    private void UpdateSeekBubble()
+    {
+        var max = SeekSlider.Maximum;
+        if (max <= 0 || SeekSlider.ActualWidth <= 0) return;
+        SeekBubbleText.Text = SliderThumbToolTipText.Time(SeekSlider.Value);
+        PositionBubble(SeekBubble, SeekSlider.Value / max, SeekSlider.ActualWidth);
+    }
+
+    private void StartVolumeBubble()
+    {
+        _volumeDragging = true;
+        UpdateVolumeBubble();
+        VolumeBubbleOverlay.Visibility = Visibility.Visible;
+    }
+
+    private void UpdateVolumeBubble()
+    {
+        var max = VolumeSlider.Maximum;
+        if (max <= 0 || VolumeSlider.ActualWidth <= 0) return;
+        VolumeBubbleText.Text = SliderThumbToolTipText.Percent(VolumeSlider.Value);
+        PositionBubble(VolumeBubble, VolumeSlider.Value / max, VolumeSlider.ActualWidth);
+    }
+
+    private void HideVolumeBubble()
+    {
+        _volumeDragging = false;
+        VolumeBubbleOverlay.Visibility = Visibility.Collapsed;
+    }
+
+    private static void PositionBubble(Border bubble, double fraction, double trackWidth)
+    {
+        // ActualWidth is 0 on the first show (not yet measured); a nominal width keeps the
+        // initial position sane until the SizeChanged hook re-positions precisely.
+        var width = bubble.ActualWidth > 0 ? bubble.ActualWidth : 36;
+        bubble.SetValue(Canvas.LeftProperty, SliderThumbToolTipText.BubbleLeft(fraction, trackWidth, width));
     }
 
     /// <summary>Called by MainWindow after AppServices.Initialize.</summary>
@@ -520,6 +581,7 @@ public sealed partial class NowPlayingBar : UserControl
                 SeekSlider.Value, duration);
             ElapsedText.Text = dragElapsed;
             RemainingText.Text = dragRemaining;
+            UpdateSeekBubble();
         }
         else
         {
@@ -562,6 +624,7 @@ public sealed partial class NowPlayingBar : UserControl
                 SeekSlider.Value, AppServices.Playback?.Duration ?? TimeSpan.Zero);
             ElapsedText.Text = elapsed;
             RemainingText.Text = remaining;
+            UpdateSeekBubble();
             return;
         }
         if (_updatingSliderFromTimer || AppServices.Playback == null) return;
@@ -768,6 +831,7 @@ public sealed partial class NowPlayingBar : UserControl
 
     private void OnVolumeChanged(object sender, RangeBaseValueChangedEventArgs e)
     {
+        if (_volumeDragging) UpdateVolumeBubble();
         if (AppServices.Playback == null) return;
         AppServices.Playback.Volume = e.NewValue / 100.0;
         if (e.NewValue > 0) _lastVolume = e.NewValue / 100.0;

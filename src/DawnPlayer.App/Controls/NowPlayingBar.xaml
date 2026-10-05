@@ -4,15 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:DawnPlayer.App.Controls"
-    xmlns:services="using:DawnPlayer.App.Services"
     MinHeight="96">
-
-    <UserControl.Resources>
-        <!-- WinUI's built-in drag tooltip floats empty unless a ThumbToolTipValueConverter
-             feeds it — these give the seek thumb a timestamp and the volume thumb a percent. -->
-        <services:SeekSecondsThumbToolTipConverter x:Key="SeekSecondsThumbToolTip"/>
-        <services:VolumePercentThumbToolTipConverter x:Key="VolumePercentThumbToolTip"/>
-    </UserControl.Resources>
 
     <Grid x:Name="RootLayout" Background="{ThemeResource PanelBrush}" Padding="18,2,18,6" SizeChanged="OnRootSizeChanged"
           BorderBrush="{ThemeResource SeparatorBrush}" BorderThickness="0,1,0,0">
@@ -33,7 +25,7 @@
                         <Setter Target="FormatBadge.Visibility" Value="Collapsed"/>
                         <Setter Target="OutputBadge.Visibility" Value="Collapsed"/>
                         <Setter Target="TrackArtist.Visibility" Value="Collapsed"/>
-                        <Setter Target="VolumeSlider.Visibility" Value="Collapsed"/>
+                        <Setter Target="VolumeSliderHost.Visibility" Value="Collapsed"/>
                         <Setter Target="ArtButton.Width" Value="40"/>
                         <Setter Target="ArtButton.Height" Value="40"/>
                         <Setter Target="ArtPlaceholder.FontSize" Value="16"/>
@@ -66,8 +58,21 @@
             <Grid Grid.Column="1" Margin="10,0" MinHeight="20" VerticalAlignment="Center">
                 <Slider x:Uid="NowPlaying_SeekSlider" x:Name="SeekSlider" Style="{StaticResource EoleSlimSliderStyle}"
                         Minimum="0" Maximum="100" StepFrequency="1" MinWidth="40"
-                        ThumbToolTipValueConverter="{StaticResource SeekSecondsThumbToolTip}"
+                        IsThumbToolTipEnabled="False"
                         VerticalAlignment="Center"/>
+
+                <!-- Drag readout: WinUI's built-in thumb tooltip renders an empty box here (its
+                     DataContext binding never receives a source — see SliderThumbToolTipText), so
+                     the app draws its own timestamp bubble above the thumb while dragging. -->
+                <Canvas x:Name="SeekBubbleOverlay" IsHitTestVisible="False" Visibility="Collapsed"
+                        Height="20" VerticalAlignment="Center">
+                    <Border x:Name="SeekBubble" Canvas.Top="-26" Padding="6,2" CornerRadius="4"
+                            Background="{ThemeResource PanelBrush}"
+                            BorderBrush="{ThemeResource BorderSubtleBrush}" BorderThickness="1">
+                        <TextBlock x:Name="SeekBubbleText" Text="0:00" FontSize="11"
+                                   Foreground="{ThemeResource TextPrimaryBrush}"/>
+                    </Border>
+                </Canvas>
 
                 <!-- A-B loop overlay: drawn over the slider's own box so the band edges line up
                      with the thumb positions (AbRepeatOverlayCalculator), never intercepts input. -->
@@ -260,10 +265,23 @@
                     <FontIcon x:Name="VolumeIcon" Glyph="&#xE767;" FontSize="13"/>
                 </Button>
 
-                <Slider x:Uid="NowPlaying_VolumeSlider" x:Name="VolumeSlider" Width="96" Style="{StaticResource EoleSlimSliderStyle}"
-                        Minimum="0" Maximum="100" StepFrequency="1"
-                        ThumbToolTipValueConverter="{StaticResource VolumePercentThumbToolTip}"
-                        ValueChanged="OnVolumeChanged" ToolTipService.ToolTip="볼륨"/>
+                <!-- Volume slider host: wraps the slider so the drag percent bubble can overlay it.
+                     Compact mode collapses the host (the slider alone used to be the collapse target). -->
+                <Grid x:Name="VolumeSliderHost">
+                    <Slider x:Uid="NowPlaying_VolumeSlider" x:Name="VolumeSlider" Width="96" Style="{StaticResource EoleSlimSliderStyle}"
+                            Minimum="0" Maximum="100" StepFrequency="1"
+                            IsThumbToolTipEnabled="False"
+                            ValueChanged="OnVolumeChanged" ToolTipService.ToolTip="볼륨"/>
+                    <Canvas x:Name="VolumeBubbleOverlay" IsHitTestVisible="False" Visibility="Collapsed"
+                            Height="20" VerticalAlignment="Center">
+                        <Border x:Name="VolumeBubble" Canvas.Top="-26" Padding="6,2" CornerRadius="4"
+                                Background="{ThemeResource PanelBrush}"
+                                BorderBrush="{ThemeResource BorderSubtleBrush}" BorderThickness="1">
+                            <TextBlock x:Name="VolumeBubbleText" Text="0%" FontSize="11"
+                                       Foreground="{ThemeResource TextPrimaryBrush}"/>
+                        </Border>
+                    </Canvas>
+                </Grid>
 
                 <!-- Playback Queue Flyout Button -->
                 <Button x:Uid="NowPlaying_QueueButton" x:Name="QueueButton" Style="{StaticResource TransportButton}"

@@ -1307,3 +1307,35 @@ kind=Dlna — 인프라 그대로), 재생목록 편집 무결성, 콜드 리빌
   109.6MB, SHA256SUMS 4라인 — 인스톨러 해시 포함 확인).
 - 교훈: CI "녹색"은 발행된 자산 수를 보증하지 않는다 — 부분 발행은 자산 개수 불변식으로만 잡는다.
   upload-artifact의 상대 경로 보존을 전제로 한 다운로드 측 복사는 반드시 -Recurse로.
+
+### 하단바 드래그 읽기값 — 버블 전환 수리 (2026-10-05, 변환기 경로 실패 → 플랫폼 소스 규명 → 사용자 승인·구현 — 커밋 대기)
+
+- 경과: 6f2857c(ThumbToolTipValueConverter 연결) 후 사용자 재보고 "여전히 빈 툴팁" — 변환기는
+  어떤 입력에도 최소 "0:00"을 반환하므로 여전히 빈 상태라는 것은 **호출 자체가 안 된다**는 뜻.
+- 플랫폼 소스 규명(microsoft-ui-xaml main — dxaml/xcp/dxaml/lib/Slider_Partial.cpp·ToolTip_Partial.cpp):
+  ① 내장 툴팁은 템플릿 파트가 아니라 OnApplyTemplate에서 코드 생성 — ToolTip{TextBlock}=**DataContext
+  바인딩**(Converter+ConverterParameter=슬라이더 약참조, Source/Path 미지정). ② ToolTip.SetContainer가
+  **부착 시점의 대상 DataContext를 1회 복사**하고 이후 전파 없음. ③ 앱의 슬라이더 DataContext는
+  null → 바인딩 미평가 → 컨버터 무호출 → 빈 박스. ④ 기본 변환기(DefaultDisambiguationUIConverter)
+  는 value를 double(슬라이더 값)로 기대하지만 DataContext를 채워주는 코드가 플랫폼 어디에도 없어
+  DataContext 없는 앱에서는 기본값도 빈 박스 — ColorPicker·MediaTransportControls가 전부 명시적으로
+  끄는 이유. ⑤ 툴팁은 열림 시점 1회 배치, 드래그 중 위치 갱신 코드 없음. → DataContext 주입 경로는
+  엔진 내부 동작 3개(스냅샷·팝업 전파·재평가) 의존 + 성공해도 엄지 미추적 — 사용자와 확인 후 **앱 소유
+  버블로 전환 승인**.
+- 구현: ① 양 슬라이더 `IsThumbToolTipEnabled="False"`(빈 박스 퇴출). ② 앱 소유 버블 — seek 열과
+  볼륨 호스트에 Canvas 오버레이(Border+TextBlock, PanelBrush/BorderSubtleBrush/R4 토큰) 신설,
+  드래그 라이프사이클(포인터 Pressed/Released/CaptureLost/Canceled)에 연동. 위치 = 재작성된
+  `SliderThumbToolTipText.BubbleLeft`(A-B 오버레이의 엄지 중심 좌표 재사용 + 트랙 경계 클램프),
+  텍스트 = 기존 Time/Percent 계약. ③ 6f2857c의 변환기 셸 2종·헬퍼 삭제(죽은 코드). ④ 볼륨 슬라이더를
+  `VolumeSliderHost` Grid로 감싸 오버레이 실어 — Compact VSM 세터 대상도 Host로 이동(슬라이더만
+  숨기면 버블이 남는다).
+- 게이트: `SliderThumbToolTipGateTests` 13종 재편(포맷·BubbleLeft 기하 단위 + 소스 스캔 — 빈 박스
+  원인인 ThumbToolTipValueConverter 재유입 금지, 내장 툴팁 비활성 상태 고정, 순수 계약 소비 고정),
+  `MiniPlayerLayoutTests.Compact_CollapsesVolumeSlider` 계약 갱신(Host 대상 + Host가 슬라이더를
+  감쌈 단언). 클린 리빌드 0경고 0오류(CA1822 1건 수선), **전체 스위트 2,213/2,213**, 런타임 스모크
+  (리소스 파스·양 슬라이더·오버레이 기본 숨김). 드래그 중 버블은 CUA 마우스 홀드 불가로 육안 확인은
+  사용자 몫.
+- 교훈: **WinUI 3 Slider 내장 드래그 툴팁은 DataContext 없는 앱에서 구조적으로 빈 박스** — ThumbToolTipValueConverter는
+  호출되지 않는다(플랫폼 소스 입증). 슬라이더 드래그 읽기값이 필요하면 앱 오버레이로 그리거나
+  IsThumbToolTipEnabled=False로 끌 것. "API가 존재+문서가 있다"와 "호출된다"는 별개 — 변환기 무호Call
+  판별은 최소 반환값 실험(어떤 입력이든 비어있지 않은 변환기)으로도 가능했다.

@@ -73,9 +73,16 @@ public class MiniPlayerLayoutTests
     [Fact]
     public void Compact_CollapsesVolumeSlider()
     {
-        var compact = FindCompactBlock(ReadNowPlayingBarXaml());
-        Assert.Contains("Target=\"VolumeSlider.Visibility\"", compact, StringComparison.Ordinal);
+        var xaml = ReadNowPlayingBarXaml();
+        var compact = FindCompactBlock(xaml);
+        // The collapse target is the slider's host grid — the drag percent bubble overlay
+        // lives in it too, so collapsing the slider alone would leave the overlay behind.
+        Assert.Contains("Target=\"VolumeSliderHost.Visibility\"", compact, StringComparison.Ordinal);
         Assert.Contains("Value=\"Collapsed\"", compact, StringComparison.Ordinal);
+
+        var host = Regex.Match(xaml, "<Grid x:Name=\"VolumeSliderHost\".*?</Grid>", RegexOptions.Singleline);
+        Assert.True(host.Success, "VolumeSliderHost must wrap the volume slider.");
+        Assert.Contains("x:Name=\"VolumeSlider\"", host.Value, StringComparison.Ordinal);
     }
 
     [Fact]
