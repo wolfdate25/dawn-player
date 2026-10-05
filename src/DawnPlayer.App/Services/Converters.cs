@@ -126,3 +126,42 @@ public static class TextFormat
         return AppStrings.Format("Time_MinutesFormat", "{0}분", (int)t.TotalMinutes);
     }
 }
+
+/// <summary>Slider value (seconds) → the seek thumb's drag tooltip ("m:ss"/"h:mm:ss"). WinUI's
+/// built-in thumb tooltip is enabled by default but renders an empty box unless a
+/// ThumbToolTipValueConverter supplies content — 2026-10-05 user report. Pure contract in
+/// <see cref="Controls.SliderThumbToolTipText.Time"/>, test-gated like the other converters.</summary>
+public sealed class SeekSecondsThumbToolTipConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+        => Controls.SliderThumbToolTipText.Time(SliderThumbToolTipValues.AsDouble(value));
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+        => 0d;  // the tooltip is read-only; the platform never converts back through it
+}
+
+/// <summary>Slider value (0-100) → the volume thumb's drag tooltip ("42%"). Same empty-tooltip
+/// defect class as the seek slider. Pure contract in <see cref="Controls.SliderThumbToolTipText.Percent"/>.</summary>
+public sealed class VolumePercentThumbToolTipConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+        => Controls.SliderThumbToolTipText.Percent(SliderThumbToolTipValues.AsDouble(value));
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+        => 0d;  // the tooltip is read-only; the platform never converts back through it
+}
+
+internal static class SliderThumbToolTipValues
+{
+    /// <summary>The platform hands the tooltip converter the slider value; tolerate the boxed
+    /// numeric shapes and treat anything else as unknown rather than throwing.</summary>
+    public static double AsDouble(object value) => value switch
+    {
+        double d => d,
+        int i => i,
+        long l => l,
+        float f => f,
+        string s when double.TryParse(s, out var parsed) => parsed,
+        _ => double.NaN,
+    };
+}

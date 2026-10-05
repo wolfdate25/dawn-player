@@ -4,7 +4,15 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:DawnPlayer.App.Controls"
+    xmlns:services="using:DawnPlayer.App.Services"
     MinHeight="96">
+
+    <UserControl.Resources>
+        <!-- WinUI's built-in drag tooltip floats empty unless a ThumbToolTipValueConverter
+             feeds it — these give the seek thumb a timestamp and the volume thumb a percent. -->
+        <services:SeekSecondsThumbToolTipConverter x:Key="SeekSecondsThumbToolTip"/>
+        <services:VolumePercentThumbToolTipConverter x:Key="VolumePercentThumbToolTip"/>
+    </UserControl.Resources>
 
     <Grid x:Name="RootLayout" Background="{ThemeResource PanelBrush}" Padding="18,2,18,6" SizeChanged="OnRootSizeChanged"
           BorderBrush="{ThemeResource SeparatorBrush}" BorderThickness="0,1,0,0">
@@ -58,6 +66,7 @@
             <Grid Grid.Column="1" Margin="10,0" MinHeight="20" VerticalAlignment="Center">
                 <Slider x:Uid="NowPlaying_SeekSlider" x:Name="SeekSlider" Style="{StaticResource EoleSlimSliderStyle}"
                         Minimum="0" Maximum="100" StepFrequency="1" MinWidth="40"
+                        ThumbToolTipValueConverter="{StaticResource SeekSecondsThumbToolTip}"
                         VerticalAlignment="Center"/>
 
                 <!-- A-B loop overlay: drawn over the slider's own box so the band edges line up
@@ -253,6 +262,7 @@
 
                 <Slider x:Uid="NowPlaying_VolumeSlider" x:Name="VolumeSlider" Width="96" Style="{StaticResource EoleSlimSliderStyle}"
                         Minimum="0" Maximum="100" StepFrequency="1"
+                        ThumbToolTipValueConverter="{StaticResource VolumePercentThumbToolTip}"
                         ValueChanged="OnVolumeChanged" ToolTipService.ToolTip="볼륨"/>
 
                 <!-- Playback Queue Flyout Button -->

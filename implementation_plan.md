@@ -1265,3 +1265,45 @@ kind=Dlna — 인프라 그대로), 재생목록 편집 무결성, 콜드 리빌
   bar rating button"/"Show the star-rating button…"** 영문 노출 확인, 메뉴 Sleep Timer 하위
   "Off/15 min/30 min/1 hour/After current track" 전부 영문 확인, 타이틀바 "No sound — Nothing
   played"·슬라이더 자동명 "Default Album Cover Size" 적용 확인. 검증 후 settings.json 원복.
+
+### 하단바 seek·볼륨 드래그 빈 툴팁 수리 (2026-10-05, 사용자 보고·스크린샷 → 승인·구현 — 커밋 대기)
+
+- 보고: 하단바 seekbar 드래그 시 타임스탬프가 떠야 하는데 **비어서 보인다**(스크린샷 — 엄지 위 빈
+  둥근 박스).
+- 원인 확정: 그 박스는 **WinUI 3 Slider 내장 드래그 툴팁**(`IsThumbToolTipEnabled`, 기본 true —
+  ColorPicker·MediaTransportControls가 전부 명시적으로 끄는 그것). 콘텐츠는
+  `ThumbToolTipValueConverter`가 만드는데 앱이 변환기를 지정하지 않아 빈 문자열 → 빈 박스. 앱의
+  커스텀 템플릿(EoleSlimSliderStyle)은 무관 — 내장 툴팁은 템플릿 파트가 아니라 플랫폼 코드가
+  생성(generic.xaml에 ThumbToolTip 파트 부재 확인). 앱의 호버 미리보기 툴팁(ToolTipService,
+  포인터 위치 시간)은 별개 파이프라인이라 드래그 중엔 뜨지 않음. 볼륨 슬라이더도 동일 결함.
+- 수리(사용자 승인: 시크+볼륨 모두): ① 순수 계약 `SliderThumbToolTipText`(App/Controls 신설 —
+  `Time(double 초)` → SeekbarScrubbingCalculator.FormatTime 위임 m:ss/h:mm:ss, `Percent(double)`
+  → "42%", NaN·∞·범위 백은 0:00/0%로 클램프). ② 얇은 셸 변환기 2종(Converters.cs 기존 관례 —
+  `SeekSecondsThumbToolTipConverter`·`VolumePercentThumbToolTipConverter`, ConvertBack은 툴팁이
+  읽기 전용이라 0d). ③ NowPlayingBar.xaml에 `xmlns:services` + UserControl.Resources 2종 등록 +
+  양 슬라이더에 `ThumbToolTipValueConverter` 지정. ④ 게이트 `SliderThumbToolTipGateTests` 11종 —
+  포맷 단위 테스트(0:00/1:15/1:01:15/NaN 클램프/퍼센트 반올림) + 소스 스캔(양 슬라이더가 변환기
+  지정 없이 재유입 금지, 셸이 순수 계약 위임 유지).
+- 엣지 기록: 트랙 미로드 시 Maximum=100이라 드래그 툴팁이 0:00~1:40 표시(재생 중엔 Maximum=곡
+  길이로 정확). 세션 복원 경로는 저장 위치로 Max를 되돌리므로 통상 무해 — 필요 시 트랙 존재 시에만
+  툴팁 활성화로 강화 가능.
+- 게이트: 클린 리빌드 0경고 0오류, **전체 스위트 2,211/2,211**(신규 11종 반영), 런타임 스모크(앱
+  기동 — Resources 파스·양 슬라이더 렌더 확인; 스위트 실행 중 기동한 1차 시도 소실은 E2E 하니스의
+  프로세스 정리와 충돌한 것으로 재기동에서 무해 판명). **드래그 중 툴팁 내용은 CUA가 마우스 홀드를
+  못 해 자동 캡처 불가(L15 한계와 동일) — 사용자 육안 확인 요청**.
+
+### v1.6.0 발행 (2026-10-05, 사용자 지시 "1.5.0 내리고 다시 릴리즈" — CI 경로)
+
+- 미커밋 전체를 2커밋으로 분할(215f560 ARM64 지원 / aef3b76 다국어 수리) → main 푸시 → v1.5.0
+  릴리스·태그 삭제(`gh release delete --cleanup-tag`) → v1.6.0 태그(마이너 bump — ARM64는 사용자
+  가시 기능, AGENTS.md §2 관례) → CI 발행. 최초 실행 37184200611 **전 잡 success였는데 3자산만
+  발행**(인스톨러 2개 누락 — 조용한 부분 실패).
+- 원인: ARM64 3-잡 재구성에서 빌드 잡이 `dist/installer/*.exe`를 하위 폴더째 아티팩트로 올리는데
+  release 잡 스테이징이 `Get-ChildItem -File`(재귀 없음)이라 `installer/`를 누락, softprops 액션은
+  매칭 없는 글롭을 조용히 건너뛰어 "성공" — **존재하지 않는 자산에 대한 릴리스 게이트가 없었다**.
+- 수리(3d2a383): 스테이징 재귀 복사 + **불변식 게이트**(5자산 전부 dist에 존재해야 발행, 누락 시
+  잡 실패+파일 목록 출력) + `fail_on_unmatched_files: true`. 태그 삭제→재생성→재푸시 재발행(2차
+  37280584235 성공) → **5자산 완발행**(Setup x64 74.8MB·arm64 71.2MB, 포터블 x64 113.3MB·arm64
+  109.6MB, SHA256SUMS 4라인 — 인스톨러 해시 포함 확인).
+- 교훈: CI "녹색"은 발행된 자산 수를 보증하지 않는다 — 부분 발행은 자산 개수 불변식으로만 잡는다.
+  upload-artifact의 상대 경로 보존을 전제로 한 다운로드 측 복사는 반드시 -Recurse로.
