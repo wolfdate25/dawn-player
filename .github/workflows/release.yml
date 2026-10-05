@@ -120,23 +120,6 @@ jobs:
           pattern: release-*
           path: staging
 
-      - name: Stage Release Files & Merge Checksums
-        shell: pwsh
-        run: |
-          $dist = "dist"
-          New-Item -ItemType Directory -Path $dist -Force | Out-Null
-          Get-ChildItem staging -Directory | ForEach-Object {
-            Get-ChildItem $_.FullName -File |
-              Where-Object { $_.Name -ne 'SHA256SUMS.txt' } |
-              Copy-Item -Destination $dist
-          }
-          # One checksum file across all architectures. Lines are "hash *filename", so a plain
-          # concatenation of the per-runtime files is valid for `sha256sum -c`.
-          $sums = Get-ChildItem staging -Recurse -Filter SHA256SUMS.txt |
-            ForEach-Object { Get-Content $_.FullName }
-          [System.IO.File]::WriteAllLines((Join-Path $dist "SHA256SUMS.txt"), $sums)
-          Get-ChildItem $dist
-
       - name: Determine Release Version
         id: get_version
         shell: pwsh
@@ -149,6 +132,42 @@ jobs:
           Write-Host "Resolved Version: $ver"
           "version=$ver" >> $env:GITHUB_OUTPUT
 
+      - name: Stage Release Files & Merge Checksums
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.get_version.outputs.version }}"
+          $dist = "dist"
+          New-Item -ItemType Directory -Path $dist -Force | Out-Null
+          # upload-artifact preserves the uploaded relative layout, so each installer sits in
+          # an installer/ subfolder of its artifact — the copy must recurse. A top-level-only
+          # listing is how the first v1.6.0 run silently published without both Setup exes.
+          Get-ChildItem staging -Directory | ForEach-Object {
+            Get-ChildItem $_.FullName -Recurse -File |
+              Where-Object { $_.Name -ne 'SHA256SUMS.txt' } |
+              Copy-Item -Destination $dist
+          }
+          # One checksum file across all architectures. Lines are "hash *filename", so a plain
+          # concatenation of the per-runtime files is valid for `sha256sum -c`.
+          $sums = Get-ChildItem staging -Recurse -Filter SHA256SUMS.txt |
+            ForEach-Object { Get-Content $_.FullName }
+          [System.IO.File]::WriteAllLines((Join-Path $dist "SHA256SUMS.txt"), $sums)
+          # Invariant: every asset the publish globs name must be on disk — fail the job
+          # instead of letting the release action skip missing globs silently.
+          $expected = @(
+            "DawnPlayer-Setup-v$ver-x64.exe",
+            "DawnPlayer-Setup-v$ver-arm64.exe",
+            "DawnPlayer-v$ver-portable-win-x64.zip",
+            "DawnPlayer-v$ver-portable-win-arm64.zip",
+            "SHA256SUMS.txt"
+          )
+          $missing = $expected | Where-Object { -not (Test-Path (Join-Path $dist $_)) }
+          if ($missing) {
+            Get-ChildItem $dist -Recurse | ForEach-Object { Write-Host $_.FullName }
+            Write-Host "::error::Missing release assets: $($missing -join ', ')"
+            exit 1
+          }
+          Get-ChildItem $dist
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
@@ -157,6 +176,7 @@ jobs:
           draft: ${{ github.event.inputs.draft || false }}
           prerelease: ${{ github.event.inputs.prerelease || false }}
           generate_release_notes: true
+          fail_on_unmatched_files: true
           files: |
             dist/DawnPlayer-Setup-v${{ steps.get_version.outputs.version }}-x64.exe
             dist/DawnPlayer-Setup-v${{ steps.get_version.outputs.version }}-arm64.exe
