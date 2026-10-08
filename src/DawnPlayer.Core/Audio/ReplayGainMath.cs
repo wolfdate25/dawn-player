@@ -13,37 +13,8 @@ public static class ReplayGainMath
     public const float MaxGain = 8.0f;
 
     /// <summary>
-    /// Computes the linear gain multiplier based on volume, ReplayGain mode, preamp dB, and peak anti-clipping.
-    /// </summary>
-    public static float ComputeGain(
-        Track? track,
-        double volume,
-        ReplayGainMode mode,
-        double preampDb,
-        bool preventClipping)
-    {
-        if (track == null) return 1.0f;
-
-        float g = (float)volume;
-        if (mode != ReplayGainMode.Off)
-        {
-            var gainDb = mode == ReplayGainMode.Track ? track.RgTrackGainDb : track.RgAlbumGainDb;
-            var peak = mode == ReplayGainMode.Track ? track.RgTrackPeak : track.RgAlbumPeak;
-            if (gainDb.HasValue)
-            {
-                g *= DecibelsToLinear((float)(gainDb.Value + preampDb));
-                if (preventClipping && peak is > 0)
-                {
-                    var max = (float)(1.0 / peak.Value);
-                    if (g > max) g = max;
-                }
-            }
-        }
-        return Math.Clamp(g, MinGain, MaxGain);
-    }
-
-    /// <summary>
     /// Computes the ReplayGain multiplier without master volume, or null if untagged/disabled.
+    /// The master fader is a separate post-chain multiply — never fold volume in here.
     /// </summary>
     public static float? ComputeReplayGainOnly(
         Track? track,

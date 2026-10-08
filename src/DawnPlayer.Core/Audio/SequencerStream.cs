@@ -56,7 +56,10 @@ public sealed class SequencerStream : IWaveProvider
     // DoP containers ride the pipeline as opaque 24-bit words: volume or DSP arithmetic would
     // corrupt the 0x05/0xFA markers the DAC resyncs on, so both are skipped entirely.
     private readonly bool _rawPassthrough;
-    private readonly Func<Track, float> _gainProvider;
+    // Supplies the PRE-CHAIN ReplayGain node gain: source correction only, boost-capable and
+    // therefore limiter-protected. The master fader (listening volume) is applied AFTER the DSP
+    // chain — see _masterGain — so the AGC can never see, or compensate away, the volume slider.
+    private readonly Func<Track, float> _replayGainNodeGainProvider;
     private readonly Func<Track, float?>? _replayGainProvider;
     private readonly int _latencyBytes;
     private readonly IAudioDspChain _dspChain;
@@ -70,7 +73,10 @@ public sealed class SequencerStream : IWaveProvider
     {
         public required PendingTrack Track { get; init; }
         public required ISampleProvider Source { get; init; }
-        public VolumeSampleProvider? Volume { get; init; }
+        public VolumeSampleProvider? ReplayGainNode { get; init; }
+        /// <summary>The gain the ReplayGain node was built with — carried so the boundary swap
+        /// (under the gate) can refresh limiter arming without dereferencing the node.</summary>
+        public float ReplayGainNodeGain { get; init; } = 1f;
     }
 
     /// <summary>The per-track facts a UI thread polls. Immutable, published as one reference.</summary>
@@ -81,17 +87,25 @@ public sealed class SequencerStream : IWaveProvider
     private PreparedTrack? _current;
     private PreparedTrack? _prefetched;
     private ISampleProvider? _sourceProvider;
-    private VolumeSampleProvider? _volumeNode;
+    private VolumeSampleProvider? _replayGainNode;
     private TrackFacts? _facts;
     private float[] _floatBuf = Array.Empty<float>();
     private long _bytesServed;
     private bool _trackStartedFired;
     private bool _endFired;
+    // Master fader, applied AFTER the DSP chain in Read: attenuation-only, so it can never push
+    // the signal over full scale and processing stages never see (or compensate) the slider.
+    // Plain float write from the UI thread / read on the audio thread: 32-bit accesses are
+    // atomic on all supported runtimes; worst case is one block of the previous value.
+    private float _masterGain = 1f;
+    // Current ReplayGain node gain — mirrors _current's node so SyncLimiterEnabled can decide
+    // arming without chasing the node reference. Written under _gate at the boundary.
+    private float _nodeGain = 1f;
 
     public SequencerStream(
         WaveFormat outFormat,
         bool applyVolume,
-        Func<Track, float> gainProvider,
+        Func<Track, float> replayGainNodeGainProvider,
         int latencyMs,
         EqProfile? initialEqProfile = null,
         NormalizerSettings? initialNormalizerSettings = null,
@@ -100,13 +114,15 @@ public sealed class SequencerStream : IWaveProvider
         bool initialMonoDownmix = false,
         IAudioDspChain? dspChain = null,
         global::DawnPlayer.Core.Audio.Dsp.Plugins.PluginDspEffect? pluginDsp = null,
-        bool rawPassthrough = false)
+        bool rawPassthrough = false,
+        float initialMasterGain = 1f)
     {
         _rawPassthrough = rawPassthrough;
         _outFormat = outFormat;
         _applyVolume = applyVolume;
-        _gainProvider = gainProvider;
+        _replayGainNodeGainProvider = replayGainNodeGainProvider;
         _replayGainProvider = replayGainProvider;
+        _masterGain = Math.Clamp(initialMasterGain, 0f, 1f);
         _latencyBytes = (int)(outFormat.AverageBytesPerSecond * latencyMs / 1000.0);
 
         if (dspChain != null)
@@ -302,7 +318,7 @@ public sealed class SequencerStream : IWaveProvider
             _current?.Track.Reader.Dispose();
             _current = null;
             _sourceProvider = null;
-            Volatile.Write(ref _volumeNode, null);
+            Volatile.Write(ref _replayGainNode, null);
             Volatile.Write(ref _facts, null);
             _endFired = false;
             _trackStartedFired = false;
@@ -312,12 +328,30 @@ public sealed class SequencerStream : IWaveProvider
         }
     }
 
-    /// <summary>Updates the gain applied to the current and future tracks.</summary>
-    public void SetGain(float gain)
+    /// <summary>Updates the master fader (listening volume). Applied after the DSP chain, so it
+    /// takes effect on the very next rendered block and no processing stage compensates it.</summary>
+    public void SetMasterGain(float gain)
     {
-        // Lock-free: the volume slider writes this on every pointer move.
-        var node = Volatile.Read(ref _volumeNode);
-        if (node != null) node.Volume = gain;
+        // Lock-free: the volume slider writes this on every pointer move. Plain float field —
+        // see the declaration comment for the atomicity/staleness reasoning.
+        _masterGain = Math.Clamp(gain, 0f, 1f);
+    }
+
+    /// <summary>Updates the pre-chain ReplayGain node gain live (e.g. when the normalizer toggles
+    /// and ReplayGain ownership moves between the node and the normalizer effect).</summary>
+    public void SetReplayGainNode(float gain)
+    {
+        // Under the gate: without it, a UI-thread toggle interleaving with a gapless-boundary
+        // SetCurrentLocked could stamp the OLD track's gain onto the NEW track's node — wrong
+        // ReplayGain level for the whole track — and leave a stale _nodeGain arming the limiter.
+        // The call is UI-rate; the worst case waits one render pass.
+        lock (_gate)
+        {
+            _nodeGain = gain;
+            var node = Volatile.Read(ref _replayGainNode);
+            if (node != null) node.Volume = gain;
+            SyncLimiterEnabled();
+        }
     }
 
     /// <summary>Updates the equalizer profile applied to the active and future tracks.</summary>
@@ -330,8 +364,9 @@ public sealed class SequencerStream : IWaveProvider
     /// <summary>
     /// The soft limiter is a memoryless waveshaper, so leaving it armed when nothing upstream can
     /// raise the level meant the configuration the UI calls bit-perfect still reshaped every peak
-    /// above 0.90. Arm it only when something can actually push the signal up: the volume/ReplayGain
-    /// node (whose multiplier reaches 8x), the equalizer, or the normalizer.
+    /// above 0.90. Arm it only when something can actually push the signal up: a boosting
+    /// ReplayGain node, the equalizer, the normalizer, convolution, or a plugin. The master fader
+    /// is attenuation-only and never warrants arming.
     /// </summary>
     private void SyncLimiterEnabled()
     {
@@ -343,7 +378,8 @@ public sealed class SequencerStream : IWaveProvider
         bool convolutionActive = _dspChain.GetEffect<ConvolutionDspEffect>() is { IsEnabled: true, HasImpulse: true };
         // Plugin DSPs are unknown quantity-wise: treat an armed one as level-altering.
         bool pluginDspActive = _dspChain.GetEffect<global::DawnPlayer.Core.Audio.Dsp.Plugins.PluginDspEffect>() is { IsEnabled: true };
-        limiter.IsEnabled = _applyVolume || eqActive || normalizerActive || convolutionActive || pluginDspActive;
+        bool replayGainNodeMayBoost = _applyVolume && _nodeGain > 1.0001f;
+        limiter.IsEnabled = replayGainNodeMayBoost || eqActive || normalizerActive || convolutionActive || pluginDspActive;
     }
 
     /// <summary>The analysis tap at the end of the chain, or null for a custom chain without one.</summary>
@@ -442,7 +478,7 @@ public sealed class SequencerStream : IWaveProvider
                             _current.Track.Reader.Dispose();
                             _current = null;
                             _sourceProvider = null;
-                            Volatile.Write(ref _volumeNode, null);
+                            Volatile.Write(ref _replayGainNode, null);
                             Volatile.Write(ref _facts, null);
                             Volatile.Write(ref AbLoopStartBytes, 0);
                             Volatile.Write(ref AbLoopEndBytes, 0);
@@ -473,6 +509,21 @@ public sealed class SequencerStream : IWaveProvider
 
                     // Process through the decoupled DSP chain
                     if (!_rawPassthrough) _dspChain.Process(_floatBuf, 0, floatsRead);
+
+                    // Master fader, after the chain: the listening volume is the last thing that
+                    // touches the signal, so no processing stage (the AGC above all) can see or
+                    // compensate it. Attenuation-only — it can never exceed full scale.
+                    if (_applyVolume && !_rawPassthrough)
+                    {
+                        float fader = _masterGain;
+                        if (fader != 1f)
+                        {
+                            for (int i = 0; i < floatsRead; i++)
+                            {
+                                _floatBuf[i] *= fader;
+                            }
+                        }
+                    }
 
                     int frames = floatsRead / _outFormat.Channels;
                     PcmConvert.ToBytes(_floatBuf.AsSpan(0, frames * _outFormat.Channels), buffer.Slice(total), _outFormat);
@@ -560,18 +611,26 @@ public sealed class SequencerStream : IWaveProvider
     private PreparedTrack Prepare(PendingTrack track)
     {
         ISampleProvider sp = track.Reader.Samples;
-        VolumeSampleProvider? volume = null;
+        VolumeSampleProvider? replayGainNode = null;
+        float replayGainNodeGain = 1f;
         if (_applyVolume && !_rawPassthrough)
         {
-            volume = new VolumeSampleProvider(sp) { Volume = _gainProvider(track.Item.Track) };
-            sp = volume;
+            replayGainNodeGain = _replayGainNodeGainProvider(track.Item.Track);
+            replayGainNode = new VolumeSampleProvider(sp) { Volume = replayGainNodeGain };
+            sp = replayGainNode;
         }
         if (sp.WaveFormat.SampleRate != _outFormat.SampleRate)
             sp = new WdlResamplingSampleProvider(sp, _outFormat.SampleRate);
         if (sp.WaveFormat.Channels != _outFormat.Channels)
             sp = new ChannelConverterSampleProvider(sp, _outFormat.Channels);
 
-        return new PreparedTrack { Track = track, Source = sp, Volume = volume };
+        return new PreparedTrack
+        {
+            Track = track,
+            Source = sp,
+            ReplayGainNode = replayGainNode,
+            ReplayGainNodeGain = replayGainNodeGain,
+        };
     }
 
     /// <param name="gapless">
@@ -594,13 +653,16 @@ public sealed class SequencerStream : IWaveProvider
         Volatile.Write(ref AbLoopEndBytes, 0);
 
         _sourceProvider = prepared.Source;
-        Volatile.Write(ref _volumeNode, prepared.Volume);
+        Volatile.Write(ref _replayGainNode, prepared.ReplayGainNode);
+        _nodeGain = prepared.ReplayGainNodeGain;
         Volatile.Write(ref _facts, new TrackFacts(track.Item, track.Reader.TotalTime));
 
         if (_replayGainProvider != null)
         {
             _dspChain.GetEffect<DynamicNormalizerDspEffect>()?.SetReplayGain(_replayGainProvider(track.Item.Track));
         }
+        // The node gain is per-track (tag-dependent): re-evaluate limiter arming at the boundary.
+        SyncLimiterEnabled();
 
         if (gapless)
         {

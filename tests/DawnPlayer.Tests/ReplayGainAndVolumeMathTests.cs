@@ -10,12 +10,15 @@ using Xunit;
 namespace DawnPlayer.Tests;
 
 /// <summary>
-/// Comprehensive unit tests for ReplayGain gain calculation, Preamp, Peak Anti-Clipping, and Volume clamping:
-/// 1. ReplayGain Off mode (Volume pass-through).
-/// 2. ReplayGain Track mode (Volume * 10^((TrackGain + Preamp) / 20)).
-/// 3. ReplayGain Album mode (Volume * 10^((AlbumGain + Preamp) / 20)).
-/// 4. Anti-clipping prevention logic (ReplayGainPreventClipping = true, limiting g <= 1.0 / peak).
+/// Unit tests for the pre-chain ReplayGain node gain and the ReplayGainMath static API:
+/// 1. Node passes unity when ReplayGain is off, the track is null, or the normalizer owns the tag.
+/// 2. ReplayGain Track mode (10^((TrackGain + Preamp) / 20)).
+/// 3. ReplayGain Album mode (10^((AlbumGain + Preamp) / 20)).
+/// 4. Anti-clipping prevention (limiting g <= 1.0 / peak).
 /// 5. Overall gain clamping ([0.0f, 8.0f]).
+/// The master fader is a separate post-chain multiply and deliberately appears in none of these
+/// numbers — volume must never leak into the node gain (that fusion was the AGC-compensates-the-
+/// slider defect).
 /// </summary>
 public class ReplayGainAndVolumeMathTests : IDisposable
 {
@@ -23,7 +26,7 @@ public class ReplayGainAndVolumeMathTests : IDisposable
     private readonly MusicLibrary _library;
     private readonly PlaylistManager _playlists;
     private readonly PlaybackController _controller;
-    private readonly MethodInfo _computeGainMethod;
+    private readonly MethodInfo _nodeGainMethod;
 
     public ReplayGainAndVolumeMathTests()
     {
@@ -32,10 +35,10 @@ public class ReplayGainAndVolumeMathTests : IDisposable
         _playlists = new PlaylistManager(_library);
         _controller = new PlaybackController(_settings, _playlists);
 
-        _computeGainMethod = typeof(PlaybackController).GetMethod(
-            "ComputeGain",
+        _nodeGainMethod = typeof(PlaybackController).GetMethod(
+            "ComputeReplayGainNodeGain",
             BindingFlags.NonPublic | BindingFlags.Instance)!;
-        Assert.NotNull(_computeGainMethod);
+        Assert.NotNull(_nodeGainMethod);
     }
 
     public void Dispose()
@@ -44,20 +47,20 @@ public class ReplayGainAndVolumeMathTests : IDisposable
         _library.Dispose();
     }
 
-    private float ComputeGain(Track? track)
+    private float NodeGain(Track? track)
     {
-        return (float)_computeGainMethod.Invoke(_controller, new object?[] { track })!;
+        return (float)_nodeGainMethod.Invoke(_controller, new object?[] { track })!;
     }
 
-    #region 1. Null Track & ReplayGain Off Mode Tests
+    #region 1. Null Track, ReplayGain Off, Normalizer Ownership
 
     [Fact]
-    public void ComputeGain_NullTrack_ReturnsOne()
+    public void NodeGain_NullTrack_ReturnsOne()
     {
         _settings.Playback.Volume = 0.5;
         _settings.Playback.ReplayGain = ReplayGainMode.Track;
 
-        float gain = ComputeGain(null);
+        float gain = NodeGain(null);
         Assert.Equal(1.0f, gain);
     }
 
@@ -67,8 +70,10 @@ public class ReplayGainAndVolumeMathTests : IDisposable
     [InlineData(0.5)]
     [InlineData(0.85)]
     [InlineData(1.0)]
-    public void ComputeGain_ReplayGainOff_PassesVolumeThrough(double volume)
+    public void NodeGain_ReplayGainOff_IsUnity_RegardlessOfVolume(double volume)
     {
+        // The node is source correction only: the listening volume rides the post-chain fader and
+        // must not leak in here (that fusion let the AGC compensate the slider away).
         _settings.Playback.Volume = volume;
         _settings.Playback.ReplayGain = ReplayGainMode.Off;
         _settings.Playback.ReplayGainPreampDb = 6.0;
@@ -82,8 +87,23 @@ public class ReplayGainAndVolumeMathTests : IDisposable
             RgAlbumPeak = 0.90
         };
 
-        float gain = ComputeGain(track);
-        Assert.Equal((float)volume, gain, precision: 5);
+        float gain = NodeGain(track);
+        Assert.Equal(1.0f, gain, precision: 5);
+    }
+
+    [Fact]
+    public void NodeGain_NormalizerEnabled_OwnsTheTag_NodePassesUnity()
+    {
+        // With the normalizer on, ReplayGain rides the normalizer's static paths; the node must
+        // stay at unity or the tag would apply twice.
+        _settings.Normalizer.Enabled = true;
+        _settings.Playback.Volume = 0.7;
+        _settings.Playback.ReplayGain = ReplayGainMode.Track;
+        _settings.Playback.ReplayGainPreampDb = 3.0;
+
+        var track = new Track { Path = "tagged.mp3", RgTrackGainDb = -6.0 };
+
+        Assert.Equal(1.0f, NodeGain(track));
     }
 
     #endregion
@@ -91,9 +111,9 @@ public class ReplayGainAndVolumeMathTests : IDisposable
     #region 2. ReplayGain Track Mode Tests
 
     [Fact]
-    public void ComputeGain_TrackMode_AppliesTrackGainAndPreamp()
+    public void NodeGain_TrackMode_AppliesTrackGainAndPreamp()
     {
-        _settings.Playback.Volume = 1.0;
+        _settings.Playback.Volume = 0.3; // must not influence the node
         _settings.Playback.ReplayGain = ReplayGainMode.Track;
         _settings.Playback.ReplayGainPreampDb = 0.0;
         _settings.Playback.ReplayGainPreventClipping = false;
@@ -106,31 +126,30 @@ public class ReplayGainAndVolumeMathTests : IDisposable
             RgAlbumGainDb = -12.0
         };
 
-        float gain = ComputeGain(track);
+        float gain = NodeGain(track);
         Assert.Equal(0.5f, gain, precision: 4);
     }
 
     [Fact]
-    public void ComputeGain_TrackMode_WithPreamp_CombinesDecibels()
+    public void NodeGain_TrackMode_WithPreamp_CombinesDecibels()
     {
-        _settings.Playback.Volume = 0.5;
         _settings.Playback.ReplayGain = ReplayGainMode.Track;
         _settings.Playback.ReplayGainPreampDb = 6.020599913279624;
         _settings.Playback.ReplayGainPreventClipping = false;
 
-        // TrackGain = -6.02 dB, Preamp = +6.02 dB -> Net dB = 0 dB -> multiplier = 1.0 -> gain = 0.5 * 1.0 = 0.5
+        // TrackGain = -6.02 dB, Preamp = +6.02 dB -> Net 0 dB -> multiplier 1.0
         var track = new Track
         {
             Path = "test.mp3",
             RgTrackGainDb = -6.020599913279624
         };
 
-        float gain = ComputeGain(track);
-        Assert.Equal(0.5f, gain, precision: 4);
+        float gain = NodeGain(track);
+        Assert.Equal(1.0f, gain, precision: 4);
     }
 
     [Fact]
-    public void ComputeGain_TrackMode_NullGainFallsBackToVolume()
+    public void NodeGain_TrackMode_Untagged_FallsBackToUnity()
     {
         _settings.Playback.Volume = 0.7;
         _settings.Playback.ReplayGain = ReplayGainMode.Track;
@@ -142,8 +161,8 @@ public class ReplayGainAndVolumeMathTests : IDisposable
             RgTrackGainDb = null
         };
 
-        float gain = ComputeGain(track);
-        Assert.Equal(0.7f, gain, precision: 5);
+        float gain = NodeGain(track);
+        Assert.Equal(1.0f, gain, precision: 5);
     }
 
     #endregion
@@ -151,9 +170,8 @@ public class ReplayGainAndVolumeMathTests : IDisposable
     #region 3. ReplayGain Album Mode Tests
 
     [Fact]
-    public void ComputeGain_AlbumMode_UsesAlbumGainAndAlbumPeak()
+    public void NodeGain_AlbumMode_UsesAlbumGainAndAlbumPeak()
     {
-        _settings.Playback.Volume = 1.0;
         _settings.Playback.ReplayGain = ReplayGainMode.Album;
         _settings.Playback.ReplayGainPreampDb = 0.0;
         _settings.Playback.ReplayGainPreventClipping = false;
@@ -166,12 +184,12 @@ public class ReplayGainAndVolumeMathTests : IDisposable
             RgAlbumGainDb = 6.020599913279624
         };
 
-        float gain = ComputeGain(track);
+        float gain = NodeGain(track);
         Assert.Equal(2.0f, gain, precision: 4);
     }
 
     [Fact]
-    public void ComputeGain_AlbumMode_NullGainFallsBackToVolume()
+    public void NodeGain_AlbumMode_Untagged_FallsBackToUnity()
     {
         _settings.Playback.Volume = 0.8;
         _settings.Playback.ReplayGain = ReplayGainMode.Album;
@@ -184,8 +202,8 @@ public class ReplayGainAndVolumeMathTests : IDisposable
             RgAlbumGainDb = null
         };
 
-        float gain = ComputeGain(track);
-        Assert.Equal(0.8f, gain, precision: 5);
+        float gain = NodeGain(track);
+        Assert.Equal(1.0f, gain, precision: 5);
     }
 
     #endregion
@@ -193,16 +211,13 @@ public class ReplayGainAndVolumeMathTests : IDisposable
     #region 4. Anti-Clipping Prevention Tests
 
     [Fact]
-    public void ComputeGain_AntiClipping_ClampsGainToInversePeak()
+    public void NodeGain_AntiClipping_ClampsGainToInversePeak()
     {
-        _settings.Playback.Volume = 1.0;
         _settings.Playback.ReplayGain = ReplayGainMode.Track;
         _settings.Playback.ReplayGainPreampDb = 0.0;
         _settings.Playback.ReplayGainPreventClipping = true;
 
-        // TrackGain = +6.0206 dB (x2.0 multiplier), Peak = 0.8
-        // 1.0 / peak = 1.0 / 0.8 = 1.25
-        // Since 2.0 > 1.25, anti-clipping clamps gain to 1.25
+        // TrackGain = +6.0206 dB (x2.0 multiplier), Peak = 0.8 -> max 1.25
         var track = new Track
         {
             Path = "loud.mp3",
@@ -210,14 +225,13 @@ public class ReplayGainAndVolumeMathTests : IDisposable
             RgTrackPeak = 0.8
         };
 
-        float gain = ComputeGain(track);
+        float gain = NodeGain(track);
         Assert.Equal(1.25f, gain, precision: 4);
     }
 
     [Fact]
-    public void ComputeGain_AntiClipping_Disabled_AllowsGainExceedingInversePeak()
+    public void NodeGain_AntiClipping_Disabled_AllowsGainExceedingInversePeak()
     {
-        _settings.Playback.Volume = 1.0;
         _settings.Playback.ReplayGain = ReplayGainMode.Track;
         _settings.Playback.ReplayGainPreampDb = 0.0;
         _settings.Playback.ReplayGainPreventClipping = false; // Disabled
@@ -229,34 +243,32 @@ public class ReplayGainAndVolumeMathTests : IDisposable
             RgTrackPeak = 0.8                  // max 1.25
         };
 
-        float gain = ComputeGain(track);
+        float gain = NodeGain(track);
         Assert.Equal(2.0f, gain, precision: 4);
     }
 
     [Fact]
-    public void ComputeGain_AntiClipping_DoesNotAlterGainWhenBelowLimit()
+    public void NodeGain_AntiClipping_DoesNotAlterGainWhenBelowLimit()
     {
-        _settings.Playback.Volume = 0.5;
         _settings.Playback.ReplayGain = ReplayGainMode.Track;
         _settings.Playback.ReplayGainPreampDb = 0.0;
         _settings.Playback.ReplayGainPreventClipping = true;
 
-        // TrackGain = 0 dB -> g = 0.5. Peak = 0.8 -> max = 1.25. Since 0.5 <= 1.25, remains 0.5.
+        // TrackGain = -6.02 dB -> 0.5. Peak = 0.8 -> max = 1.25. Since 0.5 <= 1.25, remains 0.5.
         var track = new Track
         {
             Path = "moderate.mp3",
-            RgTrackGainDb = 0.0,
+            RgTrackGainDb = -6.020599913279624,
             RgTrackPeak = 0.8
         };
 
-        float gain = ComputeGain(track);
-        Assert.Equal(0.5f, gain, precision: 5);
+        float gain = NodeGain(track);
+        Assert.Equal(0.5f, gain, precision: 4);
     }
 
     [Fact]
-    public void ComputeGain_AntiClipping_IgnoresNullOrZeroOrNegativePeak()
+    public void NodeGain_AntiClipping_IgnoresNullOrZeroOrNegativePeak()
     {
-        _settings.Playback.Volume = 1.0;
         _settings.Playback.ReplayGain = ReplayGainMode.Track;
         _settings.Playback.ReplayGainPreampDb = 0.0;
         _settings.Playback.ReplayGainPreventClipping = true;
@@ -268,7 +280,7 @@ public class ReplayGainAndVolumeMathTests : IDisposable
             RgTrackGainDb = 6.020599913279624,
             RgTrackPeak = null
         };
-        Assert.Equal(2.0f, ComputeGain(track1), precision: 4);
+        Assert.Equal(2.0f, NodeGain(track1), precision: 4);
 
         // Peak is 0
         var track2 = new Track
@@ -277,7 +289,7 @@ public class ReplayGainAndVolumeMathTests : IDisposable
             RgTrackGainDb = 6.020599913279624,
             RgTrackPeak = 0.0
         };
-        Assert.Equal(2.0f, ComputeGain(track2), precision: 4);
+        Assert.Equal(2.0f, NodeGain(track2), precision: 4);
 
         // Peak is negative
         var track3 = new Track
@@ -286,7 +298,7 @@ public class ReplayGainAndVolumeMathTests : IDisposable
             RgTrackGainDb = 6.020599913279624,
             RgTrackPeak = -0.5
         };
-        Assert.Equal(2.0f, ComputeGain(track3), precision: 4);
+        Assert.Equal(2.0f, NodeGain(track3), precision: 4);
     }
 
     [Theory]
@@ -294,10 +306,9 @@ public class ReplayGainAndVolumeMathTests : IDisposable
     [InlineData(0.5, 3.0, 2.0)]    // Peak 0.5 -> max gain 2.0. Desired gain 3.0 -> clamped to 2.0
     [InlineData(1.25, 1.0, 0.8)]   // Peak 1.25 -> max gain 0.8. Desired gain 1.0 -> clamped to 0.8
     [InlineData(2.0, 1.0, 0.5)]    // Peak 2.0 -> max gain 0.5. Desired gain 1.0 -> clamped to 0.5
-    public void ComputeGain_AntiClipping_StrictMathematicalBoundaries(
+    public void NodeGain_AntiClipping_StrictMathematicalBoundaries(
         double peak, double desiredMultiplier, double expectedGain)
     {
-        _settings.Playback.Volume = desiredMultiplier;
         _settings.Playback.ReplayGain = ReplayGainMode.Track;
         _settings.Playback.ReplayGainPreampDb = 0.0;
         _settings.Playback.ReplayGainPreventClipping = true;
@@ -305,11 +316,11 @@ public class ReplayGainAndVolumeMathTests : IDisposable
         var track = new Track
         {
             Path = "test.mp3",
-            RgTrackGainDb = 0.0, // Multiplier = 1.0, so net before peak is 'desiredMultiplier'
+            RgTrackGainDb = 20.0 * Math.Log10(desiredMultiplier),
             RgTrackPeak = peak
         };
 
-        float gain = ComputeGain(track);
+        float gain = NodeGain(track);
         Assert.Equal((float)expectedGain, gain, precision: 4);
     }
 
@@ -318,9 +329,8 @@ public class ReplayGainAndVolumeMathTests : IDisposable
     #region 5. Global Clamping [0.0f, 8.0f] Tests
 
     [Fact]
-    public void ComputeGain_ClampsToMaxEight()
+    public void NodeGain_ClampsToMaxEight()
     {
-        _settings.Playback.Volume = 1.0;
         _settings.Playback.ReplayGain = ReplayGainMode.Track;
         _settings.Playback.ReplayGainPreampDb = 20.0;
         _settings.Playback.ReplayGainPreventClipping = false;
@@ -332,56 +342,26 @@ public class ReplayGainAndVolumeMathTests : IDisposable
             RgTrackGainDb = 20.0
         };
 
-        float gain = ComputeGain(track);
+        float gain = NodeGain(track);
         Assert.Equal(8.0f, gain);
     }
 
     [Fact]
-    public void ComputeGain_ClampsToMinZero()
+    public void NodeGain_ExtremeDecibelValues_ClampGracefully()
     {
-        _settings.Playback.Volume = -1.0; // Negative volume
-        _settings.Playback.ReplayGain = ReplayGainMode.Off;
-
-        var track = new Track { Path = "test.mp3" };
-
-        float gain = ComputeGain(track);
-        Assert.Equal(0.0f, gain);
-    }
-
-    [Fact]
-    public void ComputeGain_ExtremeDecibelValues_ClampsGracefully()
-    {
-        _settings.Playback.Volume = 1.0;
         _settings.Playback.ReplayGain = ReplayGainMode.Track;
         _settings.Playback.ReplayGainPreampDb = 0.0;
         _settings.Playback.ReplayGainPreventClipping = false;
 
         // +100 dB (10^5 multiplier) -> clamped to 8.0f
         var trackHigh = new Track { Path = "high.mp3", RgTrackGainDb = 100.0 };
-        Assert.Equal(8.0f, ComputeGain(trackHigh));
+        Assert.Equal(8.0f, NodeGain(trackHigh));
 
-        // -100 dB (10^-5 multiplier) -> near 0.0f
+        // -100 dB (10^-5 multiplier) -> near 0.0f, never negative
         var trackLow = new Track { Path = "low.mp3", RgTrackGainDb = -100.0 };
-        Assert.True(ComputeGain(trackLow) < 0.0001f);
-        Assert.True(ComputeGain(trackLow) >= 0.0f);
-    }
-
-    [Fact]
-    public void ComputeGain_VolumeZero_AlwaysProducesZeroGain()
-    {
-        _settings.Playback.Volume = 0.0;
-        _settings.Playback.ReplayGain = ReplayGainMode.Track;
-        _settings.Playback.ReplayGainPreampDb = 20.0;
-        _settings.Playback.ReplayGainPreventClipping = false;
-
-        var track = new Track
-        {
-            Path = "test.mp3",
-            RgTrackGainDb = 20.0
-        };
-
-        float gain = ComputeGain(track);
-        Assert.Equal(0.0f, gain);
+        float low = NodeGain(trackLow);
+        Assert.True(low < 0.0001f);
+        Assert.True(low >= 0.0f);
     }
 
     #endregion
@@ -419,34 +399,56 @@ public class ReplayGainAndVolumeMathTests : IDisposable
         Assert.Equal(-144.0f, ReplayGainMath.LinearToDecibels(-1.0f));
     }
 
-    [Fact]
-    public void ReplayGainMath_DirectCall_MatchesExpectedBehavior()
+    [Theory]
+    [InlineData(null)]
+    [InlineData(0.0)]
+    [InlineData(-0.5)]
+    [InlineData(double.NaN)]
+    public void ComputeReplayGainOnly_InvalidPeaks_SafelyIgnoredByAntiClipping(double? peak)
     {
         var track = new Track
         {
-            Path = "pure_test.flac",
-            RgTrackGainDb = -6.0205999,
-            RgTrackPeak = 0.9
+            RgTrackGainDb = 6.0205999, // x2.0
+            RgTrackPeak = peak
         };
 
-        // Volume = 1.0, TrackMode, Preamp = 0 -> Net gain = 0.5
-        float g1 = ReplayGainMath.ComputeGain(track, 1.0, ReplayGainMode.Track, 0.0, false);
-        Assert.Equal(0.5f, g1, precision: 4);
+        // Gain should stay 2.0 without division by zero or NaN corruption
+        float gain = ReplayGainMath.ComputeReplayGainOnly(track, ReplayGainMode.Track, preampDb: 0.0, preventClipping: true)!.Value;
+        Assert.Equal(2.0f, gain, precision: 4);
+    }
 
-        // Volume = 1.0, TrackMode, Preamp = +6.0206 -> Net gain = 1.0
-        float g2 = ReplayGainMath.ComputeGain(track, 1.0, ReplayGainMode.Track, 6.020599913279624, false);
-        Assert.Equal(1.0f, g2, precision: 4);
-
-        // Track with high gain & peak anti-clipping
-        var loudTrack = new Track
+    [Fact]
+    public void ComputeReplayGainOnly_PreventClipping_WithIntersampleOvers()
+    {
+        // Track with peak exceeding full scale (1.25 -> +1.94 dBFS peak)
+        var track = new Track
         {
-            Path = "loud.flac",
-            RgTrackGainDb = 6.0205999,
-            RgTrackPeak = 0.8
+            RgTrackGainDb = 0.0, // multiplier 1.0
+            RgTrackPeak = 1.25   // max safe gain = 1.0 / 1.25 = 0.80
         };
-        // 2.0 > 1.25 (1/0.8) -> clamped to 1.25
-        float g3 = ReplayGainMath.ComputeGain(loudTrack, 1.0, ReplayGainMode.Track, 0.0, true);
-        Assert.Equal(1.25f, g3, precision: 4);
+
+        // Gain = 1.0 -> would produce clipping if unconstrained; clamped to 0.80
+        float gain = ReplayGainMath.ComputeReplayGainOnly(track, ReplayGainMode.Track, preampDb: 0.0, preventClipping: true)!.Value;
+        Assert.Equal(0.80f, gain, precision: 4);
+    }
+
+    [Fact]
+    public void ComputeReplayGainOnly_GlobalClampingBoundsEnforced()
+    {
+        var trackExtremeLoud = new Track
+        {
+            RgTrackGainDb = 20.0 // +20 dB tag, +20 dB preamp -> multiplier 100
+        };
+
+        // Extreme positive gain clamped to MaxGain (8.0)
+        float gMax = ReplayGainMath.ComputeReplayGainOnly(trackExtremeLoud, ReplayGainMode.Track, preampDb: 20.0, preventClipping: false)!.Value;
+        Assert.Equal(8.0f, gMax);
+
+        // Deep negative gain lands near zero and never negative
+        var trackQuiet = new Track { RgTrackGainDb = -100.0 };
+        float gMin = ReplayGainMath.ComputeReplayGainOnly(trackQuiet, ReplayGainMode.Track, preampDb: 0.0, preventClipping: false)!.Value;
+        Assert.True(gMin < 0.0001f);
+        Assert.True(gMin >= 0.0f);
     }
 
     [Theory]
@@ -486,57 +488,6 @@ public class ReplayGainAndVolumeMathTests : IDisposable
     {
         float actual = ReplayGainMath.LinearToDecibels(linear);
         Assert.Equal(expectedDb, actual);
-    }
-
-    [Fact]
-    public void ReplayGainMath_ComputeGain_PreventClipping_WithIntersampleOvers()
-    {
-        // Track with peak exceeding full scale (1.25 -> +1.94 dBFS peak)
-        var track = new Track
-        {
-            RgTrackGainDb = 0.0, // multiplier 1.0
-            RgTrackPeak = 1.25   // max safe gain = 1.0 / 1.25 = 0.80
-        };
-
-        // Volume = 1.0, Gain = 1.0 -> would produce clipping if unconstrained.
-        // With preventClipping: clamped to 0.80
-        float gain = ReplayGainMath.ComputeGain(track, 1.0, ReplayGainMode.Track, preampDb: 0.0, preventClipping: true);
-        Assert.Equal(0.80f, gain, precision: 4);
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData(0.0)]
-    [InlineData(-0.5)]
-    [InlineData(double.NaN)]
-    public void ReplayGainMath_ComputeGain_InvalidPeaks_SafelyIgnoredByAntiClipping(double? peak)
-    {
-        var track = new Track
-        {
-            RgTrackGainDb = 6.0205999, // x2.0
-            RgTrackPeak = peak
-        };
-
-        // Gain should stay 2.0 without division by zero or NaN corruption
-        float gain = ReplayGainMath.ComputeGain(track, 1.0, ReplayGainMode.Track, preampDb: 0.0, preventClipping: true);
-        Assert.Equal(2.0f, gain, precision: 4);
-    }
-
-    [Fact]
-    public void ReplayGainMath_ComputeGain_GlobalClampingBoundsEnforced()
-    {
-        var trackExtremeLoud = new Track
-        {
-            RgTrackGainDb = 40.0 // +40 dB -> multiplier 100
-        };
-
-        // Extreme positive gain clamped to MaxGain (8.0)
-        float gMax = ReplayGainMath.ComputeGain(trackExtremeLoud, 1.0, ReplayGainMode.Track, preampDb: 20.0, preventClipping: false);
-        Assert.Equal(8.0f, gMax);
-
-        // Negative volume clamped to MinGain (0.0)
-        float gMin = ReplayGainMath.ComputeGain(trackExtremeLoud, -5.0, ReplayGainMode.Track, preampDb: 0.0, preventClipping: false);
-        Assert.Equal(0.0f, gMin);
     }
 
     #endregion

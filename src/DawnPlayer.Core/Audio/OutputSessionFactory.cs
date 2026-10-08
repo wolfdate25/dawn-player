@@ -47,7 +47,9 @@ public sealed class OutputSessionFactory
     };
 
     private readonly AppSettings _settings;
-    private readonly Func<Track, float> _gainProvider;
+    // Supplies the pre-chain ReplayGain node gain (source correction). The master fader value is
+    // read from settings at session construction — see CreateSequencer.
+    private readonly Func<Track, float> _replayGainNodeGainProvider;
     private readonly Func<Track, float?> _replayGainProvider;
     private readonly Action<SequencerStream> _subscribeSequencer;
     private readonly Action<IWavePlayer> _subscribeOutput;
@@ -56,7 +58,7 @@ public sealed class OutputSessionFactory
 
     public OutputSessionFactory(
         AppSettings settings,
-        Func<Track, float> gainProvider,
+        Func<Track, float> replayGainNodeGainProvider,
         Func<Track, float?> replayGainProvider,
         Action<SequencerStream> subscribeSequencer,
         Action<IWavePlayer> subscribeOutput,
@@ -65,7 +67,7 @@ public sealed class OutputSessionFactory
     {
         _pluginDsp = pluginDsp;
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
-        _gainProvider = gainProvider ?? throw new ArgumentNullException(nameof(gainProvider));
+        _replayGainNodeGainProvider = replayGainNodeGainProvider ?? throw new ArgumentNullException(nameof(replayGainNodeGainProvider));
         _replayGainProvider = replayGainProvider ?? throw new ArgumentNullException(nameof(replayGainProvider));
         _subscribeSequencer = subscribeSequencer ?? throw new ArgumentNullException(nameof(subscribeSequencer));
         _subscribeOutput = subscribeOutput ?? throw new ArgumentNullException(nameof(subscribeOutput));
@@ -138,7 +140,7 @@ public sealed class OutputSessionFactory
             first,
             latency,
             _settings,
-            _gainProvider,
+            _replayGainNodeGainProvider,
             _replayGainProvider,
             _subscribeSequencer,
             _subscribeOutput,
@@ -155,9 +157,10 @@ public sealed class OutputSessionFactory
         // markers, so such sessions run the sequencer in raw-passthrough mode.
         bool rawPassthrough = DsdSupport.IsRawDsdReader(pending.Reader);
         var seq = new SequencerStream(
-            target, applyVolume, _gainProvider, latency, eqProfile, _settings.Normalizer, _replayGainProvider,
+            target, applyVolume, _replayGainNodeGainProvider, latency, eqProfile, _settings.Normalizer, _replayGainProvider,
             _settings.Crossfeed, _settings.Playback.MonoDownmixEnabled,
-            dspChain: null, pluginDsp: _pluginDsp?.Invoke(), rawPassthrough: rawPassthrough);
+            dspChain: null, pluginDsp: _pluginDsp?.Invoke(), rawPassthrough: rawPassthrough,
+            initialMasterGain: (float)Math.Clamp(_settings.Playback.Volume, 0.0, 1.0));
         _subscribeSequencer(seq);
         return seq;
     }

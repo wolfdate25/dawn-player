@@ -343,7 +343,7 @@ public sealed class AudioDspChainTests
         var seq = new SequencerStream(
             format,
             applyVolume: false,
-            gainProvider: _ => 1.0f,
+            replayGainNodeGainProvider: _ => 1.0f,
             latencyMs: 50,
             dspChain: customChain);
 
@@ -834,7 +834,7 @@ public sealed class AudioDspChainTests
         var seq = new SequencerStream(
             format,
             applyVolume: true,
-            gainProvider: _ => 1.0f,
+            replayGainNodeGainProvider: _ => 1.0f,
             latencyMs: 50,
             dspChain: customChain);
 
@@ -850,7 +850,7 @@ public sealed class AudioDspChainTests
                 try
                 {
                     seq.IsPaused = (counter % 2 == 0);
-                    seq.SetGain(0.5f + (counter % 10) * 0.05f);
+                    seq.SetMasterGain(0.5f + (counter % 10) * 0.05f);
                     seq.SetEqualizer(new EqProfile { Enabled = (counter % 3 == 0), PreampDb = counter % 6 });
                     seq.SetNormalizer(new NormalizerSettings { Enabled = (counter % 2 == 0) }, 1.0f);
                     seq.Seek(TimeSpan.FromSeconds(counter % 100));

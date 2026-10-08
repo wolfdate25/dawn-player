@@ -96,7 +96,7 @@ public class RegressionAuditFixTests
         var seq = new SequencerStream(
             NAudio.Wave.WaveFormat.CreateIeeeFloatWaveFormat(44100, 2),
             applyVolume: true,
-            gainProvider: _ => 1f,
+            replayGainNodeGainProvider: _ => 1f,
             latencyMs: 50);
 
         seq.SwitchTo(pending);

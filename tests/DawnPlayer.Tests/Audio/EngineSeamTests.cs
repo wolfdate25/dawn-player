@@ -151,7 +151,7 @@ public sealed class OutputDriverRegistryTests : IDisposable
 
     private static OutputSessionFactory NewFactory(AppSettings settings) => new(
         settings,
-        gainProvider: _ => 1f,
+        replayGainNodeGainProvider: _ => 1f,
         replayGainProvider: _ => null,
         subscribeSequencer: _ => { },
         subscribeOutput: _ => { },

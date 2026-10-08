@@ -151,7 +151,7 @@ public sealed class SequencerStreamResponsivenessTests
     }
 
     private static SequencerStream CreateSequencer(bool applyVolume = true) =>
-        new(Format, applyVolume, gainProvider: _ => 1.0f, latencyMs: 50);
+        new(Format, applyVolume, replayGainNodeGainProvider: _ => 1.0f, latencyMs: 50);
 
     [Fact]
     public void AbLoop_BouncesBackToStart_AndNeverStalls()
@@ -221,7 +221,7 @@ public sealed class SequencerStreamResponsivenessTests
                 _ = seq.CurrentItem;
                 _ = seq.RemainingTime;
                 _ = seq.HasPrefetched;
-                seq.SetGain(0.5f);
+                seq.SetMasterGain(0.5f);
             }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 
             Assert.True(probe.Wait(TimeSpan.FromSeconds(15)),

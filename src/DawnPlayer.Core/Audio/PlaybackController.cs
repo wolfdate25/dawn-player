@@ -247,7 +247,7 @@ public sealed partial class PlaybackController : IPlaybackController
         _pluginDspEffect = new DawnPlayer.Core.Audio.Dsp.Plugins.PluginDspEffect(() => Volatile.Read(ref _pluginDspHost));
         _sessionFactory = new OutputSessionFactory(
             settings,
-            ComputeGain,
+            ComputeReplayGainNodeGain,
             ComputeReplayGain,
             SubscribeSequencer,
             SubscribeOutput,
@@ -653,7 +653,7 @@ public sealed partial class PlaybackController : IPlaybackController
         set
         {
             _settings.Playback.Volume = Math.Clamp(value, 0, 1);
-            Sequencer?.SetGain(ComputeGain(CurrentItem?.Track));
+            Sequencer?.SetMasterGain((float)_settings.Playback.Volume);
         }
     }
 
@@ -674,7 +674,9 @@ public sealed partial class PlaybackController : IPlaybackController
         var seq = Sequencer;
         if (seq == null) return;
         seq.SetNormalizer(_settings.Normalizer, ComputeReplayGain(CurrentItem?.Track));
-        seq.SetGain(ComputeGain(CurrentItem?.Track));
+        // Toggling the normalizer moves ReplayGain ownership between the pre-chain node and the
+        // normalizer effect; the node must follow or the gain would apply twice (or not at all).
+        seq.SetReplayGainNode(ComputeReplayGainNodeGain(CurrentItem?.Track));
     }
 
     /// <summary>Re-applies crossfeed / mono-downmix settings live to the running stream.</summary>
@@ -1481,19 +1483,21 @@ public sealed partial class PlaybackController : IPlaybackController
 
     // ---------------- gain ----------------
 
-    private float ComputeGain(Track? track)
+    /// <summary>
+    /// Gain for the PRE-CHAIN ReplayGain node: source correction only (boost-capable, limiter-
+    /// protected). When the normalizer is enabled it owns ReplayGain via its static paths, so the
+    /// node passes unity. The master fader is a separate post-chain multiply and carries no
+    /// ReplayGain — see <see cref="Volume"/>.
+    /// </summary>
+    private float ComputeReplayGainNodeGain(Track? track)
     {
-        if (_settings.Normalizer.Enabled)
-        {
-            return (float)_settings.Playback.Volume;
-        }
+        if (_settings.Normalizer.Enabled) return 1f;
 
-        return ReplayGainMath.ComputeGain(
+        return ReplayGainMath.ComputeReplayGainOnly(
             track,
-            _settings.Playback.Volume,
             _settings.Playback.ReplayGain,
             _settings.Playback.ReplayGainPreampDb,
-            _settings.Playback.ReplayGainPreventClipping);
+            _settings.Playback.ReplayGainPreventClipping) ?? 1f;
     }
 
     private float? ComputeReplayGain(Track? track) =>
