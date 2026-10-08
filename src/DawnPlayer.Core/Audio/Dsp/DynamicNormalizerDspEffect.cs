@@ -23,6 +23,8 @@ public sealed class DynamicNormalizerDspEffect : IAudioDspEffect
         public readonly float BetaRms;
         public readonly float AlphaAttack;
         public readonly float AlphaRelease;
+        public readonly float PeakCeilingLinear;
+        public readonly float PeakDecayPerFrame;
         public readonly float? StaticReplayGainLinear;
         public readonly int SampleRate;
         public readonly int Channels;
@@ -37,6 +39,8 @@ public sealed class DynamicNormalizerDspEffect : IAudioDspEffect
             float betaRms,
             float alphaAttack,
             float alphaRelease,
+            float peakCeilingLinear,
+            float peakDecayPerFrame,
             float? staticReplayGainLinear,
             int sampleRate,
             int channels)
@@ -50,6 +54,8 @@ public sealed class DynamicNormalizerDspEffect : IAudioDspEffect
             BetaRms = betaRms;
             AlphaAttack = alphaAttack;
             AlphaRelease = alphaRelease;
+            PeakCeilingLinear = peakCeilingLinear;
+            PeakDecayPerFrame = peakDecayPerFrame;
             StaticReplayGainLinear = staticReplayGainLinear;
             SampleRate = sampleRate;
             Channels = channels;
@@ -63,9 +69,20 @@ public sealed class DynamicNormalizerDspEffect : IAudioDspEffect
     private int _sampleRate = 44100;
     private int _channels = 2;
 
+    /// <summary>AGC output ceiling, just under the soft limiter's 0.90 knee (SequencerStream arms
+    /// SoftLimiterDspEffect(0.90f)). Everything downstream is attenuation-only (the master fader
+    /// sits after the chain); ReplayGain boosts flow through this effect's own static paths, so
+    /// the limiter remains the last resort only for those.</summary>
+    private const float PeakCeilingLinear = 0.89f;
+
+    /// <summary>Exponential release of the peak envelope. Long enough to hold a boost down across
+    /// a drum hit's decay, short enough that quiet passages regain target within ~1 s.</summary>
+    private const double PeakEnvelopeTauSec = 0.5;
+
     // Dynamic State (updated exclusively on audio processing thread)
     private float _powerRms;
     private float _currentGain = 1.0f;
+    private float _peakEnvelope;
 
     public string Name => "DynamicNormalizer";
     public bool IsEnabled { get; set; } = true;
@@ -128,6 +145,7 @@ public sealed class DynamicNormalizerDspEffect : IAudioDspEffect
     {
         _powerRms = 0.0f;
         _currentGain = 1.0f;
+        _peakEnvelope = 0.0f;
     }
 
     public void Process(float[] buffer, int offset, int count)
@@ -193,16 +211,25 @@ public sealed class DynamicNormalizerDspEffect : IAudioDspEffect
         float maxBoost = snap.MaxBoostLinear;
         float minGain = snap.MinGainLinear;
         float noiseFloor = snap.NoiseFloorRms;
+        float peakCeiling = snap.PeakCeilingLinear;
+        float peakDecay = snap.PeakDecayPerFrame;
 
         for (int i = 0; i < count; i += ch)
         {
             float frameSqSum = 0.0f;
+            float framePeak = 0.0f;
             for (int c = 0; c < ch && (i + c) < count; c++)
             {
                 float s = buffer[offset + i + c];
+                float mag = s < 0 ? -s : s;
+                if (mag > framePeak) framePeak = mag;
                 frameSqSum += s * s;
             }
             float framePower = frameSqSum / ch;
+
+            // Instant-attack peak envelope: refreshed by the current frame BEFORE the cap is
+            // computed, so a just-arrived transient limits this very frame's gain.
+            _peakEnvelope = Math.Max(framePeak, _peakEnvelope * peakDecay);
 
             // Update RMS power accumulator
             _powerRms += beta * (framePower - _powerRms);
@@ -216,6 +243,14 @@ public sealed class DynamicNormalizerDspEffect : IAudioDspEffect
             else
             {
                 desiredGain = Math.Clamp(targetLin / currentRms, minGain, maxBoost);
+            }
+
+            // Peak-aware ceiling: shed boost that would drive transients into the downstream
+            // limiter instead of letting the limiter flatten them.
+            if (_peakEnvelope > 0.0f)
+            {
+                float peakCap = peakCeiling / _peakEnvelope;
+                if (peakCap < desiredGain) desiredGain = peakCap;
             }
 
             // Smooth gain transition
@@ -234,8 +269,8 @@ public sealed class DynamicNormalizerDspEffect : IAudioDspEffect
     {
         bool enabled = settings?.Enabled ?? false;
         var mode = settings?.Mode ?? NormalizerMode.Hybrid;
-        double targetDb = Math.Clamp(settings?.TargetLevelDb ?? -12.0, -24.0, -6.0);
-        double maxBoostDb = Math.Clamp(settings?.MaxBoostDb ?? 12.0, 0.0, 18.0);
+        double targetDb = Math.Clamp(settings?.TargetLevelDb ?? NormalizerSettings.DefaultTargetLevelDb, -24.0, -6.0);
+        double maxBoostDb = Math.Clamp(settings?.MaxBoostDb ?? NormalizerSettings.DefaultMaxBoostDb, 0.0, 18.0);
         var speed = settings?.Speed ?? NormalizerSpeed.Balanced;
 
         float targetLinear = (float)Math.Pow(10.0, targetDb / 20.0);
@@ -244,8 +279,14 @@ public sealed class DynamicNormalizerDspEffect : IAudioDspEffect
         float noiseFloorRms = (float)Math.Pow(10.0, -65.0 / 20.0);
 
         int sr = sampleRate > 0 ? sampleRate : 44100;
+        int ch = channels > 0 ? channels : 2;
+
+        // Coefficients are consumed once per FRAME (the ch-sample stride below), so the time
+        // constants must be expressed against the frame rate: per-sample coefficients applied
+        // per frame made every AGC time constant ch× slower than advertised.
+        double framesPerSec = (double)sr / ch;
         double tauRms = 0.050;
-        float betaRms = (float)(1.0 - Math.Exp(-1.0 / (sr * tauRms)));
+        float betaRms = (float)(1.0 - Math.Exp(-1.0 / (framesPerSec * tauRms)));
 
         double attackSec;
         double releaseSec;
@@ -267,8 +308,9 @@ public sealed class DynamicNormalizerDspEffect : IAudioDspEffect
                 break;
         }
 
-        float alphaAttack = (float)(1.0 - Math.Exp(-1.0 / (sr * attackSec)));
-        float alphaRelease = (float)(1.0 - Math.Exp(-1.0 / (sr * releaseSec)));
+        float alphaAttack = (float)(1.0 - Math.Exp(-1.0 / (framesPerSec * attackSec)));
+        float alphaRelease = (float)(1.0 - Math.Exp(-1.0 / (framesPerSec * releaseSec)));
+        float peakDecayPerFrame = (float)Math.Exp(-1.0 / (framesPerSec * PeakEnvelopeTauSec));
 
         return new NormalizerSnapshot(
             enabled,
@@ -280,8 +322,10 @@ public sealed class DynamicNormalizerDspEffect : IAudioDspEffect
             betaRms,
             alphaAttack,
             alphaRelease,
+            PeakCeilingLinear,
+            peakDecayPerFrame,
             staticReplayGainLinear,
             sr,
-            channels > 0 ? channels : 2);
+            ch);
     }
 }

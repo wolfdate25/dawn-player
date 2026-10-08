@@ -631,7 +631,7 @@
   <data name="Settings_Playback_NormMode_Dynamic.Content" xml:space="preserve"><value>실시간</value></data>
   <data name="Settings_Playback_NormMode_ReplayGain.Content" xml:space="preserve"><value>ReplayGain</value></data>
   <data name="Settings_Playback_TargetLevel_Title.Text" xml:space="preserve"><value>목표 음량 레벨 (Target Level)</value></data>
-  <data name="Settings_Playback_TargetLevel_Desc.Text" xml:space="preserve"><value>정규화 기준 목표 출력 크기 (-24.0 ~ -6.0 dBFS, 기본값 -12.0 dBFS)</value></data>
+  <data name="Settings_Playback_TargetLevel_Desc.Text" xml:space="preserve"><value>정규화 기준 목표 출력 크기 (-24.0 ~ -6.0 dBFS, 기본값 -16.0 dBFS)</value></data>
   <data name="Settings_Playback_MaxBoost_Title.Text" xml:space="preserve"><value>최대 증폭 한계 (Max Boost Limit)</value></data>
   <data name="Settings_Playback_MaxBoost_Desc.Text" xml:space="preserve"><value>조용한 곡이나 인트로/아웃트로 구간에서 과도한 노이즈 증폭을 방지합니다 (0.0 ~ +18.0 dB)</value></data>
   <data name="Settings_Playback_Speed_Title.Text" xml:space="preserve"><value>반응 속도 (Response Speed)</value></data>

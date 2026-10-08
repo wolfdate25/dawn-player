@@ -434,10 +434,18 @@ public sealed class ConvolutionSettings
 
 public sealed class NormalizerSettings
 {
+    /// <summary>Factory default target. -16 dBFS RMS ≈ the -14 LUFS streaming standard
+    /// (Spotify/YouTube) converted to the AGC's unweighted-RMS scale.</summary>
+    public const double DefaultTargetLevelDb = -16.0;
+
+    /// <summary>Factory default boost ceiling. Only binds below RMS (target − boost); transients
+    /// are guarded by the DSP's peak envelope instead of a lower default.</summary>
+    public const double DefaultMaxBoostDb = 12.0;
+
     public bool Enabled { get; set; }
     public NormalizerMode Mode { get; set; } = NormalizerMode.Hybrid;
-    public double TargetLevelDb { get; set; } = -12.0; // -24.0 .. -6.0 dBFS
-    public double MaxBoostDb { get; set; } = 12.0;     // 0.0 .. 18.0 dB
+    public double TargetLevelDb { get; set; } = DefaultTargetLevelDb; // -24.0 .. -6.0 dBFS
+    public double MaxBoostDb { get; set; } = DefaultMaxBoostDb;       // 0.0 .. 18.0 dB
     public NormalizerSpeed Speed { get; set; } = NormalizerSpeed.Balanced;
 
     public NormalizerSettings Clone() => new()

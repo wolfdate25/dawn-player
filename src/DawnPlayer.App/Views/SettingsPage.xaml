@@ -708,7 +708,7 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                         <TextBlock x:Uid="Settings_Playback_TargetLevel_Title" Text="목표 음량 레벨 (Target Level)" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock x:Uid="Settings_Playback_TargetLevel_Desc" Text="정규화 기준 목표 출력 크기 (-24.0 ~ -6.0 dBFS, 기본값 -12.0 dBFS)" Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Playback_TargetLevel_Desc" Text="정규화 기준 목표 출력 크기 (-24.0 ~ -6.0 dBFS, 기본값 -16.0 dBFS)" Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <Grid Grid.Column="1" HorizontalAlignment="Right" Width="300" ColumnSpacing="6">
                                         <Grid.ColumnDefinitions>

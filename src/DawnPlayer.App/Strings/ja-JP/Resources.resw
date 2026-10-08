@@ -631,7 +631,7 @@
   <data name="Settings_Playback_NormMode_Dynamic.Content" xml:space="preserve"><value>リアルタイム</value></data>
   <data name="Settings_Playback_NormMode_ReplayGain.Content" xml:space="preserve"><value>ReplayGain</value></data>
   <data name="Settings_Playback_TargetLevel_Title.Text" xml:space="preserve"><value>目標音量レベル (Target Level)</value></data>
-  <data name="Settings_Playback_TargetLevel_Desc.Text" xml:space="preserve"><value>ノーマライズ基準目標出力レベル (-24.0 ～ -6.0 dBFS, デフォルト -12.0 dBFS)</value></data>
+  <data name="Settings_Playback_TargetLevel_Desc.Text" xml:space="preserve"><value>ノーマライズ基準目標出力レベル (-24.0 ～ -6.0 dBFS, デフォルト -16.0 dBFS)</value></data>
   <data name="Settings_Playback_MaxBoost_Title.Text" xml:space="preserve"><value>最大増幅限界 (Max Boost Limit)</value></data>
   <data name="Settings_Playback_MaxBoost_Desc.Text" xml:space="preserve"><value>静かな楽曲やイントロ/アウトロ区間での過度なノイズ増幅を防止します (0.0 ～ +18.0 dB)</value></data>
   <data name="Settings_Playback_Speed_Title.Text" xml:space="preserve"><value>応答速度 (Response Speed)</value></data>
