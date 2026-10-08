@@ -98,16 +98,9 @@ public sealed partial class MainWindow : Window
                 : 1.0;
 
         ApplyTheme();
-        // ThemeMode.System follows the OS: re-apply the custom palette when Windows flips its
-        // theme while the app is running. ActualThemeChanged only fires on a real change, and
-        // ApplyTheme re-assigning the same RequestedTheme does not re-raise it — no loop.
-        if (Content is FrameworkElement rootFe)
-        {
-            rootFe.ActualThemeChanged += (_, _) =>
-            {
-                if (AppServices.Settings.Ui.Theme == ThemeMode.System) ApplyTheme();
-            };
-        }
+        // ThemeMode.System의 OS 추적은 ThemeService의 UISettings 와처가 담당한다(2026-10-05
+        // follow-system 크래시 수정 — 루트가 구체 테마로 고정된 뒤로 ActualThemeChanged는 OS
+        // 전환을 알릴 수 없다). 구 ActualThemeChanged 핸들러는 죽은 메커니즘이라 제거.
         WindowPlacementHelper.RestorePlacement(this, AppServices.Settings.Ui, AppServices.MainWindowHandle);
         App.Log("MainWindow: chrome configured");
 

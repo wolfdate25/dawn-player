@@ -59,7 +59,9 @@ public static void ApplyTheme(Window window, UiSettings ui, Panel? rootGrid = nu
         {
             if (window.Content is FrameworkElement hcElement)
             {
-                hcElement.RequestedTheme = ElementTheme.Default;
+                // Same concrete-value rule as the System branch below: ElementTheme.Default on
+                // a live, rendered tree access-violates inside Microsoft.UI.Xaml.dll.
+                hcElement.RequestedTheme = IsOsLightTheme() ? ElementTheme.Light : ElementTheme.Dark;
             }
             // Caption chrome follows HC too: hand the system colors back instead of leaving
             // the custom palette painted over the user's accessibility setup.
@@ -67,12 +69,18 @@ public static void ApplyTheme(Window window, UiSettings ui, Panel? rootGrid = nu
             return;
         }
 
+        // Follow System pins the OS-resolved concrete theme instead of ElementTheme.Default:
+        // assigning Default to a live, rendered tree (theme switch while running) crashes with
+        // 0xC0000005 in Microsoft.UI.Xaml.dll (2026-10-05 — Dark→System crashed 3/3 while the
+        // same pipeline Dark→Light survived, and startup Default was fine; v1.6.1 affected too).
+        // The concrete value comes from the live UISettings watcher below, so Follow System
+        // still tracks the OS — via the watcher's re-apply, not via Default resolution.
         var theme = ui.Theme switch
         {
             ThemeMode.Light => ElementTheme.Light,
             ThemeMode.Dark => ElementTheme.Dark,
             ThemeMode.OledBlack => ElementTheme.Dark,
-            _ => ElementTheme.Default
+            _ => IsOsLightTheme() ? ElementTheme.Light : ElementTheme.Dark
         };
 
         if (window.Content is FrameworkElement fe)
@@ -80,9 +88,8 @@ public static void ApplyTheme(Window window, UiSettings ui, Panel? rootGrid = nu
             fe.RequestedTheme = theme;
         }
 
-        // ThemeMode.System must follow the OS: RequestedTheme=Default lets WinUI controls flip,
-        // and ActualTheme (resolved after the assignment above) tells us which custom palette
-        // matches. Hard-coding dark here painted dark panels under light system controls.
+        // System mode's pinned theme was resolved from the live OS signal above, so the root's
+        // ActualTheme now reflects the OS even though it never reads ElementTheme.Default.
         var isLight = IsEffectiveLight(window, ui);
 
         // Apply OLED Pure Black or Standard Palette
@@ -167,6 +174,59 @@ public static void ApplyTheme(Window window, UiSettings ui, Panel? rootGrid = nu
     }
 
     public static bool IsHighContrastActive() => EnsureHighContrastWatch();
+
+    // Live OS app-mode signal for Follow System. Application.RequestedTheme is only resolved at
+    // startup and the root element is pinned to a concrete theme now (ElementTheme.Default on a
+    // live tree AVs — see ApplyTheme), so ActualThemeChanged can no longer announce OS flips.
+    // UISettings' background color is the live light/dark signal; ColorValuesChanged also fires
+    // for accent-only changes, so the re-apply is gated on an actual light/dark flip and on the
+    // user being in System mode (explicit modes keep their pin — same guard the old
+    // MainWindow ActualThemeChanged handler had).
+    private static Windows.UI.ViewManagement.UISettings? _osThemeWatch;
+    private static bool _osThemeWatchReady;
+    private static bool _osLightTheme;
+
+    private static bool IsLightBackground(Windows.UI.ViewManagement.UISettings watch) =>
+        watch.GetColorValue(Windows.UI.ViewManagement.UIColorType.Background).R > 127;
+
+    private static bool EnsureOsThemeWatch()
+    {
+        if (!_osThemeWatchReady)
+        {
+            _osThemeWatchReady = true;
+            try
+            {
+                var watch = new Windows.UI.ViewManagement.UISettings();
+                _osLightTheme = IsLightBackground(watch);
+                watch.ColorValuesChanged += (_, _) =>
+                {
+                    var light = IsLightBackground(watch);
+                    var flipped = light != _osLightTheme;
+                    _osLightTheme = light;
+                    if (flipped && AppServices.Settings.Ui.Theme == ThemeMode.System)
+                    {
+                        AppServices.RunOnUi(() =>
+                        {
+                            App.MainWin?.ApplyTheme();
+                            RefreshAuxiliaryWindows(AppServices.Settings.Ui);
+                        });
+                    }
+                };
+                _osThemeWatch = watch;
+            }
+            catch
+            {
+                // No live signal available: fall back to the startup-resolved app theme so the
+                // pin at least matches what the OS looked like when the app launched.
+                _osLightTheme = Application.Current.RequestedTheme == ApplicationTheme.Light;
+            }
+        }
+        return _osLightTheme;
+    }
+
+    /// <summary>Whether the OS app mode is light right now — live via UISettings, unlike
+    /// Application.RequestedTheme which is only resolved once at startup.</summary>
+    public static bool IsOsLightTheme() => EnsureOsThemeWatch();
 
     public static bool IsEffectiveLight(Window window, UiSettings ui) =>
         ui.Theme == ThemeMode.Light ||
