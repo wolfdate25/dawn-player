@@ -50,6 +50,10 @@
   <data name="MainWindow_Menu_Sleep_Track.Text" xml:space="preserve"><value>現在の曲の後</value></data>
   <data name="MainWindow_Menu_Sleep_RemainingFormat" xml:space="preserve"><value>{0} ({1:mm\:ss})</value></data>
   <data name="MainWindow_Menu_Exit.Text" xml:space="preserve"><value>終了</value></data>
+  <data name="Mini_Restore.Text" xml:space="preserve"><value>元のウィンドウに戻す</value></data>
+  <data name="NowPlaying_MiniRestore.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>元のウィンドウに戻す</value></data>
+  <data name="NowPlaying_MiniRestore.AutomationProperties.Name" xml:space="preserve"><value>元のウィンドウに戻す</value></data>
+  <data name="Mini_AlwaysOnTop.Text" xml:space="preserve"><value>常に手前</value></data>
   <data name="MainWindow_TitleBarTrack.Text" xml:space="preserve"><value>再生中の曲はありません</value></data>
   <data name="MainWindow_Tab_Library.Text" xml:space="preserve"><value>ライブラリ</value></data>
   <data name="MainWindow_Tab_Playlists.Text" xml:space="preserve"><value>プレイリスト</value></data>

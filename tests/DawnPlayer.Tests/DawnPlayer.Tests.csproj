@@ -83,6 +83,7 @@
     <Compile Include="..\..\src\DawnPlayer.App\Views\NavigationStateCalculator.cs" Link="Views\NavigationStateCalculator.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Views\Library\FilterRequestGate.cs" Link="Views\Library\FilterRequestGate.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Helpers\WindowPlacementMath.cs" Link="Helpers\WindowPlacementMath.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Helpers\MiniPlayerPlacement.cs" Link="Helpers\MiniPlayerPlacement.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Views\Network\RadioStationCommands.cs" Link="Views\Network\RadioStationCommands.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Controls\RadioSubtitleFormatter.cs" Link="Controls\RadioSubtitleFormatter.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Views\Library\LibraryTreeNode.cs" Link="Views\Library\LibraryTreeNode.cs" />

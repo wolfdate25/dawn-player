@@ -444,6 +444,40 @@ Narrator 스모크. N3(YouTube)는 별도 승인 대기.
 키보드 방향 의미, 시크바 호버·드래그 툴팁 공존, UpdateTransportState 10Hz 호출, 빈 선택 경로.
 "진짜 잔여" 3건은 위 2026-10-02 기록으로 전건 해소되어 더 이상 남지 않는다.
 
+**미니 플레이어 완성도 수리 (2026-10-08, "문제가 발견되지 않을 때까지 고쳐라" 지시)**:
+- 진단(초기 10건): M1 창 이동 불가(드래그 조상 탐색이 UserControl=바 셸을 인터랙티브로 차단 —
+  바가 창을 100% 덮어 드래그 표면 0) / M2 DPI 무시 물리 상수 500×104(150% 스케일에서 논리
+  333×69로 찌그러짐) / M3 캡션 3버튼이 시크 행 위에 부유(ECTB에서 TitleBar 컨트롤을 숨겨도
+  시스템 캡션은 남는다) / M4 탈출 수단이 Escape뿐(포커스 상실 시 사망 — 메뉴 진입 시 갇힘) /
+  M5 볼륨 슬라이더 소실(Compact 자동 발동 → 뮤트 전용 미니)·가사 토글은 죽은 버튼 / M6 최대화
+  →미니 진입 시 줌 해제 없음(State 읽기전용 → Restore()) / M7 PreferredMinimumWidth 해제가
+  resize 뒤 / M8 미니 상태로 종료하면 미니 크기가 배치로 저장(재시작 시 풀 UI가 최소폭에 으깨짐) /
+  M9 미니 폭 500 < Compact 자연폭(가사 버튼 잘림) / M10 InfoBar가 0높이 행에 갇힘(미니 중 경고
+  표면 없음).
+- 수리: `MiniPlayerPlacement` 순수 기하(논리 600×128 = 캡션 거터 32 + 바 96, 실시간 DPI 스케일) +
+  ResizeClient 캡션 패딩 1회 보정(실측 요청 160 → 결과 198물리 px) + 거터 행 + `MiniVolume` 상태
+  (Compact 세딩 전체 복제 + 볼륨 복원 + 가사 숨김 — GoToState가 직전 상태 세터를 통째로 복원하므로
+  부분 오버라이드는 세딩을 푼다) + `EnterMiniFocus`(RootGrid IsTabStop+포커스 — Escape·단축키
+  신뢰화) + 우클릭 메뉴(복원/항상 위/전체화면/종료 — resw 3개국어 Mini_Restore·Mini_AlwaysOnTop) +
+  `ShutdownForReal` 미니 복원 선행 + InfoBar RowSpan 전환.
+- **실행 실측(CUA)으로 발견된 2차 결함 4건 추가 수리**: ① GoToState 오버라이드로 Wide 잔존
+  (MiniVolume이 세딩 전체 소유로 해결) ② PreferredHeightOption 전환을 resize 뒤에 하면 클라이언트가
+  캡션 높이만큼 재성장(+40물리 px — 순서 교환) ③ **NC 입력 싱크가 press를 XAML로 우회하며 조상
+  사슬을 위조**(끝이 섬 호스트 ScrollViewer=Control → "인터랙티브" 오판)하고 press 후 move/release
+  스트림이 소실됨 — 수동 PointerMoved 추적·WM_NCLBUTTONDOWN 모달 루프 모두 기각하고
+  **InputNonClientPointerSource Caption(창 전체 = 시스템 네이티브 드래그·스냅) + Passthrough(컨트롤
+  구멍 — 바 트리 순회 계산, 레이아웃 정착 2단 지연 적용, SizeChanged 재인계)** 공식 패턴으로 교체
+  ④ x:Uid `.Text`를 Button에 쓰면 XAML 로드 크래시(Button은 Content — 키 제거, 글리프+
+  AutomationProperties.Name 유지). 증분 빌드가 resw 변경을 .pri에 반영 안 하는 함정도 확인(obj 삭제
+  클린 빌드로만 해소 — §5 재확인).
+- 신규: 미니 전용 복원 버튼(`NowPlaying_MiniRestore`, MiniVolume에서만 표시, resw 3개국어) —
+  표면이 시스템 캡션이 된 뒤의 발견 가능한 포인터 탈출구. `MiniPlayerPlacement`는 테스트 csproj 링크
+  추가(AGENTS §5).
+- 게이트: `MiniModeBehaviorTests` 신설(순수 기하·순서 불변식·XAML/코드 계약) + MiniPlayerLayoutTests
+  확장. 클린 리빌드 0경고 0오류, 전체 테스트 **2,247/2,247**. 실행 육안(CUA): 진입·크기(클라이언트
+  750×160 물리 정확)·네이티브 드래그(창 이동 확인)·버튼 클릭(Passthrough — 재생 시작)·복원 버튼
+  (raw+a11y)·Escape 복원·복귀 무결성(1200×876 전체 UI) 전부 통과.
+
 ---
 
 ## 1. 네트워크 소스 로드맵 (N0–N4, 개정 5판 — **제안·승인 대기**)

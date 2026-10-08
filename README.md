@@ -137,7 +137,7 @@ this marker).
 - **Sleep timer** — stop playback after 15/30/60 minutes or at the end of the current track
   (title menu)
 - **Mini player** — always-on-top compact mode from the title menu (player bar only, drag the
-  background to move, Esc to exit)
+  surface anywhere to move, restore button or Esc to exit)
 - **Tray toast** — a balloon notification when the track changes while hidden to the tray
   (respects Focus Assist)
 - **Last.fm scrobbling** — web auth with your own API keys; failed scrobbles queue and retry

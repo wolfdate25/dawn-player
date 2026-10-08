@@ -75,7 +75,18 @@ public sealed partial class NowPlayingBar : UserControl
         ShortcutTooltipBinder.BindShortcutTooltip(StopButton, Shortcuts.ShortcutCommand.Stop);
         ShortcutTooltipBinder.BindShortcutTooltip(RepeatButton, Shortcuts.ShortcutCommand.RepeatCycle);
         ShortcutTooltipBinder.BindShortcutTooltip(MuteButton, Shortcuts.ShortcutCommand.MuteToggle);
+        MiniRestoreButton.Click += (_, _) => MiniRestoreRequested?.Invoke(this, EventArgs.Empty);
     }
+
+    /// <summary>Raised by the mini-only restore button (visible only in the MiniVolume state).
+    /// MainWindow exits mini mode on it — the mini surface's pointer input is system-owned
+    /// (InputNonClientPointerSource caption region), so the visible button is the primary
+    /// pointer escape hatch alongside Escape.</summary>
+    public event EventHandler? MiniRestoreRequested;
+
+    /// <summary>Root of the bar's visual tree — MainWindow walks it to compute the mini
+    /// mode's passthrough rectangles (interactive controls) over the caption region.</summary>
+    internal Microsoft.UI.Xaml.FrameworkElement BarVisualRoot => RootLayout;
 
     /// <summary>Runs on the UI thread (AppServices relay): a remote track's art finished
     /// downloading after playback started (M3U8-restored tracks). Re-runs the art pipeline only
@@ -454,10 +465,17 @@ public sealed partial class NowPlayingBar : UserControl
     }
 
     /// <summary>Hides the volume slider on narrow windows so the bar compresses
-    /// gracefully instead of pushing the right controls out of the window.</summary>
+    /// gracefully instead of pushing the right controls out of the window. The mini context
+    /// wins over the compact shed (the mini window is always narrow) and re-asserts it —
+    /// this handler is the re-assertion hook that runs after every AdaptiveTrigger pass,
+    /// which would otherwise undo <see cref="ApplyMiniContext"/>.</summary>
     private void OnRootSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        bool compact = e.NewSize.Width < 730;
+        GoToWidthState();
+
+        // 미니 문맥에서는 슬라이더를 되살린다(VisualState MiniVolume이 호스트를 담당, 여기선
+        // 코드 측 토글). 트리거 재평가마다 이 메서드가 불리므로 재단언이 자동이다.
+        bool compact = !_miniContext && e.NewSize.Width < MiniWideBreakpoint;
         var wanted = compact ? Visibility.Collapsed : Visibility.Visible;
         if (VolumeSlider.Visibility != wanted) VolumeSlider.Visibility = wanted;
 
@@ -468,6 +486,41 @@ public sealed partial class NowPlayingBar : UserControl
                 : Visibility.Visible;
             if (OutputBadge.Visibility != outputWanted) OutputBadge.Visibility = outputWanted;
         }
+    }
+
+    // ---------------- mini player context ----------------
+
+    // XAML AdaptiveTrigger(Wide 730)와 동일한 값 — 어긋나면 혼합 상태(PT3-15 교훈). 게이트가 잠금.
+    private const double MiniWideBreakpoint = 730;
+
+    /// <summary>True while MainWindow is collapsed to the mini player — the code-driven
+    /// companion to the width VisualStates. The mini window (logical 600px) always lands in
+    /// the Compact trigger, which hides the volume slider entirely (mute-only mini) and
+    /// keeps a lyrics toggle whose pane is unreachable in mini. ApplyMiniContext applies the
+    /// triggerless MiniVolume state over it; <see cref="OnRootSizeChanged"/> re-asserts both
+    /// layers because every AdaptiveTrigger re-evaluation wins until we re-run.</summary>
+    private bool _miniContext;
+
+    /// <summary>Called by MainWindow on mini enter/exit. Applies the MiniVolume state
+    /// immediately and once more after layout settles, so the trigger pass that the mini
+    /// resize provokes cannot have the last word.</summary>
+    public void ApplyMiniContext(bool isMini)
+    {
+        _miniContext = isMini;
+        GoToWidthState();
+        DispatcherQueue.TryEnqueue(GoToWidthState);
+    }
+
+    /// <summary>Picks the visual state: MiniVolume while the mini context is active,
+    /// otherwise the width trigger's verdict (Wide/Compact) so normal resize behavior is
+    /// untouched. GoToState from code overrides the trigger-selected state until the next
+    /// trigger evaluation.</summary>
+    private void GoToWidthState()
+    {
+        var state = _miniContext
+            ? "MiniVolume"
+            : ActualWidth >= MiniWideBreakpoint ? "Wide" : "Compact";
+        VisualStateManager.GoToState(this, state, useTransitions: false);
     }
 
     private void UpdateFormatBadge()

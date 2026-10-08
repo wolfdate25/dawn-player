@@ -34,6 +34,32 @@
                         <Setter Target="ToolsPanel.Spacing" Value="4"/>
                     </VisualState.Setters>
                 </VisualState>
+                <!-- 미니 플레이어 문맥(트리거 없음 — 코드 GoToState 전용, Compact 뒤 선언 계약).
+                     Compact의 세터 전체를 복제하는 이유: GoToState(MiniVolume)는 직전 상태의
+                     세터를 통째로 복원하므로, 부분 오버라이드 상태로 Compact를 덮으면 세딩
+                     (아트 축소·아티스트/배지 숨김·패딩)까지 함께 풀려 Wide 나머지가 600px에
+                     찌그러진다(2026-10-08 실측 — 제목·배지 잘림). 세딩을 미니 상태가 직접
+                     소유한다. 거기에 미니 차이를 얹는다: Compact는 볼륨 슬라이더를 지워 뮤트
+                     전용 미니를 만드니 슬라이더를 되살리고, 가사 토글은 미니에서 도달 불가능한
+                     페이지 팬을 위한 죽은 버튼이라 숨긴다.
+                     AdaptiveTrigger 재평가가 이 상태를 덮어쓸 수 있으므로
+                     NowPlayingBar.ApplyMiniContext가 OnRootSizeChanged에서 재단언한다. -->
+                <VisualState x:Name="MiniVolume">
+                    <VisualState.Setters>
+                        <Setter Target="FormatBadge.Visibility" Value="Collapsed"/>
+                        <Setter Target="OutputBadge.Visibility" Value="Collapsed"/>
+                        <Setter Target="TrackArtist.Visibility" Value="Collapsed"/>
+                        <Setter Target="VolumeSliderHost.Visibility" Value="Visible"/>
+                        <Setter Target="LyricsButton.Visibility" Value="Collapsed"/>
+                        <Setter Target="MiniRestoreButton.Visibility" Value="Visible"/>
+                        <Setter Target="ArtButton.Width" Value="40"/>
+                        <Setter Target="ArtButton.Height" Value="40"/>
+                        <Setter Target="ArtPlaceholder.FontSize" Value="16"/>
+                        <Setter Target="RootLayout.Padding" Value="12,2,12,6"/>
+                        <Setter Target="TransportPanel.Spacing" Value="4"/>
+                        <Setter Target="ToolsPanel.Spacing" Value="4"/>
+                    </VisualState.Setters>
+                </VisualState>
             </VisualStateGroup>
         </VisualStateManager.VisualStateGroups>
         <Grid.RowDefinitions>
@@ -350,6 +376,14 @@
                               Click="OnLyricsClick" ToolTipService.ToolTip="가사 패널">
                     <FontIcon Glyph="&#xEC4F;" FontSize="13"/>
                 </ToggleButton>
+
+                <!-- 미니 전용 복원 버튼: 미니 문맥(MiniVolume 상태)에서만 보인다. 미니는
+                     ExtendsContentIntoTitleBar의 NonClient 입력 싱크 때문에 표면 우클릭·드래그가
+                     시스템 소유라, 발견 가능한 탈출구는 이 버튼과 Escape뿐이다(2026-10-08). -->
+                <Button x:Uid="NowPlaying_MiniRestore" x:Name="MiniRestoreButton" Style="{StaticResource TransportButton}"
+                        Visibility="Collapsed" ToolTipService.ToolTip="원래 창으로 복원">
+                    <FontIcon Glyph="&#xE8B7;" FontSize="13"/>
+                </Button>
             </StackPanel>
         </Grid>
     </Grid>

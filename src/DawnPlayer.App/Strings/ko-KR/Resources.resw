@@ -50,6 +50,10 @@
   <data name="MainWindow_Menu_Sleep_Track.Text" xml:space="preserve"><value>현재 곡 끝나고</value></data>
   <data name="MainWindow_Menu_Sleep_RemainingFormat" xml:space="preserve"><value>{0} ({1:mm\:ss})</value></data>
   <data name="MainWindow_Menu_Exit.Text" xml:space="preserve"><value>종료</value></data>
+  <data name="Mini_Restore.Text" xml:space="preserve"><value>원래 창으로 복원</value></data>
+  <data name="NowPlaying_MiniRestore.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>원래 창으로 복원</value></data>
+  <data name="NowPlaying_MiniRestore.AutomationProperties.Name" xml:space="preserve"><value>원래 창으로 복원</value></data>
+  <data name="Mini_AlwaysOnTop.Text" xml:space="preserve"><value>항상 위</value></data>
   <data name="MainWindow_TitleBarTrack.Text" xml:space="preserve"><value>재생 중인 곡 없음</value></data>
   <data name="MainWindow_Tab_Library.Text" xml:space="preserve"><value>라이브러리</value></data>
   <data name="MainWindow_Tab_Playlists.Text" xml:space="preserve"><value>재생목록</value></data>

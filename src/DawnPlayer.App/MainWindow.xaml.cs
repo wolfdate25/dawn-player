@@ -119,6 +119,9 @@ public sealed partial class MainWindow : Window
         AppServices.CurrentTrackChanged += PlayerBar.OnTrackChanged;
         AppServices.QueueChanged += PlayerBar.OnQueueChanged;
         PlayerBar.LyricsToggleRequested += () => ToggleLyrics();
+        PlayerBar.MiniRestoreRequested += (_, _) => ToggleMiniMode();
+        // 미니 중 창을 다시 크면 컨트롤 좌표가 바뀐다 — Passthrough 구멍을 다시 인계한다.
+        PlayerBar.SizeChanged += (_, _) => { if (_isMiniMode) ApplyMiniNonClientRegions(); };
 
         if (AppServices.Settings.Ui.ShowLyricsPane) ShowLyrics(true);
 
@@ -222,6 +225,10 @@ public sealed partial class MainWindow : Window
 
     private void ShutdownForReal()
     {
+        // 미니 상태로 저장하면 600×128 미니 클라이언트가 WindowWidth/Height로 굳어 재시작 시
+        // 풀 UI가 최소폭 620에 으깨진다 — 저장 전에 미니 배치(행·크기·최소폭·Tall)를 복원해
+        // 정상 배치가 저장되게 한다.
+        if (_isMiniMode) ToggleMiniMode();
         SessionManager.Shutdown(AppServices.Settings, AppServices.Playback, this, AppServices.MainWindowHandle);
     }
 
@@ -536,12 +543,15 @@ public sealed partial class MainWindow : Window
     private Windows.Graphics.SizeInt32 _preMiniSize;
     private bool _preMiniAlwaysOnTop;
     private bool _preMiniMaximized;
+    private MenuFlyout? _miniContextMenu;
+    private ToggleMenuFlyoutItem? _miniAlwaysOnTopItem;
 
     /// <summary>True while the window is collapsed to the compact player bar.</summary>
     public bool IsMiniMode => _isMiniMode;
 
     /// <summary>Toggles the compact always-on-top player: content and title bar hide, the bar
-    /// remains, and dragging the bar background moves the window. Escape exits as well.</summary>
+    /// remains, and the whole surface (bar shell included) drags the window. Escape, the
+    /// right-click menu and double-click on the surface all exit as well.</summary>
     public void ToggleMiniMode()
     {
         var appWindow = GetAppWindow();
@@ -550,31 +560,83 @@ public sealed partial class MainWindow : Window
 
         if (!_isMiniMode)
         {
+            // 타이틀 메뉴가 열린 채로 진입하면(메뉴 항목 클릭 경로) 앵커인 타이틀바가 무너지며
+            // 플라이아웃이 고아가 될 수 있다 — 고아 플라이아웃의 투명 라이트 디스미스 장벽이
+            // 창 전체의 press를 삼켜 미니가 클릭·드래그에 죽은 것처럼 보인다(2026-10-08 실측).
+            // 열려 있지 않으면 Hide()는 no-op.
+            TitleMenuFlyout.Hide();
+
             _preMiniSize = appWindow.Size;
             _preMiniAlwaysOnTop = presenter?.IsAlwaysOnTop == true;
             // PT1-15: exiting mini mode used to un-maximize the window — the maximized state
             // is part of the pre-mini placement.
             _preMiniMaximized = presenter?.State == Microsoft.UI.Windowing.OverlappedPresenterState.Maximized;
+            // 최대화 창은 일반 resize를 무시한다(셸이 줌 바운즈를 유지하고 State도 Maximized로
+            // 남는다) — 먼저 줌을 풀고 리사이즈한다. 복귀 시 _preMiniMaximized로 재최대화.
+            // (State 프로퍼티는 이 SDK 프로젝션에서 읽기 전용 — Restore()가 줌 해제의 유일한 길.)
+            if (_preMiniMaximized && presenter != null)
+                presenter.Restore();
+
+            // 620 타이틀바 최소폭은 리사이즈 '전에' 풀어야 한다 — 뒤에 풀면 셸 클램프가 미니
+            // 크기를 되돌릴 수 있다(순서는 MiniModeBehaviorTests가 잠금).
+            if (presenter != null) presenter.PreferredMinimumWidth = 0;
+
+            // Standard(32px) 캡션 전환은 ResizeClient '전에' — 뒤에서 바꾸면 캡션 높이만큼
+            // 클라이언트가 다시 늘어나 하단에 죽은 공간이 생겼다(2026-10-08 실측 +40물리 px).
+            appWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Standard;
 
             AppTitleBar.Visibility = Visibility.Collapsed;
             ContentHost.Visibility = Visibility.Collapsed;
-            RootGrid.RowDefinitions[0].Height = new GridLength(0);
+            // 32px 캡션 거터: ExtendsContentIntoTitleBar 아래에서는 TitleBar 컨트롤을 숨겨도
+            // 시스템 캡션 버튼(Standard 32px)이 최상단 우측에 계속 그려진다 — 행 0을 0으로
+            // 두면 캡션이 시크 행의 남은 시간 텍스트 위에 떠 있었다(2026-10-08 결함). 거터가
+            // 빈 표면 위에 호스팅한다. PreferredHeightOption.Standard(32)와 정확히 일치.
+            RootGrid.RowDefinitions[0].Height = new GridLength(Helpers.MiniPlayerPlacement.CaptionGutterHeight);
             RootGrid.RowDefinitions[1].Height = new GridLength(0);
+            // 경고·오류 InfoBar는 0높이 행에 갇히면 미니에서 표면이 없다 — 창 전체 오버레이로.
+            Microsoft.UI.Xaml.Controls.Grid.SetRowSpan(NotifyBar, 3);
 
-            appWindow.Resize(new Windows.Graphics.SizeInt32(500, 104));
-            // Mini legally shrinks below the title bar's minimum — lift it, restore on exit.
-            if (presenter != null) presenter.PreferredMinimumWidth = 0;
+            // AppWindow 크기는 물리 픽셀 — 물리 상수(구 500×104)는 150% 스케일에서 논리
+            // 333×69로 바를 2/3로 눌렀다. 논리 설계를 실시간 DPI로 스케일한다(결함 수리).
+            var scale = Helpers.WindowPlacementHelper.GetDpiScale(WindowNative.GetWindowHandle(this), RootGrid.XamlRoot);
+            var (miniW, miniH) = Helpers.MiniPlayerPlacement.PhysicalSize(scale);
+            appWindow.ResizeClient(new Windows.Graphics.SizeInt32(miniW, miniH));
+            // ResizeClient under ExtendsContentIntoTitleBar pads the resulting client by the
+            // caption strip (2026-10-08 실측: 160물리 요청 → 198물리 결과, 논리 +30). 요청과
+            // 결과의 차를 한 번 되짚어 원점에 핀다 — 캡션 수학이 스케일마다 달라도 성립한다.
+            var actualClient = appWindow.ClientSize;
+            if (Math.Abs(actualClient.Height - miniH) >= 2)
+            {
+                var corrected = Math.Max(120, miniH - (actualClient.Height - miniH));
+                appWindow.ResizeClient(new Windows.Graphics.SizeInt32(miniW, corrected));
+            }
+            App.Log($"[mini-geo] scale={scale:0.###} requested=({miniW},{miniH}) " +
+                    $"firstPass={actualClient.Width}x{actualClient.Height} " +
+                    $"final={appWindow.ClientSize.Width}x{appWindow.ClientSize.Height} " +
+                    $"outer={appWindow.Size.Width}x{appWindow.Size.Height}");
             if (presenter != null) presenter.IsAlwaysOnTop = true;
-            // 미니(104px 창)에서 Tall 캡션이 절반을 잠식하지 않게 Standard로 — 복귀 시 Tall 복원.
-            appWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Standard;
+            // 미니 중 폭 하한 — Compact 바가 컨트롤을 자르기 시작하는 폭 아래로는 줄어들지 않는다.
+            if (presenter != null) presenter.PreferredMinimumWidth = Helpers.MiniPlayerPlacement.MiniPreferredMinWidth;
+
             _isMiniMode = true;
+            // Escape와 전역 단축키는 RootGrid.KeyDown을 타는데, 메뉴 클릭으로 진입하면 포커스가
+            // 죽은 요소에 남아 이벤트가 루트에 도달하지 않는다(탈출 수단 상실 결함). 플라이아웃
+            // 정리 뒤 루트에 포커스를 세워 키 입력을 신뢰 가능하게 한다.
+            DispatcherQueue.TryEnqueue(EnterMiniFocus);
+            PlayerBar.ApplyMiniContext(isMini: true);
+            // NC 드래그 영역은 레이아웃 정착 뒤(컨트롤 좌표 확정)에 인계한다 — 1단 지연만으로는
+            // MiniVolume 상태 전환의 배치가 끝나기 전이라 Passthrough 구멍이 옛 좌표로 어긋났다
+            // (2026-10-08 실측). 2단 지연으로 배치 완료 뒤에 확정한다.
+            DispatcherQueue.TryEnqueue(() => DispatcherQueue.TryEnqueue(ApplyMiniNonClientRegions));
         }
         else
         {
+            RootGrid.IsTabStop = false;
             RootGrid.RowDefinitions[0].Height = new GridLength(TitleBarRowHeight);
             RootGrid.RowDefinitions[1].Height = new GridLength(1, GridUnitType.Star);
             AppTitleBar.Visibility = Visibility.Visible;
             ContentHost.Visibility = Visibility.Visible;
+            Microsoft.UI.Xaml.Controls.Grid.SetRowSpan(NotifyBar, 1);
 
             if (_preMiniMaximized && presenter != null)
             {
@@ -588,7 +650,177 @@ public sealed partial class MainWindow : Window
             if (presenter != null) presenter.IsAlwaysOnTop = _preMiniAlwaysOnTop;
             appWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
             _isMiniMode = false;
+            PlayerBar.ApplyMiniContext(isMini: false);
+            // Caption 영역은 즉시 해제 — 남아 있으면 일반 창 전체가 시스템 캡션이 된다.
+            ApplyMiniNonClientRegions();
         }
+    }
+
+    // 미니에서 RootGrid를 탭 스톱으로 세워 포커스를 받는다 — 키 입력(Escape·단축키)이 루트의
+    // KeyDown에 도달한다. 복귀 시 IsTabStop=false로 탭 순서 오염을 되돌린다.
+    private void EnterMiniFocus()
+    {
+        RootGrid.IsTabStop = true;
+        RootGrid.Focus(FocusState.Programmatic);
+    }
+
+    /// <summary>True when the press point sits over a real interactive control (Button,
+    /// Slider, …) of the main tree. Geometric hit-test via FindElementsInHostCoordinates —
+    /// it only walks RootGrid's own subtree, immune to the NC input sink's aliased chains
+    /// (2026-10-08 실측). The NowPlayingBar shell is a UserControl — a plain container, NOT
+    /// an owner: the old ancestor walk bailed on it, and the bar covers 100% of the mini
+    /// window, so no drag surface existed at all (2026-10-08 결함).</summary>
+    private bool IsInteractivePress(Windows.Foundation.Point point)
+    {
+        var hits = Microsoft.UI.Xaml.Media.VisualTreeHelper.FindElementsInHostCoordinates(point, RootGrid);
+        foreach (var element in hits)
+        {
+            if (element is Microsoft.UI.Xaml.Controls.UserControl) continue; // 셸 컨테이너 — 표면이다
+            if (element is Microsoft.UI.Xaml.Controls.Control) return true;
+        }
+        return false;
+    }
+
+    // ---------------- mini non-client drag regions ----------------
+
+    // 미니 창의 드래그는 XAML 포인터 이벤트가 아니라 플랫폼 정식 경로인
+    // InputNonClientPointerSource로 시스템에 맡긴다. 이 창은 ECTB의 NonClient 입력 싱크가
+    // 포인터 스트림을 가로채는 지형이라(2026-10-08 실측: press 도달 후 move/release가
+    // 소실됨 — 수동 PointerMoved 추적도 WM_NCLBUTTONDOWN 모달 루프도 신뢰 불가), Caption
+    // 영역 = 창 전체(시스템 네이티브 드래그·스냅), Passthrough = 인터랙티브 컨트롤 구멍의
+    // 공식 패턴이 유일하게 견고하다. 영역 사각형은 클라이언트 원점 기준 물리 px.
+    private Microsoft.UI.Input.InputNonClientPointerSource? _miniNonClientSource;
+
+    /// <summary>Shared empty region list for clearing both kinds (CA1825/CA1861).</summary>
+    private static readonly Windows.Graphics.RectInt32[] NoRegions = System.Array.Empty<Windows.Graphics.RectInt32>();
+
+    private void ApplyMiniNonClientRegions()
+    {
+        var appWindow = GetAppWindow();
+        if (appWindow == null) return;
+        _miniNonClientSource ??= Microsoft.UI.Input.InputNonClientPointerSource.GetForWindowId(appWindow.Id);
+        if (!_isMiniMode)
+        {
+            // 복귀 시 반드시 해제 — Caption이 남으면 일반 창 전체가 시스템 캡션이 된다.
+            _miniNonClientSource.SetRegionRects(Microsoft.UI.Input.NonClientRegionKind.Caption, NoRegions);
+            _miniNonClientSource.SetRegionRects(Microsoft.UI.Input.NonClientRegionKind.Passthrough, NoRegions);
+            return;
+        }
+
+        var scale = Helpers.WindowPlacementHelper.GetDpiScale(WindowNative.GetWindowHandle(this), RootGrid.XamlRoot);
+        var client = appWindow.ClientSize;
+        var passthrough = new List<Windows.Graphics.RectInt32>();
+        CollectPassthroughRects(PlayerBar.BarVisualRoot, RootGrid, scale, passthrough);
+        _miniNonClientSource.SetRegionRects(Microsoft.UI.Input.NonClientRegionKind.Passthrough, passthrough.ToArray());
+        _miniNonClientSource.SetRegionRects(Microsoft.UI.Input.NonClientRegionKind.Caption,
+            new Windows.Graphics.RectInt32[] { new Windows.Graphics.RectInt32(0, 0, client.Width, client.Height) });
+        foreach (var r in passthrough)
+            App.Log($"[mini-nc] passthrough rect {r.X},{r.Y} {r.Width}x{r.Height}");
+        App.Log($"[mini-nc] caption region 0,0 {client.Width}x{client.Height}");
+    }
+
+    /// <summary>Walks the bar's visual tree collecting visible interactive controls as
+    /// passthrough rectangles (client-relative physical px). A control's own rect covers its
+    /// template children, so the walk does not recurse into Controls — otherwise the Slider's
+    /// Thumb etc. would duplicate. The UserControl shell is skipped entirely.</summary>
+    private static void CollectPassthroughRects(
+        Microsoft.UI.Xaml.FrameworkElement node,
+        Microsoft.UI.Xaml.FrameworkElement relativeTo,
+        double scale,
+        List<Windows.Graphics.RectInt32> rects)
+    {
+        var count = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(node);
+        for (var i = 0; i < count; i++)
+        {
+            if (Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(node, i) is not Microsoft.UI.Xaml.FrameworkElement child)
+                continue;
+            if (child is Microsoft.UI.Xaml.Controls.Control { Visibility: Microsoft.UI.Xaml.Visibility.Visible } control
+                && control.ActualWidth > 0 && control.ActualHeight > 0)
+            {
+                var origin = child.TransformToVisual(relativeTo).TransformPoint(new Windows.Foundation.Point(0, 0));
+                rects.Add(new Windows.Graphics.RectInt32(
+                    (int)Math.Round(origin.X * scale),
+                    (int)Math.Round(origin.Y * scale),
+                    (int)Math.Round(control.ActualWidth * scale),
+                    (int)Math.Round(control.ActualHeight * scale)));
+                continue; // 컨트롤 내부는 재귀하지 않는다 — 컨트롤 사각형이 전부 커버한다.
+            }
+            if (child is Microsoft.UI.Xaml.Controls.UserControl) continue; // 셸은 표면이다
+            CollectPassthroughRects(child, relativeTo, scale, rects);
+        }
+    }
+
+    private void OnRootDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+    {
+        if (!_isMiniMode) return;
+        // Caption 영역 밖(컨트롤 구멍 근처)에서 도달하는 이중 탭만 여기 온다 — 표면 대부분은
+        // 시스템 캡션이 우선한다. 남는 경로는 성실하게 복원으로 처리.
+        if (IsInteractivePress(e.GetPosition(RootGrid))) return;
+        ToggleMiniMode();
+        e.Handled = true;
+    }
+
+    private void OnRootRightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        if (!_isMiniMode) return;
+        ShowMiniContextMenu(e.GetPosition(RootGrid));
+    }
+
+    /// <summary>미니의 유일한 탈출구였던 Escape는 포커스가 없으면 죽는다 — 우클릭 메뉴가
+    /// 포인터만으로 복원·항상 위·전체화면·종료에 도달하게 한다(WCAG 2.2 드래그 대체 수단).
+    /// 언어 변경은 재시작을 전제로 하므로(OnLanguageChanged 계약) 1회 빌드로 충분하다.</summary>
+    private void ShowMiniContextMenu(Windows.Foundation.Point position)
+    {
+        if (_miniContextMenu == null)
+        {
+            _miniContextMenu = new MenuFlyout();
+            var restore = new MenuFlyoutItem
+            {
+                Text = AppStrings.Get("Mini_Restore.Text", "원래 창으로 복원"),
+                Icon = new FontIcon { Glyph = "\uE8B7" }, // BackToWindow
+            };
+            restore.Click += (_, _) => ToggleMiniMode();
+            _miniAlwaysOnTopItem = new ToggleMenuFlyoutItem
+            {
+                Text = AppStrings.Get("Mini_AlwaysOnTop.Text", "항상 위"),
+                IsChecked = true,
+            };
+            _miniAlwaysOnTopItem.Click += OnMiniAlwaysOnTopClick;
+            var fullscreen = new MenuFlyoutItem
+            {
+                Text = AppStrings.Get("MainWindow_Menu_Fullscreen.Text", "풀스크린 Now Playing (Full-screen Now Playing)"),
+                Icon = new FontIcon { Glyph = "\uE7F4" },
+            };
+            fullscreen.Click += (_, _) => OpenFullscreenNowPlaying();
+            var exit = new MenuFlyoutItem
+            {
+                Text = AppStrings.Get("MainWindow_Menu_Exit.Text", "종료"),
+                Icon = new FontIcon { Glyph = "\uE711" },
+            };
+            exit.Click += (_, _) => CloseFromTray();
+
+            _miniContextMenu.Items.Add(restore);
+            _miniContextMenu.Items.Add(_miniAlwaysOnTopItem);
+            _miniContextMenu.Items.Add(fullscreen);
+            _miniContextMenu.Items.Add(new MenuFlyoutSeparator());
+            _miniContextMenu.Items.Add(exit);
+        }
+        SyncMiniAlwaysOnTopItem();
+        _miniContextMenu.ShowAt(RootGrid, position);
+    }
+
+    private void OnMiniAlwaysOnTopClick(object sender, RoutedEventArgs e)
+    {
+        if (AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter presenter)
+            presenter.IsAlwaysOnTop = !presenter.IsAlwaysOnTop;
+        SyncMiniAlwaysOnTopItem();
+    }
+
+    private void SyncMiniAlwaysOnTopItem()
+    {
+        if (_miniAlwaysOnTopItem == null) return;
+        if (AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter presenter)
+            _miniAlwaysOnTopItem.IsChecked = presenter.IsAlwaysOnTop;
     }
 
     private Microsoft.UI.Windowing.AppWindow? GetAppWindow()
@@ -630,39 +862,6 @@ public sealed partial class MainWindow : Window
             ToggleMiniMode();
             e.Handled = true;
         }
-    }
-
-    /// <summary>
-    /// In mini mode the whole bar becomes the drag surface: presses on background Grid/Canvas
-    /// areas start a caption drag, presses on interactive controls pass through untouched.
-    /// </summary>
-    private void OnRootPointerPressed(object sender, PointerRoutedEventArgs e)
-    {
-        if (!_isMiniMode) return;
-        if (e.OriginalSource is not DependencyObject source) return;
-        for (var node = source; node != null; node = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(node))
-        {
-            if (node is Microsoft.UI.Xaml.Controls.Control || node is Microsoft.UI.Xaml.Controls.UserControl)
-            {
-                return; // a real control owns this press
-            }
-        }
-
-        try
-        {
-            _ = NativeMethods.SendMessageForDrag(WindowNative.GetWindowHandle(this));
-        }
-        catch { }
-        e.Handled = true;
-    }
-
-    private static class NativeMethods
-    {
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        public static extern bool SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
-
-        public static bool SendMessageForDrag(IntPtr hwnd) =>
-            SendMessage(hwnd, 0xA1 /* WM_NCLBUTTONDOWN */, new IntPtr(2 /* HTCAPTION */), IntPtr.Zero);
     }
 
     // ---------------- central event handlers ----------------

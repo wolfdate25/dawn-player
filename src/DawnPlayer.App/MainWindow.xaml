@@ -8,7 +8,8 @@
     xmlns:views="using:DawnPlayer.App.Views">
 
     <Grid x:Name="RootGrid" AllowDrop="True" Background="Transparent"
-          DragOver="OnRootDragOver" Drop="OnRootDrop" PointerPressed="OnRootPointerPressed" KeyDown="OnRootKeyDown">
+          DragOver="OnRootDragOver" Drop="OnRootDrop"
+          RightTapped="OnRootRightTapped" DoubleTapped="OnRootDoubleTapped" KeyDown="OnRootKeyDown">
         <Grid.RowDefinitions>
             <!-- 48 = PreferredHeightOption.Tall 캡션과의 일치 계약(높이 게이트 테스트 참조).
                  2026-10-04 한때 44로 완화했다가 롤백 — 캡션(48) 호버 배경이 바 아래로 4px
@@ -56,7 +57,7 @@
                             Style="{StaticResource TitleMenuButtonStyle}" ToolTipService.ToolTip="메뉴">
                         <FontIcon Glyph="&#xE700;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
                         <Button.Flyout>
-                            <MenuFlyout Opening="OnTitleMenuOpening">
+                            <MenuFlyout x:Name="TitleMenuFlyout" Opening="OnTitleMenuOpening">
                                 <MenuFlyoutItem x:Uid="MainWindow_Menu_Rescan" Text="라이브러리 새로고침" Click="OnMenuRescan">
                                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE72C;"/></MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
