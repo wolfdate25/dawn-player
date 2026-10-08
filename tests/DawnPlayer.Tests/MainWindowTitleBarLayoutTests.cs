@@ -5,7 +5,8 @@ namespace DawnPlayer.Tests;
 
 /// <summary>
 /// Title-bar contract gate (2026-10-02 user report, re-pinned 2026-10-03 after the
-/// doc-aligned TitleBar-control refactor). History: the AppTitleBar grid used two Auto
+/// doc-aligned TitleBar-control refactor, re-pinned 2026-10-05 for the user-approved
+/// tab/status order swap — track-title length no longer moves the nav tabs). History: the AppTitleBar grid used two Auto
 /// columns (brand+status, nav tabs) that never shrink, so below ~870 effective px the tabs
 /// slid under the system caption buttons drawn on top by ExtendsContentIntoTitleBar — the
 /// minimize/close glyphs visibly overlapped "Playlists"/"Network". The current contract,
@@ -15,9 +16,12 @@ namespace DawnPlayer.Tests;
 /// <item>the WinUI TitleBar control hosts the bar; app-drawn caption buttons are forbidden
 ///       (the system owns caption input, and its glyph colors ignore alpha so they cannot be
 ///       hidden),</item>
-/// <item>the user-picked OLD layout keeps ☰ · brand · status · tabs in LeftHeader and the
-///       gear in RightHeader; the Content slot stays empty because it is center-aligned and
-///       would push the tabs mid-window,</item>
+/// <item>the user-picked B layout (2026-10-05, superseding the 2026-10-03 OLD pick) keeps
+///       ☰ · brand · nav tabs · status in LeftHeader and the gear in RightHeader; the tabs
+///       sit directly after the brand so the variable-width track text, as the last element,
+///       can only spill into the free space to its right and never moves them (user report:
+///       track-title length shifted the three nav tabs). The Content slot stays empty
+///       because it is center-aligned and would push the tabs mid-window,</item>
 /// <item>content sheds stepwise from the Window's SizeChanged — track hides below 840
 ///       effective px, brand text below 740 — sized so the widest localization (ko nav
 ///       ≈ 352px) still fits with slack. The control's own SizeChanged reported
@@ -67,25 +71,36 @@ public class MainWindowTitleBarLayoutTests
     }
 
     [Fact]
-    public void StatusText_SitsBeforeTabs_InTitleBarLeftHeader()
+    public void StatusText_TrailsTabs_TabsSitBesideBrand_InLeftHeader()
     {
         var bar = AppTitleBarBlock(ReadMainWindowXaml());
 
-        // 변형 OLD (2026-10-03): 상태 텍스트가 탭 왼쪽 — LeftHeader 안에서 TitleBarTrack이
-        // TopNavPanel보다 앞에 온다(문서 순서 계약). 이전 결함(상태가 브랜드 패널 안에 있어
-        // 탭을 캡션 쪽으로 밀던 것)의 재발 방지.
-        var track = bar.IndexOf("x:Name=\"TitleBarTrack\"", StringComparison.Ordinal);
+        // 변형 B (2026-10-05 승인): 탭은 브랜드 바로 뒤(주 내비 자리), 상태 텍스트는 탭 뒤
+        // 마지막 요소 — 곡 제목 폭 변동이 오른쪽 빈 공간으로만 흡수되어 브랜드·탭의 X 위치는
+        // 절대 움직이지 않는다("곡 제목 길이에 따라 후순위 탭 3개가 밀린다" 사용자 보고,
+        // 2026-10-05의 재발 방지). 구 OLD 계약(상태가 탭보다 앞)은 이로 대체했다.
+        var brand = bar.IndexOf("x:Name=\"AppBrandText\"", StringComparison.Ordinal);
         var nav = bar.IndexOf("x:Name=\"TopNavPanel\"", StringComparison.Ordinal);
-        Assert.True(track >= 0 && nav > track, "TitleBarTrack must precede TopNavPanel in the TitleBar content");
+        var track = bar.IndexOf("x:Name=\"TitleBarTrack\"", StringComparison.Ordinal);
+        Assert.True(brand >= 0 && nav > brand, "TopNavPanel must sit beside (right of) the brand panel");
+        Assert.True(track > nav, "TitleBarTrack must trail TopNavPanel in the TitleBar content");
 
         // 브랜드 패널 안에는 상태 텍스트가 없어야 한다(브랜드+구분선만).
-        var brandStart = bar.IndexOf("x:Name=\"AppBrandText\"", StringComparison.Ordinal);
-        var brandEnd = brandStart >= 0 ? bar.IndexOf("</StackPanel>", brandStart, StringComparison.Ordinal) : -1;
-        Assert.True(brandStart >= 0 && brandEnd > brandStart, "brand StackPanel not found");
-        Assert.DoesNotContain("TitleBarTrack", bar[brandStart..brandEnd]);
+        var brandEnd = brand >= 0 ? bar.IndexOf("</StackPanel>", brand, StringComparison.Ordinal) : -1;
+        Assert.True(brandEnd > brand, "brand StackPanel not found");
+        Assert.DoesNotContain("TitleBarTrack", bar[brand..brandEnd]);
 
         // 상태 텍스트는 밀리지 말고 말줄임으로 흡수된다(좁은 창 첫 방어선).
         Assert.Matches(@"x:Name=""TitleBarTrack""[^>]*TextTrimming=""\w+""", bar);
+
+        // 상한 320은 미적 천장이다(넓은 창에서 상태 텍스트가 바를 채우지 않게 한다). 캡션 침범
+        // 방어는 창 폭 유동 상한(UpdateTitleBarTrackWidthCap — SheddingThresholds 게이트가 잠금)이
+        // 담당한다: TitleBar 템플릿이 LeftHeader 측정에 캡션 폭을 반영하지 않아 고정값만으로는
+        // 좁은 창에서 제목이 캡션을 침범한다(2026-10-05 UIA 실측).
+        Assert.Matches(@"x:Name=""TitleBarTrack""[^>]*MaxWidth=""320""", bar);
+
+        // 잘린 제목의 전문은 툴팁으로 회수 가능해야 한다(자기 Text 바인딩).
+        Assert.Matches(@"x:Name=""TitleBarTrack""[^>]*ToolTipService\.ToolTip=""\{Binding", bar);
     }
 
     [Fact]
@@ -252,6 +267,17 @@ public class MainWindowTitleBarLayoutTests
         Assert.Contains("BrandVisibleMinWidth = 740", source);
         Assert.Contains("TitleBarTrack.Visibility = width >= TrackVisibleMinWidth", source);
         Assert.Contains("AppBrandText.Visibility = width >= BrandVisibleMinWidth", source);
+
+        // 변형 B(2026-10-05): 상태 텍스트 상한은 창 폭에서 유도된다 — 오른쪽 예약(캡션 144 +
+        // 톱니 32 + 여유 32 = 208 논리 px)과 배치된 시작 X를 뺀다. TitleBar 템플릿이 LeftHeader
+        // 측정에 캡션 폭을 반영하지 않아 논리 960px 창에서 긴 제목 꼬리가 최소화 버튼과 24px
+        // 겹쳤던(2026-10-05 UIA 실측) 재발 방지. XAML MaxWidth=320만으로는 부족하다.
+        Assert.Contains("UpdateTitleBarTrackWidthCap();", source, StringComparison.Ordinal);
+        // Window.SizeChanged는 초기 배치에서 발화하지 않아 첫 계산이 배치 전 ActualWidth 0을
+        // 읽었다(2026-10-05 실측) — 1차 트리거는 RootGrid.SizeChanged(첫 배치에서도 발화)다.
+        Assert.Contains("RootGrid.SizeChanged += (_, _) => UpdateTitleBarTrackWidthCap();", source, StringComparison.Ordinal);
+        Assert.Contains("private const double TitleBarRightReserve = 208;", source, StringComparison.Ordinal);
+        Assert.Contains("Math.Min(320, available)", source, StringComparison.Ordinal);
     }
 
     [Fact]

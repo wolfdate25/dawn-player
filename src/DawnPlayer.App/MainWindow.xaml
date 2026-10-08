@@ -28,8 +28,11 @@
 
         <!-- WinUI TitleBar 컨트롤(WASDK 1.7+, 공식 문서 /windows/apps/develop/title-bar).
              컨트롤이 드래그 영역·캡션 여백·인터랙티브 패스스루를 자체 계산하므로 앱이 그리는
-             캡션 버튼은 존재하지 않는다(캡션 입력은 시스템 독점). 레이아웃(사용자 선택 OLD,
-             2026-10-03): LeftHeader = ☰ · 브랜드 · 상태 · 탭 / RightHeader = 톱니.
+             캡션 버튼은 존재하지 않는다(캡션 입력은 시스템 독점). 레이아웃(사용자 선택 B,
+             2026-10-05 — 구 OLD에서 탭·상태 순서를 맞바꿈): LeftHeader = ☰ · 브랜드 · 탭 ·
+             상태 / RightHeader = 톱니. 상태 텍스트는 유연 열(*)이라 곡 제목 폭 변동이 남는
+             공간에서 말줄임으로 흡수되고 브랜드·탭의 X 위치는 절대 움직이지 않으며 LeftHeader가
+             캡션 영역을 침범하지도 않는다(순서 계약 — MainWindowTitleBarLayoutTests가 잠금).
              Content 슬롯은 의도적으로 비운다 — 중앙 배치 전용이라 탭이 창 한가운데로 밀린다.
              2026-10-03 통일 승인(변형 A + Tall 48): 탭은 트리 D 카드형과 같은 언어
              (TitleBarTabStyle), 높이 48 = PreferredHeightOption.Tall — 시스템 캡션이 바를 꽉 채운다.
@@ -39,8 +42,18 @@
         <TitleBar x:Name="AppTitleBar" Grid.Row="0" MinHeight="48"
                   BorderBrush="{ThemeResource SeparatorSubtleBrush}" BorderThickness="0,0,0,1">
             <TitleBar.LeftHeader>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
-                    <Button x:Uid="MainWindow_TitleMenuButton" Style="{StaticResource TitleMenuButtonStyle}" ToolTipService.ToolTip="메뉴">
+                <Grid VerticalAlignment="Center" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <!-- 상태 텍스트는 유연 열 — LeftHeader가 남는 폭을 넘어 설계되지 않는다
+                             (Auto 흐름이면 긴 곡 제목이 시스템 캡션·톱니를 밀어낸다: 2026-10-05
+                             UIA 실측, 논리 960px 창에서 제목 꼬리가 최소화 버튼과 72px 겹침). -->
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button x:Uid="MainWindow_TitleMenuButton" Grid.Column="0" VerticalAlignment="Center"
+                            Style="{StaticResource TitleMenuButtonStyle}" ToolTipService.ToolTip="메뉴">
                         <FontIcon Glyph="&#xE700;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
                         <Button.Flyout>
                             <MenuFlyout Opening="OnTitleMenuOpening">
@@ -74,15 +87,11 @@
                             </MenuFlyout>
                         </Button.Flyout>
                     </Button>
-                    <StackPanel x:Name="AppBrandText" Orientation="Horizontal" VerticalAlignment="Center">
+                    <StackPanel x:Name="AppBrandText" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock x:Uid="AppBrand" Text="Dawn Player" FontSize="{StaticResource FontBody}" FontWeight="SemiBold"
                                    Foreground="{ThemeResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <TextBlock x:Uid="MainWindow_TitleBarTrack" x:Name="TitleBarTrack" Text="No sound — Nothing played" FontSize="{StaticResource FontBodySmall}"
-                               Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center"
-                               MaxWidth="320" Margin="4,0,0,0" TextTrimming="CharacterEllipsis"
-                               AutomationProperties.LiveSetting="Polite"/>
-                    <StackPanel x:Name="TopNavPanel" Orientation="Horizontal" Spacing="4" Margin="4,0,0,0" VerticalAlignment="Center"
+                    <StackPanel x:Name="TopNavPanel" Grid.Column="2" Orientation="Horizontal" Spacing="4" Margin="4,0,0,0" VerticalAlignment="Center"
                                 DoubleTapped="OnTabDoubleTapped">
                         <RadioButton x:Name="TabLibrary" GroupName="TopNavGroup" IsChecked="True"
                                      AutomationProperties.AutomationId="TabLibrary"
@@ -112,7 +121,12 @@
                             </StackPanel>
                         </RadioButton>
                     </StackPanel>
-                </StackPanel>
+                    <TextBlock x:Uid="MainWindow_TitleBarTrack" x:Name="TitleBarTrack" Grid.Column="3" Text="No sound — Nothing played" FontSize="{StaticResource FontBodySmall}"
+                               Foreground="{ThemeResource TextTertiaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Left"
+                               MaxWidth="320" Margin="4,0,0,0" TextTrimming="CharacterEllipsis"
+                               ToolTipService.ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"
+                               AutomationProperties.LiveSetting="Polite"/>
+                </Grid>
             </TitleBar.LeftHeader>
 
             <TitleBar.RightHeader>

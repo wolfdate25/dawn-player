@@ -88,6 +88,11 @@ public sealed partial class MainWindow : Window
         // TitleBar 컨트롤 자체의 SizeChanged는 좁은 창에서 보고 폭이 예측적이지 않아
         // 720px에서 브랜드 숨김이 누락됐다(2026-10-03 4차 실측). 창 폭이 유일한 진실.
         SizeChanged += OnTitleBarSizeChanged;
+        // Window.SizeChanged는 초기 배치에서 발화하지 않는다(2026-10-05 실측 — 첫 상한 계산이
+        // 배치 전 ActualWidth 0을 읽어 하한 60으로 고정됐다). 상태 텍스트 상한의 1차 트리거는
+        // RootGrid.SizeChanged(첫 배치에서도 발화하고 발화 시점엔 배치가 끝난 뒤다).
+        // Window.SizeChanged 호출은 가시성 전환 뒤의 보정용으로 유지한다.
+        RootGrid.SizeChanged += (_, _) => UpdateTitleBarTrackWidthCap();
 
         // 문서 "Do"(titlebar-design): 창이 비활성이면 타이틀바의 모든 요소가 반투명해야
         // 활성/비활성이 구분된다. 시스템 캡션은 스스로 디밍되므로 커스텀 Left/RightHeader
@@ -180,6 +185,31 @@ public sealed partial class MainWindow : Window
         var width = e.Size.Width;
         TitleBarTrack.Visibility = width >= TrackVisibleMinWidth ? Visibility.Visible : Visibility.Collapsed;
         AppBrandText.Visibility = width >= BrandVisibleMinWidth ? Visibility.Visible : Visibility.Collapsed;
+        UpdateTitleBarTrackWidthCap();
+    }
+
+    // 상태 텍스트 상한 예약(논리 px): 시스템 캡션 3버튼 144(Tall 48 기준) + 톱니 버튼 32 +
+    // 템플릿 간격·안전 여유 32. 창 폭이 이 값보다 커야 상태 텍스트가 캡션을 침범하지 않는다.
+    private const double TitleBarRightReserve = 208;
+
+    // 변형 B(2026-10-05) 상태 텍스트 폭 상한. TitleBar 템플릿은 LeftHeader 측정에 시스템 캡션
+    // 폭을 반영하지 않아(2026-10-05 UIA 실측: 논리 960px 창에서 긴 제목 꼬리가 최소화 버튼과
+    // 24px 겹치고 톱니가 캡션 안으로 밀렸다) XAML 고정 MaxWidth만으로는 부족하다. 창 폭이
+    // 유일한 진실(Window에는 ActualWidth가 없다 — 루트 Content의 ActualWidth가 창 논리 폭과
+    // 같다) — 상태 텍스트의 배치된 시작 X(브랜드·탭 뒤, 고정 콘텐츠)와 오른쪽 예약을 빼서
+    // 상한을 유도한다. 미적 상한 320(좁은 창에서는 이보다 먼저 잘린다)과 하한 60을 유지.
+    // Window.SizeChanged는 시작 시 발화하지 않으므로(2026-10-05 실측 — 초기 배치 후 호출이
+    // 필요하다) 시작 경로에서도 호출한다. 배치 뒤 실제 좌표를 쓰기 위해 레이아웃 이후로 미룬다.
+    private void UpdateTitleBarTrackWidthCap()
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            if (AppTitleBar.Visibility != Visibility.Visible || TitleBarTrack.Visibility != Visibility.Visible) return;
+            if (Content is not FrameworkElement root) return;
+            var titleLeft = TitleBarTrack.TransformToVisual(root).TransformPoint(default).X;
+            var available = root.ActualWidth - TitleBarRightReserve - titleLeft;
+            TitleBarTrack.MaxWidth = Math.Max(60, Math.Min(320, available));
+        });
     }
 
     /// <summary>Real exit from the tray: pre-set the closing latch so AppWindow.Closing runs the
