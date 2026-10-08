@@ -205,6 +205,8 @@
   <data name="Library_Header_Rating.Text" xml:space="preserve"><value>평점</value></data>
 
   <data name="Library_RightQueue_Title.Text" xml:space="preserve"><value>재생 중인 트랙...</value></data>
+  <data name="Library_QueueMenu_Play.Text" xml:space="preserve"><value>이 곡 재생</value></data>
+  <data name="Library_QueueMenu_Remove.Text" xml:space="preserve"><value>재생목록에서 제거</value></data>
 
   <!-- Module 3: Playlist Management -->
   <data name="Playlist_SidebarHeader.Text" xml:space="preserve"><value>재생목록</value></data>

@@ -938,6 +938,8 @@
                       ItemsSource="{x:Bind RightQueueCvs.View, Mode=OneWay}"
                       SelectionMode="Single"
                       DoubleTapped="OnRightQueueTrackDoubleTapped"
+                      RightTapped="OnRightQueueListRightTapped"
+                      ContextRequested="OnRightQueueListContextRequested"
                       Padding="10,4,10,16">
                 <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
@@ -1070,6 +1072,20 @@
                         </GroupStyle.HeaderTemplate>
                     </GroupStyle>
                 </ListView.GroupStyle>
+
+                <!-- Queue row context menu (2026-10-08): same right-click actions the playlist
+                     page's track table offers, scoped to what a queue row means — play this row
+                     now, or drop it from the playing playlist. -->
+                <ListView.ContextFlyout>
+                    <MenuFlyout>
+                        <MenuFlyoutItem x:Uid="Library_QueueMenu_Play" Text="이 곡 재생" Click="OnRightQueueMenuPlay">
+                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE768;"/></MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem x:Uid="Library_QueueMenu_Remove" Text="재생목록에서 제거" Click="OnRightQueueMenuRemove">
+                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74D;"/></MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                    </MenuFlyout>
+                </ListView.ContextFlyout>
             </ListView>
         </Grid>
     </Grid>

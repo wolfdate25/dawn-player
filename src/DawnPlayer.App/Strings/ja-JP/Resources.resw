@@ -205,6 +205,8 @@
   <data name="Library_Header_Rating.Text" xml:space="preserve"><value>評価</value></data>
 
   <data name="Library_RightQueue_Title.Text" xml:space="preserve"><value>再生中のトラック...</value></data>
+  <data name="Library_QueueMenu_Play.Text" xml:space="preserve"><value>この曲を再生</value></data>
+  <data name="Library_QueueMenu_Remove.Text" xml:space="preserve"><value>プレイリストから削除</value></data>
 
   <!-- Module 3: Playlist Management -->
   <data name="Playlist_SidebarHeader.Text" xml:space="preserve"><value>プレイリスト</value></data>

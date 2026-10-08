@@ -205,6 +205,8 @@
   <data name="Library_Header_Rating.Text" xml:space="preserve"><value>Rating</value></data>
 
   <data name="Library_RightQueue_Title.Text" xml:space="preserve"><value>Playing tracks...</value></data>
+  <data name="Library_QueueMenu_Play.Text" xml:space="preserve"><value>Play This Track</value></data>
+  <data name="Library_QueueMenu_Remove.Text" xml:space="preserve"><value>Remove from Playlist</value></data>
 
   <!-- Module 3: Playlist Management -->
   <data name="Playlist_SidebarHeader.Text" xml:space="preserve"><value>Playlists</value></data>

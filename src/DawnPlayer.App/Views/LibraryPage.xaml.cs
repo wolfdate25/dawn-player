@@ -1129,6 +1129,40 @@ public sealed partial class LibraryPage : Page
         }
     }
 
+    // Right-tap must drive the selection refresh (same platform trap the tracks list and the
+    // playlist page fixed): a right-press never moves the selection, so without it the queue
+    // menu would act on the previously selected row — or nobody — instead of the clicked row.
+    private void OnRightQueueListRightTapped(object sender, RightTappedRoutedEventArgs e) =>
+        SelectQueueRowForContext(e.OriginalSource as DependencyObject);
+
+    private void OnRightQueueListContextRequested(UIElement sender, ContextRequestedEventArgs e) =>
+        SelectQueueRowForContext(e.OriginalSource as DependencyObject);
+
+    /// <summary>Selects the queue row under the pointer so the context menu acts on it. The
+    /// single-selection sidebar collapses the selection to the clicked row; an unresolvable
+    /// target (album group header, blank area) leaves the selection untouched.</summary>
+    private void SelectQueueRowForContext(DependencyObject? source)
+    {
+        var container = VisualTreeHelperExtensions.FindAncestor<ListViewItem>(source);
+        if (container == null) return;
+        if (RightQueueList.ItemFromContainer(container) is PlaylistItem item)
+        {
+            RightQueueList.SelectedItem = item;
+        }
+    }
+
+    private async void OnRightQueueMenuPlay(object sender, RoutedEventArgs e)
+    {
+        if (RightQueueList.SelectedItem is not PlaylistItem item) return;
+        await PlaybackUiHelper.PlayItemAsync(AppServices.Playback, AppServices.Playlists.NowPlaying, item);
+    }
+
+    private void OnRightQueueMenuRemove(object sender, RoutedEventArgs e)
+    {
+        if (RightQueueList.SelectedItem is not PlaylistItem item) return;
+        PlaybackUiHelper.RemoveItems(AppServices.Playlists, AppServices.Playlists.NowPlaying, new[] { item });
+    }
+
     private void OnTrackMenuOpening(object? sender, object e) =>
         PopulatePlaylistSubMenu(TrackSendToPlaylistSubMenu, GetSelectedTracks);
 
