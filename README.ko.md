@@ -2,8 +2,7 @@
 
 <p align="right"><a href="README.md">English</a> · <b>한국어</b> · <a href="README.zh-CN.md">简体中文</a></p>
 
-foobar2000의 기능성과 [Eole 테마](https://github.com/Ottodix/Eole-foobar-theme)의 디자인에서 영감을 받은
-네이티브 Windows 뮤직 플레이어 (WinUI 3 / .NET 10).
+[Eole 테마](https://github.com/Ottodix/Eole-foobar-theme)의 디자인에서 영감을 받은 네이티브 Windows 뮤직 플레이어 (WinUI 3 / .NET 10).
 
 ![release](https://img.shields.io/github/v/tag/wolfdate25/dawn-player?label=release&color=blue)
 
@@ -47,7 +46,7 @@ dawnplayer.log). **포터블 모드**: exe 옆에 `portable.dat` 마커가 있�
   Media Foundation + NVorbis 디코딩. DSD는 박스카 디시메이션으로 44.1k/48k 계열 PCM 변환 재생 또는
   DSD 대응 DAC에 WASAPI 배타 DoP(DSD over PCM) 패킹 전송
 - **CUE 시트 지원** — 앨범 이미지(FLAC/WAV/APE 등) + `.cue`를 스캔하면 트랙 단위 가상 트랙으로 색인해
-  곡 단위 재생·통계·평점이 동작하고, 이미지 전체 행은 숨겨집니다 (foobar2000 방식).
+  곡 단위 재생·통계·평점이 동작하고, 이미지 전체 행은 숨겨집니다.
   구간 재생은 갭리스 시퀀서 위에서 샘플 단위로 이어집니다
 - 배타 모드 비트 깊이 정책 (원본/16/24/32비트), 지연 버퍼 조절 (30~500ms)
 - **파라메트릭 이퀄라이저 (장치별 독립 프로필)** — 최대 8밴드 동적 필터(Peak EQ, Low/High Shelf, Low/High Pass), 프리앰프(±12dB), 장치별 개별 프로필 및 공통 기본 프로필 폴백, 재생 중 즉시 라이브 반영 및 비트 퍼펙트 바이패스
@@ -59,11 +58,11 @@ dawnplayer.log). **포터블 모드**: exe 옆에 `portable.dat` 마커가 있�
   없으면 동적 AGC로 폴백하는 하이브리드 모드, 목표 레벨/최대 부스트/반응 속도 조절, 무음 게이팅
 - **헤드폰 크로스피드** (Chu Moy 위상, 약함/보통/강함)와 **모노 다운믹스** — 재생 중 실시간 적용
 
-### 재생목록 / 대기열 (foobar2000 스타일)
+### 재생목록 / 대기열
 - 다중 재생목록 (탭), 이름 변경, M3U8 자동 저장 / 가져오기 / 내보내기
 - **스마트 재생목록** — 재생 통계(재생 횟수·마지막 재생·스킵)를 SQLite에 기록해 "많이 재생 /
   최근 추가 / 한동안 안 들은" 자동 재생목록을 생성·갱신 (설정 변경 없이 재생할 때마다 최신화)
-- **쿼리 기반 스마트 재생목록** — foobar2000 스타일 쿼리
+- **쿼리 기반 스마트 재생목록** — 표현력 있는 쿼리
   (`%rating% GREATER 3 AND %last_played% DURING LAST 30 DAYS LIMIT 50`)로 직접 스마트 재생목록을
   만들고 편집. 문자열(IS/HAS)/수치(GREATER, >=)/날짜(DURING LAST)/MISSING·PRESENT/AND·OR·NOT/괄호 지원
 - **트랙 평점** — 0~5개 별점. 재생목록·라이브러리 표·재생 중 화면 어디서나 행의 별점 셀을 클릭해
@@ -119,7 +118,6 @@ dawnplayer.log). **포터블 모드**: exe 옆에 `portable.dat` 마커가 있�
 
 ## 크레딧
 
-- [Eole foobar theme](https://github.com/Ottodix/Eole-foobar-theme) — UI 디자인 참조
+- [Eole 테마](https://github.com/Ottodix/Eole-foobar-theme) — UI 디자인 참조
 - [NAudio](https://github.com/naudio/NAudio) / [NVorbis](https://github.com/njdrummond/NVorbis) — 오디오
 - [TagLib#](https://github.com/mono/taglib-sharp) — 태그
-- foobar2000 — 기능적 영감의 원천

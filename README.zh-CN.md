@@ -2,8 +2,7 @@
 
 <p align="right"><a href="README.md">English</a> · <a href="README.ko.md">한국어</a> · <b>简体中文</b></p>
 
-一款受 foobar2000 的功能性以及 [Eole 主题](https://github.com/Ottodix/Eole-foobar-theme)设计启发的
-原生 Windows 音乐播放器（WinUI 3 / .NET 10）。
+一款采用 [Eole 主题](https://github.com/Ottodix/Eole-foobar-theme)风格设计的原生 Windows 音乐播放器（WinUI 3 / .NET 10）。
 
 ![release](https://img.shields.io/github/v/tag/wolfdate25/dawn-player?label=release&color=blue)
 
@@ -45,7 +44,7 @@ dawnplayer.log）。**便携模式**：exe 旁存在 `portable.dat` 标记时，
   Media Foundation + NVorbis 解码。DSD 通过箱形抽取转换为 44.1k/48k 系列 PCM 播放，或以
   DoP（DSD over PCM）打包，经 WASAPI 独占模式发送至支持 DSD 的 DAC
 - **CUE 支持** — 扫描整轨镜像（FLAC/WAV/APE 等）及其 `.cue` 时，按曲目建立虚拟音轨索引，
-  曲目级播放、统计与评分均可使用，整轨镜像行会被隐藏（foobar2000 方式）。
+  曲目级播放、统计与评分均可使用，整轨镜像行会被隐藏。
   区间播放基于无缝序列器以采样精度衔接
 - 独占模式位深策略（原始/16/24/32 位），延迟缓冲调节（30–500 ms）
 - **参数均衡器（按设备独立配置）** — 最多 8 段动态滤波器（Peak EQ、Low/High Shelf、
@@ -58,11 +57,11 @@ dawnplayer.log）。**便携模式**：exe 旁存在 `portable.dat` 标记时，
   回退到动态 AGC；可调目标电平/最大提升/响应速度，并带静音门限
 - **耳机串扰补偿（Crossfeed）**（Chu Moy 相位，弱/中/强）与**单声道下混** — 播放中实时生效
 
-### 播放列表 / 队列（foobar2000 风格）
+### 播放列表 / 队列
 - 多播放列表（标签页）、重命名、M3U8 自动保存 / 导入 / 导出
 - **智能播放列表** — 将播放统计（播放次数/最后播放/跳过）记录到 SQLite，自动生成并刷新
   "播放最多 / 最近添加 / 久未播放"列表（每次播放即时更新，无需配置）
-- **基于查询的智能播放列表** — 使用 foobar2000 风格的查询
+- **基于查询的智能播放列表** — 使用表达力强的查询
   （`%rating% GREATER 3 AND %last_played% DURING LAST 30 DAYS LIMIT 50`）直接创建和编辑。
   支持字符串（IS/HAS）、数值（GREATER、>=）、日期（DURING LAST）、MISSING/PRESENT、
   AND/OR/NOT 与括号
@@ -122,7 +121,6 @@ dawnplayer.log）。**便携模式**：exe 旁存在 `portable.dat` 标记时，
 
 ## 致谢
 
-- [Eole foobar theme](https://github.com/Ottodix/Eole-foobar-theme) — UI 设计参考
+- [Eole 主题](https://github.com/Ottodix/Eole-foobar-theme) — UI 设计参考
 - [NAudio](https://github.com/naudio/NAudio) / [NVorbis](https://github.com/njdrummond/NVorbis) — 音频
 - [TagLib#](https://github.com/mono/taglib-sharp) — 标签
-- foobar2000 — 功能灵感的来源

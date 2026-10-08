@@ -2,8 +2,7 @@
 
 <p align="right"><b>English</b> · <a href="README.ko.md">한국어</a> · <a href="README.zh-CN.md">简体中文</a></p>
 
-A native Windows music player (WinUI 3 / .NET 10) inspired by the functionality of foobar2000
-and the design of the [Eole theme](https://github.com/Ottodix/Eole-foobar-theme).
+A native Windows music player (WinUI 3 / .NET 10) styled after the [Eole theme](https://github.com/Ottodix/Eole-foobar-theme).
 
 ![release](https://img.shields.io/github/v/tag/wolfdate25/dawn-player?label=release&color=blue)
 
@@ -53,7 +52,7 @@ this marker).
   as DoP (DSD over PCM) packing to a DSD-capable DAC over WASAPI exclusive
 - **CUE sheet support** — scanning an album image (FLAC/WAV/APE etc.) plus its `.cue` indexes
   track-level virtual tracks so per-track playback, statistics and ratings work, while the
-  whole-image row is hidden (the foobar2000 way). Range playback continues on the gapless
+  whole-image row is hidden. Range playback continues on the gapless
   sequencer at sample precision
 - Exclusive-mode bit-depth policy (source/16/24/32-bit), latency buffer adjustment (30–500 ms)
 - **Parametric equalizer (per-device profiles)** — up to 8 bands of dynamic filters (peak EQ,
@@ -70,12 +69,12 @@ this marker).
 - **Headphone crossfeed** (Chu Moy phase, weak/medium/strong) and **mono downmix** — applied
   live during playback
 
-### Playlists / queue (foobar2000 style)
+### Playlists / queue
 - Multiple playlists (tabs), renaming, M3U8 auto-save / import / export
 - **Smart playlists** — play statistics (plays, last played, skips) recorded in SQLite generate
   and refresh "Most played / Recently added / Not played lately" lists automatically (updated on
   every play, no settings to touch)
-- **Query-based smart playlists** — build and edit smart playlists directly with foobar2000-style
+- **Query-based smart playlists** — build and edit smart playlists directly with expressive
   queries (`%rating% GREATER 3 AND %last_played% DURING LAST 30 DAYS LIMIT 50`). Strings
   (IS/HAS), numbers (GREATER, >=), dates (DURING LAST), MISSING/PRESENT, AND/OR/NOT, parentheses
 - **Track ratings** — 0–5 stars, set inline from any list row (playlist, library table, and the
@@ -149,7 +148,6 @@ this marker).
 
 ## Credits
 
-- [Eole foobar theme](https://github.com/Ottodix/Eole-foobar-theme) — UI design reference
+- [Eole theme](https://github.com/Ottodix/Eole-foobar-theme) — UI design reference
 - [NAudio](https://github.com/naudio/NAudio) / [NVorbis](https://github.com/njdrummond/NVorbis) — audio
 - [TagLib#](https://github.com/mono/taglib-sharp) — tags
-- foobar2000 — the source of functional inspiration
