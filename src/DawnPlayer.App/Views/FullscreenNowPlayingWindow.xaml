@@ -52,7 +52,12 @@
                                Visibility="Collapsed"/>
                 </StackPanel>
 
-                <!-- Waveform seek canvas: full envelope (muted) + played clip (accent) -->
+                <!-- Waveform seek canvas: full envelope (muted) + played clip (accent).
+                     The played clip is clipped on the POLYGON, not the canvas: a Canvas.Clip
+                     clips hit testing too, so with the clip on the canvas every click/drag
+                     ahead of the playhead (the normal "seek forward" gesture) silently landed
+                     outside the hit region and the canvas was unseekable forward (2026-10-08
+                     실측 — 클립 안쪽 클릭만 press 도달). -->
                 <Canvas x:Name="WaveCanvas" x:Uid="Fullscreen_WaveCanvas" Height="72" Background="Transparent"
                         PointerPressed="OnWavePointerPressed"
                         PointerMoved="OnWavePointerMoved"
@@ -60,16 +65,24 @@
                         PointerEntered="OnWavePointerEntered"
                         PointerExited="OnWavePointerExited"
                         AutomationProperties.LiveSetting="Polite">
-                    <Polygon x:Name="WaveUnplayed" Fill="{ThemeResource SeparatorBrush}" Opacity="0.9"/>
-                    <Polygon x:Name="WavePlayed" Fill="{ThemeResource DawnAccentBrush}"/>
+                    <!-- 피크 캡은 재생 구역에만 — 미재생 쪽 캡은 리미티드 마스터에서 풀스케일
+                         벽으로 읽혀 RMS 바디를 덮는다(2026-10-08 실측). 미재생은 RMS 바디만. -->
+                    <Polygon x:Name="WavePlayedPeak" Fill="{ThemeResource DawnAccentBrush}" Opacity="0.28">
+                        <Polygon.Clip>
+                            <RectangleGeometry x:Name="WavePlayedPeakClip" Rect="0,0,0,72"/>
+                        </Polygon.Clip>
+                    </Polygon>
+                    <Polygon x:Name="WaveUnplayed" Fill="{ThemeResource SeparatorBrush}"/>
+                    <Polygon x:Name="WavePlayed" Fill="{ThemeResource DawnAccentBrush}">
+                        <Polygon.Clip>
+                            <RectangleGeometry x:Name="WavePlayedClip" Rect="0,0,0,72"/>
+                        </Polygon.Clip>
+                    </Polygon>
                     <!-- PT3-10: A-B window mirrored on the fullscreen waveform. -->
                     <Rectangle x:Name="AbBand" Fill="{ThemeResource DawnAccentMutedBrush}" Visibility="Collapsed"/>
                     <Rectangle x:Name="AbMarkerA" Width="2" Fill="{ThemeResource DawnAccentTextBrush}" Visibility="Collapsed"/>
                     <Rectangle x:Name="AbMarkerB" Width="2" Fill="{ThemeResource DawnAccentTextBrush}" Visibility="Collapsed"/>
                     <Rectangle x:Name="WaveHoverLine" Width="1" Fill="{ThemeResource TextTertiaryBrush}" Visibility="Collapsed"/>
-                    <Canvas.Clip>
-                        <RectangleGeometry x:Name="WaveClip" Rect="0,0,0,72"/>
-                    </Canvas.Clip>
                 </Canvas>
                 <Grid>
                     <TextBlock x:Name="ElapsedText" Text="0:00" FontSize="{StaticResource FontCaption}"

@@ -34,12 +34,13 @@ public sealed partial class FullscreenNowPlayingWindow : Window
     private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer _timer;
     private bool _dragging;
     private double _dragFraction;
-    private float[]? _peaks;   // scan buckets for the current track
+    private WaveEnvelope? _envelope;   // peak + RMS scan buckets for the current track
     private int _generation;
 
     public FullscreenNowPlayingWindow()
     {
         InitializeComponent();
+        _current = this;
 
         TryEnterFullScreen();
         // Opt-in (default off — battery/GPU): acrylic behind the dim overlay keeps text contrast.
@@ -66,17 +67,55 @@ public sealed partial class FullscreenNowPlayingWindow : Window
             AppServices.CurrentTrackChanged -= OnTrackChanged;
             AppServices.LiveStreamTitleChanged -= OnLiveStreamTitle;
             AppServices.PlaybackStateChanged -= OnPlaybackStateChanged;
+            AppServices.RemoteArtResolved -= OnRemoteArt;
+            if (_current == this) _current = null;
         };
 
         BuildSpectrumBars();
         AppServices.CurrentTrackChanged += OnTrackChanged;
         AppServices.LiveStreamTitleChanged += OnLiveStreamTitle;
         AppServices.PlaybackStateChanged += OnPlaybackStateChanged;
+        // PT3-12 companion: a remote (M3U8) track's cover resolves after LoadCover already
+        // ran — mirror it here the same way the bar does, or fullscreen keeps the placeholder
+        // until the next track change.
+        AppServices.RemoteArtResolved += OnRemoteArt;
+
+        // Theme flip while fullscreen is open: ThemeResource XAML references update on their
+        // own, but the code-created spectrum bars hold a snapshot — re-read the token.
+        Root.ActualThemeChanged += (_, _) => RetintSpectrumBars();
 
         _timer.Start();
         OnTrackChanged(AppServices.Playback.CurrentItem);
         OnPlaybackStateChanged();
         OnFrame();
+    }
+
+    /// <summary>Single live instance — MainWindow re-entry (Alt-Tab back to the main window
+    /// and the title menu again) used to stack a second fullscreen window with its own frame
+    /// timer; Escape closed only the top one, which read as "Escape broken".</summary>
+    private static FullscreenNowPlayingWindow? _current;
+
+    /// <summary>Opens the fullscreen surface, or brings the existing one to the front.</summary>
+    public static void ShowOrActivate()
+    {
+        if (_current is { } existing)
+        {
+            existing.Activate();
+            return;
+        }
+        new FullscreenNowPlayingWindow().Activate();
+    }
+
+    private void OnRemoteArt(Core.Models.Track track)
+    {
+        if (!ReferenceEquals(AppServices.Playback?.CurrentItem?.Track, track)) return;
+        LoadCover(track);
+    }
+
+    private void RetintSpectrumBars()
+    {
+        foreach (var bar in _spectrumBars)
+            bar.Fill = (Brush)Microsoft.UI.Xaml.Application.Current.Resources["DawnAccentBrush"];
     }
 
     private void TryEnterFullScreen()
@@ -228,7 +267,7 @@ public sealed partial class FullscreenNowPlayingWindow : Window
 
     private void LoadTrack(PlaylistItem? item)
     {
-        _peaks = null;
+        _envelope = null;
         _generation++;
         TrackTitle.Text = item?.Track.Title ?? AppStrings.Get("NowPlaying_TrackTitle_Empty.Text", "재생 중인 트랙 없음");
         TrackArtist.Text = item?.Track.Artist ?? "";
@@ -237,7 +276,9 @@ public sealed partial class FullscreenNowPlayingWindow : Window
         CoverPlaceholder.Visibility = Visibility.Visible;
         WavePlayed.Points.Clear();
         WaveUnplayed.Points.Clear();
-        WaveClip.Rect = new Rect(0, 0, 0, WaveHeight);
+        WavePlayedPeak.Points.Clear();
+        WavePlayedClip.Rect = new Rect(0, 0, 0, WaveHeight);
+        WavePlayedPeakClip.Rect = new Rect(0, 0, 0, WaveHeight);
 
         var track = item?.Track;
         if (track == null) return;
@@ -251,7 +292,7 @@ public sealed partial class FullscreenNowPlayingWindow : Window
                 // Guard against a superseded track whose scan already started.
                 if (string.IsNullOrEmpty(path) || AppServices.Playback.CurrentItem?.Track.Path != path)
                     return (generation, null);
-                return (generation, WaveformPeaks.GetOrScan(path, WaveformLayout.DefaultScanBuckets));
+                return (generation, WaveformPeaks.GetOrScanEnvelope(path, WaveformLayout.DefaultScanBuckets));
             }
             catch
             {
@@ -264,7 +305,7 @@ public sealed partial class FullscreenNowPlayingWindow : Window
             DispatcherQueue.TryEnqueue(() =>
             {
                 if (t.Result.Item1 != _generation) return;
-                _peaks = t.Result.Item2;
+                _envelope = t.Result.Item2;
                 UpdateWaveGeometry();
             });
         });
@@ -308,27 +349,42 @@ public sealed partial class FullscreenNowPlayingWindow : Window
         });
     }
 
-    /// <summary>Rebuilds the mirrored envelope polygons from the decimated peaks. Call after
-    /// size changes and scan completion; the played overlay shares the geometry via clipping.</summary>
+    /// <summary>Rebuilds the mirrored envelope polygons from the decimated scan. Call after
+    /// size changes and scan completion; the played overlay shares the geometry via clipping.
+    /// Two layers per side: the RMS body carries the audible dynamics (raw max-abs reads as a
+    /// solid wall on limited masters — every bucket holds one near-full-scale transient) and
+    /// the translucent peak caps above it mark the true limits.</summary>
     private void UpdateWaveGeometry()
     {
         double width = WaveCanvas.ActualWidth;
         if (width <= 0 || double.IsNaN(width)) return;
 
-        if (_peaks == null || _peaks.Length == 0)
+        if (_envelope == null || _envelope.Peaks.Length == 0)
         {
             WavePlayed.Points.Clear();
             WaveUnplayed.Points.Clear();
+            WavePlayedPeak.Points.Clear();
             return;
         }
 
         int bars = Math.Clamp((int)(width / 3), 24, WaveformLayout.DefaultScanBuckets);
-        float[] display = WaveformLayout.Decimate(_peaks, bars);
+        float[] peakDisplay = WaveformLayout.Decimate(_envelope.Peaks, bars);
+        float[] rmsDisplay = WaveformLayout.Decimate(_envelope.Rms, bars);
+
+        // Per-track normalization: scale the RMS body so its 95th percentile reaches ~85%
+        // height. A fixed gain saturates on limited masters (their RMS already sits near the
+        // clamp — the body read as a wall again) and under-reads quiet ones.
+        float denominator = Percentile(rmsDisplay, 0.95f);
+        float gain = denominator > 0.02f ? 0.85f / denominator : 2.8f;
+        for (int i = 0; i < rmsDisplay.Length; i++)
+            rmsDisplay[i] = Math.Clamp(rmsDisplay[i] * gain, 0f, 1f);
+
         double mid = WaveHeight / 2.0;
         double halfMax = WaveHeight / 2.0 - 2;
 
-        WavePlayed.Points = BuildEnvelope(display, bars, width, mid, halfMax);
-        WaveUnplayed.Points = BuildEnvelope(display, bars, width, mid, halfMax);
+        WavePlayedPeak.Points = BuildEnvelope(peakDisplay, bars, width, mid, halfMax);
+        WaveUnplayed.Points = BuildEnvelope(rmsDisplay, bars, width, mid, halfMax);
+        WavePlayed.Points = BuildEnvelope(rmsDisplay, bars, width, mid, halfMax);
         ApplyWaveClip(CurrentFraction());
     }
 
@@ -357,6 +413,16 @@ public sealed partial class FullscreenNowPlayingWindow : Window
         return points;
     }
 
+    /// <summary>Nearest-rank percentile of a value array (0..1 fraction). Empty arrays return 0.</summary>
+    private static float Percentile(float[] values, float fraction)
+    {
+        if (values.Length == 0) return 0;
+        var sorted = (float[])values.Clone();
+        Array.Sort(sorted);
+        int index = Math.Clamp((int)Math.Ceiling(fraction * sorted.Length) - 1, 0, sorted.Length - 1);
+        return sorted[index];
+    }
+
     // ---------- seek interaction ----------
 
     private void OnWavePointerPressed(object sender, PointerRoutedEventArgs e)
@@ -364,6 +430,10 @@ public sealed partial class FullscreenNowPlayingWindow : Window
         _dragging = true;
         WaveCanvas.CapturePointer(e.Pointer);
         UpdateSeekPreview(e);
+    }
+
+    private void OnWavePointerEntered(object sender, PointerRoutedEventArgs e)
+    {
     }
 
     private void OnWavePointerMoved(object sender, PointerRoutedEventArgs e)
@@ -384,10 +454,6 @@ public sealed partial class FullscreenNowPlayingWindow : Window
             TextFormat.LongDuration(TimeSpan.FromSeconds(fraction * playback.Duration.TotalSeconds)));
         WaveHoverLine.Visibility = Visibility.Visible;
         Microsoft.UI.Xaml.Controls.Canvas.SetLeft(WaveHoverLine, x);
-    }
-
-    private void OnWavePointerEntered(object sender, PointerRoutedEventArgs e)
-    {
     }
 
     private void OnWavePointerExited(object sender, PointerRoutedEventArgs e)
@@ -424,7 +490,9 @@ public sealed partial class FullscreenNowPlayingWindow : Window
 
     private void ApplyWaveClip(double fraction)
     {
-        WaveClip.Rect = new Rect(0, 0, WaveformLayout.FractionToX(fraction, WaveCanvas.ActualWidth), WaveHeight);
+        var playedWidth = WaveformLayout.FractionToX(fraction, WaveCanvas.ActualWidth);
+        WavePlayedClip.Rect = new Rect(0, 0, playedWidth, WaveHeight);
+        WavePlayedPeakClip.Rect = new Rect(0, 0, playedWidth, WaveHeight);
     }
 
     // ---------- 10 Hz frame: progress + spectrum ----------

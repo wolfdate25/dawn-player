@@ -4,17 +4,18 @@ using DawnPlayer.Core.Util;
 namespace DawnPlayer.Core.Audio;
 
 /// <summary>
-/// Peak envelope of a track: one max-abs float per bucket (0..1 nominal). Results are cached in
-/// memory keyed by (path, range, file mtime) — a rescan of the same file replaces the entry, and
-/// the cache is trimmed oldest-first when it overflows. Currently without a UI surface (the
-/// bottom bar proved too small to show a whole-track envelope legibly); kept for a future
-/// large-canvas view such as a full-screen Now Playing page.
+/// Peak envelope of a track: one max-abs float per bucket (0..1 nominal) plus the matching
+/// RMS body. Results are cached in memory keyed by (path, range, file mtime) — a rescan of
+/// the same file replaces the entry, and the cache is trimmed oldest-first when it overflows.
+/// The fullscreen Now Playing canvas renders the RMS body with the peak as a translucent cap:
+/// raw max-abs alone reads as a solid wall on modern limited masters (every ~0.5 s bucket
+/// contains one near-full-scale transient), while RMS carries the audible dynamics.
 /// </summary>
 public static class WaveformPeaks
 {
     private const int DefaultBuckets = 480;
 
-    private sealed record CacheEntry(long MtimeTicks, float[] Peaks, long LastUsedTicks);
+    private sealed record CacheEntry(long MtimeTicks, WaveEnvelope Envelope, long LastUsedTicks);
 
     private static readonly ConcurrentDictionary<string, CacheEntry> Cache = new(StringComparer.OrdinalIgnoreCase);
     private const int MaxCacheEntries = 48;
@@ -24,6 +25,13 @@ public static class WaveformPeaks
     /// null when the file cannot be opened/decoded. Blocking — call off the UI thread.
     /// </summary>
     public static float[]? GetOrScan(string path, int buckets = DefaultBuckets)
+        => GetOrScanEnvelope(path, buckets)?.Peaks;
+
+    /// <summary>
+    /// Returns the peak + RMS envelopes for a track path, or null when the file cannot be
+    /// opened/decoded. Blocking — call off the UI thread.
+    /// </summary>
+    public static WaveEnvelope? GetOrScanEnvelope(string path, int buckets = DefaultBuckets)
     {
         if (string.IsNullOrEmpty(path) || buckets < 16) return null;
 
@@ -43,13 +51,13 @@ public static class WaveformPeaks
         if (Cache.TryGetValue(key, out var cached) && cached.MtimeTicks == mtime)
         {
             Cache[key] = cached with { LastUsedTicks = Environment.TickCount64 };
-            return cached.Peaks;
+            return cached.Envelope;
         }
 
-        float[]? peaks = null;
+        WaveEnvelope? envelope = null;
         try
         {
-            peaks = Scan(path, buckets);
+            envelope = Scan(path, buckets);
         }
         catch (Exception ex)
         {
@@ -57,23 +65,23 @@ public static class WaveformPeaks
             Log.Debug($"[waveform] scan failed for '{path}': {ex.Message}");
         }
 
-        if (peaks != null)
+        if (envelope != null)
         {
-            Cache[key] = new CacheEntry(mtime, peaks, Environment.TickCount64);
+            Cache[key] = new CacheEntry(mtime, envelope, Environment.TickCount64);
             Trim();
         }
         else
         {
             Cache.TryRemove(key, out _);
         }
-        return peaks;
+        return envelope;
     }
 
     /// <summary>Drops the cached envelope for a path (tag edits etc. invalidate nothing here
     /// because the mtime key already re-scans, but callers may free memory explicitly).</summary>
     public static void Invalidate(string path) => Cache.TryRemove(path, out _);
 
-    private static float[]? Scan(string path, int buckets)
+    private static WaveEnvelope? Scan(string path, int buckets)
     {
         // Open the PHYSICAL file: TotalTime here must be the parent's duration. Opening the
         // fragment path wraps it in a CueTrackReader whose TotalTime is the range length —
@@ -100,6 +108,8 @@ public static class WaveformPeaks
         reader.CurrentTime = TimeSpan.FromMilliseconds(startMs);
 
         var peaks = new float[buckets];
+        var sumSquares = new double[buckets];
+        var framesInBucket = new long[buckets];
         double framesPerBucket = totalFrames / (double)buckets;
 
         var buffer = new float[fmt.SampleRate * fmt.Channels]; // ~1 s slices
@@ -120,11 +130,16 @@ public static class WaveformPeaks
                     if (a > max) max = a;
                 }
                 if (max > peaks[frameBucket]) peaks[frameBucket] = max;
+                sumSquares[frameBucket] += (double)max * max;
+                framesInBucket[frameBucket]++;
             }
         }
 
         // A file shorter than its tags claim just leaves the tail buckets at 0.
-        return peaks;
+        var rms = new float[buckets];
+        for (int b = 0; b < buckets; b++)
+            rms[b] = framesInBucket[b] > 0 ? (float)Math.Sqrt(sumSquares[b] / framesInBucket[b]) : 0;
+        return new WaveEnvelope(peaks, rms);
     }
 
     private static void Trim()
@@ -141,3 +156,7 @@ public static class WaveformPeaks
         }
     }
 }
+
+/// <summary>Per-bucket peak and RMS envelopes (0..1 nominal), same bucket count. The RMS body
+/// carries the audible dynamics; the peak caps mark the true limits.</summary>
+public sealed record WaveEnvelope(float[] Peaks, float[] Rms);

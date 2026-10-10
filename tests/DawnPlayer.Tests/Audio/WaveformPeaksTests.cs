@@ -88,6 +88,58 @@ public sealed class WaveformPeaksTests
         Assert.Null(WaveformPeaks.GetOrScan(""));
     }
 
+    [Fact]
+    public void ScanEnvelope_RmsTracksLoudness_BelowPeak()
+    {
+        var dir = NewTempDir();
+        try
+        {
+            // 사인(진폭 0.8): 버킷 피크 = 진폭, RMS = 진폭×0.707. RMS가 피크의 청량감 대비를
+            // 담는지(≤ 피크, 0.707 비율)와 무음 구간이 0으로 남는지 고정한다.
+            var file = Path.Combine(dir, "fade.wav");
+            File.WriteAllBytes(file, MinimalWav(22050, 1, 440.0, 2.0, amplitude: 0.8, fadeOutAfterSeconds: 1.0));
+
+            var loud = WaveformPeaks.GetOrScanEnvelope(AppPaths.MakeCuePath(file, 0, 1000), buckets: 50)!;
+            var quiet = WaveformPeaks.GetOrScanEnvelope(AppPaths.MakeCuePath(file, 1000, 2000), buckets: 50)!;
+
+            Assert.Equal(50, loud.Peaks.Length);
+            Assert.Equal(50, loud.Rms.Length);
+            for (int i = 0; i < loud.Peaks.Length; i++)
+            {
+                Assert.True(loud.Rms[i] <= loud.Peaks[i] + 1e-4f,
+                    $"bucket {i}: rms {loud.Rms[i]} > peak {loud.Peaks[i]}");
+                Assert.True(loud.Rms[i] > 0.4f, $"bucket {i}: rms {loud.Rms[i]} too quiet");
+            }
+            Assert.True(Math.Abs(loud.Peaks.Average() - 0.8f) < 0.06f, $"peak avg {loud.Peaks.Average()}");
+            Assert.True(Math.Abs(loud.Rms.Average() - 0.8f * 0.707) < 0.07f, $"rms avg {loud.Rms.Average()}");
+
+            Assert.True(quiet.Peaks.Max() < 0.05f, $"quiet half peak {quiet.Peaks.Max()}");
+            Assert.True(quiet.Rms.Max() < 0.05f, $"quiet half rms {quiet.Rms.Max()}");
+        }
+        finally
+        {
+            Cleanup(dir);
+        }
+    }
+
+    [Fact]
+    public void GetOrScan_ReturnsTheEnvelopePeaks_SameInstance()
+    {
+        var dir = NewTempDir();
+        try
+        {
+            var file = Path.Combine(dir, "tone.wav");
+            File.WriteAllBytes(file, MinimalWav(44100, 1, 440.0, 0.5, amplitude: 0.5));
+
+            var envelope = WaveformPeaks.GetOrScanEnvelope(file, buckets: 60)!;
+            Assert.Same(envelope.Peaks, WaveformPeaks.GetOrScan(file));
+        }
+        finally
+        {
+            Cleanup(dir);
+        }
+    }
+
     private static string NewTempDir()
     {
         var dir = Path.Combine(Path.GetTempPath(), $"DawnPlayer_Waveform_{Guid.NewGuid():N}");

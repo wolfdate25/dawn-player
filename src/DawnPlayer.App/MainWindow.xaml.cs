@@ -847,7 +847,7 @@ public sealed partial class MainWindow : Window
         if (_isMiniMode) ToggleMiniMode();
         try
         {
-            new Views.FullscreenNowPlayingWindow().Activate();
+            Views.FullscreenNowPlayingWindow.ShowOrActivate();
         }
         catch (Exception ex)
         {
