@@ -163,6 +163,19 @@ public sealed class SettingsViewModelTests
 
         playback.ReplayGainPreventClipping = false;
         Assert.False(settings.Playback.ReplayGainPreventClipping);
+
+        // Crossfade Clamping [0.0, 10.0] & Display
+        playback.CrossfadeDurationSeconds = 3.5;
+        Assert.Equal(3.5, settings.Playback.CrossfadeDurationSeconds, 1);
+        Assert.Contains("3.5", playback.CrossfadeDurationDisplay);
+
+        playback.CrossfadeDurationSeconds = -2.0;
+        Assert.Equal(0.0, settings.Playback.CrossfadeDurationSeconds, 1);
+        Assert.Contains("갭리스", playback.CrossfadeDurationDisplay);
+
+        playback.CrossfadeDurationSeconds = 15.0;
+        Assert.Equal(10.0, settings.Playback.CrossfadeDurationSeconds, 1);
+        Assert.Contains("10.0", playback.CrossfadeDurationDisplay);
     }
 
     [Fact]

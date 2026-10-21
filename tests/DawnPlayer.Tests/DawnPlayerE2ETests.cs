@@ -186,8 +186,11 @@ public sealed class DawnPlayerE2ETests
 
             try
             {
-                window = app.GetMainWindow(automation, TimeSpan.FromSeconds(2));
-                if (window != null) break;
+                var wins = app.GetAllTopLevelWindows(automation);
+                window = wins.FirstOrDefault(w => w.Title == "Dawn Player")
+                         ?? wins.FirstOrDefault(w => !string.IsNullOrEmpty(w.Title))
+                         ?? app.GetMainWindow(automation, TimeSpan.FromSeconds(1));
+                if (window != null && !string.IsNullOrEmpty(window.Title)) break;
             }
             catch { }
             Thread.Sleep(200);

@@ -31,8 +31,9 @@ this marker).
 - **WASAPI exclusive output** — bit-perfect direct output. Falls back to shared mode
   automatically (with a notification) when the device does not support the format or another
   app is holding the device
-- **Gapless playback** — a sequencer where track boundaries continue at sample precision. The
-  next track's decoder is opened in advance (prefetch) and chained without a gap
+- **Gapless & crossfade playback** — a sequencer where track boundaries continue at sample precision. The
+  next track's decoder is opened in advance (prefetch) and chained without a gap. Optional track-to-track
+  crossfade (0.0–10.0s, equal-power cosine mixing, 0s = bit-perfect gapless) for smooth transitions
 - Exclusive-mode sample-rate mismatch policy — rebuild the output session at the track boundary
   (bit-perfect) or keep the session running and resample (seamless), as you prefer
 - **Internet radio** — Icecast/Shoutcast MP3 streaming with station/song info from ICY metadata.
@@ -55,9 +56,10 @@ this marker).
   whole-image row is hidden. Range playback continues on the gapless
   sequencer at sample precision
 - Exclusive-mode bit-depth policy (source/16/24/32-bit), latency buffer adjustment (30–500 ms)
-- **Parametric equalizer (per-device profiles)** — up to 8 bands of dynamic filters (peak EQ,
+- **Parametric equalizer & AutoEq import** — up to 20 bands of dynamic filters (peak EQ,
   low/high shelf, low/high pass), preamp (±12 dB), per-device profiles with a common default
-  fallback, live apply during playback and bit-perfect bypass
+  fallback, live apply during playback and bit-perfect bypass. Direct import of headphone calibration
+  measurements from AutoEq (ParametricEQ.txt), plus profile backup and sharing (.dpeq / JSON)
 - **ReplayGain** (track/album gain, preamp, clipping prevention) — FLAC/OGG (Xiph) and MP3
   (ID3v2 TXXX) tags
 - **Convolution (impulse response)** — room/speaker/headphone correction with impulse files
@@ -89,13 +91,18 @@ this marker).
   default)
 - Sorting (title/artist/album·track/path/random/reverse), duplicate removal, group-by toggle +
   drag reordering in flat mode
+- **Playlist undo / redo** — full multi-step history for track additions, deletions, reordering,
+  sorting, and duplicate removal (Ctrl+Z / Ctrl+Y)
 
 ### Library
 - Music folder indexing (SQLite, incremental scan), artist/album/genre filter browser + search
-- **WAV converter** — export playlist tracks to WAV (CUE image splitting, ReplayGain baking,
-  tags and artwork included)
-- **Tag editor** — edit metadata and album art from the track/album context menu, atomic
-  (file-replace) saving
+- **Audio converter (Transcoder)** — export playlist/library tracks to WAV, FLAC, MP3, Opus, or AAC (via ffmpeg).
+  Supports CUE image splitting, ReplayGain volume baking, bitrate/compression presets, and automatic tag & artwork copying
+- **File organizer & batch renamer** — organize and rename music files using customizable metadata patterns
+  (e.g. `%artist%/[%year% - ]%album%/[%tracknumber% - ]%title%`), with live preview, collision policies (auto-rename/skip/overwrite),
+  and atomic SQLite database & playlist path synchronization
+- **Tag editor** — edit metadata, album art, and embedded lyrics (ID3v2 USLT, Vorbis LYRICS, MP4 ©lyr)
+  from the track/album context menu, with atomic file-replace saving and LRC import
 - **ReplayGain batch analysis** — an EBU R128 loudness scanner (−18 LUFS) computes per-track and
   per-album gains, writes them to tags (REPLAYGAIN_*) and the database, and feeds volume
   normalization immediately. **ReplayGain 2.0 tags** (R128_TRACK_GAIN / R128_ALBUM_GAIN) can be
@@ -113,8 +120,7 @@ this marker).
   adjustment
 - **Online lyrics plugins** — per-site lyric search via .NET DLL plugins. Plugin priorities,
   auto-search during playback (offline lyrics first), title/artist/album search window,
-  preview before apply, saving online lyrics as offline .lrc — with save location (source
-  folder/custom folder) and file-name templates (`%title%` etc.)
+  preview before apply, saving online lyrics as offline .lrc files or directly embedding into audio tags
 - Bundled site plugins (samples): LRCLIB + Alsong — copy the built DLL into the plugins
   folder and rescan to enable
 - Standard/multi-timestamp/`[offset:]`/extended (word-level) LRC support, UTF-8/ANSI auto
@@ -126,10 +132,12 @@ this marker).
 - Multilingual UI — Korean / English / 日本語. Pick the language in Settings → Appearance & theme
   (system default supported); the whole UI shows it after a restart
 - Playlists with album group headers (art + metadata) — Eole's signature layout
+- **In-playlist search (Find & Jump / `Ctrl+F`)** — instant search preserving album grouping and order, with sequential match navigation (`Enter`/`F3` next, `Shift+Enter`/`Shift+F3` prev, `Esc` close)
+- **Jump to current track (`Ctrl+J` / now-playing bar click)** — click the track title/artist in the bottom bar or press `Ctrl+J` to automatically switch to the owning playlist and scroll to the active track
 - Bottom player bar: album art, seek, transport, volume, queue badge, lyrics toggle
 - SMTC integration — media keys / OS media overlay / volume popup control
-- 17 shortcuts — playback (`Space` play/pause, `Ctrl+S` stop, `Ctrl+←/→` previous/next,
-  `Ctrl+H` shuffle, `Ctrl+R` repeat, `Ctrl+Shift+S` stop after track), navigation (`←/→` ±5 s,
+- 18 shortcuts — playback (`Space` play/pause, `Ctrl+S` stop, `Ctrl+←/→` previous/next,
+  `Ctrl+H` shuffle, `Ctrl+R` repeat, `Ctrl+Shift+S` stop after track), navigation (`Ctrl+J` jump to track, `←/→` ±5 s,
   `Ctrl+B` start of track), volume (`Ctrl+↑/↓`, `Ctrl+M` mute), windows (`L` lyrics, `Ctrl+F`
   search, `Ctrl+P` settings)
 - Shortcut rebinding: remap every command in Settings → Shortcuts (conflict detection,

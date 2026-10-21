@@ -158,6 +158,7 @@
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
@@ -181,6 +182,9 @@
                     <!-- PT2-12: multi-selection used to be invisible until a menu was opened. -->
                     <TextBlock x:Name="PlaylistSelectionText" Text="" FontSize="{StaticResource FontBodySmall}"
                                Foreground="{ThemeResource DawnAccentTextBrush}" VerticalAlignment="Center" Visibility="Collapsed"/>
+                    <Button x:Uid="Playlist_SearchButton" Click="OnOpenSearchClick" Style="{StaticResource TransportButton}" Width="28" Height="28" ToolTipService.ToolTip="재생목록 검색 (Ctrl+F)">
+                        <FontIcon Glyph="&#xE721;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                    </Button>
                     <Button x:Uid="Playlist_ToolsButton" Style="{StaticResource TransportButton}" Width="28" Height="28" ToolTipService.ToolTip="재생목록 도구 및 정렬">
                         <FontIcon Glyph="&#xE712;" FontSize="13" Foreground="{ThemeResource TextSecondaryBrush}"/>
                         <Button.Flyout>
@@ -193,6 +197,13 @@
                                 </MenuFlyoutItem>
                                 <MenuFlyoutItem x:Uid="Playlist_ToolsMenu_Import" Text="재생목록 파일 가져오기 (M3U8)..." Click="OnImportPlaylistClick">
                                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8E5;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutSeparator/>
+                                <MenuFlyoutItem x:Uid="Playlist_ToolsMenu_Undo" x:Name="UndoMenuItem" Text="실행 취소 (Ctrl+Z)" Click="OnUndoClick">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE7A7;"/></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem x:Uid="Playlist_ToolsMenu_Redo" x:Name="RedoMenuItem" Text="다시 실행 (Ctrl+Y)" Click="OnRedoClick">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE7A6;"/></MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
                                 <MenuFlyoutSeparator/>
                                 <ToggleMenuFlyoutItem x:Uid="Playlist_ToolsMenu_GroupToggle" x:Name="GroupToggleMenuItem" Text="앨범별 그룹화 표시" IsChecked="True" Click="OnGroupToggle"/>
@@ -236,8 +247,66 @@
             <!-- Hairline Divider -->
             <Border Grid.Row="0" Height="1" VerticalAlignment="Bottom" Background="{ThemeResource SeparatorSubtleBrush}" Margin="20,0,20,0"/>
 
+            <!-- Row 1: Inline Search Bar (Ctrl+F) -->
+            <Border x:Name="InlineSearchBar" Grid.Row="1" Visibility="Collapsed"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource SeparatorSubtleBrush}" BorderThickness="0,0,0,1"
+                    Padding="20,8,20,8">
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="260"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Search Glyph -->
+                    <FontIcon Grid.Column="0" Glyph="&#xE721;" FontSize="13"
+                              Foreground="{ThemeResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+
+                    <!-- Search Input Box -->
+                    <TextBox x:Name="PlaylistSearchBox" Grid.Column="1"
+                             x:Uid="Playlist_SearchBox"
+                             PlaceholderText="재생목록에서 검색…"
+                             FontSize="{StaticResource FontBodySmall}"
+                             VerticalAlignment="Center"
+                             TextChanged="OnSearchBoxTextChanged"
+                             KeyDown="OnSearchBoxKeyDown"/>
+
+                    <!-- Match Count Text -->
+                    <TextBlock x:Name="PlaylistSearchCountText" Grid.Column="2"
+                               Text="" FontSize="{StaticResource FontCaption}"
+                               Foreground="{ThemeResource TextTertiaryBrush}"
+                               VerticalAlignment="Center" Margin="4,0,4,0"/>
+
+                    <!-- Prev Match Button -->
+                    <Button x:Name="PlaylistSearchPrevButton" Grid.Column="3"
+                            Click="OnSearchPrevClick" Style="{StaticResource TransportButton}"
+                            Width="28" Height="28" ToolTipService.ToolTip="이전 (Shift+Enter, Shift+F3)">
+                        <FontIcon Glyph="&#xE70E;" FontSize="12" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                    </Button>
+
+                    <!-- Next Match Button -->
+                    <Button x:Name="PlaylistSearchNextButton" Grid.Column="4"
+                            Click="OnSearchNextClick" Style="{StaticResource TransportButton}"
+                            Width="28" Height="28" ToolTipService.ToolTip="다음 (Enter, F3)">
+                        <FontIcon Glyph="&#xE70D;" FontSize="12" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                    </Button>
+
+                    <!-- Close Button (Far Right) -->
+                    <Button x:Name="PlaylistSearchCloseButton" Grid.Column="6"
+                            Click="OnSearchCloseClick" Style="{StaticResource TransportButton}"
+                            Width="28" Height="28" ToolTipService.ToolTip="닫기 (Esc)">
+                        <FontIcon Glyph="&#xE711;" FontSize="11" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                    </Button>
+                </Grid>
+            </Border>
+
             <!-- Main Track List -->
-            <Grid Grid.Row="1">
+            <Grid Grid.Row="2">
                 <ListView x:Name="PlaylistList"
                               SelectionChanged="OnPlaylistSelectionChanged"
                           SelectionMode="Extended"
@@ -439,8 +508,11 @@
                                 <MenuFlyoutSeparator/>
                                 <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Unrate" Text="평점 없음" Click="OnUnrateItems"/>
                             </MenuFlyoutSubItem>
-                            <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Convert" Text="WAV로 변환..." Click="OnConvertItems">
+                            <MenuFlyoutItem x:Uid="Playlist_TrackMenu_Convert" Text="오디오 변환…" Click="OnConvertItems">
                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8E5;"/></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem x:Uid="Playlist_TrackMenu_FileOps" Text="파일 정리 (이름 변경/이동)…" Click="OnFileOpsItems">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8B7;"/></MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                             <MenuFlyoutSeparator/>
                             <MenuFlyoutItem x:Uid="Playlist_TrackMenu_MoveUp" Text="위로 이동 (Alt+↑)" Click="OnMoveUpClick">

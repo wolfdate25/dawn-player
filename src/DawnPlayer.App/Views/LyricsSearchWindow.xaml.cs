@@ -274,6 +274,43 @@ public sealed partial class LyricsSearchWindow : Window
         PreviewText.Text = LrcParser.Format(fetched.Document);
         ApplyButton.IsEnabled = true;
         SaveButton.IsEnabled = true;
+        EmbedButton.IsEnabled = CanEmbedLyrics();
+    }
+
+    private bool CanEmbedLyrics() =>
+        _track != null &&
+        _track.SourceKind == Core.Models.TrackSourceKind.File &&
+        !string.IsNullOrEmpty(_track.Path) &&
+        !_track.Path.Contains("#cue=") &&
+        System.IO.File.Exists(_track.Path);
+
+    private async void OnEmbedClick(object sender, RoutedEventArgs e)
+    {
+        if (_closed || ResultsList.SelectedItem is not LyricsResultItemVm vm) return;
+        var fetched = vm.Fetched ?? await FetchSelectedAsync(vm);
+        if (fetched == null)
+        {
+            StatusText.Text = AppStrings.Get("LyricsSearch_SaveFailed_NoLyrics", "가사를 가져올 수 없어 저장하지 못했습니다.");
+            return;
+        }
+
+        if (!CanEmbedLyrics())
+        {
+            StatusText.Text = AppStrings.Get("LyricsSearch_EmbedNotSupported", "이 파일 형식이나 스트림은 태그 임베딩을 지원하지 않습니다.");
+            return;
+        }
+
+        string lrcContent = LrcParser.Format(fetched.Document);
+        var writeRes = Core.Library.TagWriter.TryApplyAtomic(_track!.Path, new Core.Library.TagEdit(Lyrics: lrcContent));
+        if (writeRes == Core.Library.TagWriteResult.Ok)
+        {
+            StatusText.Text = AppStrings.Format("LyricsSearch_EmbedSuccess", "'{0}' 오디오 태그에 가사를 저장했습니다.", System.IO.Path.GetFileName(_track.Path)) + StaleTrackNote();
+            AppServices.LyricsOnline?.ApplyResult(fetched, _track);
+        }
+        else
+        {
+            StatusText.Text = AppStrings.Format("LyricsSearch_EmbedFailed", "오디오 태그 저장 실패: {0}", writeRes);
+        }
     }
 
     private async void OnApplyClick(object sender, RoutedEventArgs e)

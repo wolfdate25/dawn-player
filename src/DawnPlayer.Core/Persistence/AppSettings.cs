@@ -100,6 +100,12 @@ public sealed class PlaybackSettings
 
     /// <summary>Fold every channel to the average signal (mono check / single-ear listening).</summary>
     public bool MonoDownmixEnabled { get; set; }
+
+    /// <summary>
+    /// Duration of crossfade overlap mixing between tracks in seconds (0.0 to 10.0s).
+    /// Default 0.0s keeps pure sample-accurate gapless playback.
+    /// </summary>
+    public double CrossfadeDurationSeconds { get; set; }
     public RepeatMode Repeat { get; set; } = RepeatMode.All;
     public ReplayGainMode ReplayGain { get; set; } = ReplayGainMode.Off;
     public double ReplayGainPreampDb { get; set; } // -12..+12

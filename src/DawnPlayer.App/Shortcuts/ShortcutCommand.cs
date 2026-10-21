@@ -22,7 +22,10 @@ public enum ShortcutCommand
     MuteToggle,
     ToggleLyrics,
     FocusSearch,
-    OpenPreferences
+    OpenPreferences,
+    PlaylistUndo,
+    PlaylistRedo,
+    JumpToCurrentTrack
 }
 
 /// <summary>Grouping used to build the section headers in the settings list.</summary>
@@ -31,5 +34,6 @@ public enum ShortcutCategory
     Playback,
     Seek,
     Volume,
+    Playlist,
     Navigation
 }

@@ -415,6 +415,8 @@
                                         <Button x:Uid="Settings_Eq_RenameProfile_Button" Content="이름 변경" Click="OnEqRenameProfileClick" ToolTipService.ToolTip="프로필 이름 변경"/>
                                         <Button x:Uid="Settings_Eq_DeleteProfile_Button" Content="삭제" Click="OnEqDeleteProfileClick"
                                                 IsEnabled="{x:Bind ViewModel.Equalizer.CanDeleteProfile, Mode=OneWay}" ToolTipService.ToolTip="현재 프로필 삭제"/>
+                                        <Button x:Uid="Settings_Eq_Import_Button" Content="가져오기" Click="OnEqImportProfileClick" ToolTipService.ToolTip="AutoEq 파일(.txt) 또는 프리셋(.dpeq, .json) 가져오기"/>
+                                        <Button x:Uid="Settings_Eq_Export_Button" Content="내보내기" Click="OnEqExportProfileClick" ToolTipService.ToolTip="현재 프로필 내보내기"/>
                                     </StackPanel>
                                 </Grid>
 
@@ -660,6 +662,39 @@
                     <!-- ==================== 3. PLAYBACK & NORMALIZER SECTION ==================== -->
                     <StackPanel x:Name="Section_Playback" Visibility="{x:Bind BooleanToVisibility(ViewModel.IsPlaybackCategorySelected), Mode=OneWay}" Spacing="0">
                         <TextBlock x:Uid="Settings_Playback_Header" Text="재생 &amp; 음량 정규화 (Playback &amp; Normalizer)" Style="{StaticResource CategoryHeader}"/>
+
+                        <!-- Track Transition / Crossfade Card -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <StackPanel Spacing="10">
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock x:Uid="Settings_Playback_Crossfade_Title" Text="트랙 간 크로스페이드 (Crossfade)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Playback_Crossfade_Desc" Text="트랙 전환 시 부드러운 오버랩 페이드인/페이드아웃을 적용합니다. 0초로 설정하면 무음 없이 즉시 이어지는 갭리스(Gapless) 모드로 재생됩니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <Grid Grid.Column="1" HorizontalAlignment="Right" Width="300" ColumnSpacing="6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="48"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="48"/>
+                                            <ColumnDefinition Width="80"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="0s" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        <Slider x:Uid="Settings_Playback_Crossfade_A11yName" Grid.Column="1" Minimum="0" Maximum="10" StepFrequency="0.5"
+                                                Value="{x:Bind ViewModel.Playback.CrossfadeDurationSeconds, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="2" Text="10s" FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="3" Text="{x:Bind ViewModel.Playback.CrossfadeDurationDisplay, Mode=OneWay}"
+                                                   FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                   Foreground="{ThemeResource TextSecondaryBrush}"/>
+                                    </Grid>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
 
                         <!-- 1. Hybrid Dynamic Normalizer Card -->
                         <Border Style="{StaticResource SectionCard}">

@@ -59,6 +59,26 @@ public sealed class EqSettingsService : IEqSettingsService
         return clamped.Clone();
     }
 
+    public EqProfile ImportProfile(EqProfile profile)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        _settings.Equalizer.EnsureDefaultProfile();
+
+        string newId = Guid.NewGuid().ToString("N");
+        var cloned = profile.Clone();
+        cloned.Id = newId;
+        if (string.IsNullOrWhiteSpace(cloned.Name))
+        {
+            cloned.Name = AppStrings.Get("Eq_DefaultProfileName", "새 프로필");
+        }
+
+        var clamped = ClampProfile(cloned);
+        _settings.Equalizer.Profiles[newId] = clamped;
+
+        _saveCallback?.Invoke();
+        return clamped.Clone();
+    }
+
     public void RenameProfile(string profileId, string newName)
     {
         if (string.IsNullOrEmpty(profileId) || string.IsNullOrWhiteSpace(newName)) return;

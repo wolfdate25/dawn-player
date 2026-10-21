@@ -96,12 +96,36 @@ internal static class ShortcutCommandExecutor
                 break;
 
             case ShortcutCommand.FocusSearch:
-                window?.FocusLibrarySearch();
+                window?.FocusSearch();
+                break;
+
+            case ShortcutCommand.JumpToCurrentTrack:
+                window?.JumpToCurrentTrack();
                 break;
 
             case ShortcutCommand.OpenPreferences:
                 window?.NavigateToSettings();
                 break;
+
+            case ShortcutCommand.PlaylistUndo:
+            {
+                var pl = AppServices.Playlists?.Current;
+                if (pl != null && AppServices.Playlists?.CanUndo(pl) == true)
+                {
+                    AppServices.Playlists.Undo(pl);
+                }
+                break;
+            }
+
+            case ShortcutCommand.PlaylistRedo:
+            {
+                var pl = AppServices.Playlists?.Current;
+                if (pl != null && AppServices.Playlists?.CanRedo(pl) == true)
+                {
+                    AppServices.Playlists.Redo(pl);
+                }
+                break;
+            }
         }
 
         return true;

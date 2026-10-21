@@ -89,8 +89,15 @@ public static class ShortcutCommandCatalog
             new KeyChord(ShortcutModifiers.None, 'L'), true),
         new(ShortcutCommand.FocusSearch, ShortcutCategory.Navigation, "라이브러리 검색으로 이동",
             new KeyChord(ShortcutModifiers.Control, 'F'), false),
+        new(ShortcutCommand.JumpToCurrentTrack, ShortcutCategory.Navigation, "현재 재생 중인 트랙으로 이동",
+            new KeyChord(ShortcutModifiers.Control, 'J'), false),
         new(ShortcutCommand.OpenPreferences, ShortcutCategory.Navigation, "환경설정 열기",
-            new KeyChord(ShortcutModifiers.Control, 'P'), true)
+            new KeyChord(ShortcutModifiers.Control, 'P'), true),
+
+        new(ShortcutCommand.PlaylistUndo, ShortcutCategory.Playlist, "재생목록 실행 취소",
+            new KeyChord(ShortcutModifiers.Control, 'Z'), true),
+        new(ShortcutCommand.PlaylistRedo, ShortcutCategory.Playlist, "재생목록 다시 실행",
+            new KeyChord(ShortcutModifiers.Control, 'Y'), true)
     };
 
     private static readonly Dictionary<ShortcutCommand, ShortcutCommandInfo> ByCommand =
@@ -110,6 +117,7 @@ public static class ShortcutCommandCatalog
         ShortcutCategory.Playback => AppStrings.Get("Settings_Shortcuts_Cat_Playback", "재생 제어"),
         ShortcutCategory.Seek => AppStrings.Get("Settings_Shortcuts_Cat_Seek", "탐색"),
         ShortcutCategory.Volume => AppStrings.Get("Settings_Shortcuts_Cat_Volume", "볼륨"),
+        ShortcutCategory.Playlist => AppStrings.Get("Settings_Shortcuts_Cat_Playlist", "재생목록"),
         _ => AppStrings.Get("Settings_Shortcuts_Cat_Navigation", "네비게이션 & 창")
     };
 }

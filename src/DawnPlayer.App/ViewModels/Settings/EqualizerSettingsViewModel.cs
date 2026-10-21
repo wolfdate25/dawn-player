@@ -374,6 +374,39 @@ public sealed class EqualizerSettingsViewModel : ViewModelBase
         return created;
     }
 
+    public EqProfile? ImportAutoEqText(string text, string profileName)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return null;
+        var parsed = AutoEqParser.Parse(text, profileName);
+        var imported = _eqSettingsService.ImportProfile(parsed);
+        RefreshProfiles(imported.Id);
+        RefreshDeviceBindingOptions();
+        return imported;
+    }
+
+    public EqProfile? ImportJson(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return null;
+        var parsed = AutoEqParser.DeserializeJson(json);
+        if (parsed == null) return null;
+        var imported = _eqSettingsService.ImportProfile(parsed);
+        RefreshProfiles(imported.Id);
+        RefreshDeviceBindingOptions();
+        return imported;
+    }
+
+    public string? ExportCurrentAsAutoEq()
+    {
+        if (_selectedProfile == null) return null;
+        return AutoEqParser.Export(_selectedProfile);
+    }
+
+    public string? ExportCurrentAsJson()
+    {
+        if (_selectedProfile == null) return null;
+        return AutoEqParser.SerializeJson(_selectedProfile);
+    }
+
     public EqProfile? DuplicateProfile()
     {
         if (_selectedProfile == null) return null;

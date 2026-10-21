@@ -120,6 +120,40 @@ public sealed partial class PlaylistPage : Page
         }
     }
 
+    /// <summary>
+    /// Selects and scrolls to the currently playing track in the active playlist.
+    /// </summary>
+    public void ScrollToPlayingTrack(PlaylistItem? item)
+    {
+        if (item == null || PlaylistList == null) return;
+        var target = PlaybackUiHelper.FindItemToScroll(Current?.Items, item);
+        if (target != null)
+        {
+            PlaylistList.SelectedItem = target;
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                try
+                {
+                    PlaylistList.ScrollIntoView(target, ScrollIntoViewAlignment.Leading);
+                    PlaylistList.Focus(FocusState.Programmatic);
+                }
+                catch (Exception ex)
+                {
+                    App.Log($"[ScrollToPlayingTrack Error] {ex}");
+                }
+            });
+        }
+    }
+
+    /// <summary>Selects the given playlist in the left sidebar.</summary>
+    public void SelectSidebarPlaylist(Playlist? pl)
+    {
+        if (PlaylistsSidebarList != null && pl != null)
+        {
+            PlaylistsSidebarList.SelectedItem = pl;
+        }
+    }
+
     public void SetLyricsVisibility(bool show)
     {
         LyricsPanelContainer.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
@@ -301,48 +335,19 @@ public sealed partial class PlaylistPage : Page
     private async void OnConvertItems(object sender, RoutedEventArgs e)
     {
         var sel = SelectedItems();
-        if (sel.Count == 0) return;
+        if (sel.Count == 0 || XamlRoot == null) return;
 
-        try
-        {
-            var folder = await PlaylistDialogs.PickMusicFolderAsync(AppServices.MainWindowHandle);
-            if (string.IsNullOrEmpty(folder)) return;
+        var tracks = sel.Select(i => i.Track).ToList();
+        await TranscodeDialog.ShowAsync(tracks, XamlRoot);
+    }
 
-            var options = new Core.Audio.TranscodeOptions
-            {
-                OutputDirectory = folder,
-                ApplyReplayGain = false,
-                WriteTags = true,
-            };
+    private async void OnFileOpsItems(object sender, RoutedEventArgs e)
+    {
+        var sel = SelectedItems();
+        if (sel.Count == 0 || XamlRoot == null) return;
 
-            AppServices.RaiseWarning(AppStrings.Get("Convert_Started", "변환을 시작합니다. 완료하면 알려 드립니다."));
-
-            _ = Task.Run(() =>
-            {
-                int ok = 0, failed = 0;
-                foreach (var item in sel)
-                {
-                    try
-                    {
-                        var output = Core.Audio.AudioTranscoder.ConvertToWav(item.Track, options, out var r);
-                        if (r == Core.Audio.TranscodeResult.Ok && output != null) ok++;
-                        else failed++;
-                    }
-                    catch (Exception ex)
-                    {
-                        App.Log($"[convert] {item.Track.Path}: {ex}");
-                        failed++;
-                    }
-                }
-
-                AppServices.RaiseWarning(AppStrings.Format(
-                    "Convert_Done", "변환 완료: {0}개 성공, {1}개 실패", ok, failed));
-            });
-        }
-        catch (Exception ex)
-        {
-            App.Log($"[convert] {ex}");
-        }
+        var tracks = sel.Select(i => i.Track).ToList();
+        await FileOperationsDialog.ShowAsync(tracks, XamlRoot);
     }
 
     private void OnSidebarListRightTapped(object sender, RightTappedRoutedEventArgs e)
@@ -449,6 +454,12 @@ public sealed partial class PlaylistPage : Page
 
         if (HeaderDeleteMenuItem != null)
             HeaderDeleteMenuItem.Visibility = locked ? Visibility.Collapsed : Visibility.Visible;
+
+        // 실행 가능 여부를 반영한다 — 항상 활성인 채 조용한 no-op이던 상태를 고친다.
+        if (UndoMenuItem != null)
+            UndoMenuItem.IsEnabled = current != null && AppServices.Playlists.CanUndo(current);
+        if (RedoMenuItem != null)
+            RedoMenuItem.IsEnabled = current != null && AppServices.Playlists.CanRedo(current);
 
         if (HeaderClearMenuItem != null)
         {
@@ -739,8 +750,29 @@ public sealed partial class PlaylistPage : Page
     {
         var isAlt = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Menu)
             .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+        var isCtrl = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+        var isShift = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
 
-        if (e.Key == Windows.System.VirtualKey.Delete)
+        if (isCtrl && e.Key == Windows.System.VirtualKey.Z)
+        {
+            if (isShift)
+            {
+                OnRedoClick(sender, e);
+            }
+            else
+            {
+                OnUndoClick(sender, e);
+            }
+            e.Handled = true;
+        }
+        else if (isCtrl && e.Key == Windows.System.VirtualKey.Y)
+        {
+            OnRedoClick(sender, e);
+            e.Handled = true;
+        }
+        else if (e.Key == Windows.System.VirtualKey.Delete)
         {
             var sel = SelectedItems();
             if (sel.Count > 0)
@@ -755,6 +787,20 @@ public sealed partial class PlaylistPage : Page
             e.Handled = true;
             OnPlayItems(sender, e);
         }
+        else if (isCtrl && e.Key == Windows.System.VirtualKey.F)
+        {
+            ShowInlineSearch();
+            e.Handled = true;
+        }
+        else if (e.Key == Windows.System.VirtualKey.F3)
+        {
+            if (InlineSearchBar?.Visibility == Visibility.Visible || _searchMatches.Count > 0)
+            {
+                if (isShift) SearchPrev();
+                else SearchNext();
+                e.Handled = true;
+            }
+        }
         else if (isAlt && e.Key == Windows.System.VirtualKey.Up)
         {
             OnMoveUpClick(sender, e);
@@ -764,6 +810,22 @@ public sealed partial class PlaylistPage : Page
         {
             OnMoveDownClick(sender, e);
             e.Handled = true;
+        }
+    }
+
+    private void OnUndoClick(object sender, RoutedEventArgs e)
+    {
+        if (Current != null && AppServices.Playlists.CanUndo(Current))
+        {
+            AppServices.Playlists.Undo(Current);
+        }
+    }
+
+    private void OnRedoClick(object sender, RoutedEventArgs e)
+    {
+        if (Current != null && AppServices.Playlists.CanRedo(Current))
+        {
+            AppServices.Playlists.Redo(Current);
         }
     }
 
@@ -835,4 +897,159 @@ public sealed partial class PlaylistPage : Page
 
     private void OnRemoveItems(object sender, RoutedEventArgs e) =>
         PlaybackUiHelper.RemoveItems(AppServices.Playlists, Current, SelectedItems());
+
+    // ---------------- inline search (Find & Jump / Ctrl+F) ----------------
+
+    private IReadOnlyList<int> _searchMatches = Array.Empty<int>();
+
+    /// <summary>
+    /// Opens the inline search bar, focuses the search box, and selects all text.
+    /// </summary>
+    public void ShowInlineSearch()
+    {
+        if (InlineSearchBar == null) return;
+        InlineSearchBar.Visibility = Visibility.Visible;
+        PlaylistSearchBox.Focus(FocusState.Programmatic);
+        PlaylistSearchBox.SelectAll();
+        PerformSearch(PlaylistSearchBox.Text);
+    }
+
+    /// <summary>
+    /// Closes the inline search bar and returns focus to the track list.
+    /// </summary>
+    public void CloseInlineSearch()
+    {
+        if (InlineSearchBar == null) return;
+        InlineSearchBar.Visibility = Visibility.Collapsed;
+        PlaylistList?.Focus(FocusState.Programmatic);
+    }
+
+    private void OnOpenSearchClick(object sender, RoutedEventArgs e) => ShowInlineSearch();
+    private void OnSearchCloseClick(object sender, RoutedEventArgs e) => CloseInlineSearch();
+
+    private void OnSearchBoxTextChanged(object sender, TextChangedEventArgs e)
+    {
+        PerformSearch(PlaylistSearchBox.Text);
+    }
+
+    /// <summary>
+    /// The selected item's index within Current.Items — NOT the ListView's SelectedIndex, which
+    /// in the grouped view counts group-header slots and never lines up with the search-match
+    /// indices (those index Current.Items directly).
+    /// </summary>
+    private int SelectedItemIndexInItems()
+    {
+        var items = Current?.Items;
+        if (items == null || PlaylistList?.SelectedItem is not PlaylistItem sel) return -1;
+        return items.IndexOf(sel);
+    }
+
+    private void PerformSearch(string query)
+    {
+        _searchMatches = PlaylistSearchEngine.FindMatches(Current?.Items, query);
+
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            PlaylistSearchCountText.Text = "";
+            return;
+        }
+
+        if (_searchMatches.Count == 0)
+        {
+            PlaylistSearchCountText.Text = AppStrings.Get("Playlist_Search_NoMatch", "일치 항목 없음");
+            return;
+        }
+
+        // Find match closest to current selection, or first match
+        int currentIdx = SelectedItemIndexInItems();
+        int targetIdx = PlaylistSearchEngine.GetNextMatchIndex(_searchMatches, currentIdx);
+        NavigateToMatch(targetIdx);
+    }
+
+    private void OnSearchPrevClick(object sender, RoutedEventArgs e) => SearchPrev();
+    private void OnSearchNextClick(object sender, RoutedEventArgs e) => SearchNext();
+
+    private void SearchPrev()
+    {
+        if (_searchMatches.Count == 0) return;
+        int currentIdx = SelectedItemIndexInItems();
+        int targetIdx = PlaylistSearchEngine.GetPrevMatchIndex(_searchMatches, currentIdx);
+        NavigateToMatch(targetIdx);
+    }
+
+    private void SearchNext()
+    {
+        if (_searchMatches.Count == 0) return;
+        int currentIdx = SelectedItemIndexInItems();
+        int targetIdx = PlaylistSearchEngine.GetNextMatchIndex(_searchMatches, currentIdx);
+        NavigateToMatch(targetIdx);
+    }
+
+    private void NavigateToMatch(int playlistIndex)
+    {
+        if (Current?.Items == null || playlistIndex < 0 || playlistIndex >= Current.Items.Count) return;
+        var target = Current.Items[playlistIndex];
+        PlaylistList.SelectedItem = target;
+        // Same deferral as ScrollToPlayingTrack: ScrollIntoView directly after a selection
+        // assignment can fire before the container is realized and silently no-op.
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            try
+            {
+                PlaylistList?.ScrollIntoView(target, ScrollIntoViewAlignment.Leading);
+            }
+            catch (Exception ex)
+            {
+                App.Log($"[NavigateToMatch Error] {ex}");
+            }
+        });
+        UpdateMatchCountText();
+    }
+
+    private void UpdateMatchCountText()
+    {
+        if (_searchMatches.Count == 0)
+        {
+            PlaylistSearchCountText.Text = AppStrings.Get("Playlist_Search_NoMatch", "일치 항목 없음");
+            return;
+        }
+
+        int currentIdx = SelectedItemIndexInItems();
+        int matchPos = -1;
+        for (int i = 0; i < _searchMatches.Count; i++)
+        {
+            if (_searchMatches[i] == currentIdx)
+            {
+                matchPos = i + 1;
+                break;
+            }
+        }
+
+        if (matchPos > 0)
+        {
+            PlaylistSearchCountText.Text = AppStrings.Format("Playlist_Search_MatchFormat", "{0}/{1}", matchPos, _searchMatches.Count);
+        }
+        else
+        {
+            PlaylistSearchCountText.Text = AppStrings.Format("Playlist_Search_TotalCount", "{0}개 일치", _searchMatches.Count);
+        }
+    }
+
+    private void OnSearchBoxKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        var isShift = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+
+        if (e.Key == Windows.System.VirtualKey.Enter || e.Key == Windows.System.VirtualKey.F3)
+        {
+            if (isShift) SearchPrev();
+            else SearchNext();
+            e.Handled = true;
+        }
+        else if (e.Key == Windows.System.VirtualKey.Escape)
+        {
+            CloseInlineSearch();
+            e.Handled = true;
+        }
+    }
 }

@@ -147,6 +147,15 @@ public class ShortcutBindingTests
     }
 
     [Fact]
+    public void JumpToCurrentTrackShipsWithCtrlJAndNavigationCategory()
+    {
+        var info = ShortcutCommandCatalog.Get(ShortcutCommand.JumpToCurrentTrack);
+        Assert.Equal(ShortcutCategory.Navigation, info.Category);
+        Assert.Equal(new KeyChord(ShortcutModifiers.Control, 'J'), info.DefaultChord);
+        Assert.False(info.RequiresTextInputGuard);
+    }
+
+    [Fact]
     public void DefaultChordsAreValidAndNoTwoCommandsShipWithTheSameOne()
     {
         var seen = new Dictionary<KeyChord, ShortcutCommand>();
@@ -322,7 +331,9 @@ public class ShortcutBindingTests
 
         Assert.True(map.TryFindCommand(chord, out var command));
         Assert.Equal(ShortcutCommand.SeekToStart, command);
-        Assert.False(map.TryFindCommand(new KeyChord(ShortcutModifiers.Control, KeyJ), out _));
+        Assert.True(map.TryFindCommand(new KeyChord(ShortcutModifiers.Control, KeyJ), out var jumpCommand));
+        Assert.Equal(ShortcutCommand.JumpToCurrentTrack, jumpCommand);
+        Assert.False(map.TryFindCommand(new KeyChord(ShortcutModifiers.Control, 'K'), out _));
     }
 
     [Fact]

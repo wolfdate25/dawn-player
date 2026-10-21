@@ -4,6 +4,7 @@ using DawnPlayer.Core.Audio.Dsp;
 using DawnPlayer.Core.Models;
 using DawnPlayer.Core.Persistence;
 using DawnPlayer.Core.Playlists;
+using DawnPlayer.Core.Util;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 
@@ -101,6 +102,22 @@ public sealed class SequencerStream : IWaveProvider
     // Current ReplayGain node gain — mirrors _current's node so SyncLimiterEnabled can decide
     // arming without chasing the node reference. Written under _gate at the boundary.
     private float _nodeGain = 1f;
+
+    private double _crossfadeDurationSeconds;
+    /// <summary>
+    /// Configured crossfade duration between consecutive tracks in seconds (0.0 to 10.0s).
+    /// Value of 0 disables crossfade and uses pure gapless sequencing.
+    /// </summary>
+    public double CrossfadeDurationSeconds
+    {
+        get => _crossfadeDurationSeconds;
+        set => _crossfadeDurationSeconds = Math.Clamp(value, 0.0, 10.0);
+    }
+
+    private float[] _crossfadeNextBuf = Array.Empty<float>();
+    private bool _inCrossfade;
+    private long _crossfadeTotalFrames;
+    private long _crossfadeElapsedFrames;
 
     public SequencerStream(
         WaveFormat outFormat,
@@ -245,6 +262,14 @@ public sealed class SequencerStream : IWaveProvider
         }
 
         Volatile.Write(ref _bytesServed, MfTrackReader.TimeToBytes(_outFormat, position));
+        // 시크로 페이드를 취소하면 다음 트랙 소스는 이미 일부 소비된 상태다. 되감기지 않으면
+        // (크로스페이드를 끈 뒤의) 갭리스 전환에서 다음 트랙 앞부분이 통째로 건너뛰어진다.
+        if (_inCrossfade)
+        {
+            lock (_prefetchLock) RewindAbortedCrossfadeSource(_prefetched?.Track);
+            _inCrossfade = false;
+            _crossfadeElapsedFrames = 0;
+        }
         // The normalizer's converged gain stays valid across a seek within the track; resetting
         // it made the volume pump after every scrub. Delay-line/convolution/limiter state IS
         // stale after a jump and must clear.
@@ -282,6 +307,8 @@ public sealed class SequencerStream : IWaveProvider
         {
             previous = _prefetched;
             _prefetched = prepared;
+            _inCrossfade = false;
+            _crossfadeElapsedFrames = 0;
         }
         previous?.Track.Reader.Dispose();
     }
@@ -293,7 +320,32 @@ public sealed class SequencerStream : IWaveProvider
         {
             var t = _prefetched;
             _prefetched = null;
+            if (_inCrossfade)
+            {
+                RewindAbortedCrossfadeSource(t?.Track);
+                _inCrossfade = false;
+                _crossfadeElapsedFrames = 0;
+            }
             return t?.Track;
+        }
+    }
+
+    /// <summary>
+    /// Rewinds a prefetched source that a cancelled crossfade had partially consumed, so the
+    /// track still starts at its beginning when it is later chained or handed off. Only the
+    /// reader is repositioned — a resampler wrapper keeps a few samples of history across the
+    /// rewind, which is inaudible and confined to this aborted-fade edge case.
+    /// </summary>
+    private static void RewindAbortedCrossfadeSource(PendingTrack? track)
+    {
+        if (track == null || track.RequiresRestart) return;
+        try
+        {
+            track.Reader.CurrentTime = TimeSpan.Zero;
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"[sequencer] crossfade-abort rewind failed: {ex.Message}");
         }
     }
 
@@ -304,6 +356,8 @@ public sealed class SequencerStream : IWaveProvider
         {
             previous = _prefetched;
             _prefetched = null;
+            _inCrossfade = false;
+            _crossfadeElapsedFrames = 0;
         }
         previous?.Track.Reader.Dispose();
     }
@@ -463,7 +517,106 @@ public sealed class SequencerStream : IWaveProvider
                     int floatsWanted = framesWanted * _outFormat.Channels;
                     if (_floatBuf.Length < floatsWanted) Array.Resize(ref _floatBuf, floatsWanted);
 
-                    int floatsRead = _sourceProvider.Read(_floatBuf.AsSpan(0, floatsWanted));
+                    // Check if we should enter crossfade mode
+                    if (_crossfadeDurationSeconds > 0.05 && !_rawPassthrough && !_inCrossfade)
+                    {
+                        var facts = Volatile.Read(ref _facts);
+                        if (facts != null && facts.TotalTime > TimeSpan.Zero)
+                        {
+                            var currentPos = TimeSpan.FromSeconds((double)served / _outFormat.AverageBytesPerSecond);
+                            var rem = facts.TotalTime - currentPos;
+                            if (rem > TimeSpan.Zero && rem <= TimeSpan.FromSeconds(_crossfadeDurationSeconds))
+                            {
+                                lock (_prefetchLock)
+                                {
+                                    if (_prefetched is { Track.RequiresRestart: false })
+                                    {
+                                        _inCrossfade = true;
+                                        _crossfadeTotalFrames = Math.Max(1, (long)(_crossfadeDurationSeconds * _outFormat.SampleRate));
+                                        _crossfadeElapsedFrames = 0;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    int floatsRead;
+                    if (_inCrossfade)
+                    {
+                        PreparedTrack? nextTrack;
+                        lock (_prefetchLock)
+                        {
+                            nextTrack = _prefetched;
+                        }
+
+                        if (nextTrack == null || nextTrack.Track.RequiresRestart)
+                        {
+                            _inCrossfade = false;
+                            _crossfadeElapsedFrames = 0;
+                            floatsRead = _sourceProvider.Read(_floatBuf.AsSpan(0, floatsWanted));
+                        }
+                        else
+                        {
+                            if (_crossfadeNextBuf.Length < floatsWanted) Array.Resize(ref _crossfadeNextBuf, floatsWanted);
+
+                            int floats1 = _sourceProvider.Read(_floatBuf.AsSpan(0, floatsWanted));
+                            int floats2 = nextTrack.Source.Read(_crossfadeNextBuf.AsSpan(0, floatsWanted));
+
+                            int frames1 = floats1 / _outFormat.Channels;
+                            int frames2 = floats2 / _outFormat.Channels;
+                            int maxFrames = Math.Max(frames1, frames2);
+
+                            if (maxFrames == 0)
+                            {
+                                _inCrossfade = false;
+                                _crossfadeElapsedFrames = 0;
+                                floatsRead = 0;
+                            }
+                            else
+                            {
+                                int channels = _outFormat.Channels;
+                                for (int f = 0; f < maxFrames; f++)
+                                {
+                                    double t = Math.Clamp((double)(_crossfadeElapsedFrames + f) / _crossfadeTotalFrames, 0.0, 1.0);
+                                    float gain1 = (float)Math.Cos(t * Math.PI * 0.5);
+                                    float gain2 = (float)Math.Sin(t * Math.PI * 0.5);
+
+                                    for (int ch = 0; ch < channels; ch++)
+                                    {
+                                        int idx = f * channels + ch;
+                                        float s1 = idx < floats1 ? _floatBuf[idx] : 0f;
+                                        float s2 = idx < floats2 ? _crossfadeNextBuf[idx] : 0f;
+                                        _floatBuf[idx] = s1 * gain1 + s2 * gain2;
+                                    }
+                                }
+
+                                _crossfadeElapsedFrames += maxFrames;
+                                floatsRead = maxFrames * channels;
+
+                                if (_crossfadeElapsedFrames >= _crossfadeTotalFrames || (floats1 <= 0 && floats2 > 0))
+                                {
+                                    _inCrossfade = false;
+                                    _crossfadeElapsedFrames = 0;
+                                    var next = TakeChainablePrefetched(out _);
+                                    if (next != null)
+                                    {
+                                        AdvanceToPrefetchedLocked(next);
+                                        // The handoff anchored the clock to the next reader's real
+                                        // position — it already carries the fade window this pass
+                                        // finished delivering. Subtract the pass so the increment
+                                        // below lands exactly on that anchor instead of counting
+                                        // the window twice.
+                                        served = Volatile.Read(ref _bytesServed) - (long)maxFrames * _outFormat.BlockAlign;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        floatsRead = _sourceProvider.Read(_floatBuf.AsSpan(0, floatsWanted));
+                    }
+
                     if (floatsRead <= 0)
                     {
                         var endedItem = _current.Track.Item;
@@ -488,7 +641,8 @@ public sealed class SequencerStream : IWaveProvider
                         if (next != null)
                         {
                             AdvanceToPrefetchedLocked(next);
-                            served = 0;
+                            // The handoff anchored the clock to the new reader's real position.
+                            served = Volatile.Read(ref _bytesServed);
                             continue;
                         }
                         _current.Track.Reader.Dispose();
@@ -643,7 +797,14 @@ public sealed class SequencerStream : IWaveProvider
     {
         var track = prepared.Track;
         _current = prepared;
-        Volatile.Write(ref _bytesServed, 0);
+        // Anchor the reported clock to the reader's actual position instead of hard-zero. A
+        // crossfaded-in track (or one whose prefix an aborted fade consumed) continues
+        // mid-stream; serving 0 made the seekbar trail the heard audio by the whole overlap for
+        // the rest of the track, and the crossfade arming check computes its remaining time off
+        // this clock. Reader positions are track-relative (CueTrackReader maps the parent
+        // timeline), so a normal gapless handoff still anchors to 0.
+        var handoffPos = track.Reader.CurrentTime;
+        Volatile.Write(ref _bytesServed, handoffPos > TimeSpan.Zero ? MfTrackReader.TimeToBytes(_outFormat, handoffPos) : 0);
         _trackStartedFired = false;
         // Without this the one-shot latch survives the switch and a reused sequencer never
         // reports end-of-stream again, so playback simply stops at the next track boundary.

@@ -612,6 +612,12 @@
                                                                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8FD;"/></MenuFlyoutItem.Icon>
                                                                             </MenuFlyoutItem>
                                                                             <MenuFlyoutSeparator/>
+                                                                            <MenuFlyoutItem x:Uid="Library_TrackMenu_Convert" Text="오디오 변환…" Click="OnDrawerTrackConvert">
+                                                                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8E5;"/></MenuFlyoutItem.Icon>
+                                                                            </MenuFlyoutItem>
+                                                                            <MenuFlyoutItem x:Uid="Library_TrackMenu_FileOps" Text="파일 정리 (이름 변경/이동)…" Click="OnDrawerTrackFileOps">
+                                                                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8B7;"/></MenuFlyoutItem.Icon>
+                                                                            </MenuFlyoutItem>
                                                                             <MenuFlyoutItem x:Uid="Library_TrackMenu_ShowInExplorer" Text="탐색기에서 보기" Click="OnDrawerTrackShowInExplorer">
                                                                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE838;"/></MenuFlyoutItem.Icon>
                                                                             </MenuFlyoutItem>
@@ -674,6 +680,12 @@
                                                                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8FD;"/></MenuFlyoutItem.Icon>
                                                                             </MenuFlyoutItem>
                                                                             <MenuFlyoutSeparator/>
+                                                                            <MenuFlyoutItem x:Uid="Library_TrackMenu_Convert" Text="오디오 변환…" Click="OnDrawerTrackConvert">
+                                                                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8E5;"/></MenuFlyoutItem.Icon>
+                                                                            </MenuFlyoutItem>
+                                                                            <MenuFlyoutItem x:Uid="Library_TrackMenu_FileOps" Text="파일 정리 (이름 변경/이동)…" Click="OnDrawerTrackFileOps">
+                                                                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8B7;"/></MenuFlyoutItem.Icon>
+                                                                            </MenuFlyoutItem>
                                                                             <MenuFlyoutItem x:Uid="Library_TrackMenu_ShowInExplorer" Text="탐색기에서 보기" Click="OnDrawerTrackShowInExplorer">
                                                                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE838;"/></MenuFlyoutItem.Icon>
                                                                             </MenuFlyoutItem>
@@ -859,6 +871,16 @@
                                 <MenuFlyoutItem x:Uid="Library_TrackMenu_EditTags" Text="태그 편집…" Click="OnEditTrackTags">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE70F;"/>
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem x:Uid="Library_TrackMenu_Convert" Text="오디오 변환…" Click="OnConvertSelected">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8E5;"/>
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem x:Uid="Library_TrackMenu_FileOps" Text="파일 정리 (이름 변경/이동)…" Click="OnFileOpsSelected">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8B7;"/>
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
                                 <MenuFlyoutSubItem x:Uid="Playlist_TrackMenu_Rating" Text="평점">

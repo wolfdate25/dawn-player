@@ -120,6 +120,7 @@ public sealed partial class MainWindow : Window
         AppServices.QueueChanged += PlayerBar.OnQueueChanged;
         PlayerBar.LyricsToggleRequested += () => ToggleLyrics();
         PlayerBar.MiniRestoreRequested += (_, _) => ToggleMiniMode();
+        PlayerBar.JumpToCurrentTrackRequested += JumpToCurrentTrack;
         // 미니 중 창을 다시 크면 컨트롤 좌표가 바뀐다 — Passthrough 구멍을 다시 인계한다.
         PlayerBar.SizeChanged += (_, _) => { if (_isMiniMode) ApplyMiniNonClientRegions(); };
 
@@ -1006,6 +1007,63 @@ public sealed partial class MainWindow : Window
     /// methods the buttons use instead of duplicating the state changes and desyncing the icons.
     /// </summary>
     public DawnPlayer.App.Controls.NowPlayingBar Player => PlayerBar;
+
+    /// <summary>
+    /// Context-aware search: opens the inline search bar if currently on the Playlists tab,
+    /// otherwise navigates to Library and focuses the library search box.
+    /// </summary>
+    public void FocusSearch()
+    {
+        if (PlaylistPageView?.Visibility == Visibility.Visible)
+        {
+            PlaylistPageView.ShowInlineSearch();
+        }
+        else
+        {
+            FocusLibrarySearch();
+        }
+    }
+
+    /// <summary>
+    /// Jumps to and highlights the currently playing track in the active or owning playlist.
+    /// </summary>
+    public void JumpToCurrentTrack()
+    {
+        var currentItem = AppServices.Playback?.CurrentItem;
+        if (currentItem == null) return;
+
+        if (PlaylistPageView?.Visibility != Visibility.Visible)
+        {
+            NavigateToTab("Playlists");
+        }
+
+        var playlists = AppServices.Playlists;
+        if (playlists != null)
+        {
+            // The queue's item and the source playlist's item are separate PlaylistItem
+            // instances wrapping the same Track — reference containment alone misses the owner,
+            // so match by track path too (same contract as PlaybackUiHelper.FindItemToScroll).
+            static bool OwesItem(DawnPlayer.Core.Playlists.Playlist pl, DawnPlayer.Core.Models.PlaylistItem item) =>
+                pl.Items.Contains(item)
+                || pl.Items.Any(i => string.Equals(i.Track?.Path, item.Track?.Path, StringComparison.OrdinalIgnoreCase));
+
+            var activePl = playlists.Current;
+            if (activePl == null || !OwesItem(activePl, currentItem))
+            {
+                // Prefer the user playlist that owns the track over the Now Playing queue
+                // (which is pinned at index 0 and always reference-contains the playing item).
+                var ownerPl = playlists.Playlists.FirstOrDefault(p => p != playlists.NowPlaying && OwesItem(p, currentItem))
+                    ?? playlists.Playlists.FirstOrDefault(p => p == playlists.NowPlaying && OwesItem(p, currentItem));
+                if (ownerPl != null)
+                {
+                    playlists.SelectPlaylist(ownerPl);
+                    PlaylistPageView?.SelectSidebarPlaylist(ownerPl);
+                }
+            }
+        }
+
+        PlaylistPageView?.ScrollToPlayingTrack(currentItem);
+    }
 
     /// <summary>Moves focus to the library search box, switching to the Library tab if needed.</summary>
     public void FocusLibrarySearch()

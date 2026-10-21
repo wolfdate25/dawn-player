@@ -175,7 +175,10 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock x:Uid="NowPlaying_TrackTitle_Empty" x:Name="TrackTitle" Grid.Column="0" Text="재생 중인 트랙 없음" FontSize="13" FontWeight="SemiBold"
-                                   Foreground="{ThemeResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                   Foreground="{ThemeResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"
+                                   PointerPressed="OnTrackInfoPointerPressed"
+                                   PointerEntered="OnTrackInfoPointerEntered"
+                                   PointerExited="OnTrackInfoPointerExited"/>
                         <Button x:Name="TrackRatingButton" x:Uid="Rating_Cell" Grid.Column="1" Style="{StaticResource RatingCellButton}"
                                 Visibility="Collapsed" Margin="6,0,0,0">
                             <Button.Flyout>
@@ -218,7 +221,10 @@
                     </Grid>
 
                     <TextBlock x:Name="TrackArtist" Text="" FontSize="{StaticResource FontBodySmall}"
-                               Foreground="{ThemeResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
+                               Foreground="{ThemeResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis"
+                               PointerPressed="OnTrackInfoPointerPressed"
+                               PointerEntered="OnTrackInfoPointerEntered"
+                               PointerExited="OnTrackInfoPointerExited"/>
 
                     <!-- Audio format and output session badges -->
                     <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,1,0,0">

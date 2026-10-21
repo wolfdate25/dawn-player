@@ -657,6 +657,19 @@ public sealed partial class PlaybackController : IPlaybackController
         }
     }
 
+    public double CrossfadeDurationSeconds
+    {
+        get => _settings.Playback.CrossfadeDurationSeconds;
+        set
+        {
+            _settings.Playback.CrossfadeDurationSeconds = Math.Clamp(value, 0.0, 10.0);
+            if (Sequencer is { } seq)
+            {
+                seq.CrossfadeDurationSeconds = _settings.Playback.CrossfadeDurationSeconds;
+            }
+        }
+    }
+
     /// <summary>
     /// Re-evaluates and applies the active device's equalizer profile live to the running stream without restarting playback.
     /// </summary>

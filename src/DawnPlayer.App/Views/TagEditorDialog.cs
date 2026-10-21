@@ -58,6 +58,8 @@ public static class TagEditorDialogs
         public TextBox? YearBox;
         public TextBox? TrackNoBox;
         public TextBox? DiscNoBox;
+        public TextBox? LyricsBox;
+        public string? OriginalLyrics;
         public Image? ArtPreview;
         public string? StagedArtPath; // set by the change button, applied on save
         public bool RemoveArtStaged;
@@ -90,6 +92,19 @@ public static class TagEditorDialogs
         state.TrackNoBox = MakeBox(track.TrackNo > 0 ? track.TrackNo.ToString(System.Globalization.CultureInfo.InvariantCulture) : "");
         state.DiscNoBox = MakeBox(track.DiscNo > 0 ? track.DiscNo.ToString(System.Globalization.CultureInfo.InvariantCulture) : "");
         state.ArtPreview = MakeArtPreview(track.ArtPath);
+        if (!multi && !string.IsNullOrEmpty(track.Path))
+        {
+            state.OriginalLyrics = TagReader.ReadEmbeddedLyrics(track.Path) ?? string.Empty;
+            state.LyricsBox = new TextBox
+            {
+                Text = state.OriginalLyrics,
+                FontSize = 12,
+                AcceptsReturn = true,
+                TextWrapping = TextWrapping.Wrap,
+                Height = 110,
+                FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas")
+            };
+        }
         return state;
     }
 
@@ -168,6 +183,21 @@ public static class TagEditorDialogs
             artButtons.Children.Add(removeButton);
             artRow.Children.Add(artButtons);
             form.Children.Add(artRow);
+
+            form.Children.Add(new TextBlock { Text = AppStrings.Get("Msg_TagEditorLyrics", "가사"), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, FontSize = 12 });
+            if (state.LyricsBox != null) form.Children.Add(state.LyricsBox);
+
+            var lyricsButtons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+            var loadLrcButton = new Button { Content = AppStrings.Get("Msg_TagEditorLoadFromLrc", "LRC 파일에서 불러오기…"), FontSize = 12 };
+            loadLrcButton.Click += async (_, _) => await LoadLrcFileAsync(state);
+            var clearLyricsButton = new Button { Content = AppStrings.Get("Msg_TagEditorClearLyrics", "가사 지우기"), FontSize = 12 };
+            clearLyricsButton.Click += (_, _) =>
+            {
+                if (state.LyricsBox != null) state.LyricsBox.Text = string.Empty;
+            };
+            lyricsButtons.Children.Add(loadLrcButton);
+            lyricsButtons.Children.Add(clearLyricsButton);
+            form.Children.Add(lyricsButtons);
         }
 
         string dialogTitle = multi
@@ -265,7 +295,31 @@ public static class TagEditorDialogs
         DiscNo: ParseInt(state.DiscNoBox?.Text),
         Art: state.RemoveArtStaged ? TagEditorArt.Remove
             : !string.IsNullOrEmpty(state.StagedArtPath) ? TagEditorArt.Embed : TagEditorArt.None,
-        ArtSourcePath: state.StagedArtPath);
+        ArtSourcePath: state.StagedArtPath,
+        Lyrics: state.LyricsBox != null && state.LyricsBox.Text != state.OriginalLyrics ? state.LyricsBox.Text : null);
+
+    private static async Task LoadLrcFileAsync(EditorState state)
+    {
+        var picker = new FileOpenPicker();
+        InitializeWithWindow.Initialize(picker, AppServices.MainWindowHandle);
+        picker.FileTypeFilter.Add(".lrc");
+        picker.FileTypeFilter.Add(".txt");
+        var file = await picker.PickSingleFileAsync();
+        if (file == null) return;
+
+        try
+        {
+            string text = await File.ReadAllTextAsync(file.Path);
+            if (state.LyricsBox != null)
+            {
+                state.LyricsBox.Text = text;
+            }
+        }
+        catch (Exception ex)
+        {
+            App.Log($"[TagEditor] Failed to load LRC file '{file.Path}': {ex.Message}");
+        }
+    }
 
     private static TagEdit CollectAlbumEdit(EditorState state) => new(
         Artist: state.ArtistDirty ? state.ArtistBox?.Text ?? "" : null,

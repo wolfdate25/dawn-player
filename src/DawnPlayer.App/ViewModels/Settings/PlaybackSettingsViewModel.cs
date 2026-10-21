@@ -312,4 +312,28 @@ public sealed class PlaybackSettingsViewModel : ViewModelBase
             _settings.Playback.ReplayGainPreampDb,
             _settings.Playback.ReplayGainPreventClipping);
     }
+
+    public double CrossfadeDurationSeconds
+    {
+        get => _settings.Playback.CrossfadeDurationSeconds;
+        set
+        {
+            double clamped = Math.Clamp(Math.Round(value, 1), 0.0, 10.0);
+            if (Math.Abs(_settings.Playback.CrossfadeDurationSeconds - clamped) > 0.01)
+            {
+                _settings.Playback.CrossfadeDurationSeconds = clamped;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(CrossfadeDurationDisplay));
+                _audioSettingsService.SetCrossfade(clamped);
+            }
+        }
+    }
+
+    public string CrossfadeDurationDisplay =>
+        _settings.Playback.CrossfadeDurationSeconds <= 0.05
+            ? DawnPlayer.App.Localization.AppStrings.Get("Settings_Playback_Crossfade_Off", "끔 (갭리스)")
+            : DawnPlayer.App.Localization.AppStrings.Format(
+                "Settings_Playback_Crossfade_SecondsFormat",
+                "{0:0.0}초",
+                _settings.Playback.CrossfadeDurationSeconds);
 }

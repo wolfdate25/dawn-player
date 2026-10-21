@@ -32,6 +32,7 @@ public sealed partial class NowPlayingBar : UserControl
     private int _artGeneration;
 
     public event Action? LyricsToggleRequested;
+    public event Action? JumpToCurrentTrackRequested;
 
     public NowPlayingBar()
     {
@@ -990,6 +991,28 @@ public sealed partial class NowPlayingBar : UserControl
         if (LyricsButton != null) LyricsButton.IsChecked = show;
     }
 
+    private static readonly Microsoft.UI.Input.InputCursor HandCursor =
+        Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Hand);
+
+    private void OnTrackInfoPointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        ProtectedCursor = HandCursor;
+    }
+
+    private void OnTrackInfoPointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        ProtectedCursor = null;
+    }
+
+    private void OnTrackInfoPointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        if (AppServices.Playback?.CurrentItem != null)
+        {
+            JumpToCurrentTrackRequested?.Invoke();
+            e.Handled = true;
+        }
+    }
+
     // ---------- shortcut hints ----------
 
     /// <summary>
@@ -1011,6 +1034,8 @@ public sealed partial class NowPlayingBar : UserControl
         SetHint(RepeatButton, CommandName(Shortcuts.ShortcutCommand.RepeatCycle, "반복 (끔 / 전체 / 한 곡)"), map.GetChord(Shortcuts.ShortcutCommand.RepeatCycle));
         SetHint(MuteButton, CommandName(Shortcuts.ShortcutCommand.MuteToggle, "음소거"), map.GetChord(Shortcuts.ShortcutCommand.MuteToggle));
         SetHint(LyricsButton, CommandName(Shortcuts.ShortcutCommand.ToggleLyrics, "가사 패널"), map.GetChord(Shortcuts.ShortcutCommand.ToggleLyrics));
+        SetHint(TrackTitle, CommandName(Shortcuts.ShortcutCommand.JumpToCurrentTrack, "현재 재생 중인 트랙으로 이동"), map.GetChord(Shortcuts.ShortcutCommand.JumpToCurrentTrack));
+        SetHint(TrackArtist, CommandName(Shortcuts.ShortcutCommand.JumpToCurrentTrack, "현재 재생 중인 트랙으로 이동"), map.GetChord(Shortcuts.ShortcutCommand.JumpToCurrentTrack));
     }
 
     private static string CommandName(Shortcuts.ShortcutCommand command, string fallback) =>

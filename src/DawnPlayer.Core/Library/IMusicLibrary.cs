@@ -40,6 +40,9 @@ public interface IMusicLibrary : IDisposable
     /// <summary>Replaces entire rows (tag edits, RG tagging) and swaps the working set in one step.</summary>
     void ReplaceTracks(IReadOnlyCollection<Track> tracks);
 
+    /// <summary>Updates primary key paths and working-set mapping after files are moved/renamed.</summary>
+    void RelocateTracks(IReadOnlyList<(string OldPath, Track Track)> relocations) { }
+
     /// <summary>Loads track catalog into memory from SQLite database.</summary>
     void LoadFromDb();
 

@@ -172,6 +172,17 @@ public sealed class AudioSettingsService : IAudioSettingsService
         _playback?.ApplyConvolution();
     }
 
+    public void SetCrossfade(double durationSeconds)
+    {
+        var clamped = Math.Clamp(durationSeconds, 0.0, 10.0);
+        _settings.Playback.CrossfadeDurationSeconds = clamped;
+        SettingsWriter.Schedule(_settings);
+        if (_playback != null)
+        {
+            _playback.CrossfadeDurationSeconds = clamped;
+        }
+    }
+
     public void OpenSoundControlPanel()
     {
         WasapiDeviceService.OpenSoundControlPanel();

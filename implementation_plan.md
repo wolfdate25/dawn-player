@@ -1474,3 +1474,458 @@ kind=Dlna — 인프라 그대로), 재생목록 편집 무결성, 콜드 리빌
   기술 → 갱신. P2 토글 순간 천이(끔 전환 시 노드 g 즉시 + 이펙트 페이드 중첩으로 최대 g², ~150ms,
   부스트 태그+재생 중 토글에서만 가청)는 폴리시 잔여. 수리 후 관련 스위트 131건 + 클린 빌드 0경고 +
   전체 2,229/2,229 재확인.
+
+---
+
+## 4. Tier 3 파워유저 도구 구현 계획 (T3-1 ~ T3-3 — 제안 및 승인 대기)
+
+> 작성일: 2026-10-14 · 사용자 지시: "Tier 3 진행해줬으면 좋겠는데 먼저 구현 계획서를 작성해줘."
+> 대상 범위:
+> 1. **T3-1: 태그 편집기 가사(Lyrics) 임베딩 읽기/쓰기 지원**
+> 2. **T3-2: 오디오 변환기(Transcoder) 포맷 확장 (FLAC / MP3 / Opus / AAC)**
+> 3. **T3-3: 파일 정리 및 일괄 이름 변경 (File Operations / Organizer)**
+> 원칙: 외부 무단 소스 수정 금지(AGENTS.md §1), 결함 트리 선분석 및 실패 시나리오 테스트 선설계(§3),
+> 콜드 리빌드 0경고 0오류 및 전체 테스트 통과 게이트(§4, §5).
+
+### 4.1 T3-1: 태그 편집기 가사(Lyrics) 임베딩 읽기/쓰기 지원 (S)
+
+#### 1) 문제 배경 및 진단
+- 현재 `TagReader.ReadEmbeddedLyrics`는 ID3v2 USLT, Vorbis LYRICS, MP4 `©lyr` 가사 읽기를 이미 지원하지만, `TagWriter.TryApplyAtomic` 및 `TagEdit` 레코드에는 가사 필드가 없어 오디오 파일에 가사를 직접 저장하지 못함.
+- 사용자가 온라인에서 검색한 가사나 수정한 가사를 별도 `.lrc` 파일이 아닌 오디오 파일 내부 태그에 임베딩 저장하고 싶어도 방법이 없음.
+
+#### 2) 설계 및 파일 수준 변경점
+- **Core (`TagEdit`, `TagWriter`)**:
+  - `src/DawnPlayer.Core/Library/TagWriter.cs`: `TagEdit`에 `string? Lyrics = null` 추가 (null=유지, string.Empty=태그 가사 삭제, 비어있지 않은 문자열=가사 저장).
+  - `ApplyFields`: `edit.Lyrics != null`일 때 TagLib의 `tag.Lyrics`에 값 반영 (빈 문자열이면 null로 할당하여 프레임 제거). ID3v2의 경우 USLT(언어 "XXX", 설명 "") 프레임 생성/갱신 확인.
+  - 기존 원자적 교체(`TempPath` 복사 후 `File.Replace`) 경로를 그대로 타므로 쓰기 도중 크래시 발생 시에도 파일 파손 0%.
+- **App UI (`TagEditorDialog`, `LyricsPane`, `LyricsSearchWindow`)**:
+  - `src/DawnPlayer.App/Views/TagEditorDialog.cs`: 단일 트랙 편집 모드에 "가사(Lyrics)" 다중 행 TextBox(접이식 Expander 또는 스크롤 영역) 추가. 대화상자 오픈 시 `TagReader.ReadEmbeddedLyrics`로 기존 임베디드 가사 자동 프리필. "LRC 파일에서 불러오기..." 버튼 지원.
+  - `src/DawnPlayer.App/Controls/LyricsPane.xaml.cs`: 가사 패널 헤더 더보기 메뉴(또는 버튼)에 "오디오 파일에 가사 저장(Embed to file)" 액션 추가.
+- **다국어 (resw)**:
+  - ko-KR, en-US, ja-JP에 `TagEditor_Lyrics`, `TagEditor_LoadFromLrc`, `Lyrics_EmbedToFile`, `Msg_LyricsEmbeddedSuccess` 등 키 동기화.
+
+#### 3) 결함 트리 및 불변식 (Invariants)
+- **결함 1 (인코딩 손상)**: 비-UTF8 가사 저장 시 문자가 깨질 위험 -> TagLib ID3v2 USLT는 UTF-8 TextEncoding 강제.
+- **결함 2 (동기 가사 vs 비동기 가사)**: 타임스탬프가 포함된 `[00:12.34]` 싱크 가사가 텍스트로 저장될 때 포맷 파손 -> 텍스트 원문 그대로 보존하되 `TagReader` 파이프라인에서 읽을 때 `LrcParser`가 파싱 가능하도록 호환성 유지.
+- **불변식**: `TagWriter.TryApplyAtomic` 실행 후 `TagReader.ReadEmbeddedLyrics(path)`의 반환값이 저장한 문자열과 100% 동일해야 함 (`Read(Write(lyrics)) == lyrics`).
+
+#### 4) 선설계 테스트
+- `TagWriter_Lyrics_RoundTrip`: MP3, FLAC, M4A에 가사 저장 후 읽기 일치 검증.
+- `TagWriter_Lyrics_Delete`: 빈 문자열 전달 시 기존 가사 프레임 제거 및 읽기 시 null 반환 검증.
+- `TagWriter_Lyrics_NullLeavesUnchanged`: `Lyrics = null`일 때 기존 가사 보존 검증.
+
+---
+
+### 4.2 T3-2: 오디오 변환기(Transcoder) 포맷 확장 (FLAC / MP3 / Opus / AAC) (M)
+
+#### 1) 문제 배경 및 진단
+- 현재 `AudioTranscoder`는 순수 16/24/32-bit WAV 변환만 지원.
+- 사용자가 CUE 분할 트랙이나 고음질 FLAC을 휴대용 기기용 MP3/Opus로 변환하거나, 무손실 압축 포맷인 FLAC으로 내보내려면 별도의 외부 변환 툴을 써야 함.
+- 이미 N3(YouTube)에서 `ffmpeg` 프로세스 탐색, 버전 프로브, 파이프 스트리밍 인프라가 구현되어 있으므로, 이를 재사용하면 별도의 무거운 외부 라이브러리 추가 없이도 완전한 다중 포맷 인코더를 구축할 수 있음.
+
+#### 2) 설계 및 파일 수준 변경점
+- **Core (`AudioTranscoder`, `TranscodeOptions`)**:
+  - `src/DawnPlayer.Core/Audio/AudioTranscoder.cs`:
+    - `public enum OutputAudioFormat { Wav, Flac, Mp3, Opus, Aac }` 신설.
+    - `TranscodeOptions`에 `OutputFormat`, `QualityPreset`(예: MP3 320k, V0, Opus 160k, FLAC comp 5 등), `FfmpegPath` 추가.
+    - WAV: 기존 내장 PCM 스트림 라이터 그대로 유지 (ffmpeg 불필요).
+    - FLAC / MP3 / Opus / AAC: `ffmpeg -f s16le -ar {sr} -ac {ch} -i pipe:0 -c:a {codec} {quality_args} {outputPath}` 프로세스 파이프 실행. `AudioFileReaderFactory` 디코더에서 PCM 버퍼를 읽어 stdin으로 펌프.
+    - 변환 완료 후 `TagWriter.TryApplyAtomic`으로 메타데이터(제목, 아티스트, 앨범, 트랙 번호, 연도, 장르) 및 앨범아트, ReplayGain 태그 일괄 전사.
+    - CancellationToken 지원으로 취소 시 부분 생성 파일 삭제 및 프로세스 즉시 종료.
+- **App UI (`TranscodeDialog`)**:
+  - `src/DawnPlayer.App/Views/TranscodeDialog.xaml(.cs)` 신설 (ContentDialog):
+    - 포맷 라디오/콤보 (WAV, FLAC, MP3, Opus, AAC).
+    - ffmpeg 상태 배지: ffmpeg 감지 시 녹색 '사용 가능', 미감지 시 'WAV 전용 (ffmpeg 설정 필요)' 안내 및 설정 이동 링크.
+    - 품질 옵션 드롭다운 (포맷별 최적 프리셋 제공).
+    - ReplayGain 굽기(Bake-in) 체크박스.
+    - 태그 쓰기 여부 체크박스.
+    - 대상 폴더 선택기 + 경로 표시.
+  - `PlaylistPage.xaml.cs` 및 `LibraryPage.xaml.cs`:
+    - 컨텍스트 메뉴 "WAV로 변환..." -> "오디오 변환..."(`Msg_ConvertAudio`)으로 명칭 변경 및 `TranscodeDialog` 연결.
+    - 다중 트랙 일괄 변환 시 취소 가능한 ProgressRing / 게이지 제공.
+
+#### 3) 결함 트리 및 불변식 (Invariants)
+- **결함 1 (프로세스 좀비/데드락)**: ffmpeg 프로세스가 표준 입력을 다 소비하기 전에 오류로 종료되거나 파이프 버퍼가 가득 차 블로킹 -> stdout/stderr 비동기 드레인 및 `process.Exited` / `ct.Register(() => Kill())` 결합.
+- **결함 2 (스트림/무한 소스 변환 시도)**: 라디오나 라이브 스트림을 변환기로 밀어 넣는 경우 -> `track.SourceKind != TrackSourceKind.File` 및 CUE 아닌 무한 스트림은 변환 입구에서 즉시 거부(`UnsupportedTrackKind`).
+- **불변식 1**: WAV 변환은 ffmpeg 설치 여부와 완전히 무관하게 100% 독립 실행되어야 함.
+- **불변식 2**: 변환 취소 또는 실패 시 불완전하게 작성된 찌꺼기 파일이 디스크에 남지 않아야 함 (`finally { DeleteIfIncomplete() }`).
+
+#### 4) 선설계 테스트
+- `TranscodeOptions_Validation`: 포맷별 유효 비트레이트 및 확장자 매핑 검증.
+- `AudioTranscoder_Wav_NoRegression`: 기존 WAV 변환 로직 완전 호환 및 무회귀 계약.
+- `AudioTranscoder_RejectsStreamTracks`: 라디오/스트림 트랙 입력 시 거부 예외 검증.
+- `AudioTranscoder_FfmpegArgsBuilder`: 포맷/품질별 ffmpeg 인자 문자열 golden 검증.
+
+---
+
+### 4.3 T3-3: 파일 정리 및 일괄 이름 변경 (File Operations / Organizer) (M)
+
+#### 1) 문제 배경 및 진단
+- 파일의 태그가 수정되어도 파일명과 디렉토리 구조는 그대로 유지되어, 파일 탐색기에서 음악을 관리할 때 혼란 발생.
+- `%artist%/%album%/[%track%. ]%title%`과 같은 포맷 패턴으로 파일을 이동하거나 복사하는 기능은 foobar2000 사용자들의 필수 워크플로우임.
+- 파일 이동 시 `library.db`와 재생목록(M3U8)의 트랙 경로가 동기화되지 않으면 깨진 링크가 발생할 위험이 큼.
+
+#### 2) 설계 및 파일 수준 변경점
+- **Core (`FilePatternFormatter`, `FileOperationService`)**:
+  - `src/DawnPlayer.Core/Library/FilePatternFormatter.cs` (순수 클래스):
+    - 패턴 토큰: `%artist%`, `%albumartist%`, `%album%`, `%title%`, `%track%`, `%tracknumber%`(01 형식 2자리), `%disc%`, `%year%`, `%genre%`, `%ext%`.
+    - 조건부 블록: `[%track%. ]` (트랙 번호 유효 시에만 내부 리터럴 포함).
+    - Windows 금지 문자(`\ / : * ? " < > |`) 자동 치환/정제 (단, 패턴 내 폴더 구분자 `/`, `\`는 서브 디렉토리 생성으로 해석).
+  - `src/DawnPlayer.Core/Library/FileOperationService.cs`:
+    - `FileOpMode`: Move(이동/이름변경) vs Copy(복사).
+    - `CollisionPolicy`: Skip(건너뛰기), AutoRename(번호 부가 `(1)`), Overwrite(덮어쓰기).
+    - `PreviewOperations(IEnumerable<Track> tracks, string baseDir, string pattern, CollisionPolicy policy)`:
+      실제 디스크 변경 없이 변경 전/후 전체 경로 계획 목록(`IReadOnlyList<FileOpPlan>`) 산출.
+    - `ExecuteOperationsAsync(...)`: 계획에 따라 디렉토리 생성 및 `File.Move` / `File.Copy` 실행.
+    - **라이브러리 및 재생목록 동기화**:
+      - `Move` 성공 시: `ILibraryStore.UpdateTrackPath(oldPath, newPath)` 호출로 DB 경로 갱신, `PlaylistManager`의 열린 재생목록 내 트랙 경로 갱신.
+- **App UI (`FileOperationsDialog`)**:
+  - `src/DawnPlayer.App/Views/FileOperationsDialog.xaml(.cs)` 신설:
+    - 대상 기준 디렉토리 선택기 (기본값: 원본 파일의 공통 상위 디렉토리).
+    - 패턴 콤보박스 (추천 프리셋: `%artist% - %title%`, `[%track%. ]%title%`, `%artist%/%album%/[%track%. ]%title%`, `%genre%/%artist% - %album%/[%track%. ]%title%` + 직접 입력).
+    - 모드 선택: "파일 이동 및 이름 변경" / "새 위치로 복사".
+    - 충돌 해결 정책 라디오버튼 (건너뛰기 / 번호 붙이기 / 덮어쓰기).
+    - **실시간 미리보기 표**: [상태/아이콘] [현재 파일명] → [변경될 경로].
+    - 실행 버튼 (Primary: "실행 (N개 파일)").
+  - `LibraryPage` 및 `PlaylistPage`:
+    - 트랙 선택 컨텍스트 메뉴에 "파일 정리(File Operations)..." 메뉴 항목 추가.
+
+#### 3) 결함 트리 및 불변식 (Invariants)
+- **결함 1 (동일 파일/대소문자 충돌)**: 원본과 대상이 동일하거나 대소문자만 변경되는 경우(`file.mp3` -> `File.mp3`), Windows 파일 시스템에서 자기 자신을 덮어써 파일이 삭제되는 위험 -> 원본 대조 정규화, 대소문자 전용 변경 시 임시 파일 경유 2단계 Rename.
+- **결함 2 (CUE 가상 트랙 및 스트림 파일 파손)**: `#cue=` 조각 경로를 가진 트랙이나 가상 트랙을 이동하려다 원본 전체 앨범 이미지를 잘못 이동시키거나 엉뚱한 경로로 분리 -> `track.Path.Contains("#cue=")` 또는 `track.SourceKind != File` 트랙은 파일 작업 대상에서 구조적 사전 제외.
+- **결함 3 (이동 실패 시 고아 레코드)**: 일부 파일 이동 실패 시 DB와 실제 디스크 불일치 -> 파일별 성공 시에만 원자적으로 DB 경로 갱신, 실패한 파일은 상세 오류 수집 후 보고.
+- **불변식 1**: 가상 트랙(CUE) 및 네트워크 스트림은 어떠한 경우에도 파일 이동/복사 대상이 되지 않음.
+- **불변식 2**: 미리보기 목록에서 계산된 대상 경로와 실제 이동/복사 결과 경로는 100% 일치해야 함.
+
+#### 4) 선설계 테스트
+- `FilePatternFormatter_Tokens`: 모든 토큰(%artist%, %title%, %tracknumber% 등) 치환 golden 테스트.
+- `FilePatternFormatter_ConditionalBlocks`: 조건부 블록 `[%track%. ]`의 유효/무효 시 동작 검증.
+- `FilePatternFormatter_SanitizesIllegalChars`: Windows 예약어 및 금지 문자 정제 검증.
+- `FileOperationService_CollisionResolution`: 충돌 정책(Skip, AutoRename, Overwrite)에 따른 파일명 계산 검증.
+- `FileOperationService_FiltersVirtualTracks`: CUE 가상 트랙 및 스트림 트랙의 작업 목록 제외 검증.
+
+---
+
+### 4.4 마일스톤 실행 순서 및 검증 게이트
+
+| 마일스톤 | 주제 | 핵심 파일 | 의존성 | 규모 | 상태 |
+|---|---|---|---|---|---|
+| **T3-1** | 태그 가사 임베딩 | `TagWriter.cs`, `TagEditorDialog.cs`, `LyricsSearchWindow.xaml` | 없음 (TagLib# 인프라 완비) | S | ✅ 완료 (2026-10-14) |
+| **T3-2** | 오디오 변환기 확장 | `AudioTranscoder.cs`, `TranscodeDialog.cs`, `PlaylistPage.xaml.cs`, `LibraryPage.xaml.cs` | ffmpeg 인프라 재사용 | M | ✅ 완료 (2026-10-14) |
+| **T3-3** | 파일 정리 도구 | `FilePatternFormatter.cs`, `FileOperationService.cs`, `FileOperationsDialog.cs` | T3-1/T3-2 독립 | M | ✅ 완료 (2026-10-14) |
+
+- **실행 완료 요약 (2026-10-14)**:
+  - **T3-1 (가사 임베딩)**: `TagEdit.Lyrics` 및 `TagWriter` ID3v2/Vorbis/MP4 가사 입출력, `TagEditorDialog` 가사 탭 및 LRC 불러오기, `LyricsSearchWindow`에서 재생 트랙 태그로 원클릭 임베딩 저장 구현. `TagWriterLyricsTests` 4/4 통과.
+  - **T3-2 (오디오 변환기 확장)**: `AudioTranscoder`에서 WAV/FLAC/MP3/Opus/AAC 5개 포맷 확장, ffmpeg 파이프 스트리밍 인코딩 및 ReplayGain 굽기, 메타데이터/커버 전사, `TranscodeDialog` 신설, `PlaylistPage` 및 `LibraryPage` 컨텍스트 메뉴 연결. `AudioTranscoderFormatTests` 11/11 통과.
+  - **T3-3 (파일 정리 및 이름 변경)**: foobar2000 스타일 토큰(`%artist%`, `%album%`, `%tracknumber%` 등) 및 조건부 블록 `[...]`, Windows 금지문자 정제(`FilePatternFormatter`), 실시간 미리보기 및 충돌 해결 정책(AutoRename/Skip/Overwrite), SQLite DB(`library.db`) 및 열린 재생목록(M3U8) 실시간 동기화(`FileOperationService`), `FileOperationsDialog` 신설 및 메뉴 연결. `FilePatternFormatterTests` 및 `FileOperationServiceTests` 10/10 통과.
+  - **검증 게이트 달성**:
+    - `LocalizationTests` (15/15), `AutomationNameGateTests` (16/16), 다국어 3개 언어(ko-KR, en-US, ja-JP) 패리티 100% 일치.
+    - `dotnet clean` 후 콜드 빌드 **0 Warning(s) 0 Error(s)** 달성.
+    - 전체 테스트 스위트 **2,280개 100% 통과** (Failed: 0, Passed: 2280).
+    - `README.md`, `README.ko.md`, `README.zh-CN.md` 3개 국어 동기화 완료.
+
+---
+
+## 5. Tier 2: 오디오 및 재생목록 완성도 로드맵 (T2-1 ~ T2-3)
+
+> **승인일**: 2026-10-14 · **목표**: 오디오 애호가 및 파워유저를 위한 재생 엔진/EQ/재생목록 고도화.
+> **규약 준수**: 결함 트리 분석, 불변식 정의, 실패 시나리오 테스트 선설계, 콜드 리빌드 0경고 0오류 게이트.
+
+### 5.1 T2-1: EQ 프리셋 라이브러리 + AutoEq 임포트 (M)
+
+#### 1) 문제 배경 및 진단
+- Dawn Player는 20밴드 파라메트릭 EQ를 갖추고 있으나, 사용자가 일일이 주파수/게인/Q를 수동 입력해야 하여 헤드폰 보정 곡선 적용이 매우 번거로움.
+- 전 세계 헤드폰/이어폰 4,000종 이상의 하만 타깃 보정치를 제공하는 오픈소스 표준인 **AutoEq**의 `ParametricEQ.txt` 포맷을 직접 가져올 수 있어야 함.
+- 또한 사용자가 튜닝한 EQ 프로필을 `.dpeq` (JSON) 파일로 내보내거나 가져오는 백업/공유 워크플로우 부재.
+
+#### 2) 설계 및 파일 수준 변경점
+- **Core (`AutoEqParser.cs`, `EqProfileSerializer.cs`)**:
+  - `src/DawnPlayer.Core/Audio/AutoEqParser.cs` 신설:
+    - AutoEq parametric eq 텍스트 파싱:
+      - `Preamp: -X.X dB` -> `profile.PreampDb = -X.X` (범위: -12.0 ~ 12.0 dB 클램프).
+      - `Filter N: ON/OFF PK/LSC/HSC/LP/HP Fc <freq> Hz Gain <gain> dB Q <q>`
+      - 지원 필터 타입: `PK`(PeakEq), `LSC`(LowShelf), `HSC`(HighShelf), `LP`(LowPass), `HP`(HighPass).
+      - `OFF` 필터는 제외하거나 비활성화 처리.
+      - 20밴드 상한 제약 준수 (초과 필터는 경고 또는 상위 20개 우선 적용).
+    - AutoEq 텍스트 내보내기: `profile`을 표준 AutoEq 텍스트 형식으로 직렬화.
+  - JSON 프리셋 Import/Export 지원:
+    - `EqProfile`을 포터블한 독립 JSON 파일(`.dpeq` or `.json`)로 직렬화/역직렬화.
+- **App UI (`EqualizerSettingsViewModel.cs`, `SettingsPage.xaml`)**:
+  - EQ 프로필 관리 UI에 "가져오기(Import)..." (AutoEq 텍스트 / Dawn EQ JSON 선택) 및 "내보내기(Export)..." 버튼 추가.
+  - 다국어 3개 언어(ko-KR, en-US, ja-JP) resw 키 추가.
+
+#### 3) 결함 트리 및 불변식 (Invariants)
+- **결함 1 (비정상 값/부동소수점 예외)**: 비정상 주파수(0Hz, 음수, 가청대역 밖 50kHz 등), 극단적 Q(0 또는 무한대), NaN/Inf 등 -> 주파수(20~20,000Hz), Q(0.1~8.0), 게인(-15~+15dB) 엄격 클램핑 및 안전 폴백.
+- **결함 2 (20밴드 초과 시 크래시)**: AutoEq 텍스트에 30개 이상의 필터가 포함될 때 엔진 배열 초과 -> 최대 20개까지만 슬라이스하여 임포트하고 잘림 여부를 사용자에게 안내.
+- **결함 3 (로캘 소수점 파싱 결함)**: 마침표(`.`) 대신 쉼표(`,`)를 사용하는 유럽 로캘 환경에서 소수점 파싱 실패 -> `CultureInfo.InvariantCulture` 강제.
+- **불변식 1**: AutoEq 파서는 어떠한 손상된 텍스트 입력에도 프로세스를 크래시시키지 않고, 파싱 가능한 유효 밴드만 추출하거나 안전하게 실패해야 함.
+- **불변식 2**: 임포트된 `EqProfile`의 모든 밴드 파라미터는 `EqBandSettings`의 불변 범위(Freq 20..20000, Gain -15..+15, Q 0.1..8)를 100% 준수해야 함.
+
+#### 4) 선설계 테스트 (`AutoEqParserTests.cs`)
+- `AutoEqParser_StandardText`: 표준 AutoEq 파라메트릭 텍스트 완벽 파싱 (Preamp, PK/LSC/HSC/LP/HP 타입, 주파수, 게인, Q 매핑).
+- `AutoEqParser_ClampingAndSanitization`: 비정상 수치(초과 Q, 과도한 게인, 마이너스 주파수) 클램핑 검증.
+- `AutoEqParser_BandLimit20`: 20개 초과 필터가 입력될 때 선두 20개 보존 및 안전 슬라이싱 검증.
+- `AutoEqParser_RoundTrip`: `EqProfile` -> AutoEq 텍스트 -> `EqProfile` 왕복 무손실 일치 검증.
+
+---
+
+### 5.2 T2-2: 재생목록 Undo/Redo (되돌리기/다시 실행) (M)
+
+#### 1) 문제 배경 및 진단
+- 사용자가 실수로 수백 곡의 재생목록에서 곡을 일괄 삭제하거나, 무작위 셔플/정렬을 수행했을 때 원상 복구할 방법이 없음 (`Ctrl+Z` 미지원).
+- foobar2000이나 일반적인 전문 미디어 플레이어는 재생목록 조작에 대해 다단계 Undo/Redo를 지원함.
+
+#### 2) 설계 및 파일 수준 변경점
+- **Core (`PlaylistUndoManager.cs`, `IPlaylistManager.cs`)**:
+  - `src/DawnPlayer.Core/Playlists/PlaylistUndoManager.cs` 신설:
+    - 재생목록별 또는 활성 재생목록 대상 `UndoStack`과 `RedoStack` 관리 (기본 최대 30단계).
+    - `Snapshot` 단위: `IReadOnlyList<PlaylistItem>` (불변 리스트 스냅샷).
+    - `RecordOperation(Playlist pl, string description)`: 파괴적 변경(삭제, 전체삭제, 정렬, 셔플, 중복제거, 이동, 추가) 직전 현재 상태를 Undo 스택에 푸시, Redo 스택 초기화.
+    - `Undo(Playlist pl)`: 현재 상태를 Redo 스택에 푸시하고, 이전 스냅샷으로 `pl.Items.ReplaceAll(...)` 원자적 복원.
+    - `Redo(Playlist pl)`: 현재 상태를 Undo 스택에 푸시하고, 다음 스냅샷으로 복원.
+  - `PlaylistManager.cs` 연동:
+    - `IPlaylistManager`에 `Undo(Playlist pl)`, `Redo(Playlist pl)`, `CanUndo(Playlist pl)`, `CanRedo(Playlist pl)` 노출.
+    - `RemoveItems`, `RemoveAll`, `Sort`, `RemoveDuplicates`, `MoveItem`, `AddFiles/Tracks` 호출 시 자동 스냅샷 기록.
+- **App UI (`ShortcutCommandCatalog.cs`, `PlaylistPage.xaml.cs`)**:
+  - 단축키: `ShortcutCommand.PlaylistUndo` (`Ctrl+Z`), `ShortcutCommand.PlaylistRedo` (`Ctrl+Y` / `Ctrl+Shift+Z`) 추가.
+  - `PlaylistPage.xaml.cs`에서 Undo/Redo 단축키 및 컨텍스트 메뉴 처리.
+
+#### 3) 결함 트리 및 불변식 (Invariants)
+- **결함 1 (재생 중인 곡 인스턴스 분리로 인한 재생 중단/상태 꼬임)**:
+  - Undo로 곡 목록을 복원할 때, 현재 재생 중인 `PlaylistItem`과 동일한 트랙이 새 인스턴스로 교체되면 컨트롤러의 `CurrentItem` 참조와 불일치 발생.
+  - **해결/불변식**: 스냅샷 저장 시 기존 `PlaylistItem` 인스턴스 참조를 그대로 보존하여 복원 시 동일 객체 유지.
+- **결함 2 (스마트 재생목록/시스템 재생목록 오염)**:
+  - 동적으로 쿼리되는 스마트 재생목록(IsSmart)이나 재생 큐에 대해 무차별 Undo/Redo가 적용되면 쿼리 결과와 불일치.
+  - **해결/불변식**: `IsSmart` 재생목록은 Undo/Redo 대상에서 엄격히 제외 (`CanUndo == false`).
+- **결함 3 (메모리 누수)**:
+  - 수천 곡의 재생목록을 100회 이상 편집할 때 무제한 스택 누적 -> 최대 30단계 고정 링버퍼/용량 제한 관리.
+- **불변식 1**: Undo/Redo 수행 후 `pl.Items`의 내용과 순서는 스냅샷 캡처 시점과 100% 동일해야 함.
+- **불변식 2**: 새 편집 작업이 발생하면 Redo 스택은 완전히 비워져야 함 (표준 편집기 계약).
+
+#### 4) 선설계 테스트 (`PlaylistUndoTests.cs`)
+- `PlaylistUndo_RemoveAndRestore`: 곡 삭제 후 Undo 시 원본 곡들이 동일한 순서로 복구되는지 검증.
+- `PlaylistUndo_MultipleSteps`: 여러 차례의 편집(추가 -> 이동 -> 정렬)에 대해 다단계 Undo 및 Redo 체인 검증.
+- `PlaylistUndo_NewActionClearsRedo`: Undo 후 새 변경 작업 수행 시 Redo 스택 클리어 검증.
+- `PlaylistUndo_MaxCapacity`: 30개 초과 작업 시 가장 오래된 스냅샷이 안전하게 방출되는지 검증.
+- `PlaylistUndo_SmartPlaylistIgnored`: 스마트 재생목록에 대해 Undo 작업이 무시되는지 검증.
+
+---
+
+### 5.3 T2-3: 트랙 간 크로스페이드 (Crossfade) (L)
+
+#### 1) 문제 배경 및 진단
+- Dawn Player는 완벽한 갭리스(Gapless) 재생을 지원하지만, 파티/BGM 감상이나 트랙 간 묵음 없이 부드럽게 이어지는 믹싱을 원하는 사용자들을 위한 크로스페이드 기능이 부재.
+- 다음 트랙으로 전환될 때 0~10초 동안 이전 트랙이 서서히 줄어들고(Fade-out) 다음 트랙이 서서히 커지며(Fade-in) 부드럽게 겹쳐서 재생되는 실시간 오버랩 믹싱이 필요.
+
+#### 2) 설계 및 파일 수준 변경점
+- **설정 (`PlaybackSettings.cs`)**:
+  - `PlaybackSettings.CrossfadeDurationSeconds` (double, 0.0 ~ 10.0초, 기본값: 0.0초 = 갭리스 유지).
+- **Core (`SequencerStream.cs`, `CrossfadeAudioSource.cs`)**:
+  - `SequencerStream` 확장:
+    - `_crossfadeSeconds`: 활성 크로스페이드 길이 (초 단위).
+    - 현재 트랙의 잔여 시간(`RemainingTime` 또는 잔여 바이트)이 `_crossfadeSeconds` 이하로 진입하고, 다음 트랙이 프리페치되어 있으며(`_prefetched != null`), 포맷 변경(`RequiresRestart == false`)이 아닐 때:
+    - **크로스페이드 믹싱 모드 진입**:
+      - 이전 트랙의 잔여 샘플을 `(1 - t)` (선형 또는 등출력 코사인) 가중치로 감쇠.
+      - 다음 트랙의 샘플을 `t` 가중치로 증가시키며 동일 버퍼에 합산(Add) 출력.
+      - 크로스페이드 완료 시 다음 트랙이 완전한 `_current`가 되고 `TrackStarted` 이벤트 발화.
+    - **Bit-perfect DoP 가드**: `_rawPassthrough`(DSD DoP) 활성화 시 크로스페이드 완전 바이패스 (DSD 마커 파손 방지).
+    - **시크 및 수동 전환 방어**: 크로스페이드 도중 사용자가 수동 시크하거나 다음 곡으로 강제 점프할 경우 크로스페이드 버퍼 즉시 리셋 및 클린 핸드오프.
+- **App UI (`PlaybackSettingsViewModel.cs`, `SettingsPage.xaml`)**:
+  - 재생 설정 페이지에 "트랙 간 크로스페이드" 슬라이더 추가 (0.0초 ~ 10.0초, 0.5초 단위).
+  - 0초 시 "끄기 (갭리스)", 그 외 "N.N초" 표시.
+  - 다국어 3개 언어(ko-KR, en-US, ja-JP) resw 키 추가.
+
+#### 3) 결함 트리 및 불변식 (Invariants)
+- **결함 1 (등출력 합산 클리핑 및 왜곡)**: 두 곡의 최대 볼륨 구간이 겹칠 때 1.0을 초과하여 디지털 클리핑 발생 -> SoftLimiter 및 선형/등출력 감쇠 계수 보정, 클리핑 방어.
+- **결함 2 (0초 설정 시 갭리스 회귀 결함)**: 크로스페이드 코드가 0초 설정에서도 동작하여 갭리스의 샘플 단위 정확성을 훼손하는 위험 -> `_crossfadeSeconds <= 0.01`일 때는 기존 갭리스 핫루프를 100% 동일하게 직결 실행 (단 1라인의 오버헤드나 지연도 없음).
+- **결함 3 (독점 모드 샘플레이트 불일치)**: 다음 곡의 샘플레이트가 다른 경우 믹싱 불가 -> `RequiresRestart` 트랙은 크로스페이드 대상에서 즉시 제외하고 세션 재시작 갭리스/무음 전환.
+- **불변식 1**: `CrossfadeDurationSeconds == 0`일 때의 출력 파형은 기존 갭리스 시퀀서의 출력과 비트 단위로 100% 동일해야 함.
+- **불변식 2**: 크로스페이드 믹싱 중 어떤 입력 샘플도 NaN이나 Inf로 발산하지 않아야 함.
+
+#### 4) 선설계 테스트 (`CrossfadeMixerTests.cs`)
+- `CrossfadeMixer_ZeroDuration_PureGapless`: 0초 크로스페이드 시 기존 순수 갭리스 시퀀싱과 동일하게 동작하는지 검증.
+- `CrossfadeMixer_OverlapMixing`: 두 개의 서로 다른 사인파 소스가 크로스페이드 구간에서 부드럽게 오버랩 합산되는지 진폭 곡선 검증.
+- `CrossfadeMixer_SeekDuringCrossfade`: 크로스페이드 믹싱 도중 시크 호출 시 오디오 버퍼가 오염되지 않고 정상 위치로 회복되는지 검증.
+- `CrossfadeMixer_DsdDoPBypassed`: DoP 패스스루 모드에서 크로스페이드가 강제 바이패스되는지 검증.
+
+---
+
+### 5.4 마일스톤 실행 순서 및 검증 게이트
+
+| 마일스톤 | 주제 | 핵심 파일 | 의존성 | 규모 | 상태 |
+|---|---|---|---|---|---|
+| **T2-1** | EQ 프리셋 + AutoEq | `AutoEqParser.cs`, `EqualizerSettingsViewModel.cs`, `SettingsPage.xaml` | 없음 | M | ✅ 완료 |
+| **T2-2** | 재생목록 Undo/Redo | `PlaylistUndoManager.cs`, `PlaylistManager.cs`, `PlaylistPage.xaml.cs` | T2-1 독립 | M | ✅ 완료 |
+| **T2-3** | 크로스페이드 (Crossfade) | `SequencerStream.cs`, `PlaybackSettings.cs`, `PlaybackSettingsViewModel.cs` | T2-1/T2-2 독립 | L | ✅ 완료 |
+
+- **검증 게이트 달성 기록 (2026-10-14)**:
+  1. 각 마일스톤 실패 시나리오 테스트 선설계(RED) -> 구현(GREEN) 완료 (`AutoEqParserTests`, `PlaylistUndoTests`, `CrossfadeMixerTests`, `SettingsViewModelTests`).
+  2. 중간 작업 단위 필터 테스트 엄격 준수.
+  3. `dotnet clean` 후 콜드 리빌드 **0 Warning(s) 0 Error(s)** 달성.
+  4. 전체 테스트 스위트 **2,297 / 2,297 전수 통과** (실패 0, 스킵 0).
+  5. README 3개 국어(EN, KO, ZH) 및 3개 국어 resw(ko-KR, en-US, ja-JP) 리소스 동기화 완료.---
+
+## 6. Tier 1: UI 및 조작 편의 로드맵 (T1-1, T1-2)
+
+> **작성일**: 2026-10-18 · **목표**: 일상 청취 및 대규모 재생목록 탐색 시의 UI/UX 편의성 극대화.
+> **제외 사항**: Discord RPC (사용자 지시로 제외).
+> **규약 준수**: 결함 트리 분석, 불변식 정의, 실패 시나리오 테스트 선설계, 콜드 리빌드 0경고 0오류 게이트.
+
+### 6.1 T1-1: 재생목록 내 인라인 검색 (Find & Jump / Ctrl+F) (M)
+
+#### 1) 문제 배경 및 진단
+- 현재 Dawn Player에서 `Ctrl+F`(`ShortcutCommand.FocusSearch`)는 무조건 라이브러리 탭으로 화면을 전환하고 라이브러리 검색창에 포커스를 맞춤.
+- 사용자가 수백~수천 곡이 담긴 재생목록 화면(`PlaylistPage`)에 머무르고 있을 때도 라이브러리로 강제 튕겨 나가므로, 현재 재생목록 안에서 원하는 곡을 찾을 방법이 전무함.
+- 단순 목록 필터링(Filter) 방식은 `CollectionViewSource`의 앨범 그룹핑을 해체하고, 드래그 앤 드롭 정렬 및 Undo/Redo 스냅샷과 인덱스 불일치 버그를 유발할 위험이 큼.
+- 따라서 foobar2000 및 웹 브라우저 스타일의 **Find & Jump (일치 항목 순차 탐색 및 포커스 스크롤)** 방식을 채택하여 원본 재생목록 구조와 재생 상태를 100% 보존하면서 직관적인 탐색을 지원해야 함.
+
+#### 2) 설계 및 파일 수준 변경점
+- **Core / App 헬퍼 (`PlaylistSearchEngine.cs`)**:
+  - `src/DawnPlayer.App/Views/Playlist/PlaylistSearchEngine.cs` (순수 클래스, 단위 테스트 가능):
+    - `FindMatches(IReadOnlyList<PlaylistItem> items, string query)`:
+      - 대소문자 무시(`StringComparison.OrdinalIgnoreCase`).
+      - 제목(`Track.Title`), 아티스트(`Track.Artist`), 앨범(`Track.Album`), 파일명(`Path`) 대상 다중 토큰(공백 기준 AND) 매칭.
+      - 정규식 메타문자나 특수문자 입력에도 안전한 순수 리터럴 부분 일치.
+      - 일치하는 항목의 인덱스 목록(`IReadOnlyList<int>`) 반환.
+    - `GetNextMatchIndex(IReadOnlyList<int> matches, int currentIndex)`:
+      - 현재 인덱스 뒤에 오는 가장 가까운 일치 인덱스 선택, 마지막이면 처음으로 Wrap-around 순환.
+    - `GetPrevMatchIndex(IReadOnlyList<int> matches, int currentIndex)`:
+      - 현재 인덱스 앞에 오는 가장 가까운 일치 인덱스 선택, 처음이면 마지막으로 Wrap-around 순환.
+- **App UI (`PlaylistPage.xaml`, `PlaylistPage.xaml.cs`)**:
+  - `PlaylistPage.xaml`:
+    - Center Main View의 Row 0(헤더)과 Row 1(트랙 목록) 사이에 `InlineSearchBar` (`Border`, `Height="Auto"`, 기본 `Visibility="Collapsed"`) 배치:
+      - 돋보기 아이콘 (`FontIcon Glyph="\uE721"`).
+      - 검색어 입력창 (`TextBox x:Name="PlaylistSearchBox"`, Placeholder="재생목록에서 검색...").
+      - 매치 카운트 텍스트 (`TextBlock x:Name="PlaylistSearchCountText"`: 예: `"1/14"` 또는 `"일치 항목 없음"`, 빈 검색어 시 숨김).
+      - 이전 이동 버튼 (`Button x:Name="PlaylistSearchPrevButton"`, `FontIcon Glyph="\uE70E"`, 툴팁="이전 (Shift+Enter, Shift+F3)").
+      - 다음 이동 버튼 (`Button x:Name="PlaylistSearchNextButton"`, `FontIcon Glyph="\uE70D"`, 툴팁="다음 (Enter, F3)").
+      - 닫기 버튼 (`Button x:Name="PlaylistSearchCloseButton"`, `FontIcon Glyph="\uE711"`, 툴팁="닫기 (Esc)").
+    - 헤더 도구 영역(`Playlist_ToolsButton` 좌측)에 마우스 검색 오픈 버튼 (`Button x:Uid="Playlist_SearchButton"`, 돋보기 아이콘, 툴팁="재생목록 검색 (Ctrl+F)") 추가.
+  - `PlaylistPage.xaml.cs`:
+    - `ShowInlineSearch()`: 인라인 검색 바 표시, `PlaylistSearchBox`에 포커스 부여 및 텍스트 전체 선택.
+    - `CloseInlineSearch()`: 인라인 검색 바 숨김, `PlaylistList`로 포커스 복귀.
+    - 키보드 이벤트 핸들러:
+      - `Enter`: Shift 여부에 따라 다음/이전 매치로 이동.
+      - `F3`: Shift 여부에 따라 다음/이전 매치로 이동.
+      - `Escape`: 검색 바 닫기.
+    - 매치 항목으로 이동 시 `PlaylistList.SelectedItem = matchItem` 및 `PlaylistList.ScrollIntoView(matchItem, ScrollIntoViewAlignment.Leading)`.
+- **단축키 라우팅 (`ShortcutCommandExecutor.cs`, `MainWindow.xaml.cs`)**:
+  - `MainWindow.FocusSearch()`: `PlaylistPageView`가 가시 상태(`Visibility == Visibility.Visible`)이면 `PlaylistPageView.ShowInlineSearch()`를 호출하고, 그렇지 않으면 기존 `FocusLibrarySearch()` 호출.
+- **다국어 (resw)**:
+  - ko-KR, en-US, ja-JP에 `Playlist_Search_Placeholder`, `Playlist_Search_NoMatch`, `Playlist_Search_MatchFormat`, `Playlist_Search_PrevTooltip`, `Playlist_Search_NextTooltip`, `Playlist_Search_CloseTooltip` 동기화.
+
+#### 3) 결함 트리 및 불변식 (Invariants)
+- **결함 1 (검색 중 재생목록 동적 변경으로 인한 인덱스 오버플로우)**:
+  - 검색 결과를 띄워둔 상태에서 외부 파일 드롭, 삭제, Undo/Redo 등으로 재생목록 곡 수가 변했을 때 이전 인덱스로 접근 시 크래시 -> 인덱스 탐색 전 항상 `items.Count` 범위 검증 및 `CollectionSnapshot` 기반 방어.
+- **결함 2 (포커스 탈취 및 텍스트 입력 간섭)**:
+  - 검색창에서 스페이스바나 단축키(Space=재생/정지, B=처음으로 등) 입력 시 재생 컨트롤러가 반응하여 글자 입력이 먹히거나 재생이 튀는 결함 -> `PlaylistSearchBox` 내부 `KeyDown`에서 영숫자/기호/스페이스 입력은 기본 텍스트박스로 전달하고 단축키 핸들러 전파 차단.
+- **결함 3 (특수문자 정규식 크래시)**:
+  - `(`, `[`, `*`, `?` 등 특수문자가 포함된 곡 검색 시 예외 발생 -> Regex가 아닌 순수 `string.IndexOf(query, StringComparison.OrdinalIgnoreCase)` 사용.
+- **불변식 1**: 인라인 검색은 재생목록의 실제 순서, 앨범 그룹 구조, 재생 중인 상태, Undo/Redo 스택을 100% 보존하며 어떠한 파괴적 변경도 일으키지 않음.
+- **불변식 2**: 빈 쿼리 또는 공백 쿼리는 매치 개수 0을 반환하며 목록의 선택 상태를 임의로 변경하지 않음.
+
+#### 4) 선설계 테스트 (`PlaylistSearchEngineTests.cs`)
+- `Search_MatchesTitleArtistAlbum_CaseInsensitive`: 대소문자 무관 및 다중 필드 매치 검증.
+- `Search_MultiTokenAndQuery`: "iu celeb" 공백 토큰 AND 조건 일치 검증.
+- `Search_EmptyQuery_ReturnsZero`: 빈 쿼리 또는 공백만 입력 시 매치 없음 반환.
+- `Search_NextPrevNavigation_WrapAround`: 3개 매치 항목에 대해 0 -> 1 -> 2 -> 0 (다음), 0 -> 2 -> 1 -> 0 (이전) 순환 검증.
+- `Search_SanitizesSpecialCharacters`: 특수문자(`(`, `[`, `*`, `?`) 입력 시 크래시 없이 리터럴 검색 동작 검증.
+
+---
+
+### 6.2 T1-2: 재생바에서 현재 재생 곡으로 점프/포커스 (Ctrl+J / NowPlayingBar) (S)
+
+#### 1) 문제 배경 및 진단
+- 수천 곡의 거대한 재생목록을 둘러보거나 다른 탭(라이브러리, 설정, 네트워크)을 탐색하다가, 현재 흘러나오고 있는 곡의 재생목록 위치로 즉시 되돌아갈 방법이 없음.
+- foobar2000, iTunes, Spotify 등 표준 오디오 플레이어는 모두 단축키(예: `Ctrl+J`) 및 재생바의 현재 곡 정보 클릭을 통해 현재 재생 트랙으로 즉시 화면을 맞추고 포커스를 주는 워크플로우를 제공함.
+
+#### 2) 설계 및 파일 수준 변경점
+- **단축키 시스템 (`ShortcutCommand.cs`, `ShortcutCommandCatalog.cs`)**:
+  - `ShortcutCommand.JumpToCurrentTrack` 추가.
+  - 기본 단축키: `Ctrl+J` (`new KeyChord(ShortcutModifiers.Control, 'J')`).
+  - 카테고리: `ShortcutCategory.Navigation`.
+  - 표시명: "현재 재생 트랙으로 이동" (`Shortcut_Command_JumpToCurrentTrack`).
+- **단축키 실행기 및 메인 윈도우 (`ShortcutCommandExecutor.cs`, `MainWindow.xaml.cs`)**:
+  - `ShortcutCommandExecutor.cs`에 `case ShortcutCommand.JumpToCurrentTrack: window?.JumpToCurrentTrack(); break;` 연결.
+  - `MainWindow.JumpToCurrentTrack()`:
+    - 현재 재생 아이템 `AppServices.Playback.CurrentItem` 확인. 없으면 무동작.
+    - 필요 시 재생목록 탭으로 전환 (`NavigateToTab("Playlists")`).
+    - 현재 재생 아이템을 소유한 재생목록 탐색 (`AppServices.Playlists.Playlists.FirstOrDefault(p => p.Items.Contains(currentItem))`).
+    - 활성 재생목록이 다르면 해당 재생목록을 사이드바에서 선택/전환.
+    - `PlaylistPageView.ScrollToPlayingTrack(currentItem)` 호출.
+- **재생바 UI (`NowPlayingBar.xaml`, `NowPlayingBar.xaml.cs`)**:
+  - `NowPlayingBar.xaml`:
+    - `TrackTitle` 및 `TrackArtist`가 위치한 텍스트 영역에 클릭/탭 가능 어포던스 부여.
+    - 커서: `ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.Hand)`.
+    - 툴팁: `ToolTipService.ToolTip="현재 재생 트랙으로 이동 (Ctrl+J)"`.
+    - `TrackInfoContainer`에 `PointerPressed="OnTrackInfoPointerPressed"` 연결.
+    - 별점 버튼(`TrackRatingButton`) 클릭과 충돌하지 않도록 타이틀 텍스트 영역 한정 바인딩.
+  - `NowPlayingBar.xaml.cs`:
+    - `public event Action? JumpToCurrentTrackRequested;` 이벤트 노출.
+    - `OnTrackInfoPointerPressed` 발생 시 재생 중인 곡이 존재하면 이벤트 발화.
+    - `MainWindow.xaml.cs`에서 `PlayerBar.JumpToCurrentTrackRequested += JumpToCurrentTrack;` 연결.
+- **재생목록 뷰 (`PlaylistPage.xaml.cs`)**:
+  - `public void ScrollToPlayingTrack(PlaylistItem item)`:
+    - `PlaylistList.SelectedItem = item;`
+    - 레이아웃 배치 완료 보장을 위해 `DispatcherQueue.TryEnqueue`로 `PlaylistList.ScrollIntoView(item, ScrollIntoViewAlignment.Leading)` 실행.
+    - `PlaylistList.Focus(FocusState.Programmatic);`
+- **다국어 (resw)**:
+  - ko-KR, en-US, ja-JP에 `Shortcut_Command_JumpToCurrentTrack`, `NowPlaying_JumpToTrackTooltip` 추가.
+
+#### 3) 결함 트리 및 불변식 (Invariants)
+- **결함 1 (가상화 리스트의 ScrollIntoView 타이밍 문제)**:
+  - 탭이 방금 전환되었거나 다른 재생목록이 로드되는 순간에는 XAML 레이아웃 엔진이 뷰포트 크기를 계산하지 못해 `ScrollIntoView`가 무시될 수 있음 -> `DispatcherQueue.TryEnqueue`를 통해 렌더 패스 후 스크롤 보장.
+- **결함 2 (재생 트랙이 어떤 재생목록에도 없는 경우 - 라디오/네트워크 스트림)**:
+  - `TrackSourceKind.Radio` 등 외부 스트림은 재생목록에 존재하지 않음 -> 소유 재생목록 탐색 실패 시 예외 없이 안전 무시.
+- **불변식 1**: `JumpToCurrentTrack` 실행 후 선택된 항목과 화면 중앙/상단에 스크롤된 항목은 반드시 `AppServices.Playback.CurrentItem`과 일치해야 함.
+- **불변식 2**: NowPlayingBar의 별점 클릭 또는 앨범아트 클릭 동작에 일체 간섭하지 않아야 함.
+
+#### 4) 선설계 테스트 (`ShortcutTests.cs`)
+- `ShortcutCommandCatalog_ContainsJumpToCurrentTrack`: `JumpToCurrentTrack`의 기본 chord가 `Ctrl+J`이고 카테고리가 Navigation인지 검증.
+- `ShortcutCommandExecutor_JumpToCurrentTrack`: 실행 시 정상 처리(true 반환) 검증.
+
+---
+
+### 6.3 마일스톤 실행 순서 및 검증 게이트
+
+| 마일스톤 | 주제 | 핵심 파일 | 의존성 | 규모 | 상태 |
+|---|---|---|---|---|---|
+| **T1-1** | 재생목록 인라인 검색 | `PlaylistSearchEngine.cs`, `PlaylistPage.xaml(.cs)`, `MainWindow.xaml.cs` | 없음 | M | ✅ 완료 (2026-10-18) |
+| **T1-2** | 현재 재생 트랙 점프 | `ShortcutCommand.cs`, `ShortcutCommandCatalog.cs`, `NowPlayingBar.xaml(.cs)`, `MainWindow.xaml.cs` | T1-1 독립 | S | ✅ 완료 (2026-10-18) |
+
+- **검증 게이트 달성 기록 (2026-10-18)**:
+  1. 각 마일스톤 실패 시나리오 테스트 선설계(RED) -> 구현(GREEN) 완료 (`PlaylistSearchEngineTests` 6종, `ShortcutBindingTests` 111종).
+  2. 중간 작업 단위 필터 테스트 엄격 준수.
+  3. `LocalizationTests` 패리티 3개 언어(ko-KR, en-US, ja-JP) 100% 통과 (15/15), `AutomationNameGateTests` 3/3 통과.
+  4. `dotnet clean` 후 콜드 리빌드 **0 Warning(s) 0 Error(s)** 달성.
+  5. 전체 테스트 스위트 1회 전수 실행: **2,304 / 2,304 100% 통과** (Failed: 0, Passed: 2304, Skipped: 0, Total: 2304).
+  6. `README.md`, `README.ko.md`, `README.zh-CN.md` 3개 국어 동기화 완료.
+
+
+---
+
+## 7. 신규 기능 리뷰 및 수리 기록 (2026-10-18 — 사용자 승인 완료)
+
+> Tier 1~3 8개 기능 전체 리뷰(작업 트리 미커밋 상태)에서 지적된 결함의 수리 기록.
+> 원칙: §3에 따라 각 결함의 실패 시나리오 테스트를 먼저 작성해 RED를 확인한 뒤 수리(GREEN).
+
+### 7.1 수리 내역
+
+| # | 결함 | 수리 | 검증 테스트 |
+|---|---|---|---|
+| P1-1 | 크로스페이드 전환 후 `_bytesServed=0` 리셋으로 보고 위치가 다음 트랙의 실제 위치(T초)와 영구 불일치 → 시크바 오차 + 다음 전환부터 아밍 판정이 틀어져 크로스페이드가 즉시-스위치로 퇴화 | `SetCurrentLocked`가 리더의 실제 위치(트랙 상대 좌표 — CueTrackReader 포함)에 클록을 앵커. 페이드 완료 패스는 `anchor − 당 패스 프레임`로 보정해 이중 계산 제거 | `Crossfade_HandoffAnchorsReportedPositionToHeardAudio`, `Crossfade_ConsecutiveBoundaries_KeepFading` (100ms 다중 패스로 실제 재생 형상 재현) |
+| P1-2 | 시크로 페이드 취소 시 일부 소비된 다음 트랙 소스가 그대로 재사용 → (크로스페이드 비활성 후) 갭리스 전환에서 다음 트랙 앞부분 통째로 건너뜀 | `SeekLocked`/`TakePrefetched`의 취소 경로에서 프리페치 리더를 0으로 되감김 (`RewindAbortedCrossfadeSource`) | `Crossfade_SeekAbortedFade_NextSourceStillStartsAtBeginning` (위치 인코딩 리더로 실제 서비스 프레임 단언) |
+| P1-3 | 파일 정리기 Overwrite 정책에서 서로 다른 트랙이 같은 dest로 수렴 시 선행 이동 파일이 후행 `File.Delete(dest)`에 파괴(데이터 손실) + Delete/Move 비원자 | 배치 내 수렴은 플랜 단계에서 `Conflict` 봉쇄, 실행은 `File.Move(src, dest, overwrite: true)` 단일 원자 호출 | `PlanOperations_OverwriteBatchCollision_LaterTrackConflictsInsteadOfClobbering` |
+| P2-5 | 이동 후 재생목록 동기화가 `plan.Track.Path`를 먼저 변경해 구-경로 룩업이 항상 미스 → `SavePlaylist` 생략, 디스크 재생목록에 구 경로 잔존 | 실행 전 재생목록 항목 경로 스냅숏 → 스냅숏 기준 룩업·갱신·저장 | `ExecuteAsync_Move_UpdatesSharedAndDistinctPlaylistTracksAndSaves` (공유/별개 인스턴스 모두) |
+| P2-6 | FLAC 변환이 `s16le` 파이프라 24-bit 소스가 무음 16-bit 강등("무손실" 표방 위반). 부수: stderr 비드레인 대비 `-nostats` 부재 | FLAC은 `s24le` 파이프(24-bit 패킹), 손실 포맷은 s16le 유지, `-nostats` 상시 지정 | `BuildFfmpegArgs_GeneratesExpectedArgs_ForFlac`, `BuildFfmpegArgs_PipeDepthFollowsContainerLosslessness` |
+| P2-7 | 현재 곡 점프의 소유 재생목록 탐색이 참조 동등성만 사용(큐·재생목록 인스턴스 상이) + Now Playing이 컬렉션 0번 인덱스로 항상 선매치 | 참조+트랙 경로 이중 매칭(`FindItemToScroll`과 동일 규약), 사용자 재생목록 우선 후 큐 폴백 | (MainWindow 수동 검증 — UI 계층) |
+| P1-4 | 인라인 검색 탐색이 `PlaylistList.SelectedIndex`(그룹 헤더 슬롯 포함 뷰 인덱스)를 `Current.Items` 인덱스와 직접 비교 — 그룹 모드(기본)에서 탐색 origin 엉킴, "k/N" 카운터 미표시 | `SelectedItemIndexInItems()` 헬퍼로 아이템 기반 origin 통일 + `NavigateToMatch`의 `ScrollIntoView`를 `ScrollToPlayingTrack`과 동일한 디스패처 지연으로 정렬 | (PlaylistPage 수동 검증 — 엔진 계약은 기존 `PlaylistSearchEngineTests`가 커버) |
+| 문서 | README 3개 국어 "최대 8밴드" 오기(실제 20밴드 — `CanAddBand < 20`, AutoEq 파서 20 상한)와 AutoEq 기능 모순 | EN/KO/ZH 모두 20밴드로 정정 | — |
+
+### 7.2 검증 기록
+- ffmpeg stderr 데드락 추정은 ffmpeg 9.0.1 실측으로 기각: `-loglevel error`에서 stderr 0바이트(통계 출력 억제 확인). 그래도 버전 파편화 대비 `-nostats`를 상시 지정하도록 경화.
+- Tier 1~3 구현 시 계획 대비 미구현 항목 중 사용자 승인(2026-10-18 "진행할 것만 진행, 나머지는 폐기")으로 처리 결과:
+  - **진행 완료**: (a) TranscodeDialog 배치 진행률·취소 모달 다이얼로그(ProgressBar 전체 진행률 + 트랙별 상태 + 취소 시 `Convert_Cancelled` 토스트, 부분 파일은 Convert 내부에서 삭제) 및 ffmpeg 감지 상태 표시(`AudioTranscoder.IsFfmpegAvailable()` 신설 — 미감지 시 StatusDangerBrush 안내). (b) 재생목록 도구 메뉴 Undo/Redo가 `CanUndo/CanRedo`를 반영해 활성/비활성(기존 항상 활성+조용한 no-op 해소, `OnHeaderToolsMenuOpening` 확장).
+  - **폐기(판정 근거)**: (c) LyricsPane 헤더 임베딩 액션 — 패널에 메뉴 표면 자체가 없어 신규 UI이고, 태그 편집기·가사 검색 창으로 동일 기능 도달 가능한 중복 진입점. (d) 검색 TextChanged 디바운스 — `FindMatches`가 단일 스캔 문자열 루프라 수만 곡에서도 수 ms 수준, 실측 문제 없는 성급한 최적화. 실사용 지연 보고 시 재검토.
+  - resw 3개 언어: `Convert_ProgressTitle/ProgressTrack/Cancelled/FfmpegAvailable/FfmpegMissing` 5키 추가, 정적 안내로 대체된 `Convert_FfmpegRequired` 제거, `Convert_Started` 토스트는 모달 진행률로 대체되어 호출부 제거(키는 유지).
+- 검증 게이트 (2026-10-18 달성, 수리+폴리시 최종): obj/bin 삭제 후 콜드 리빌드 **0 Warning(s) 0 Error(s)**, 전체 테스트 스위트 1회 전수 실행 **2,310 / 2,310 100% 통과**(신규 6건 포함 — 크로스페이드 3, 파일 정리기 2, 파이프 포맷 1).

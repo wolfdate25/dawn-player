@@ -116,6 +116,8 @@
                     <Button x:Name="ApplyButton" x:Uid="LyricsSearch_ApplyButton" Content="현재 곡에 적용" Click="OnApplyClick" IsEnabled="False"/>
                     <Button x:Name="SaveButton" x:Uid="LyricsSearch_SaveButton" Content="파일로 저장" Click="OnSaveClick" IsEnabled="False"
                             ToolTipService.ToolTip="설정된 저장 위치와 파일명 템플릿으로 저장합니다"/>
+                    <Button x:Name="EmbedButton" x:Uid="LyricsSearch_EmbedButton" Content="오디오 태그에 저장" Click="OnEmbedClick" IsEnabled="False"
+                            ToolTipService.ToolTip="오디오 파일 내부 태그에 가사를 직접 임베딩하여 저장합니다"/>
                 </StackPanel>
             </Grid>
         </Grid>

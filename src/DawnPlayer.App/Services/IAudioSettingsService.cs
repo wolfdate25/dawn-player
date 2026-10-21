@@ -96,6 +96,11 @@ public interface IAudioSettingsService
     void SetConvolution(bool enabled, string impulsePath);
 
     /// <summary>
+    /// Updates track-to-track crossfade duration in seconds (0.0 to 10.0; 0 = gapless).
+    /// </summary>
+    void SetCrossfade(double durationSeconds);
+
+    /// <summary>
     /// Opens the Windows Sound Control Panel (mmsys.cpl) for audio hardware configuration.
     /// </summary>
     void OpenSoundControlPanel();

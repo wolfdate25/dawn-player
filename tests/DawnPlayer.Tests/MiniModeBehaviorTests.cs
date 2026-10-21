@@ -102,7 +102,6 @@ public class MiniModeBehaviorTests
         // 시스템 캡션이 된다.
         var body2 = ToggleMiniModeBody();
         Assert.Contains("ApplyMiniNonClientRegions();", body2, StringComparison.Ordinal);
-        Assert.True(body2.IndexOf("ApplyMiniNonClientRegions();", StringComparison.Ordinal) >= 0);
 
         // 구 수동 추적·모달 루프의 재유입 금지.
         Assert.DoesNotContain("0xA1", source, StringComparison.Ordinal);
@@ -116,8 +115,7 @@ public class MiniModeBehaviorTests
         // 미니의 발견 가능한 포인터 탈출구 — 표면이 시스템 캡션이라 컨텍스트 메뉴가 닿지 않는
         // 자리를 이 버튼이 담당한다(2026-10-08).
         var xaml = BarXaml();
-        var btn = xaml.IndexOf("x:Name=\"MiniRestoreButton\"", StringComparison.Ordinal);
-        Assert.True(btn >= 0, "MiniRestoreButton missing from NowPlayingBar.xaml");
+        Assert.Contains("x:Name=\"MiniRestoreButton\"", xaml, StringComparison.Ordinal);
 
         var miniAt = xaml.IndexOf("<VisualState x:Name=\"MiniVolume\"", StringComparison.Ordinal);
         Assert.True(miniAt > 0, "MiniVolume state missing");
@@ -144,9 +142,7 @@ public class MiniModeBehaviorTests
 
         // 표면 우클릭은 시스템 캡션 영역이 우선하므로 남는 XAML 우클릭 경로(컨트롤 구멍)는
         // 좌클릭 가드의 반대인 인터랙티브 판정만 남는다 — 기하 히트테스트 필수(위조 사슬 방어).
-        var geo = source.IndexOf("FindElementsInHostCoordinates(point, RootGrid)", StringComparison.Ordinal);
-        Assert.True(geo >= 0, "surface input eligibility must use geometric hit-testing — the ancestor walk " +
-            "is fooled by the NC input sink's aliased chain");
+        Assert.Contains("FindElementsInHostCoordinates(point, RootGrid)", source, StringComparison.Ordinal);
         var shell = source.IndexOf("is Microsoft.UI.Xaml.Controls.UserControl", StringComparison.Ordinal);
         var control = source.IndexOf("is Microsoft.UI.Xaml.Controls.Control", StringComparison.Ordinal);
         Assert.True(shell >= 0 && control > shell,

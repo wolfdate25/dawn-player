@@ -161,6 +161,7 @@ public sealed class OutputSessionFactory
             _settings.Crossfeed, _settings.Playback.MonoDownmixEnabled,
             dspChain: null, pluginDsp: _pluginDsp?.Invoke(), rawPassthrough: rawPassthrough,
             initialMasterGain: (float)Math.Clamp(_settings.Playback.Volume, 0.0, 1.0));
+        seq.CrossfadeDurationSeconds = _settings.Playback.CrossfadeDurationSeconds;
         _subscribeSequencer(seq);
         return seq;
     }

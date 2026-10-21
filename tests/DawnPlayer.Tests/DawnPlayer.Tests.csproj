@@ -99,6 +99,8 @@
     <Compile Include="..\..\src\DawnPlayer.App\Services\DensityScale.cs" Link="Services\DensityScale.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Controls\WaveformLayout.cs" Link="Controls\WaveformLayout.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Helpers\AutomationNameScan.cs" Link="Helpers\AutomationNameScan.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Views\Playlist\PlaylistSearchEngine.cs" Link="Views\Playlist\PlaylistSearchEngine.cs" />
   </ItemGroup>
+
 
 </Project>

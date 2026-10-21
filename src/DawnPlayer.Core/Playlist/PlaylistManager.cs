@@ -44,6 +44,8 @@ public sealed class PlaylistManager : IPlaylistManager
 
     public const string NowPlayingPlaylistName = "Now Playing";
 
+    private readonly PlaylistUndoManager _undoManager = new();
+
     public ObservableCollection<Playlist> Playlists { get; } = new();
     private Playlist? _current;
     private Playlist? _nowPlaying;
@@ -784,9 +786,10 @@ public sealed class PlaylistManager : IPlaylistManager
         return pl;
     }
 
-    private static void InsertItems(Playlist pl, List<PlaylistItem> items, int? insertAt)
+    private void InsertItems(Playlist pl, List<PlaylistItem> items, int? insertAt)
     {
         if (items == null || items.Count == 0) return;
+        _undoManager.RecordSnapshot(pl, "Add Items");
         lock (pl.SyncRoot)
         {
             if (insertAt is int idx and >= 0 && idx <= pl.Items.Count)
@@ -803,6 +806,7 @@ public sealed class PlaylistManager : IPlaylistManager
     public void RemoveItems(Playlist pl, IReadOnlyList<PlaylistItem> items)
     {
         if (pl == null || items == null || items.Count == 0) return;
+        _undoManager.RecordSnapshot(pl, "Remove Items");
         lock (pl.SyncRoot)
         {
             pl.Items.RemoveRange(items);
@@ -813,6 +817,7 @@ public sealed class PlaylistManager : IPlaylistManager
     public void RemoveAll(Playlist pl)
     {
         if (pl == null) return;
+        _undoManager.RecordSnapshot(pl, "Clear Playlist");
         List<PlaylistItem> removed;
         lock (pl.SyncRoot)
         {
@@ -825,6 +830,7 @@ public sealed class PlaylistManager : IPlaylistManager
     public List<PlaylistItem> ReplaceWithTracks(Playlist pl, IEnumerable<Track> tracks)
     {
         if (pl == null || tracks == null) return new List<PlaylistItem>();
+        _undoManager.RecordSnapshot(pl, "Replace Tracks");
         var items = tracks.Select(t => new PlaylistItem(t)).ToList();
         List<PlaylistItem> oldItems;
         lock (pl.SyncRoot)
@@ -839,6 +845,7 @@ public sealed class PlaylistManager : IPlaylistManager
     public void Sort(Playlist pl, PlaylistSort sort)
     {
         if (pl == null) return;
+        _undoManager.RecordSnapshot(pl, $"Sort {sort}");
         Comparison<PlaylistItem> cmp = sort switch
         {
             // Culture-aware on purpose: these are the linguistic sorts the user sees (Korean
@@ -904,6 +911,7 @@ public sealed class PlaylistManager : IPlaylistManager
         lock (pl.SyncRoot)
         {
             if (pl.Items.Count <= 1) return false;
+            _undoManager.RecordSnapshot(pl, "Move Selection");
 
             if (up)
             {
@@ -943,11 +951,31 @@ public sealed class PlaylistManager : IPlaylistManager
             if (oldIndex < 0 || oldIndex >= pl.Items.Count || newIndex < 0 || newIndex >= pl.Items.Count)
                 return;
 
+            _undoManager.RecordSnapshot(pl, "Move Item");
             pl.Items.Move(oldIndex, newIndex);
             moved = true;
         }
 
         if (moved) ScheduleSave(pl);
+    }
+
+    public bool CanUndo(Playlist pl) => _undoManager.CanUndo(pl);
+    public bool CanRedo(Playlist pl) => _undoManager.CanRedo(pl);
+
+    public bool Undo(Playlist pl)
+    {
+        if (pl == null) return false;
+        bool ok = _undoManager.Undo(pl);
+        if (ok) ScheduleSave(pl);
+        return ok;
+    }
+
+    public bool Redo(Playlist pl)
+    {
+        if (pl == null) return false;
+        bool ok = _undoManager.Redo(pl);
+        if (ok) ScheduleSave(pl);
+        return ok;
     }
 
     public int RemoveDeadItems(Playlist pl)

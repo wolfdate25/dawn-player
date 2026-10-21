@@ -22,7 +22,8 @@ public sealed record TagEdit(
     int? TrackNo = null,
     int? DiscNo = null,
     TagEditorArt Art = TagEditorArt.None,
-    string? ArtSourcePath = null);
+    string? ArtSourcePath = null,
+    string? Lyrics = null);
 
 /// <summary>What the editor does with the embedded pictures of a file.</summary>
 public enum TagEditorArt { None, Embed, Remove }
@@ -240,6 +241,10 @@ public static class TagWriter
         if (edit.Year.HasValue) union.Year = edit.Year.Value < 0 ? 0 : (uint)edit.Year.Value;
         if (edit.TrackNo.HasValue) union.Track = edit.TrackNo.Value < 0 ? 0 : (uint)edit.TrackNo.Value;
         if (edit.DiscNo.HasValue) union.Disc = edit.DiscNo.Value < 0 ? 0 : (uint)edit.DiscNo.Value;
+        if (edit.Lyrics != null)
+        {
+            union.Lyrics = string.IsNullOrEmpty(edit.Lyrics) ? null : edit.Lyrics;
+        }
 
         if (edit.Art == TagEditorArt.Remove)
         {

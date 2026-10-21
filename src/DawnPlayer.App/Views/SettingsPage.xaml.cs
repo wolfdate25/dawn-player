@@ -616,6 +616,86 @@ public sealed partial class SettingsPage : Page
         }
     }
 
+    private async void OnEqImportProfileClick(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var picker = new Windows.Storage.Pickers.FileOpenPicker();
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, AppServices.MainWindowHandle);
+            picker.FileTypeFilter.Add(".txt");
+            picker.FileTypeFilter.Add(".dpeq");
+            picker.FileTypeFilter.Add(".json");
+
+            var file = await picker.PickSingleFileAsync();
+            if (file != null)
+            {
+                string content = await File.ReadAllTextAsync(file.Path);
+                string ext = System.IO.Path.GetExtension(file.Path).ToLowerInvariant();
+                DawnPlayer.Core.Persistence.EqProfile? imported = null;
+
+                if (ext == ".txt")
+                {
+                    string profileName = System.IO.Path.GetFileNameWithoutExtension(file.Path);
+                    imported = ViewModel.Equalizer.ImportAutoEqText(content, profileName);
+                }
+                else
+                {
+                    imported = ViewModel.Equalizer.ImportJson(content);
+                }
+
+                if (imported != null)
+                {
+                    AppServices.RaiseWarning(AppStrings.Format("Settings_Eq_ImportSuccessFormat", "'{0}' EQ 프로필을 성공적으로 가져왔습니다.", imported.Name));
+                }
+                else
+                {
+                    AppServices.RaiseWarning(AppStrings.Get("Settings_Eq_ImportFailed", "EQ 프로필 가져오기 실패: 파일 형식을 확인하세요."));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            App.Log($"[eq import] {ex}");
+            AppServices.RaiseWarning(AppStrings.Format("Settings_Eq_ImportFailed", "EQ 프로필 가져오기 실패: {0}", ex.Message));
+        }
+    }
+
+    private async void OnEqExportProfileClick(object sender, RoutedEventArgs e)
+    {
+        var profile = ViewModel.Equalizer.SelectedProfile;
+        if (profile == null) return;
+
+        try
+        {
+            var picker = new Windows.Storage.Pickers.FileSavePicker
+            {
+                SuggestedFileName = profile.Name
+            };
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, AppServices.MainWindowHandle);
+
+            picker.FileTypeChoices.Add("AutoEq ParametricEQ (*.txt)", new List<string> { ".txt" });
+            picker.FileTypeChoices.Add("Dawn EQ Preset (*.dpeq)", new List<string> { ".dpeq" });
+            picker.FileTypeChoices.Add("JSON Preset (*.json)", new List<string> { ".json" });
+
+            var file = await picker.PickSaveFileAsync();
+            if (file != null)
+            {
+                string ext = System.IO.Path.GetExtension(file.Path).ToLowerInvariant();
+                string outputText = ext == ".txt"
+                    ? (ViewModel.Equalizer.ExportCurrentAsAutoEq() ?? "")
+                    : (ViewModel.Equalizer.ExportCurrentAsJson() ?? "");
+
+                await File.WriteAllTextAsync(file.Path, outputText);
+                AppServices.RaiseWarning(AppStrings.Format("Settings_Eq_ExportSuccessFormat", "'{0}'(으)로 EQ 프로필을 내보냈습니다.", file.Path));
+            }
+        }
+        catch (Exception ex)
+        {
+            App.Log($"[eq export] {ex}");
+            AppServices.RaiseWarning(AppStrings.Format("Settings_Eq_ExportFailed", "EQ 프로필 내보내기 실패: {0}", ex.Message));
+        }
+    }
+
     private void OnEqAddBandClick(object sender, RoutedEventArgs e) =>
         ViewModel.Equalizer.AddBand();
 

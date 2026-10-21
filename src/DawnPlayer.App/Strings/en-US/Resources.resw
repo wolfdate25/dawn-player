@@ -227,6 +227,8 @@
   <data name="Playlist_ToolsMenu_AddFiles.Text" xml:space="preserve"><value>Add Files...</value></data>
   <data name="Playlist_ToolsMenu_AddFolder.Text" xml:space="preserve"><value>Add Folder...</value></data>
   <data name="Playlist_ToolsMenu_Import.Text" xml:space="preserve"><value>Import Playlist File (M3U8)...</value></data>
+  <data name="Playlist_ToolsMenu_Undo.Text" xml:space="preserve"><value>Undo (Ctrl+Z)</value></data>
+  <data name="Playlist_ToolsMenu_Redo.Text" xml:space="preserve"><value>Redo (Ctrl+Y)</value></data>
   <data name="Playlist_ToolsMenu_GroupToggle.Text" xml:space="preserve"><value>Group by Album</value></data>
   <data name="Playlist_ToolsMenu_StopAfterCurrent.Text" xml:space="preserve"><value>Stop after current track</value></data>
   <data name="Playlist_ToolsMenu_SortSubItem.Text" xml:space="preserve"><value>Sort</value></data>
@@ -471,6 +473,7 @@
   <data name="Settings_Playback_RgPreamp_A11yName.AutomationProperties.Name" xml:space="preserve"><value>ReplayGain Preamp</value></data>
   <data name="Settings_Playback_PreventClipping_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Prevent Clipping</value></data>
   <data name="Settings_Playback_CrossfeedStrength_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Crossfeed Strength</value></data>
+  <data name="Settings_Playback_Crossfade_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Track crossfade duration</value></data>
   <data name="Settings_Library_StartupScan_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Scan on Startup</value></data>
   <data name="Settings_Library_Rg_R128_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Also write ReplayGain 2.0 (R128_*) tags</value></data>
   <data name="Settings_Lyrics_Font_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Lyrics Font Family</value></data>
@@ -585,6 +588,16 @@
   <data name="Settings_Eq_DeleteProfile_Button.Content" xml:space="preserve"><value>Delete</value></data>
   <data name="Settings_Eq_DeleteProfile_Button.AutomationProperties.Name" xml:space="preserve"><value>Delete current profile</value></data>
   <data name="Settings_Eq_DeleteProfile_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Delete current profile</value></data>
+  <data name="Settings_Eq_Import_Button.Content" xml:space="preserve"><value>Import</value></data>
+  <data name="Settings_Eq_Import_Button.AutomationProperties.Name" xml:space="preserve"><value>Import AutoEq or preset file</value></data>
+  <data name="Settings_Eq_Import_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Import AutoEq file (.txt) or preset (.dpeq, .json)</value></data>
+  <data name="Settings_Eq_Export_Button.Content" xml:space="preserve"><value>Export</value></data>
+  <data name="Settings_Eq_Export_Button.AutomationProperties.Name" xml:space="preserve"><value>Export current EQ profile</value></data>
+  <data name="Settings_Eq_Export_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Export current profile</value></data>
+  <data name="Settings_Eq_ImportSuccessFormat" xml:space="preserve"><value>Successfully imported EQ profile '{0}'.</value></data>
+  <data name="Settings_Eq_ImportFailed" xml:space="preserve"><value>Failed to import EQ profile: Check file format.</value></data>
+  <data name="Settings_Eq_ExportSuccessFormat" xml:space="preserve"><value>Exported EQ profile to '{0}'.</value></data>
+  <data name="Settings_Eq_ExportFailed" xml:space="preserve"><value>Failed to export EQ profile: {0}</value></data>
   <data name="Settings_Eq_Preamp_Title.Text" xml:space="preserve"><value>Preamp</value></data>
   <data name="Settings_Eq_Preamp_Desc.Text" xml:space="preserve"><value>Adjust overall level to prevent digital clipping when boosting EQ bands (-12.0 to +12.0 dB).</value></data>
   <data name="Settings_Eq_Visualizer_Title.Text" xml:space="preserve"><value>Frequency Response Curve</value></data>
@@ -665,6 +678,10 @@
   <data name="Settings_Playback_Crossfeed_Toggle.OffContent" xml:space="preserve"><value>Off</value></data>
   <data name="Settings_Playback_Mono_Toggle.OnContent" xml:space="preserve"><value>On</value></data>
   <data name="Settings_Playback_Mono_Toggle.OffContent" xml:space="preserve"><value>Off</value></data>
+  <data name="Settings_Playback_Crossfade_Title.Text" xml:space="preserve"><value>Track Crossfade</value></data>
+  <data name="Settings_Playback_Crossfade_Desc.Text" xml:space="preserve"><value>Applies a smooth overlapping fade-in/fade-out during track transitions. Set to 0s for gapless playback without silence.</value></data>
+  <data name="Settings_Playback_Crossfade_Off" xml:space="preserve"><value>Off (Gapless)</value></data>
+  <data name="Settings_Playback_Crossfade_SecondsFormat" xml:space="preserve"><value>{0:0.0}s</value></data>
 
   <!-- Library -->
   <data name="Settings_Library_Header.Text" xml:space="preserve"><value>Music Library</value></data>
@@ -836,6 +853,7 @@
   <data name="Settings_Shortcuts_Cat_Playback" xml:space="preserve"><value>Playback Control</value></data>
   <data name="Settings_Shortcuts_Cat_Seek" xml:space="preserve"><value>Seek</value></data>
   <data name="Settings_Shortcuts_Cat_Volume" xml:space="preserve"><value>Volume</value></data>
+  <data name="Settings_Shortcuts_Cat_Playlist" xml:space="preserve"><value>Playlist</value></data>
   <data name="Settings_Shortcuts_Cat_Navigation" xml:space="preserve"><value>Navigation &amp; Window</value></data>
   <data name="Shortcut_Command_PlayPause" xml:space="preserve"><value>Play / Pause</value></data>
   <data name="Shortcut_Command_Stop" xml:space="preserve"><value>Stop</value></data>
@@ -854,6 +872,8 @@
   <data name="Shortcut_Command_ToggleLyrics" xml:space="preserve"><value>Toggle Lyrics Panel</value></data>
   <data name="Shortcut_Command_FocusSearch" xml:space="preserve"><value>Focus Library Search</value></data>
   <data name="Shortcut_Command_OpenPreferences" xml:space="preserve"><value>Open Preferences</value></data>
+  <data name="Shortcut_Command_PlaylistUndo" xml:space="preserve"><value>Playlist Undo</value></data>
+  <data name="Shortcut_Command_PlaylistRedo" xml:space="preserve"><value>Playlist Redo</value></data>
 
   <!-- About -->
   <data name="Settings_About_Header.Text" xml:space="preserve"><value>About Dawn Player</value></data>
@@ -1013,9 +1033,17 @@
   <data name="Settings_Plugins_Dsp_Desc.Text" xml:space="preserve"><value>Applies DSP effects from the plugins folder at the end of the playback chain. Newly added plugins are picked up after an app restart.</value></data>
   <data name="Settings_Plugins_Dsp_Toggle.OnContent" xml:space="preserve"><value>On</value></data>
   <data name="Settings_Plugins_Dsp_Toggle.OffContent" xml:space="preserve"><value>Off</value></data>
-  <data name="Playlist_TrackMenu_Convert.Text" xml:space="preserve"><value>Convert to WAV...</value></data>
+  <data name="Playlist_TrackMenu_Convert.Text" xml:space="preserve"><value>Convert Audio…</value></data>
+  <data name="Playlist_TrackMenu_FileOps.Text" xml:space="preserve"><value>Organize Files (Rename/Move)…</value></data>
+  <data name="Library_TrackMenu_Convert.Text" xml:space="preserve"><value>Convert Audio…</value></data>
+  <data name="Library_TrackMenu_FileOps.Text" xml:space="preserve"><value>Organize Files (Rename/Move)…</value></data>
   <data name="Convert_Started" xml:space="preserve"><value>Conversion started — you will be notified when it finishes.</value></data>
   <data name="Convert_Done" xml:space="preserve"><value>Conversion finished: {0} succeeded, {1} failed</value></data>
+  <data name="Convert_ProgressTitle" xml:space="preserve"><value>Converting {0} tracks…</value></data>
+  <data name="Convert_ProgressTrack" xml:space="preserve"><value>{0} / {1} — {2}</value></data>
+  <data name="Convert_Cancelled" xml:space="preserve"><value>Conversion cancelled: {0} done, {1} failed, {2} not processed</value></data>
+  <data name="Convert_FfmpegAvailable" xml:space="preserve"><value>ffmpeg detected — FLAC/MP3/Opus/AAC conversion available</value></data>
+  <data name="Convert_FfmpegMissing" xml:space="preserve"><value>ffmpeg not found — only WAV conversion is available. Add ffmpeg to PATH to convert other formats.</value></data>
   <data name="LyricsEditor_PlayPauseBtn.AutomationProperties.Name" xml:space="preserve"><value>Play/Pause</value></data>
   <data name="LyricsEditor_MoveLineUpBtn.AutomationProperties.Name" xml:space="preserve"><value>Move line up</value></data>
   <data name="LyricsEditor_MoveLineDownBtn.AutomationProperties.Name" xml:space="preserve"><value>Move line down</value></data>
@@ -1055,4 +1083,49 @@
   <data name="Settings_Appearance_FsAcrylic_Desc.Text" xml:space="preserve"><value>Uses an acrylic backdrop on the full-screen Now Playing surface. Off by default — it increases GPU and battery usage.</value></data>
   <data name="Settings_Appearance_Accent_PlayGreen.Content" xml:space="preserve"><value>Play Green</value></data>
   <data name="CoreMsg_DirectSoundUnavailableWaveOutFallback" xml:space="preserve"><value>DirectSound output could not be opened; playing through WaveOut instead.</value></data>
+  <data name="Msg_TagEditorLyrics" xml:space="preserve"><value>Lyrics</value></data>
+  <data name="Msg_TagEditorLoadFromLrc" xml:space="preserve"><value>Load from LRC file…</value></data>
+  <data name="Msg_TagEditorClearLyrics" xml:space="preserve"><value>Clear lyrics</value></data>
+  <data name="LyricsSearch_EmbedButton.Content" xml:space="preserve"><value>Embed to tag</value></data>
+  <data name="LyricsSearch_EmbedButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Embeds lyrics directly into the audio file tags</value></data>
+  <data name="LyricsSearch_EmbedButton.AutomationProperties.Name" xml:space="preserve"><value>Embed to tag</value></data>
+  <data name="LyricsSearch_EmbedNotSupported" xml:space="preserve"><value>This file format or stream does not support embedding tags.</value></data>
+  <data name="LyricsSearch_EmbedSuccess" xml:space="preserve"><value>Embedded lyrics into '{0}' audio tags.</value></data>
+  <data name="LyricsSearch_EmbedFailed" xml:space="preserve"><value>Failed to embed lyrics: {0}</value></data>
+  <data name="Convert_NoValidFiles" xml:space="preserve"><value>No convertible local file tracks found (excluding streams/radio).</value></data>
+  <data name="Convert_FormatHeader" xml:space="preserve"><value>Output Format</value></data>
+  <data name="Convert_QualityHeader" xml:space="preserve"><value>Quality / Bitrate</value></data>
+  <data name="Convert_DirHeader" xml:space="preserve"><value>Destination Folder</value></data>
+  <data name="Convert_BrowseFolder" xml:space="preserve"><value>Browse…</value></data>
+  <data name="Convert_ApplyRg" xml:space="preserve"><value>Bake ReplayGain (Volume leveling)</value></data>
+  <data name="Convert_WriteTags" xml:space="preserve"><value>Copy metadata &amp; album art</value></data>
+  <data name="Convert_Title" xml:space="preserve"><value>Convert {0} audio tracks</value></data>
+  <data name="Convert_StartButton" xml:space="preserve"><value>Start Conversion</value></data>
+  <data name="FileOps_Title" xml:space="preserve"><value>File Organizer &amp; Renamer</value></data>
+  <data name="FileOps_BaseDirHeader" xml:space="preserve"><value>Target Base Folder</value></data>
+  <data name="FileOps_PatternHeader" xml:space="preserve"><value>Name/Path Pattern</value></data>
+  <data name="FileOps_ModeHeader" xml:space="preserve"><value>Operation Mode</value></data>
+  <data name="FileOps_ModeMove" xml:space="preserve"><value>Move &amp; Rename (Sync library)</value></data>
+  <data name="FileOps_ModeCopy" xml:space="preserve"><value>Copy to new location</value></data>
+  <data name="FileOps_CollisionHeader" xml:space="preserve"><value>Collision Policy</value></data>
+  <data name="FileOps_CollisionAuto" xml:space="preserve"><value>Auto number (Filename (1))</value></data>
+  <data name="FileOps_CollisionSkip" xml:space="preserve"><value>Skip</value></data>
+  <data name="FileOps_CollisionOverwrite" xml:space="preserve"><value>Overwrite</value></data>
+  <data name="FileOps_PreviewHeader" xml:space="preserve"><value>Preview Changes</value></data>
+  <data name="FileOps_ExecuteButton" xml:space="preserve"><value>Execute ({0})</value></data>
+  <data name="FileOps_Started" xml:space="preserve"><value>Starting file operations for {0} files.</value></data>
+  <data name="FileOps_Done" xml:space="preserve"><value>File operations completed: {0} succeeded, {1} failed, {2} skipped</value></data>
+  <data name="FileOps_NoValidFiles" xml:space="preserve"><value>No valid local files to organize (excluding streams and CUE virtual tracks).</value></data>
+  <data name="Shortcut_Command_JumpToCurrentTrack" xml:space="preserve"><value>Jump to currently playing track</value></data>
+  <data name="NowPlaying_JumpToTrackTooltip" xml:space="preserve"><value>Jump to current track (Ctrl+J)</value></data>
+  <data name="Playlist_SearchButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Search playlist (Ctrl+F)</value></data>
+  <data name="Playlist_SearchButton.AutomationProperties.Name" xml:space="preserve"><value>Search playlist</value></data>
+  <data name="Playlist_SearchBox.PlaceholderText" xml:space="preserve"><value>Search playlist…</value></data>
+  <data name="Playlist_SearchBox.AutomationProperties.Name" xml:space="preserve"><value>Playlist search input</value></data>
+  <data name="Playlist_Search_NoMatch" xml:space="preserve"><value>No matches</value></data>
+  <data name="Playlist_Search_MatchFormat" xml:space="preserve"><value>{0}/{1}</value></data>
+  <data name="Playlist_Search_TotalCount" xml:space="preserve"><value>{0} matches</value></data>
+  <data name="Playlist_Search_PrevTooltip" xml:space="preserve"><value>Previous (Shift+Enter, Shift+F3)</value></data>
+  <data name="Playlist_Search_NextTooltip" xml:space="preserve"><value>Next (Enter, F3)</value></data>
+  <data name="Playlist_Search_CloseTooltip" xml:space="preserve"><value>Close (Esc)</value></data>
 </root>

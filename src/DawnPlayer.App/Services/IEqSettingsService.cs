@@ -22,6 +22,11 @@ public interface IEqSettingsService
     EqProfile CreateProfile(string name, EqProfile? template = null);
 
     /// <summary>
+    /// Imports an existing profile instance, clamps its parameters, assigns a fresh ID, and saves it.
+    /// </summary>
+    EqProfile ImportProfile(EqProfile profile);
+
+    /// <summary>
     /// Renames an existing profile.
     /// </summary>
     void RenameProfile(string profileId, string newName);

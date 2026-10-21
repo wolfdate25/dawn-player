@@ -227,6 +227,8 @@
   <data name="Playlist_ToolsMenu_AddFiles.Text" xml:space="preserve"><value>파일 추가...</value></data>
   <data name="Playlist_ToolsMenu_AddFolder.Text" xml:space="preserve"><value>폴더 추가...</value></data>
   <data name="Playlist_ToolsMenu_Import.Text" xml:space="preserve"><value>재생목록 파일 가져오기 (M3U8)...</value></data>
+  <data name="Playlist_ToolsMenu_Undo.Text" xml:space="preserve"><value>실행 취소 (Ctrl+Z)</value></data>
+  <data name="Playlist_ToolsMenu_Redo.Text" xml:space="preserve"><value>다시 실행 (Ctrl+Y)</value></data>
   <data name="Playlist_ToolsMenu_GroupToggle.Text" xml:space="preserve"><value>앨범별 그룹화 표시</value></data>
   <data name="Playlist_ToolsMenu_StopAfterCurrent.Text" xml:space="preserve"><value>현재 곡 재생 후 정지 (Stop After Current)</value></data>
   <data name="Playlist_ToolsMenu_SortSubItem.Text" xml:space="preserve"><value>정렬 (Sort)</value></data>
@@ -471,6 +473,7 @@
   <data name="Settings_Playback_RgPreamp_A11yName.AutomationProperties.Name" xml:space="preserve"><value>ReplayGain 사전 증폭 (Preamp)</value></data>
   <data name="Settings_Playback_PreventClipping_A11yName.AutomationProperties.Name" xml:space="preserve"><value>클리핑 방지 (Prevent Clipping)</value></data>
   <data name="Settings_Playback_CrossfeedStrength_A11yName.AutomationProperties.Name" xml:space="preserve"><value>크로스피드 강도</value></data>
+  <data name="Settings_Playback_Crossfade_A11yName.AutomationProperties.Name" xml:space="preserve"><value>트랙 간 크로스페이드 지속 시간</value></data>
   <data name="Settings_Library_StartupScan_A11yName.AutomationProperties.Name" xml:space="preserve"><value>시작할 때 자동 스캔</value></data>
   <data name="Settings_Library_Rg_R128_A11yName.AutomationProperties.Name" xml:space="preserve"><value>ReplayGain 2.0 태그(R128_*) 함께 기록</value></data>
   <data name="Settings_Lyrics_Font_A11yName.AutomationProperties.Name" xml:space="preserve"><value>가사 글꼴 (Font Family)</value></data>
@@ -585,6 +588,16 @@
   <data name="Settings_Eq_DeleteProfile_Button.Content" xml:space="preserve"><value>삭제</value></data>
   <data name="Settings_Eq_DeleteProfile_Button.AutomationProperties.Name" xml:space="preserve"><value>현재 프로필 삭제</value></data>
   <data name="Settings_Eq_DeleteProfile_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>현재 프로필 삭제</value></data>
+  <data name="Settings_Eq_Import_Button.Content" xml:space="preserve"><value>가져오기</value></data>
+  <data name="Settings_Eq_Import_Button.AutomationProperties.Name" xml:space="preserve"><value>AutoEq 또는 프리셋 파일 가져오기</value></data>
+  <data name="Settings_Eq_Import_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>AutoEq 파일(.txt) 또는 프리셋(.dpeq, .json) 가져오기</value></data>
+  <data name="Settings_Eq_Export_Button.Content" xml:space="preserve"><value>내보내기</value></data>
+  <data name="Settings_Eq_Export_Button.AutomationProperties.Name" xml:space="preserve"><value>현재 EQ 프로필 내보내기</value></data>
+  <data name="Settings_Eq_Export_Button.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>현재 프로필 내보내기</value></data>
+  <data name="Settings_Eq_ImportSuccessFormat" xml:space="preserve"><value>'{0}' EQ 프로필을 성공적으로 가져왔습니다.</value></data>
+  <data name="Settings_Eq_ImportFailed" xml:space="preserve"><value>EQ 프로필 가져오기 실패: 파일 형식을 확인하세요.</value></data>
+  <data name="Settings_Eq_ExportSuccessFormat" xml:space="preserve"><value>'{0}'(으)로 EQ 프로필을 내보냈습니다.</value></data>
+  <data name="Settings_Eq_ExportFailed" xml:space="preserve"><value>EQ 프로필 내보내기 실패: {0}</value></data>
   <data name="Settings_Eq_Preamp_Title.Text" xml:space="preserve"><value>프리앰프 (Preamp)</value></data>
   <data name="Settings_Eq_Preamp_Desc.Text" xml:space="preserve"><value>EQ 부스트 시 디지털 클리핑을 방지하기 위해 전체 레벨을 조절합니다 (-12.0 ~ +12.0 dB).</value></data>
   <data name="Settings_Eq_Visualizer_Title.Text" xml:space="preserve"><value>주파수 응답 곡선 (Frequency Response)</value></data>
@@ -665,6 +678,10 @@
   <data name="Settings_Playback_Crossfeed_Toggle.OffContent" xml:space="preserve"><value>끔</value></data>
   <data name="Settings_Playback_Mono_Toggle.OnContent" xml:space="preserve"><value>켬</value></data>
   <data name="Settings_Playback_Mono_Toggle.OffContent" xml:space="preserve"><value>끔</value></data>
+  <data name="Settings_Playback_Crossfade_Title.Text" xml:space="preserve"><value>트랙 간 크로스페이드 (Crossfade)</value></data>
+  <data name="Settings_Playback_Crossfade_Desc.Text" xml:space="preserve"><value>트랙 전환 시 부드러운 오버랩 페이드인/페이드아웃을 적용합니다. 0초로 설정하면 무음 없이 즉시 이어지는 갭리스(Gapless) 모드로 재생됩니다.</value></data>
+  <data name="Settings_Playback_Crossfade_Off" xml:space="preserve"><value>끔 (갭리스)</value></data>
+  <data name="Settings_Playback_Crossfade_SecondsFormat" xml:space="preserve"><value>{0:0.0}초</value></data>
 
   <!-- Library -->
   <data name="Settings_Library_Header.Text" xml:space="preserve"><value>음악 라이브러리 (Music Library)</value></data>
@@ -836,6 +853,7 @@
   <data name="Settings_Shortcuts_Cat_Playback" xml:space="preserve"><value>재생 제어</value></data>
   <data name="Settings_Shortcuts_Cat_Seek" xml:space="preserve"><value>탐색</value></data>
   <data name="Settings_Shortcuts_Cat_Volume" xml:space="preserve"><value>볼륨</value></data>
+  <data name="Settings_Shortcuts_Cat_Playlist" xml:space="preserve"><value>재생목록</value></data>
   <data name="Settings_Shortcuts_Cat_Navigation" xml:space="preserve"><value>네비게이션 &amp; 창</value></data>
   <data name="Shortcut_Command_PlayPause" xml:space="preserve"><value>재생 / 일시정지</value></data>
   <data name="Shortcut_Command_Stop" xml:space="preserve"><value>정지</value></data>
@@ -854,6 +872,8 @@
   <data name="Shortcut_Command_ToggleLyrics" xml:space="preserve"><value>가사 창 열기 / 닫기</value></data>
   <data name="Shortcut_Command_FocusSearch" xml:space="preserve"><value>라이브러리 검색으로 이동</value></data>
   <data name="Shortcut_Command_OpenPreferences" xml:space="preserve"><value>환경설정 열기</value></data>
+  <data name="Shortcut_Command_PlaylistUndo" xml:space="preserve"><value>재생목록 실행 취소 (Undo)</value></data>
+  <data name="Shortcut_Command_PlaylistRedo" xml:space="preserve"><value>재생목록 다시 실행 (Redo)</value></data>
 
   <!-- About -->
   <data name="Settings_About_Header.Text" xml:space="preserve"><value>정보 (About Dawn Player)</value></data>
@@ -1013,9 +1033,17 @@
   <data name="Settings_Plugins_Dsp_Desc.Text" xml:space="preserve"><value>플러그인 폴더의 DSP 효과를 재생 체인 끝에 적용합니다. 플러그인 추가 후 앱을 다시 시작하면 인식됩니다.</value></data>
   <data name="Settings_Plugins_Dsp_Toggle.OnContent" xml:space="preserve"><value>사용</value></data>
   <data name="Settings_Plugins_Dsp_Toggle.OffContent" xml:space="preserve"><value>사용 안 함</value></data>
-  <data name="Playlist_TrackMenu_Convert.Text" xml:space="preserve"><value>WAV로 변환...</value></data>
+  <data name="Playlist_TrackMenu_Convert.Text" xml:space="preserve"><value>오디오 변환…</value></data>
+  <data name="Playlist_TrackMenu_FileOps.Text" xml:space="preserve"><value>파일 정리 (이름 변경/이동)…</value></data>
+  <data name="Library_TrackMenu_Convert.Text" xml:space="preserve"><value>오디오 변환…</value></data>
+  <data name="Library_TrackMenu_FileOps.Text" xml:space="preserve"><value>파일 정리 (이름 변경/이동)…</value></data>
   <data name="Convert_Started" xml:space="preserve"><value>변환을 시작합니다. 완료하면 알려 드립니다.</value></data>
   <data name="Convert_Done" xml:space="preserve"><value>변환 완료: {0}개 성공, {1}개 실패</value></data>
+  <data name="Convert_ProgressTitle" xml:space="preserve"><value>{0}개 트랙 변환 중…</value></data>
+  <data name="Convert_ProgressTrack" xml:space="preserve"><value>{0} / {1} — {2}</value></data>
+  <data name="Convert_Cancelled" xml:space="preserve"><value>변환 취소: {0}개 완료, {1}개 실패, {2}개 미처리</value></data>
+  <data name="Convert_FfmpegAvailable" xml:space="preserve"><value>ffmpeg 감지됨 — FLAC/MP3/Opus/AAC 변환 가능</value></data>
+  <data name="Convert_FfmpegMissing" xml:space="preserve"><value>ffmpeg 미감지 — WAV 변환만 가능합니다. PATH에 ffmpeg를 추가하면 다른 형식도 변환할 수 있습니다.</value></data>
   <data name="LyricsEditor_PlayPauseBtn.AutomationProperties.Name" xml:space="preserve"><value>재생/일시정지</value></data>
   <data name="LyricsEditor_MoveLineUpBtn.AutomationProperties.Name" xml:space="preserve"><value>선택 줄 위로</value></data>
   <data name="LyricsEditor_MoveLineDownBtn.AutomationProperties.Name" xml:space="preserve"><value>선택 줄 아래로</value></data>
@@ -1055,4 +1083,49 @@
   <data name="Settings_Appearance_FsAcrylic_Desc.Text" xml:space="preserve"><value>풀스크린 Now Playing 화면에 아크릴 배경을 사용합니다. GPU·배터리 사용이 늘어 기본값은 꺼짐입니다.</value></data>
   <data name="Settings_Appearance_Accent_PlayGreen.Content" xml:space="preserve"><value>Play Green (플레이 그린)</value></data>
   <data name="CoreMsg_DirectSoundUnavailableWaveOutFallback" xml:space="preserve"><value>DirectSound 출력을 열 수 없어 WaveOut으로 재생합니다.</value></data>
+  <data name="Msg_TagEditorLyrics" xml:space="preserve"><value>가사</value></data>
+  <data name="Msg_TagEditorLoadFromLrc" xml:space="preserve"><value>LRC 파일에서 불러오기…</value></data>
+  <data name="Msg_TagEditorClearLyrics" xml:space="preserve"><value>가사 지우기</value></data>
+  <data name="LyricsSearch_EmbedButton.Content" xml:space="preserve"><value>오디오 태그에 저장</value></data>
+  <data name="LyricsSearch_EmbedButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>오디오 파일 내부 태그에 가사를 직접 임베딩하여 저장합니다</value></data>
+  <data name="LyricsSearch_EmbedButton.AutomationProperties.Name" xml:space="preserve"><value>오디오 태그에 저장</value></data>
+  <data name="LyricsSearch_EmbedNotSupported" xml:space="preserve"><value>이 파일 형식이나 스트림은 태그 임베딩을 지원하지 않습니다.</value></data>
+  <data name="LyricsSearch_EmbedSuccess" xml:space="preserve"><value>'{0}' 오디오 태그에 가사를 저장했습니다.</value></data>
+  <data name="LyricsSearch_EmbedFailed" xml:space="preserve"><value>오디오 태그 저장 실패: {0}</value></data>
+  <data name="Convert_NoValidFiles" xml:space="preserve"><value>변환 가능한 로컬 파일 트랙이 없습니다 (스트림/라디오 제외).</value></data>
+  <data name="Convert_FormatHeader" xml:space="preserve"><value>출력 형식</value></data>
+  <data name="Convert_QualityHeader" xml:space="preserve"><value>품질 / 비트레이트</value></data>
+  <data name="Convert_DirHeader" xml:space="preserve"><value>저장 폴더</value></data>
+  <data name="Convert_BrowseFolder" xml:space="preserve"><value>폴더 변경…</value></data>
+  <data name="Convert_ApplyRg" xml:space="preserve"><value>ReplayGain 음량 굽기 (기기 음량 평준화)</value></data>
+  <data name="Convert_WriteTags" xml:space="preserve"><value>메타데이터 및 앨범 커버 복사</value></data>
+  <data name="Convert_Title" xml:space="preserve"><value>{0}개 트랙 오디오 변환</value></data>
+  <data name="Convert_StartButton" xml:space="preserve"><value>변환 시작</value></data>
+  <data name="FileOps_Title" xml:space="preserve"><value>파일 정리 및 이름 변경</value></data>
+  <data name="FileOps_BaseDirHeader" xml:space="preserve"><value>대상 기준 폴더</value></data>
+  <data name="FileOps_PatternHeader" xml:space="preserve"><value>이름/경로 패턴</value></data>
+  <data name="FileOps_ModeHeader" xml:space="preserve"><value>작업 모드</value></data>
+  <data name="FileOps_ModeMove" xml:space="preserve"><value>파일 이동 및 이름 변경 (라이브러리 동기화)</value></data>
+  <data name="FileOps_ModeCopy" xml:space="preserve"><value>새 위치로 복사</value></data>
+  <data name="FileOps_CollisionHeader" xml:space="preserve"><value>충돌 해결 정책</value></data>
+  <data name="FileOps_CollisionAuto" xml:space="preserve"><value>자동 번호 부여 (파일명 (1))</value></data>
+  <data name="FileOps_CollisionSkip" xml:space="preserve"><value>건너뛰기</value></data>
+  <data name="FileOps_CollisionOverwrite" xml:space="preserve"><value>덮어쓰기</value></data>
+  <data name="FileOps_PreviewHeader" xml:space="preserve"><value>변경 미리보기</value></data>
+  <data name="FileOps_ExecuteButton" xml:space="preserve"><value>실행 ({0}개)</value></data>
+  <data name="FileOps_Started" xml:space="preserve"><value>{0}개 파일 정리를 시작합니다.</value></data>
+  <data name="FileOps_Done" xml:space="preserve"><value>파일 정리 완료: {0}개 성공, {1}개 실패, {2}개 건너뜀</value></data>
+  <data name="FileOps_NoValidFiles" xml:space="preserve"><value>정리 가능한 로컬 파일 트랙이 없습니다 (스트림/CUE 가상 트랙 제외).</value></data>
+  <data name="Shortcut_Command_JumpToCurrentTrack" xml:space="preserve"><value>현재 재생 중인 트랙으로 이동</value></data>
+  <data name="NowPlaying_JumpToTrackTooltip" xml:space="preserve"><value>현재 재생 트랙으로 이동 (Ctrl+J)</value></data>
+  <data name="Playlist_SearchButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>재생목록 검색 (Ctrl+F)</value></data>
+  <data name="Playlist_SearchButton.AutomationProperties.Name" xml:space="preserve"><value>재생목록 검색</value></data>
+  <data name="Playlist_SearchBox.PlaceholderText" xml:space="preserve"><value>재생목록에서 검색…</value></data>
+  <data name="Playlist_SearchBox.AutomationProperties.Name" xml:space="preserve"><value>재생목록 검색창</value></data>
+  <data name="Playlist_Search_NoMatch" xml:space="preserve"><value>일치 항목 없음</value></data>
+  <data name="Playlist_Search_MatchFormat" xml:space="preserve"><value>{0}/{1}</value></data>
+  <data name="Playlist_Search_TotalCount" xml:space="preserve"><value>{0}개 일치</value></data>
+  <data name="Playlist_Search_PrevTooltip" xml:space="preserve"><value>이전 (Shift+Enter, Shift+F3)</value></data>
+  <data name="Playlist_Search_NextTooltip" xml:space="preserve"><value>다음 (Enter, F3)</value></data>
+  <data name="Playlist_Search_CloseTooltip" xml:space="preserve"><value>닫기 (Esc)</value></data>
 </root>

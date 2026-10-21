@@ -847,6 +847,40 @@ public sealed class MusicLibrary : IMusicLibrary
         }
     }
 
+    /// <summary>
+    /// Updates primary key paths in database and in-memory cache after files are moved or renamed.
+    /// </summary>
+    public void RelocateTracks(IReadOnlyList<(string OldPath, Track Track)> relocations)
+    {
+        if (relocations == null || relocations.Count == 0) return;
+
+        lock (_ioLock)
+        {
+            using var tx = _conn.BeginTransaction();
+            using var cmd = _conn.CreateCommand();
+            cmd.Transaction = tx;
+            cmd.CommandText = "UPDATE tracks SET path = @newPath WHERE path = @oldPath;";
+            var pOld = cmd.Parameters.Add("@oldPath", SqliteType.Text);
+            var pNew = cmd.Parameters.Add("@newPath", SqliteType.Text);
+
+            foreach (var (oldPath, track) in relocations)
+            {
+                pOld.Value = oldPath;
+                pNew.Value = track.Path;
+                cmd.ExecuteNonQuery();
+            }
+            tx.Commit();
+
+            var next = new Dictionary<string, Track>(_tracks, StringComparer.OrdinalIgnoreCase);
+            foreach (var (oldPath, track) in relocations)
+            {
+                next.Remove(oldPath);
+                next[track.Path] = track;
+            }
+            SwapTracks(next);
+        }
+    }
+
     public void Dispose()
     {
         lock (_ioLock)

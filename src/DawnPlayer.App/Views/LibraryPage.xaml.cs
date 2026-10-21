@@ -1077,6 +1077,18 @@ public sealed partial class LibraryPage : Page
         }
     }
 
+    private async void OnDrawerTrackConvert(object sender, RoutedEventArgs e)
+    {
+        if (_drawerMenuTracks.Count == 0 || XamlRoot == null) return;
+        await TranscodeDialog.ShowAsync(_drawerMenuTracks, XamlRoot);
+    }
+
+    private async void OnDrawerTrackFileOps(object sender, RoutedEventArgs e)
+    {
+        if (_drawerMenuTracks.Count == 0 || XamlRoot == null) return;
+        await FileOperationsDialog.ShowAsync(_drawerMenuTracks, XamlRoot);
+    }
+
     /// <summary>Tracks the album-card menu acts on, fixed at Opening time from the right-clicked
     /// card. MenuFlyoutItem.DataContext is empty inside the popup (see OnDrawerTrackMenuOpening),
     /// so the old resolver fell through to "the open drawer's album" — with a drawer open the
@@ -1338,6 +1350,20 @@ public sealed partial class LibraryPage : Page
     {
         if (_albumMenuTracks.Count == 0 || XamlRoot == null) return;
         await TagEditorDialogs.ShowForAlbumAsync(_albumMenuTracks, XamlRoot);
+    }
+
+    private async void OnConvertSelected(object sender, RoutedEventArgs e)
+    {
+        var tracks = GetSelectedTracks();
+        if (tracks.Count == 0 || XamlRoot == null) return;
+        await TranscodeDialog.ShowAsync(tracks, XamlRoot);
+    }
+
+    private async void OnFileOpsSelected(object sender, RoutedEventArgs e)
+    {
+        var tracks = GetSelectedTracks();
+        if (tracks.Count == 0 || XamlRoot == null) return;
+        await FileOperationsDialog.ShowAsync(tracks, XamlRoot);
     }
 
     // ---------------- Cover Zoom (Slider / Ctrl+Wheel / Presets) ----------------

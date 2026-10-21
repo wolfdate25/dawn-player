@@ -62,6 +62,11 @@ public interface IPlaylistManager
     int RemoveDeadItems(Playlist pl);
     Task<int> RemoveDeadItemsAsync(Playlist pl, CancellationToken ct = default);
 
+    bool CanUndo(Playlist pl);
+    bool CanRedo(Playlist pl);
+    bool Undo(Playlist pl);
+    bool Redo(Playlist pl);
+
     void SavePlaylist(Playlist playlist);
     void SaveAll();
     void LoadAll();
