@@ -243,6 +243,24 @@ public sealed class Review20261024RepairGateTests : IDisposable
         Assert.Equal("가사 줄", doc.Lines[0].Text);
     }
 
+    [Fact]
+    public void LegacyTextDecoder_ShortMarkupHeavyLine_StillPicksCp949OverSystemAnsi()
+    {
+        // CI regression (2026-10-29): an absolute Hangul-ratio threshold rejected CP949 for
+        // markup-heavy LRC lines (most bytes are ASCII "[00:01.00]" markup) on non-Korean
+        // systems. The decision is now the DELTA between candidates — pinned with the exact
+        // short line that failed.
+        string content = "[ti:제목]
+[00:01.00]가사 줄
+";
+        var bytes = Encoding.GetEncoding(949).GetBytes(content);
+
+        var decoded = DawnPlayer.Core.Util.LegacyTextDecoder.DecodeNonUtf8(bytes);
+
+        Assert.Contains("제목", decoded);
+        Assert.Contains("가사 줄", decoded);
+    }
+
     // ---------------- EQ delay-line continuity ----------------
 
     [Fact]
