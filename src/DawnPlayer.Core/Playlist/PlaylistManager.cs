@@ -586,15 +586,31 @@ public sealed class PlaylistManager : IPlaylistManager
         }
     }
 
-    public void RenamePlaylist(Playlist pl, string newName)
+    /// <summary>Renames a user playlist. Returns false when the new name is taken (another
+    /// playlist with that name, a name that sanitizes to another playlist's file, or the system
+    /// playlist's name) — without this gate the rename wrote this playlist's contents over the
+    /// other one's .m3u8 and the next SaveAll permanently lost one of the two.</summary>
+    public bool RenamePlaylist(Playlist pl, string newName)
     {
-        if (pl == null || pl.IsSystem || pl.IsSmart || string.IsNullOrWhiteSpace(newName)) return;
+        if (pl == null || pl.IsSystem || pl.IsSmart || string.IsNullOrWhiteSpace(newName)) return false;
+
+        lock (_saveLock)
+        {
+            if (string.Equals(pl.Name, newName, StringComparison.Ordinal)) return true;
+
+            var candidatePath = PlaylistFilePath(newName);
+            bool taken = string.Equals(newName, NowPlayingPlaylistName, StringComparison.OrdinalIgnoreCase) ||
+                         Playlists.Any(p => p != null && !ReferenceEquals(p, pl) &&
+                             (string.Equals(p.Name, newName, StringComparison.OrdinalIgnoreCase) ||
+                              string.Equals(PlaylistFilePath(p.Name), candidatePath, StringComparison.OrdinalIgnoreCase)));
+            if (taken) return false;
+        }
 
         string old;
         lock (pl.SyncRoot)
         {
             old = pl.Name;
-            if (string.Equals(old, newName, StringComparison.Ordinal)) return;
+            if (string.Equals(old, newName, StringComparison.Ordinal)) return true;
             pl.Name = newName;
         }
 
@@ -626,6 +642,8 @@ public sealed class PlaylistManager : IPlaylistManager
                 }
             }
         }
+
+        return true;
     }
 
     private static List<string> EnumerateAudioFiles(IEnumerable<string> paths)
@@ -637,9 +655,11 @@ public sealed class PlaylistManager : IPlaylistManager
             {
                 if (Directory.Exists(p))
                 {
-                    files.AddRange(Directory.EnumerateFiles(p, "*.*", SearchOption.AllDirectories)
-                        .Where(AppPaths.IsSupportedAudioFile)
-                        .OrderBy(f => f, StringComparer.OrdinalIgnoreCase));
+                    // Manual recursion with per-entry guards: Directory.EnumerateFiles(AllDirectories)
+                    // threw out of the whole folder on the first access-denied subdirectory, which
+                    // surfaced as "0 tracks added" for a drop that was mostly readable.
+                    CollectAudioFiles(p, files);
+                    files.Sort(StringComparer.OrdinalIgnoreCase);
                 }
                 // Cue virtual tracks arrive as fragment paths (file.ext#cue=...) whose
                 // extension no longer parses as audio, so route them through their physical half.
@@ -652,6 +672,27 @@ public sealed class PlaylistManager : IPlaylistManager
             catch (Exception ex) { Log.Debug($"[playlists] path inaccessible '{p}': {ex.Message}"); }
         }
         return files;
+    }
+
+    private static void CollectAudioFiles(string directory, List<string> into)
+    {
+        try
+        {
+            foreach (var file in Directory.EnumerateFiles(directory, "*.*", SearchOption.TopDirectoryOnly))
+            {
+                if (AppPaths.IsSupportedAudioFile(file)) into.Add(file);
+            }
+        }
+        catch (Exception ex) { Log.Debug($"[playlists] files inaccessible '{directory}': {ex.Message}"); }
+
+        try
+        {
+            foreach (var sub in Directory.EnumerateDirectories(directory))
+            {
+                CollectAudioFiles(sub, into);
+            }
+        }
+        catch (Exception ex) { Log.Debug($"[playlists] subfolders inaccessible '{directory}': {ex.Message}"); }
     }
 
     /// <summary>Adds files/folders (recursively) to a playlist. Returns newly added items.</summary>
@@ -758,14 +799,42 @@ public sealed class PlaylistManager : IPlaylistManager
         return items;
     }
 
+    /// <summary>Classifies M3U8 entries the way <see cref="LoadAll"/> does: #DPTRACK directives
+    /// become remote tracks, stream URLs stay as radio items, and only plain paths go through the
+    /// File.Exists filter. Importing what this app exported used to drop every remote entry
+    /// (File.Exists is false for any URL), breaking the export → import round trip.</summary>
+    private static (List<string> Files, List<Models.Track> RemoteTracks) ResolveImportEntries(IEnumerable<M3uEntry> entries)
+    {
+        var files = new List<string>();
+        var remote = new List<Models.Track>();
+        foreach (var e in entries)
+        {
+            if (DpTrackMeta.TryDecode(e.DpTrackDirective) is { } meta)
+            {
+                if (Persistence.RemoteTrackCodec.ToTrack(e.Path, meta) is { } t) { remote.Add(t); continue; }
+            }
+            if (Audio.RadioTrack.IsStreamUrl(e.Path))
+            {
+                files.Add(e.Path);
+                continue;
+            }
+            if (File.Exists(AppPaths.PhysicalPath(e.Path)))
+            {
+                files.Add(e.Path);
+            }
+        }
+        return (files, remote);
+    }
+
     public Playlist? ImportPlaylist(string filePath, string? playlistName = null)
     {
         if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath)) return null;
         var entries = M3u.Read(filePath);
         var name = playlistName ?? Path.GetFileNameWithoutExtension(filePath);
         var pl = CreatePlaylist(name);
-        var files = entries.Select(e => e.Path).Where(e => File.Exists(AppPaths.PhysicalPath(e))).ToList();
+        var (files, remote) = ResolveImportEntries(entries);
         AddFiles(pl, files);
+        if (remote.Count > 0) AddTracks(pl, remote);
         return pl;
     }
 
@@ -781,8 +850,12 @@ public sealed class PlaylistManager : IPlaylistManager
         await RunOnUiAsync(() => pl = CreatePlaylist(name)).ConfigureAwait(false);
         if (pl == null) return null;
 
-        var files = entries.Select(e => e.Path).Where(e => File.Exists(AppPaths.PhysicalPath(e))).ToList();
+        var (files, remote) = ResolveImportEntries(entries);
         await AddFilesAsync(pl, files, ct: ct).ConfigureAwait(false);
+        if (remote.Count > 0)
+        {
+            await RunOnUiAsync(() => AddTracks(pl, remote)).ConfigureAwait(false);
+        }
         return pl;
     }
 
@@ -831,16 +904,67 @@ public sealed class PlaylistManager : IPlaylistManager
     {
         if (pl == null || tracks == null) return new List<PlaylistItem>();
         _undoManager.RecordSnapshot(pl, "Replace Tracks");
-        var items = tracks.Select(t => new PlaylistItem(t)).ToList();
+        var incoming = tracks.ToList();
         List<PlaylistItem> oldItems;
         lock (pl.SyncRoot)
         {
+            // No-change fast path: a smart refresh that resolved to the same track sequence must
+            // not churn the collection — ReplaceAll fired ItemsRemoved, which purged the playback
+            // queue on every track transition, and a Reset rebuilt the whole visible list
+            // (scroll/selection loss). Reference equality on the Track: a re-resolved instance
+            // with the same path but new metadata IS a change and must flow through.
+            if (pl.Items.Count == incoming.Count)
+            {
+                bool same = true;
+                for (int i = 0; i < incoming.Count; i++)
+                {
+                    if (!ReferenceEquals(pl.Items[i].Track, incoming[i]) ||
+                        !string.Equals(pl.Items[i].Track.Path, incoming[i].Path, StringComparison.OrdinalIgnoreCase))
+                    {
+                        same = false;
+                        break;
+                    }
+                }
+                if (same) return pl.Items.ToList();
+            }
+
+            // Reuse existing item instances whose Track is the SAME INSTANCE the refresh resolved
+            // (the library hands out its live instances, so unchanged tracks keep identity and
+            // their queue entries), so the play-order resolver still finds the playing item. A
+            // re-resolved instance with new metadata builds a fresh item — keying reuse by PATH
+            // would swallow the metadata change instead.
+            var itemByTrack = new Dictionary<Track, PlaylistItem>();
+            foreach (var item in pl.Items)
+            {
+                if (!itemByTrack.ContainsKey(item.Track)) itemByTrack[item.Track] = item;
+            }
+            var claimed = new HashSet<PlaylistItem>();
+            var items = new List<PlaylistItem>(incoming.Count);
+            foreach (var t in incoming)
+            {
+                // A repeated track claims the reused instance once; further occurrences need
+                // their own item — sharing one instance in two rows breaks selection and queue
+                // identity.
+                if (itemByTrack.TryGetValue(t, out var reuse) && claimed.Add(reuse))
+                    items.Add(reuse);
+                else
+                    items.Add(new PlaylistItem(t));
+            }
+
             oldItems = [.. pl.Items];
             pl.Items.ReplaceAll(items);
         }
-        if (oldItems.Count > 0) ItemsRemoved?.Invoke(pl, oldItems);
-        return items;
+        // Only the items that actually disappeared leave the queue: reusing instances above means
+        // the items the refresh kept are still the ones the queue holds.
+        var removed = oldItems.Where(i => !pl.Items.Contains(i)).ToList();
+        if (removed.Count > 0) ItemsRemoved?.Invoke(pl, removed);
+        return pl.Items.ToList();
     }
+
+    /// <summary>Records the playlist's current order as one undo step. Flat-mode drag reorder
+    /// mutates the list through the framework directly, so without this the move never entered
+    /// the undo history.</summary>
+    public void RecordReorderSnapshot(Playlist pl) => _undoManager.RecordSnapshot(pl, "Reorder");
 
     public void Sort(Playlist pl, PlaylistSort sort)
     {
@@ -965,17 +1089,39 @@ public sealed class PlaylistManager : IPlaylistManager
     public bool Undo(Playlist pl)
     {
         if (pl == null) return false;
+        var before = pl.GetSnapshot();
         bool ok = _undoManager.Undo(pl);
-        if (ok) ScheduleSave(pl);
+        if (ok)
+        {
+            // The undo manager swaps the whole list directly, so removals it performs never
+            // passed through RemoveItems — queue entries for vanished tracks stayed stranded
+            // (a Q badge on a row that no longer exists, and the track still playing).
+            PurgeQueueForVanished(pl, before);
+            ScheduleSave(pl);
+        }
         return ok;
     }
 
     public bool Redo(Playlist pl)
     {
         if (pl == null) return false;
+        var before = pl.GetSnapshot();
         bool ok = _undoManager.Redo(pl);
-        if (ok) ScheduleSave(pl);
+        if (ok)
+        {
+            PurgeQueueForVanished(pl, before);
+            ScheduleSave(pl);
+        }
         return ok;
+    }
+
+    /// <summary>Fires <see cref="ItemsRemoved"/> for items an undo/redo made disappear, so the
+    /// queue purge runs through the same path a direct removal uses.</summary>
+    private void PurgeQueueForVanished(Playlist pl, PlaylistItem[] before)
+    {
+        var current = pl.GetSnapshot();
+        var removed = before.Where(i => Array.IndexOf(current, i) < 0).ToArray();
+        if (removed.Length > 0) ItemsRemoved?.Invoke(pl, removed);
     }
 
     public int RemoveDeadItems(Playlist pl)
@@ -1039,9 +1185,17 @@ public sealed class PlaylistManager : IPlaylistManager
             int delay = Math.Max(10, DebounceDelayMs);
             if (_saveTimers.TryGetValue(pl, out var existing))
             {
-                try { existing.Change(delay, Timeout.Infinite); }
-                catch (ObjectDisposedException) { /* timer already fired and disposed itself; a new one is created below */ }
-                return;
+                try
+                {
+                    existing.Change(delay, Timeout.Infinite);
+                    return;
+                }
+                catch (ObjectDisposedException)
+                {
+                    // The timer fired and disposed between our TryGetValue and the Change call
+                    // (SaveAll's sweep, for one). Fall through and create a fresh one — returning
+                    // here silently dropped this change's debounced save.
+                }
             }
 
             var timer = new Timer(state =>
@@ -1082,11 +1236,11 @@ public sealed class PlaylistManager : IPlaylistManager
 
             var snapshot = playlist.GetSnapshot();
             string name;
-            List<string> unresolved;
+            List<(int Index, string Path)> unresolved;
             lock (playlist.SyncRoot)
             {
                 name = playlist.Name;
-                unresolved = [.. playlist.UnresolvedPaths];
+                unresolved = [.. playlist.UnresolvedEntries];
             }
             string path = PlaylistFilePath(name);
 
@@ -1117,12 +1271,14 @@ public sealed class PlaylistManager : IPlaylistManager
 
     public void SaveAll()
     {
-        foreach (var (_, t) in _saveTimers) t.Dispose();
-        _saveTimers.Clear();
-
         List<Playlist> current;
+        // Dispose the debounced timers under the same lock ScheduleSave takes: sweeping them
+        // unlocked let an in-flight ScheduleSave grab a just-disposed timer and (before the
+        // recreate-on-disposed fix) silently drop that change.
         lock (_saveLock)
         {
+            foreach (var (_, t) in _saveTimers) t.Dispose();
+            _saveTimers.Clear();
             current = [.. Playlists];
         }
         foreach (var pl in current)
@@ -1177,10 +1333,17 @@ public sealed class PlaylistManager : IPlaylistManager
                     bool isNp = string.Equals(plName, NowPlayingPlaylistName, StringComparison.OrdinalIgnoreCase);
                     var pl = isNp ? NowPlaying : RegisterPlaylistLocked(plName);
                     var items = new List<PlaylistItem>();
-                    var unresolved = new List<string>();
+                    var unresolved = new List<(int Index, string Path)>();
 
                     foreach (var entry in entries)
                     {
+                        // A #DPUNRESOLVED: marker line is carried positionally to the next save.
+                        if (entry.Unresolved)
+                        {
+                            unresolved.Add((items.Count, entry.Path));
+                            continue;
+                        }
+
                         Track? track = null;
                         if (DpTrackMeta.TryDecode(entry.DpTrackDirective) is { } meta)
                         {
@@ -1200,14 +1363,15 @@ public sealed class PlaylistManager : IPlaylistManager
 
                         if (track != null) items.Add(new PlaylistItem(track));
                         // Remember what we could not load rather than dropping it: the file may be
-                        // on a volume that is merely offline right now.
-                        else unresolved.Add(entry.Path);
+                        // on a volume that is merely offline right now. The index keeps its list
+                        // position so the next save re-emits it where it was.
+                        else unresolved.Add((items.Count, entry.Path));
                     }
 
                     lock (pl.SyncRoot)
                     {
-                        pl.UnresolvedPaths.Clear();
-                        pl.UnresolvedPaths.AddRange(unresolved);
+                        pl.UnresolvedEntries.Clear();
+                        pl.UnresolvedEntries.AddRange(unresolved);
                         pl.Items.AddRange(items);
                     }
                 }

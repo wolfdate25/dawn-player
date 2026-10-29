@@ -168,7 +168,7 @@
   <data name="Library_AlbumMenu_EditTags.Text" xml:space="preserve"><value>앨범 태그 편집…</value></data>
   <data name="Msg_TagEditorDialogTitle" xml:space="preserve"><value>태그 편집</value></data>
   <data name="Msg_TagEditorAlbumDialogTitle" xml:space="preserve"><value>앨범 태그 편집</value></data>
-  <data name="Msg_TagEditorSingleHint" xml:space="preserve"><value>빈 칸은 그대로 둡니다. 저장은 원자적으로 교체됩니다.</value></data>
+  <data name="Msg_TagEditorSingleHint" xml:space="preserve"><value>빈 칸으로 저장하면 해당 필드의 태그가 지워집니다. 저장은 원자적으로 교체됩니다.</value></data>
   <data name="Msg_TagEditorAlbumHint" xml:space="preserve"><value>공유 필드만 변경됩니다 (앨범·가수·장르·연도). 비워 두면 그대로 둡니다.</value></data>
   <data name="Msg_TagEditorAlbumTitle" xml:space="preserve"><value>{0}개 트랙 앨범 태그 편집</value></data>
   <data name="Msg_TagEditorTrackPath" xml:space="preserve"><value>파일</value></data>
@@ -379,6 +379,7 @@
   <!-- Dialogs & Settings Notices -->
   <data name="Msg_PlaylistName" xml:space="preserve"><value>재생목록 이름</value></data>
   <data name="Msg_RenamePlaylistTitle" xml:space="preserve"><value>재생목록 이름 변경</value></data>
+  <data name="Msg_RenamePlaylistTaken" xml:space="preserve"><value>이미 사용 중인 이름입니다. 다른 이름을 입력하세요.</value></data>
   <data name="Msg_M3U8FileType" xml:space="preserve"><value>M3U8 재생목록</value></data>
   <data name="Msg_SaveFailed" xml:space="preserve"><value>저장 실패: {0}</value></data>
   <data name="Msg_ShortcutInvalidTitle" xml:space="preserve"><value>사용할 수 없는 키</value></data>
@@ -391,6 +392,8 @@
   <data name="Msg_ShortcutCaptureHint" xml:space="preserve"><value>Esc를 누르면 취소됩니다. Tab, Esc, Backspace 등 일부 키는 단축키로 쓸 수 없습니다.</value></data>
   <data name="Msg_ShortcutCaptureInstruction" xml:space="preserve"><value>새 키 조합을 누르세요.</value></data>
   <data name="Msg_ShortcutDisallowedKey" xml:space="preserve"><value>이 키는 단축키로 사용할 수 없습니다. 다른 키를 눌러 주세요.</value></data>
+  <data name="Msg_ShortcutReservedAltF4" xml:space="preserve"><value>Alt+F4는 시스템이 창을 닫는 데 사용합니다. 다른 키를 눌러 주세요.</value></data>
+  <data name="Msg_ShortcutReservedWin" xml:space="preserve"><value>Windows 로고 키 조합은 시스템이 선점합니다. 다른 키를 눌러 주세요.</value></data>
   <data name="Msg_EqNewProfileTitle" xml:space="preserve"><value>새 EQ 프로필 생성</value></data>
   <data name="Msg_EqProfilePlaceholder" xml:space="preserve"><value>프로필 이름 입력 (예: 보컬 부스트, 헤드폰)</value></data>
   <data name="Msg_EqProfileDefaultName" xml:space="preserve"><value>프로필 {0}</value></data>
@@ -978,6 +981,7 @@
   <data name="Network_YouTube_TosNotice.Text" xml:space="preserve"><value>YouTube 소스는 유손실 스트림(무료 Opus ~160k)이며 YouTube 서비스약관과 충돌할 수 있는 비공식 경로를 사용합니다. 개인 재생 용도로만 사용하세요.</value></data>
   <data name="Network_YouTube_UrlLabel.Text" xml:space="preserve"><value>YouTube 주소</value></data>
   <data name="Network_YouTube_Status_Resolving" xml:space="preserve"><value>해석 중… — 첫 재생까지 몇 초 걸립니다</value></data>
+  <data name="Network_YouTube_RowProcessing" xml:space="preserve"><value>불러오는 중…</value></data>
   <data name="Network_YouTube_Retry.Content" xml:space="preserve"><value>다시 시도</value></data>
   <data name="Network_YouTube_ResolveFailed" xml:space="preserve"><value>항목을 가져오지 못했습니다: {0}</value></data>
   <data name="Network_YouTube_RecentHeader.Text" xml:space="preserve"><value>최근 항목</value></data>
@@ -1091,6 +1095,7 @@
   <data name="LyricsSearch_EmbedButton.AutomationProperties.Name" xml:space="preserve"><value>오디오 태그에 저장</value></data>
   <data name="LyricsSearch_EmbedNotSupported" xml:space="preserve"><value>이 파일 형식이나 스트림은 태그 임베딩을 지원하지 않습니다.</value></data>
   <data name="LyricsSearch_EmbedSuccess" xml:space="preserve"><value>'{0}' 오디오 태그에 가사를 저장했습니다.</value></data>
+  <data name="LyricsSearch_Embedding" xml:space="preserve"><value>태그에 저장하는 중...</value></data>
   <data name="LyricsSearch_EmbedFailed" xml:space="preserve"><value>오디오 태그 저장 실패: {0}</value></data>
   <data name="Convert_NoValidFiles" xml:space="preserve"><value>변환 가능한 로컬 파일 트랙이 없습니다 (스트림/라디오 제외).</value></data>
   <data name="Convert_FormatHeader" xml:space="preserve"><value>출력 형식</value></data>
@@ -1115,6 +1120,7 @@
   <data name="FileOps_ExecuteButton" xml:space="preserve"><value>실행 ({0}개)</value></data>
   <data name="FileOps_Started" xml:space="preserve"><value>{0}개 파일 정리를 시작합니다.</value></data>
   <data name="FileOps_Done" xml:space="preserve"><value>파일 정리 완료: {0}개 성공, {1}개 실패, {2}개 건너뜀</value></data>
+  <data name="FileOps_DoneErrors" xml:space="preserve"><value> (동기화 오류 {0}건 — 로그 참조)</value></data>
   <data name="FileOps_NoValidFiles" xml:space="preserve"><value>정리 가능한 로컬 파일 트랙이 없습니다 (스트림/CUE 가상 트랙 제외).</value></data>
   <data name="Shortcut_Command_JumpToCurrentTrack" xml:space="preserve"><value>현재 재생 중인 트랙으로 이동</value></data>
   <data name="NowPlaying_JumpToTrackTooltip" xml:space="preserve"><value>현재 재생 트랙으로 이동 (Ctrl+J)</value></data>

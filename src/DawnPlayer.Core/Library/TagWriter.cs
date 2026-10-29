@@ -40,11 +40,13 @@ public enum TagWriteResult { Ok, FileMissing, ReadFailed, SaveFailed }
 public static class TagWriter
 {
     /// <summary>Same-volume temp path that preserves the extension — TagLib dispatches file
-    /// types by extension, so a ".dawn-tmp" name would leave every file unreadable.</summary>
+    /// types by extension, so a ".dawn-tmp" name would leave every file unreadable. The GUID
+    /// suffix keeps concurrent writers of the SAME file (a fast re-rate racing the RG scanner)
+    /// from colliding on one deterministic temp name.</summary>
     private static string TempPath(string path)
     {
         var dir = Path.GetDirectoryName(path) ?? string.Empty;
-        return Path.Combine(dir, Path.GetFileNameWithoutExtension(path) + ".dawn-tmp" + Path.GetExtension(path));
+        return Path.Combine(dir, Path.GetFileNameWithoutExtension(path) + ".dawn-tmp-" + Guid.NewGuid().ToString("N") + Path.GetExtension(path));
     }
 
     /// <summary>Applies editor fields and/or artwork to one file atomically.</summary>
@@ -170,7 +172,15 @@ public static class TagWriter
             {
                 using (var tf = TagLib.File.Create(temp))
                 {
-                    WriteRatingToContainer(ResolveWritable(tf), stars);
+                    bool written = WriteRatingToContainer(ResolveWritable(tf), stars);
+                    if (!written)
+                    {
+                        // An unsupported container (ASF/WMA and the rest): refusing here reports
+                        // failure honestly instead of rewriting the file unchanged and claiming
+                        // the rating was saved into the tag.
+                        Log.Warn($"[tags] rating write unsupported container for '{path}'");
+                        return false;
+                    }
                     tf.Save();
                 }
             }
@@ -194,29 +204,37 @@ public static class TagWriter
         }
     }
 
-    private static void WriteRatingToContainer(TagLib.Tag container, int stars)
+    /// <summary>Writes a 0-5 star rating into the given container tag. Returns false when the
+    /// container type has no rating representation here (the caller reports failure rather than
+    /// a silent no-op success).</summary>
+    private static bool WriteRatingToContainer(TagLib.Tag container, int stars)
     {
         if (container is TagLib.Id3v2.Tag id3)
         {
             var frame = TagLib.Id3v2.PopularimeterFrame.Get(id3, user: string.Empty, create: true);
             frame.Rating = StarsToPopm(stars);
+            return true;
         }
-        else if (container is TagLib.Ogg.XiphComment xiph)
+        if (container is TagLib.Ogg.XiphComment xiph)
         {
             if (stars > 0) xiph.SetField("RATING", new[] { stars.ToString(CultureInfo.InvariantCulture) });
             else xiph.RemoveField("RATING");
+            return true;
         }
-        else if (container is TagLib.Mpeg4.AppleTag apple)
+        if (container is TagLib.Mpeg4.AppleTag apple)
         {
             if (stars > 0) apple.SetDashBox("com.apple.iTunes", "rating", stars.ToString(CultureInfo.InvariantCulture));
             else apple.SetDashBox("com.apple.iTunes", "rating", string.Empty);
+            return true;
         }
-        else if (container is TagLib.Ape.Tag ape)
+        if (container is TagLib.Ape.Tag ape)
         {
             if (stars > 0) ape.SetItem(new TagLib.Ape.Item("RATING", stars.ToString(CultureInfo.InvariantCulture)));
             else ape.RemoveItem("RATING");
+            return true;
         }
-        // Unknown containers are skipped for the same reason as SetReplayField.
+        // Unknown containers (ASF/WMA, …) have no rating writer here.
+        return false;
     }
 
     /// <summary>Star count → POPM counter byte, using the anchors most writers agree on

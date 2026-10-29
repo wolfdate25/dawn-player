@@ -57,8 +57,41 @@ public sealed class HttpProgressiveTrackReader : ITrackReader
         await using var source = await response.Content.ReadAsStreamAsync(_cancel.Token);
         await using var target = new FileStream(_spoolPath, FileMode.Create, FileAccess.Write, FileShare.None,
             bufferSize: 81920, useAsync: true);
-        await source.CopyToAsync(target, 81920, _cancel.Token);
+
+        // With ResponseHeadersRead the HttpClient.Timeout covers the HEADERS only — a body that
+        // stopped mid-transfer (server hang) blocked the open forever, and nothing disposed the
+        // reader until Connect returned, so the open was not even cancellable. Each read gets an
+        // idle timeout, and the spool has a hard size cap.
+        var buffer = new byte[81920];
+        long total = 0;
+        while (true)
+        {
+            int read;
+            try
+            {
+                read = await source.ReadAsync(buffer.AsMemory(0, buffer.Length), _cancel.Token)
+                    .AsTask().WaitAsync(ReadIdleTimeout);
+            }
+            catch (TimeoutException)
+            {
+                throw new IOException($"download stalled for {ReadIdleTimeout.TotalSeconds:0}s: {_url}");
+            }
+            if (read <= 0) break;
+            total += read;
+            if (total > MaxSpoolBytes)
+            {
+                throw new IOException($"download exceeds the {MaxSpoolBytes >> 20} MiB spool cap: {_url}");
+            }
+            await target.WriteAsync(buffer.AsMemory(0, read), _cancel.Token);
+        }
     }
+
+    /// <summary>Per-read idle timeout: a healthy LAN spool never sees a gap this long.</summary>
+    private static readonly TimeSpan ReadIdleTimeout = TimeSpan.FromSeconds(30);
+
+    /// <summary>Hard cap on the spooled body (1 GiB) — a runaway or bogus Content-Length must not
+    /// be able to fill the system disk before anyone notices.</summary>
+    public const long MaxSpoolBytes = 1L << 30;
 
     public WaveFormat SourceFormat => Inner.SourceFormat;
     public ISampleProvider Samples => Inner.Samples;

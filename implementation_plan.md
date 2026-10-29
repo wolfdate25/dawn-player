@@ -1929,3 +1929,87 @@ kind=Dlna — 인프라 그대로), 재생목록 편집 무결성, 콜드 리빌
   - **폐기(판정 근거)**: (c) LyricsPane 헤더 임베딩 액션 — 패널에 메뉴 표면 자체가 없어 신규 UI이고, 태그 편집기·가사 검색 창으로 동일 기능 도달 가능한 중복 진입점. (d) 검색 TextChanged 디바운스 — `FindMatches`가 단일 스캔 문자열 루프라 수만 곡에서도 수 ms 수준, 실측 문제 없는 성급한 최적화. 실사용 지연 보고 시 재검토.
   - resw 3개 언어: `Convert_ProgressTitle/ProgressTrack/Cancelled/FfmpegAvailable/FfmpegMissing` 5키 추가, 정적 안내로 대체된 `Convert_FfmpegRequired` 제거, `Convert_Started` 토스트는 모달 진행률로 대체되어 호출부 제거(키는 유지).
 - 검증 게이트 (2026-10-18 달성, 수리+폴리시 최종): obj/bin 삭제 후 콜드 리빌드 **0 Warning(s) 0 Error(s)**, 전체 테스트 스위트 1회 전수 실행 **2,310 / 2,310 100% 통과**(신규 6건 포함 — 크로스페이드 3, 파일 정리기 2, 파이프 포맷 1).
+
+---
+
+## 8. 기능별 적대적 검토 수리 기록 (2026-10-24 — 사용자 승인 "ok 수정해" 완료)
+
+> 2026-10-24 적대적 검토(`docs/adversarial-review-2026-10-24.md`, 9개 영역 104건) 중 사용자 승인
+> 우선순위 ①~④를 순차 수리한 기록. 원칙: 탐색은 병렬(한도 2)·수정은 순차.
+
+### 8.1 수리 내역 (24건)
+
+| 등급 | 결함 | 수리 |
+|---|---|---|
+| P0 | 크로스페이드 진행 중 프리페치 리더를 `_gate` 밖에서 Dispose → 렌더 스레드 사용 중 해제(AV) | `_retired` 그레이브야드 목록 — 폐기는 렌더 스레드(Read 상단) 또는 `_gate` 보유자(SwitchTo/Cancel)에서만 (`SequencerStream`) |
+| P0 | 플레이리스트 이름 변경 중복 검사 없음 → 기존 .m3u8 덮어쓰기(내용 유실) | `RenamePlaylist`이 `bool` 반환 — 이름·살균화 파일·시스템 이름 충돌 거부 + 다이얼로그 경고 + resw 3개 언어 (`PlaylistManager`·`PlaylistDialogs`) |
+| P1 | 쿼리 파서 무제한 재귀 → 괄호 폭탄 StackOverflow(프로세스 사망) | ParseOr/ParseNot 깊이 상한 64 + DURING LAST 월×일 long 연산+클램프(오버플로 무매치 제거) (`SmartPlaylistQuery`) |
+| P1 | 앨범 RG 스캔이 앨범 피크를 항상 0.0 기록 → 안티클리핑 우회 + 태그 오염 | `LoudnessScanner.AppendPeak` 신설 — 앨범 피크 = 멤버 피크 max (`AppServices` 스캔 연결) |
+| P1 | 태그 편집기 재반입에 Rating 미운반 → DB 평점 소실 | `Rating` carry-forward + RG 필드 폴백 + ArtPath 재추출 + CUE 프래그먼트는 물리 경로 쓰기/프래그먼트 정체 유지 (`TagEditorDialog`) |
+| P1 | RG 굽기 변환이 원본 RG 태그를 재기록 → 재생 시 이중 적용 | `ApplyMetadataAndArt(replayGainBakedIn:)` — 굽기 시 RG 태그 미기록 (`AudioTranscoder`) |
+| P1 | DFF(DSDIFF) 스펙 불일치(FS 80비트/'CHAN' 4바이트) → 실제 .dff 전면 불능 | FS u32 BE(80비트는 폴백)+CHNL u16 채널ID 스킵('CHAN' 폴백 유지) + 픽스처를 스펙 형식으로 갱신 (`DsdRawReaders`·`DoPIntegrationTests`) |
+| P1 | BOM 없는 ANSI(CP949) CUE·LRC를 UTF-8 오인 | `Encoding.Default`(=UTF-8) 폴백 → 시스템 ANSI 코드 페이지(M3u와 동일 패턴, UTF-8 코드 페이지 시스템은 Latin-1) + CodePages 등록 (`CueSheet`·`LrcParser`) |
+| P1 | 프리페치 폴링 1.2s 고정 → 크로스페이드 1.2s 초과 설정 시 페이드 절단+음량 점프 | 폴링 리드 = max(1.2s, 크로스페이드+0.5s) (`PlaybackController`) |
+| P1 | 자연 진행 resolve 창의 일시정지 → 재개 시 영구 무음 "Playing" 좀비 | Paused arm에 드레인 시퀀서 검사 — Buffering arm과 동일 계약으로 정지 (`PlaybackController`) |
+| P1 | 스마트 갱신이 큐를 무조건 소거 + 재생 순서 0↔1 진동 + 매 갱신 Reset | `ReplaceWithTracks`: 무변경(Track 참조) fast path + 동일 Track 인스턴스 재사용 + 실제 소실 항목만 ItemsRemoved (`PlaylistManager`) |
+| P1 | M3U8 가져오기가 라디오 URL·#DPTRACK 항목을 전부 버림 | `ResolveImportEntries` — LoadAll과 동일 분류(DPTRACK→원격, URL→라디오, 물리 파일) (`PlaylistManager`) |
+| P1 | 라디오 재생 중 다음 트랙 프리페치가 무한 버퍼 적재(~10MB/분) | 무한 소스(TotalTime=0) 프리페치 스킵 + RadioStreamReader 30초 백프레셔 캡 (`PlaybackController`·`RadioStreamReader`) |
+| P1 | EQ 라이브 변경·갭리스 경계마다 바이쿼드 z-상태 폐기 → 크래클 | 스냅샷 교체 시 동일 레이아웃이면 State 배열 재사용 + 갭리스 경계 EQ/크로스피드 Reset 제거(연속 신호) (`EqualizerDspEffect`·`SequencerStream`) |
+| P1 | 노멀라이저 끄기 토글 시 RG² 순간 부스트 | RG 승차 중 비활성화면 게인 즉시 1.0 스냅 + `SetNormalizerAndNode` 단일 게이트 원자 적용(두 단계 사이 렌더 창 제거) (`DynamicNormalizerDspEffect`·`SequencerStream`·`PlaybackController`) |
+| P1 | DoP×DirectSound/WaveOut → 16비트 재인코딩 풀스케일 노이즈 / WASAPI 공유 폴백이 DoP 재생성 | 비-WASAPI 드라이버 진입 시 DoP→PCM 스왑 게이트(`SwapOutUnsupportedDoP`) + 폴백 경로 BlockDoP+ReopenPendingAsPcm (`OutputDrivers`) |
+| P1 | 트레이 "종료"가 세션·배치·플레이리스트 저장 전체 생략(v1.0.0부터) | `_closing`을 `_shutdownStarted`+`_exitRequested` 이원화 — 트레이 종료가 Closing에서 실제 셧다운 실행 (`MainWindow`) |
+| P1 | 언어 변경 재시작이 트레이 모드에서 이중 인스턴스 | `CloseForExit` 신설 — RestartApp이 종료 의도 명시 (`AppServices`·`MainWindow`) |
+| P1 | CUE `FILE "공백 포함"` 경로 첫 공백 절단 → 앨범 전체 미인덱싱 | quote-aware TakeFirstToken(여는 따옴표→닫는 따옴표) (`CueSheet`) |
+| P2 | 슬립 타이머 "현재 곡 끝나고"→분 전환 시 StopAfterCurrent 잔류 | 카운트다운 분기에서 플래그 환원 (`SleepTimerService`) |
+| P2 | 풀스크린 Now Playing이 테마 설정 미반영 | ApplyTheme+RegisterAuxiliaryWindow 적용 (`FullscreenNowPlayingWindow`) |
+| P2 | 검색 매치 인덱스가 변형·탭 전환 후 무효화되지 않음 | Rebuild 시 검색바 표시 중 재검색 + 탭 전환 시 매치 클리어 (`PlaylistPage`) |
+| P2 | 언두/리두가 큐 퍼지 우회 / 드래그 재정렬이 언두 미기록 | Undo/Redo 후 소실 항목 diff → ItemsRemoved + `DragItemsCompleted`→`RecordReorderSnapshot` (`PlaylistManager`·`PlaylistPage`) |
+| P2 | 오거나이저 실행 단계 무조건 overwrite(TOCTOU)+재진입 무가드 / 원본-대상 체인 미검사 / Errors 폐기 / 타이핑 패턴 무반영 | 실행 직전 대상 재검사(정책 재적용)+프로세스 전역 재진입 잠금 + 배치 원본 집합 체인 Conflict + Errors 토스트 노출(+resw) + TextSubmitted/실행 직전 RefreshPreview (`FileOperationService`·`FileOperationsDialog`) |
+| P2 | 트랜스코더 취소 시 Kill 비동기로 반쪽 파일 최종명 잔여 | Kill 후 WaitForExit(5s) 후 삭제(OCE 경로 포함) (`AudioTranscoder`) |
+| P3 | 무공유 폴백에서 반쯤 만든 세션 누수 / 라디오 ACM 디컴프레서 미해제 / ICY 종료자 부재 NUL / 세션 라디오 큐 소실·위치 0 이월 / play_events 미이전 / LRC 불안정 정렬·빈 파일 폴백 차단 | 비배타 catch 확장+`catch when(!exclusive)` 정리, Dispose에서 디컴프레서 해제, 세션 복원 URL 분기·트랙 변경 시 위치 리셋, RelocateTracks가 play_events 동일 트랜잭션 이전, OrderBy 안정 정렬, HasLines 폴백 통과 |
+
+### 8.2 신규 방어 게이트 (tests/DawnPlayer.Tests/Review20261024RepairGateTests.cs — 16건)
+이름 변경 중복/살균화/시스템명 거부+정상 성공, 쿼리 괄호 폭탄·정상 중첩·DURING 오버플로, 앨범 피크 합산, CUE 공백 파일명·CP949, LRC CP949, EQ 라이브 편집 지연선 연속성, 노멀라이저 토글 스냅, 스마트 갱신 무변경/부분 변경/메타데이터 변경 3분리.
+
+### 8.3 검증 게이트 (2026-10-24 달성)
+- obj/bin 삭제 후 콜드 리빌드 **0 Warning(s) 0 Error(s)** (DawnPlayer.slnx 전체).
+- 전체 테스트 스위트 1회 전수 실행 **2,326 / 2,326 100% 통과**(신규 게이트 16건 포함).
+- 미수리(보고서 잔여): 검토 P2/P3 중 구조 변경을 수반하는 건(세션 스캔 경합 병합, IR 리샘플, HttpProgressiveTrackReader 타임아웃, 스포티파이류 재설계성 항목 등)과 실행 육안 확인 항목 — `docs/adversarial-review-2026-10-24.md` 잔여 표 참조.
+
+---
+
+## 9. 잔여 항목 수리 기록 (2026-10-24 — "전부 승인" 완료)
+
+> §8에서 미수리로 남은 잔여(`docs/adversarial-review-2026-10-24-remaining.md`)를 사용자 승인
+> 하에 전부 처리한 기록. A그룹 26건 + B그룹 15건 수리, C그룹 8건 폐기 기록, D그룹 확인 완료.
+
+### 9.1 A그룹 수리 (26건 — 소형 즉시 수리)
+A1 정렬 복원 클램프를 `(int)SortColumn.Rating`로(LibraryPage) · A2 스캔 finally에서 무조건 Finished 발화(AppServices) · A3 DSF `_dataBytes` 파일 길이 클램프+EOF 시 최소 소비 프레임 반환(DsfTrackReader) · A4 CUE 마지막 트랙 `max(DurationMs, startMs+1)` 유지(MusicLibrary) · A5 DsfRawReader short-read 채널 min 일반화(DsdRawReaders) · A6 DoP/DsdPcm 생성자 throw 시 raw Dispose(DopTrackReader) · A7 루트 없는 XML null 가드(DlnaDeviceDescriptionParser) · A8 DLNA reset 시작 시 목록·빵조각 클리어(DlnaSection) · A9/A10 가사 편집기 오프셋 ±1h 클램프+음수 시각 거부(LyricsEditorWindow) · A11 검색 결과 세대 검사(LyricsSearchWindow) · A12 플러그인 호출 20초 타임아웃 래퍼(OnlineLyricsService) · A13 SaveAll 잠금 하 타이머 정리+폐기 타이머 재생성(PlaylistManager) · A14 태그 임시명 GUID(TagWriter) · A15 미지원 컨테이너 평점 false 반환(TagWriter) · A16 Scrobble StateChanged UI 마샬링 시임(ScrobbleService) · A17 빈 칸=삭제 안내 문구 정정(resw 3개) · A18 "32-bit PCM" 라벨(TranscodeDialog) · A19 "올해" 로컬 1월 1일 경계(AppServices) · A20 case-only 개명 실패 롤백(FileOperationService) · A21 트레이 생성 실패 시 정리·미구독 반환(TrayIconService) · A22 bitsPerSample≠1 거부(DsfTrackReader) · A23 태그/표지 복사 실패 경고 콜백(AudioTranscoder+TranscodeDialog) · A24 YouTube 경로 프로브 Task.Run(YouTubeSection) · A25 .lrc temp+File.Replace 원자 저장(LrcParser) · A26 Win/Alt+F4 캡처 거부 안내(ShortcutCaptureDialog+resw 3개).
+
+### 9.2 B그룹 수리 (15건 — 구조 변경)
+B1 IR 세션 레이트 디코드+선형 리샘플+경고(ImpulseResponse.LoadedImpulse/PlaybackController) · B2 스캔 종료 SwapTracks에서 스캔 미생성 경로는 라이브 인스턴스 우선 병합(MusicLibrary) · B3 CommitBatch가 `_ioLock` 하 최신 인스턴스에서 통계/평점 재병합(MusicLibrary) · B4 DLNA 스풀 30초 무활동 타임아웃+1GiB 상한(HttpProgressiveTrackReader) · B5 라디오 15초 무데이터 감시 경고(`RadioNoData`, PlaybackController+RadioStreamReader) · B6 외부 태그 평점(신규 nonzero·상이) 수용 병합(MusicLibrary) · B7 태그 편집 저장·가사 태그 내장 백그라운드화+가사 로드 비동기화(세대 가드, TagEditorDialog/LyricsSearchWindow/LyricsPane) · B8 `#DPUNRESOLVED:` 위치 마커로 미해결 경로 순서 보존(M3u·Playlist.UnresolvedEntries·PlaylistManager) · B9 ffmpeg stderr 상시 비동기 드레인+취소 가능 exit 루프(AudioTranscoder) · B10 4GiB 초과 WAV 사전 거부(`UnsupportedDuration`) · B11 재구축 창 시크 이월(15초/동일 트랙 가드)+AB 루프 중 크로스페이드 아밍 억제(PlaybackController/SequencerStream) · B12 IR 2초 절단 경고+스왑 드라이 통과 수용 명시(코드 주석) · B13 풀스크린 Space/←/→를 단축키 맵 dispatch로(FullscreenNowPlayingWindow — 문서된 ←/→ ±5s 의미도 정합) · B14 SettingsWriter 시퀀스 순서 보장 쓰기(WriteTurn) · B15 폴더 드롭 수동 재귀+엔트리별 예외 흡수(PlaylistManager).
+
+### 9.3 C그룹 폐기 기록 (8건)
+| # | 항목 | 폐기 근거 |
+|---|---|---|
+| C1 | 스마트 쿼리 따옴표 이스케이프 부재 | foobar2000도 동일 설계, 파서가 명시적 오류로 보고(조용한 오염 아님). 쿼리 문서에 "값에 따옴표 불가" 명시로 대체 |
+| C2 | 크로스피드 강도 변경 LP 스텝 | 일회성 조작, 청감 미미(P3) |
+| C3 | ClampFrequency 극저 샘플레이트 예외 | 실제 기기 레이트(≥8kHz) 도달 불가 — 이론상 |
+| C4 | `%title%.lrc` 동명 다른 아티스트 오매칭 | 저장은 `%filename%.lrc` 기반이라 덮어쓰기 없음(표시만). 아티스트 교차검사는 오탐 리스크가 커서 보류, 문서화로 대체 |
+| C5 | 로컬 아트 캐시 스테일 재사용·무한 증가/팔레트 테마 미구분 | 영향 낮음+지문(mtime/해시) 체계 도입은 구조 변경. 아트 교체 빈도가 낮아 스테일 노출이 실질 없음 |
+| C6 | IR 교체×세션 초기화 극단 경합 시 구레이트 IR | 파티션 불변식 유지(OOB 없음), 빈도 매우 낮음 |
+| C7 | EQ 프로필 사전 재구조×세션 시작 읽기 경합 | 빈도 매우 낮음, 읽기 경합만(예외 상향 경로 없음) |
+| C8 | APE 이미지+CUE 무경고 스킵 | APE 디코더 자체가 미구현(별도 기능 과제) — 큐 결함 아님 |
+
+### 9.4 D그룹 확인 결과 (3건)
+- **D1 트레이 모드 OS 종료 차단 의심** — CUA로 OS 종료는 곤란하여 **수동 확인 절차**로 문서화: ① "트레이로 닫기" ON → ② Windows 종료 시도 → ③ "앱이 종료를 방지합니다" 화면이 뜨면 재현(→ WM_QUERYENDSESSION 서브클래싱 수리 착수), 정상 종료되면 비재현 기록. `docs/adversarial-review-2026-10-24-remaining.md`에 절차 기록.
+- **D2 SMTC 타임라인** — 빌드로 검증: `SystemMediaTransportControls.UpdateTimeline`은 이 TFM(net10.0-windows10.0.19041.0) 프로젝션에 **존재하지 않음**(CS1061) → 실구현 불가 판정. 죽은 호출·카운터 제거하고 no-op에 근거 주석 고정(SmtcService/NowPlayingBar).
+- **D3 YouTube 허위 "조기 종료" 경고** — 자연 EOF 후 유예 2s→10s(YouTubeProcessRunner.ExitedCleanly). 실시간 YouTube 재생 자동화 검증은 네트워크·yt-dlp 의존으로 미수행, 코드 수리+단위 수준 검증만 기록.
+
+### 9.5 신규 방어 게이트 (Review20261024RepairBatch2Tests — 7건)
+DSF 8비트 거부, 절단 DSF 클램프·정상 종료, .lrc 원자 저장, M3U 미해결 위치 왕복, IR 리샘플·절단, SettingsWriter 동시 Flush 순서 보장.
+
+### 9.6 검증 게이트 (2026-10-24 달성)
+- obj/bin 삭제 후 콜드 리빌드 **0 Warning(s) 0 Error(s)** (DawnPlayer.slnx 전체).
+- 전체 테스트 스위트 1회 전수 실행 **2,333 / 2,333 100% 통과**(§8의 2,326 + 본 배치 신규 게이트 7건).
+- 필터 검증: 수정 영역(M3u·Regression·Transcoder·Settings·Scan·Cue·Lyrics·Playlist·Radio·Http·Dlna·Smtc·Tray·Shortcut) 740건 통과.

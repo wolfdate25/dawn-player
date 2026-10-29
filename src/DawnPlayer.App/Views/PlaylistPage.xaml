@@ -314,6 +314,7 @@
                           KeyDown="OnListKeyDown"
                           RightTapped="OnListRightTapped"
                           ContextRequested="OnListContextRequested"
+                          DragItemsCompleted="OnDragItemsCompleted"
                           AllowDrop="False"
                           CanReorderItems="False"
                           Padding="20,8,20,24">

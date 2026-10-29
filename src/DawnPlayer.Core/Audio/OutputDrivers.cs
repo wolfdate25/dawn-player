@@ -120,9 +120,19 @@ public sealed class WasapiOutputDriver : IOutputDriver
 
             // Cancel() disposes the reader the failed sequencer took ownership of in SwitchTo,
             // so the shared-mode retry needs a freshly opened one — reusing the disposed reader
-            // would make the fallback session play silence.
+            // would make the fallback session play silence. A raw-DSD (DoP) source must also
+            // swap to the plain PCM reader: the shared mixer resamples, which destroys the DoP
+            // markers, and reopening through the factory would just build another DoP reader.
             seq.Cancel();
-            first = request.ReopenPending(first);
+            if (DsdSupport.IsRawDsdReader(first.Reader))
+            {
+                DsdSupport.BlockDoP();
+                first = request.ReopenPendingAsPcm(first);
+            }
+            else
+            {
+                first = request.ReopenPending(first);
+            }
 
             exclusive = false;
             target = WasapiDeviceService.GetSharedTarget(device);
@@ -152,6 +162,15 @@ public sealed class WasapiOutputDriver : IOutputDriver
             // Only now is the claim true.
             request.Warn(CoreMessages.Encode(CoreMessageKey.ExclusiveFallbackShared));
         }
+        catch when (!exclusive)
+        {
+            // A shared-mode Init/Play failure has no further fallback. Without this arm the
+            // half-built session's reader (an open file handle) and output object leaked until
+            // GC finalizers ran, if ever.
+            output.Dispose();
+            seq.Cancel();
+            throw;
+        }
 
         var info = new SessionInfo(
             device.FriendlyName, exclusive, WasapiDeviceService.Describe(target), latency, AudioDriverType.Wasapi,
@@ -173,6 +192,29 @@ public sealed class WasapiOutputDriver : IOutputDriver
             .WithEventSync()
             .WithLatency(latency);
         return (exclusive ? builder.WithExclusiveMode() : builder.WithSharedMode()).Build();
+    }
+
+    /// <summary>
+    /// Swaps a raw-DSD (DoP) reader for the plain boxcar-PCM reader when the target output cannot
+    /// carry DoP. Only a WASAPI exclusive session whose endpoint accepted the DoP rate can; the
+    /// DirectSound/WaveOut targets are 16-bit PCM, where the packed 24-bit words got re-encoded
+    /// through the 16-bit converter — marker destruction, full-scale noise, volume ignored. The
+    /// replaced reader is disposed here (it has not been handed to a sequencer yet).
+    /// </summary>
+    internal static PendingTrack SwapOutUnsupportedDoP(OutputSessionRequest request, PendingTrack first)
+    {
+        if (!DsdSupport.IsRawDsdReader(first.Reader) || DsdSupport.PlaybackMode != DsdPlaybackMode.DoPPriority)
+            return first;
+
+        if (!DsdSupport.IsDoPBlocked)
+        {
+            DsdSupport.BlockDoP();
+            request.Warn(CoreMessages.Encode(CoreMessageKey.DoPUnsupportedFallback));
+        }
+        var dopReader = first.Reader;
+        first = request.ReopenPendingAsPcm(first);
+        try { dopReader.Dispose(); } catch { /* already torn down */ }
+        return first;
     }
 }
 
@@ -260,6 +302,7 @@ public sealed class DirectSoundOutputDriver : IOutputDriver
         var target = new WaveFormat(rate, 16, channels);
         var eqProfile = EqualizerProfileResolver.Resolve(_settings.Equalizer, AudioDriverType.DirectSound, dsGuid.ToString());
 
+        first = WasapiOutputDriver.SwapOutUnsupportedDoP(request, first);
         var seq = request.CreateSequencer(first, target, true, eqProfile);
         seq.SwitchTo(first);
 
@@ -300,6 +343,7 @@ public sealed class WaveOutOutputDriver : IOutputDriver
         var target = new WaveFormat(rate, 16, channels);
         var eqProfile = EqualizerProfileResolver.Resolve(_settings.Equalizer, AudioDriverType.WaveOut, devNum.ToString(CultureInfo.InvariantCulture));
 
+        first = WasapiOutputDriver.SwapOutUnsupportedDoP(request, first);
         var seq = request.CreateSequencer(first, target, true, eqProfile);
         seq.SwitchTo(first);
 

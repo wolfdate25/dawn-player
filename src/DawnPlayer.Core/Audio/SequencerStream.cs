@@ -85,6 +85,15 @@ public sealed class SequencerStream : IWaveProvider
 
     private readonly object _prefetchLock = new();
 
+    // Readers retired from the prefetch slot. Disposing them on the thread that invalidated the
+    // prefetch raced the render thread's crossfade read — that read copies the reference out of
+    // _prefetchLock, releases the lock, and only then decodes, so a concurrent Dispose could free
+    // a native decoder underneath it (AccessViolation on MediaFoundation/Vorbis readers).
+    // Retirement only parks readers here; actual disposal happens where no render pass can be
+    // reading: the render thread itself at the top of Read, or any caller already holding _gate
+    // (SwitchTo/Cancel), which by definition waits out any in-flight pass.
+    private readonly List<PreparedTrack> _retired = new();
+
     private PreparedTrack? _current;
     private PreparedTrack? _prefetched;
     private ISampleProvider? _sourceProvider;
@@ -118,6 +127,12 @@ public sealed class SequencerStream : IWaveProvider
     private bool _inCrossfade;
     private long _crossfadeTotalFrames;
     private long _crossfadeElapsedFrames;
+    // Post-abort gain recovery: an interrupted fade left the current track partway down its
+    // fade-out curve; restoring unity in one block was an audible step. Ramp back instead.
+    private bool _fadeRecovering;
+    private float _fadeRecoverStartGain = 1f;
+    private long _fadeRecoverTotalFrames;
+    private long _fadeRecoverElapsedFrames;
 
     public SequencerStream(
         WaveFormat outFormat,
@@ -266,9 +281,11 @@ public sealed class SequencerStream : IWaveProvider
         // (크로스페이드를 끈 뒤의) 갭리스 전환에서 다음 트랙 앞부분이 통째로 건너뛰어진다.
         if (_inCrossfade)
         {
-            lock (_prefetchLock) RewindAbortedCrossfadeSource(_prefetched?.Track);
-            _inCrossfade = false;
-            _crossfadeElapsedFrames = 0;
+            lock (_prefetchLock)
+            {
+                RewindAbortedCrossfadeSource(_prefetched?.Track);
+                BeginCrossfadeAbortLocked();
+            }
         }
         // The normalizer's converged gain stays valid across a seek within the track; resetting
         // it made the volume pump after every scrub. Delay-line/convolution/limiter state IS
@@ -291,6 +308,7 @@ public sealed class SequencerStream : IWaveProvider
             SetCurrentLocked(prepared);
             if (next.StartPosition is { } start) SeekLocked(start);
             old?.Track.Reader.Dispose();
+            DrainRetiredLocked();
         }
     }
 
@@ -307,10 +325,9 @@ public sealed class SequencerStream : IWaveProvider
         {
             previous = _prefetched;
             _prefetched = prepared;
-            _inCrossfade = false;
-            _crossfadeElapsedFrames = 0;
+            BeginCrossfadeAbortLocked();
         }
-        previous?.Track.Reader.Dispose();
+        RetireReader(previous);
     }
 
     /// <summary>Takes the prefetched track (used when rebuilding the session after a format change).</summary>
@@ -323,8 +340,7 @@ public sealed class SequencerStream : IWaveProvider
             if (_inCrossfade)
             {
                 RewindAbortedCrossfadeSource(t?.Track);
-                _inCrossfade = false;
-                _crossfadeElapsedFrames = 0;
+                BeginCrossfadeAbortLocked();
             }
             return t?.Track;
         }
@@ -356,10 +372,55 @@ public sealed class SequencerStream : IWaveProvider
         {
             previous = _prefetched;
             _prefetched = null;
-            _inCrossfade = false;
-            _crossfadeElapsedFrames = 0;
+            BeginCrossfadeAbortLocked();
         }
-        previous?.Track.Reader.Dispose();
+        RetireReader(previous);
+    }
+
+    /// <summary>Parks a reader for later disposal on a thread that cannot race the render
+    /// pass — see <see cref="_retired"/>.</summary>
+    private void RetireReader(PreparedTrack? track)
+    {
+        if (track == null) return;
+        lock (_prefetchLock) _retired.Add(track);
+    }
+
+    /// <summary>Disposes retired readers. Caller must hold <see cref="_gate"/>: that excludes any
+    /// concurrent render pass, and the render thread is the only reader of prefetch sources, so
+    /// nothing can still be decoding them here.</summary>
+    private void DrainRetiredLocked()
+    {
+        PreparedTrack[] toDispose;
+        lock (_prefetchLock)
+        {
+            if (_retired.Count == 0) return;
+            toDispose = _retired.ToArray();
+            _retired.Clear();
+        }
+        foreach (var retired in toDispose)
+        {
+            try { retired.Track.Reader.Dispose(); }
+            catch (Exception ex) { Log.Trace($"[sequencer] retired reader dispose: {ex.Message}"); }
+        }
+    }
+
+    /// <summary>
+    /// Clears an in-progress crossfade (caller holds <see cref="_prefetchLock"/>) and starts the
+    /// gain-recovery ramp from wherever the fade had reached, so an aborted fade-out does not
+    /// step the current track straight back to unity.
+    /// </summary>
+    private void BeginCrossfadeAbortLocked()
+    {
+        if (!_inCrossfade) return;
+        _inCrossfade = false;
+        double t = _crossfadeTotalFrames > 0
+            ? Math.Clamp((double)_crossfadeElapsedFrames / _crossfadeTotalFrames, 0.0, 1.0)
+            : 0.0;
+        _crossfadeElapsedFrames = 0;
+        _fadeRecoverStartGain = (float)Math.Cos(t * Math.PI * 0.5);
+        _fadeRecoverTotalFrames = Math.Max(1, (long)(0.15 * _outFormat.SampleRate));
+        _fadeRecoverElapsedFrames = 0;
+        _fadeRecovering = _fadeRecoverStartGain < 0.999f;
     }
 
     /// <summary>Aborts playback: drops everything without firing events.</summary>
@@ -376,9 +437,12 @@ public sealed class SequencerStream : IWaveProvider
             Volatile.Write(ref _facts, null);
             _endFired = false;
             _trackStartedFired = false;
+            _fadeRecovering = false;
             Volatile.Write(ref AbLoopStartBytes, 0);
             Volatile.Write(ref AbLoopEndBytes, 0);
             _dspChain.Reset();
+            // The session is going away, so no render pass will drain the retirement list.
+            DrainRetiredLocked();
         }
     }
 
@@ -485,6 +549,57 @@ public sealed class SequencerStream : IWaveProvider
         SyncLimiterEnabled();
     }
 
+    /// <summary>
+    /// Applies normalizer settings and the pre-chain node gain as ONE step under the gate.
+    /// Toggling the normalizer moves ReplayGain ownership between the normalizer effect and the
+    /// node; doing that in two separate (ungated) calls let the render thread produce a block in
+    /// between — RG² right after a toggle-off, or a unity dip right after a toggle-on.
+    /// </summary>
+    public void SetNormalizerAndNode(NormalizerSettings? settings, float? staticReplayGainLinear, float nodeGain)
+    {
+        lock (_gate)
+        {
+            var norm = _dspChain.GetEffect<DynamicNormalizerDspEffect>();
+            if (settings != null)
+            {
+                norm?.ApplySettings(settings);
+            }
+            if (staticReplayGainLinear.HasValue || norm != null)
+            {
+                norm?.SetReplayGain(staticReplayGainLinear);
+            }
+            _nodeGain = nodeGain;
+            var node = Volatile.Read(ref _replayGainNode);
+            if (node != null) node.Volume = nodeGain;
+            SyncLimiterEnabled();
+        }
+    }
+
+    /// <summary>
+    /// Ramps the current track's gain back to unity after an aborted crossfade. The aborted fade
+    /// had already attenuated rendered blocks partway down its curve; jumping straight back to
+    /// full gain mid-fade-out was an audible step on every queue edit in the final seconds.
+    /// </summary>
+    private int ApplyFadeRecovery(int floatsRead)
+    {
+        if (!_fadeRecovering || floatsRead <= 0) return floatsRead;
+        int channels = _outFormat.Channels;
+        int frames = floatsRead / channels;
+        float start = _fadeRecoverStartGain;
+        for (int f = 0; f < frames; f++)
+        {
+            double p = Math.Clamp((double)(_fadeRecoverElapsedFrames + f) / _fadeRecoverTotalFrames, 0.0, 1.0);
+            float g = start + (1f - start) * (float)p;
+            for (int ch = 0; ch < channels; ch++)
+            {
+                _floatBuf[f * channels + ch] *= g;
+            }
+        }
+        _fadeRecoverElapsedFrames += frames;
+        if (_fadeRecoverElapsedFrames >= _fadeRecoverTotalFrames) _fadeRecovering = false;
+        return floatsRead;
+    }
+
     public int Read(Span<byte> buffer)
     {
         try
@@ -505,6 +620,11 @@ public sealed class SequencerStream : IWaveProvider
                     return count;
                 }
 
+                // Retired readers are disposed here — the render thread itself — because it is the
+                // only thread that decodes prefetch sources, so by construction nothing is reading
+                // them mid-pass. See _retired.
+                DrainRetiredLocked();
+
                 long served = _bytesServed;
                 while (total < count)
                 {
@@ -517,8 +637,12 @@ public sealed class SequencerStream : IWaveProvider
                     int floatsWanted = framesWanted * _outFormat.Channels;
                     if (_floatBuf.Length < floatsWanted) Array.Resize(ref _floatBuf, floatsWanted);
 
-                    // Check if we should enter crossfade mode
-                    if (_crossfadeDurationSeconds > 0.05 && !_rawPassthrough && !_inCrossfade)
+                    // Check if we should enter crossfade mode. Suppressed while an A-B loop is
+                    // active: a loop whose B point sits inside the fade window kept fading past
+                    // the first bounce, and the elapsed window drained to the next track with
+                    // the loop quietly cleared.
+                    if (_crossfadeDurationSeconds > 0.05 && !_rawPassthrough && !_inCrossfade
+                        && Volatile.Read(ref AbLoopEndBytes) == 0)
                     {
                         var facts = Volatile.Read(ref _facts);
                         if (facts != null && facts.TotalTime > TimeSpan.Zero)
@@ -529,10 +653,21 @@ public sealed class SequencerStream : IWaveProvider
                             {
                                 lock (_prefetchLock)
                                 {
-                                    if (_prefetched is { Track.RequiresRestart: false })
+                                    if (_prefetched is { Track.RequiresRestart: false } next)
                                     {
                                         _inCrossfade = true;
-                                        _crossfadeTotalFrames = Math.Max(1, (long)(_crossfadeDurationSeconds * _outFormat.SampleRate));
+                                        // Clamp the window to what both sides can actually fill. A
+                                        // fade longer than the current track's remainder handed off
+                                        // mid-fade (the next track jumping from sin(t) straight to
+                                        // unity), and one longer than the NEXT track skipped most
+                                        // of that track.
+                                        long fade = Math.Max(1, (long)(_crossfadeDurationSeconds * _outFormat.SampleRate));
+                                        long remFrames = Math.Max(1, (long)(rem.TotalSeconds * _outFormat.SampleRate));
+                                        var nextTotal = next.Track.Reader.TotalTime;
+                                        long nextFrames = nextTotal > TimeSpan.Zero
+                                            ? Math.Max(1, (long)(nextTotal.TotalSeconds * _outFormat.SampleRate))
+                                            : fade;
+                                        _crossfadeTotalFrames = Math.Max(1, Math.Min(fade, Math.Min(remFrames, nextFrames)));
                                         _crossfadeElapsedFrames = 0;
                                     }
                                 }
@@ -551,9 +686,11 @@ public sealed class SequencerStream : IWaveProvider
 
                         if (nextTrack == null || nextTrack.Track.RequiresRestart)
                         {
-                            _inCrossfade = false;
-                            _crossfadeElapsedFrames = 0;
+                            // The fade target vanished underneath the fade (queue edit, stop-after-
+                            // current) — recover the gain instead of stepping back to unity.
+                            lock (_prefetchLock) BeginCrossfadeAbortLocked();
                             floatsRead = _sourceProvider.Read(_floatBuf.AsSpan(0, floatsWanted));
+                            floatsRead = ApplyFadeRecovery(floatsRead);
                         }
                         else
                         {
@@ -615,6 +752,7 @@ public sealed class SequencerStream : IWaveProvider
                     else
                     {
                         floatsRead = _sourceProvider.Read(_floatBuf.AsSpan(0, floatsWanted));
+                        floatsRead = ApplyFadeRecovery(floatsRead);
                     }
 
                     if (floatsRead <= 0)
@@ -802,10 +940,13 @@ public sealed class SequencerStream : IWaveProvider
         // mid-stream; serving 0 made the seekbar trail the heard audio by the whole overlap for
         // the rest of the track, and the crossfade arming check computes its remaining time off
         // this clock. Reader positions are track-relative (CueTrackReader maps the parent
-        // timeline), so a normal gapless handoff still anchors to 0.
-        var handoffPos = track.Reader.CurrentTime;
+        // timeline), so a normal gapless handoff still anchors to 0. An endless reader (radio:
+        // TotalTime 0) reports wall-clock-since-open, which counts the prefetch open and
+        // prebuffer the listener never heard — anchor those to 0 instead.
+        var handoffPos = track.Reader.TotalTime > TimeSpan.Zero ? track.Reader.CurrentTime : TimeSpan.Zero;
         Volatile.Write(ref _bytesServed, handoffPos > TimeSpan.Zero ? MfTrackReader.TimeToBytes(_outFormat, handoffPos) : 0);
         _trackStartedFired = false;
+        _fadeRecovering = false;
         // Without this the one-shot latch survives the switch and a reused sequencer never
         // reports end-of-stream again, so playback simply stops at the next track boundary.
         _endFired = false;
@@ -827,10 +968,9 @@ public sealed class SequencerStream : IWaveProvider
 
         if (gapless)
         {
-            // The EQ and the crossfeed delay lines must not carry the previous track over the
-            // boundary; the normalizer deliberately keeps its converged loudness gain.
-            _dspChain.GetEffect<EqualizerDspEffect>()?.Reset();
-            _dspChain.GetEffect<CrossfeedDspEffect>()?.Reset();
+            // A gapless boundary is a sample-continuous signal: the EQ and crossfeed delay lines
+            // hold mid-signal values, and zeroing them injected a step exactly where the user
+            // hears one junction. They reset only on a real discontinuity (manual switch, seek).
         }
         else
         {

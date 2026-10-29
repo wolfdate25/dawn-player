@@ -34,9 +34,14 @@ public static class SessionManager
         {
             foreach (var qi in p.QueueItems)
             {
-                if (!File.Exists(qi.TrackPath)) continue;
+                // SaveSession writes queue entries verbatim, so a radio station (a URL) is a
+                // legitimate saved entry — dropping it here silently emptied the saved queue of
+                // every live stream on each restart.
+                bool isStream = Core.Audio.RadioTrack.IsStreamUrl(qi.TrackPath);
+                if (!isStream && !File.Exists(qi.TrackPath)) continue;
                 var pl = playlists.Playlists.FirstOrDefault(x => x.Name == qi.PlaylistName) ?? playlists.Current;
-                var track = library.GetTrack(qi.TrackPath) ?? TagReader.TryRead(qi.TrackPath);
+                var track = library.GetTrack(qi.TrackPath)
+                            ?? (isStream ? Core.Audio.RadioTrack.Create(qi.TrackPath) : TagReader.TryRead(qi.TrackPath));
                 if (track != null)
                 {
                     var item = pl.Items.FirstOrDefault(i => i.Track.Path == track.Path) ?? new PlaylistItem(track);
@@ -86,11 +91,18 @@ public static class SessionManager
 
                 // A torn-down controller still reports CurrentItem but a position of zero, so a
                 // second save pass would overwrite the real resume point with 0 and the app would
-                // always restart the track from the beginning. Keep the previous value instead.
+                // always restart the track from the beginning. Keep the previous value instead —
+                // but ONLY for the same track: carrying the old position onto a NEW track resumed
+                // yesterday's spot of a different song.
                 var pos = playback.Position;
+                bool sameTrack = string.Equals(p.LastPlayedTrackPath, track.Path, StringComparison.OrdinalIgnoreCase);
                 if (pos > TimeSpan.Zero || playback.Duration <= TimeSpan.Zero)
                 {
                     p.LastPlayedPositionSeconds = pos.TotalSeconds;
+                }
+                else if (!sameTrack)
+                {
+                    p.LastPlayedPositionSeconds = 0;
                 }
             }
 

@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using DawnPlayer.Core.Util;
 
 namespace DawnPlayer.Core.Library;
 
@@ -17,6 +18,12 @@ public sealed record CueDocument(string? AlbumTitle, string? AlbumPerformer, IRe
 /// </summary>
 public static class CueSheet
 {
+    static CueSheet()
+    {
+        // Needed for Encoding.GetEncoding(0) (the system ANSI code page) on .NET Core.
+        try { Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance); } catch { }
+    }
+
     /// <summary>Parses a cue file. Returns null when nothing playable is in it.</summary>
     public static CueDocument? TryParseFile(string cuePath)
     {
@@ -166,11 +173,18 @@ public static class CueSheet
         return s;
     }
 
-    /// <summary>CUE FILE lines carry exactly one argument (the name); the type word follows a space
-    /// outside the quotes. Splitting on the first space after any closing quote is overkill — the
-    /// first token is enough because the type is never part of a quoted name in practice.</summary>
+    /// <summary>CUE FILE lines carry exactly one argument (the name); the type word follows a
+    /// space. A quoted name may itself contain spaces — "Artist - Album.flac" is the standard EAC
+    /// form — so a leading quote extends the token to its CLOSING quote; the old first-space split
+    /// truncated every such path at "Artist -" and the whole album failed File.Exists.</summary>
     private static string TakeFirstToken(this string argument)
     {
+        argument = argument.TrimStart();
+        if (argument.Length > 0 && argument[0] == '"')
+        {
+            int close = argument.IndexOf('"', 1);
+            return close > 0 ? argument[1..close] : argument.Trim('"');
+        }
         int space = argument.IndexOf(' ');
         return space < 0 ? argument : argument[..space];
     }
@@ -208,7 +222,20 @@ public static class CueSheet
             }
             catch (DecoderFallbackException)
             {
-                return Encoding.Default;
+                // Not UTF-8. The system code page is the right guess for a legacy EAC cue —
+                // but .NET's Encoding.Default is ALWAYS UTF-8, which mangled every CP949 title
+                // into U+FFFD and broke non-ASCII FILE paths. Mirror M3u.DetectEncoding: system
+                // ANSI when it is a real code page, Latin-1 (lossless per-byte) otherwise.
+                try
+                {
+                    var ansi = Encoding.GetEncoding(0);
+                    if (ansi.CodePage != Encoding.UTF8.CodePage) return ansi;
+                }
+                catch (Exception ex)
+                {
+                    Log.Debug($"[cue] ANSI code page unavailable: {ex.Message}");
+                }
+                return Encoding.Latin1;
             }
         }
         catch

@@ -23,6 +23,14 @@ public static class SettingsWriter
     private static string? _pendingJson;
     private static string? _pendingPath;
 
+    // Write ordering: two Flushes can overlap (the debounce timer and a shutdown FlushNow), and
+    // an older snapshot that acquires the disk late would overwrite the newer one. Every snapshot
+    // gets a sequence number under the Gate; a writer waits its turn on _writeTurn, so snapshots
+    // land strictly in the order they were taken.
+    private static readonly object WriteTurn = new();
+    private static long _issuedSeq;
+    private static long _writtenSeq;
+
     /// <summary>How long to wait for further changes before writing.</summary>
     public static TimeSpan Delay { get; set; } = TimeSpan.FromMilliseconds(400);
 
@@ -77,6 +85,7 @@ public static class SettingsWriter
     {
         string? json;
         string? path;
+        long seq;
         lock (Gate)
         {
             FlushTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
@@ -84,13 +93,31 @@ public static class SettingsWriter
             path = _pendingPath;
             _pendingJson = null;
             _pendingPath = null;
+            seq = json != null ? ++_issuedSeq : 0;
         }
 
         if (json == null) return;
 
-        var sink = WriteSink;
-        if (sink != null) sink(json);
-        else SettingsStore.WriteJson(json, path ?? Util.AppPaths.SettingsFile);
+        lock (WriteTurn)
+        {
+            while (_writtenSeq < seq - 1)
+            {
+                Monitor.Wait(WriteTurn, 50);
+            }
+
+            try
+            {
+                var sink = WriteSink;
+                if (sink != null) sink(json);
+                else SettingsStore.WriteJson(json, path ?? Util.AppPaths.SettingsFile);
+            }
+            finally
+            {
+                // A failed write must still advance the turn, or every later Flush stalls here.
+                _writtenSeq = seq;
+                Monitor.PulseAll(WriteTurn);
+            }
+        }
     }
 
     /// <summary>

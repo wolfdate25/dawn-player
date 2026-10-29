@@ -168,7 +168,7 @@
   <data name="Library_AlbumMenu_EditTags.Text" xml:space="preserve"><value>Edit Album Tags…</value></data>
   <data name="Msg_TagEditorDialogTitle" xml:space="preserve"><value>Edit Tags</value></data>
   <data name="Msg_TagEditorAlbumDialogTitle" xml:space="preserve"><value>Edit Album Tags</value></data>
-  <data name="Msg_TagEditorSingleHint" xml:space="preserve"><value>Empty fields are left alone. Saving replaces the file atomically.</value></data>
+  <data name="Msg_TagEditorSingleHint" xml:space="preserve"><value>Saving an empty field CLEARS that tag. Saving replaces the file atomically.</value></data>
   <data name="Msg_TagEditorAlbumHint" xml:space="preserve"><value>Only shared fields change (album · artists · genre · year). Leave blank to keep.</value></data>
   <data name="Msg_TagEditorAlbumTitle" xml:space="preserve"><value>Edit album tags for {0} tracks</value></data>
   <data name="Msg_TagEditorTrackPath" xml:space="preserve"><value>File</value></data>
@@ -379,6 +379,7 @@
   <!-- Dialogs & Settings Notices -->
   <data name="Msg_PlaylistName" xml:space="preserve"><value>Playlist Name</value></data>
   <data name="Msg_RenamePlaylistTitle" xml:space="preserve"><value>Rename Playlist</value></data>
+  <data name="Msg_RenamePlaylistTaken" xml:space="preserve"><value>That name is already in use. Choose a different one.</value></data>
   <data name="Msg_M3U8FileType" xml:space="preserve"><value>M3U8 Playlist</value></data>
   <data name="Msg_SaveFailed" xml:space="preserve"><value>Save failed: {0}</value></data>
   <data name="Msg_ShortcutInvalidTitle" xml:space="preserve"><value>Invalid Key</value></data>
@@ -391,6 +392,8 @@
   <data name="Msg_ShortcutCaptureHint" xml:space="preserve"><value>Press Esc to cancel. Certain keys like Tab, Esc, and Backspace cannot be used as shortcuts.</value></data>
   <data name="Msg_ShortcutCaptureInstruction" xml:space="preserve"><value>Press the new key combination.</value></data>
   <data name="Msg_ShortcutDisallowedKey" xml:space="preserve"><value>This key cannot be used as a shortcut. Please press a different key.</value></data>
+  <data name="Msg_ShortcutReservedAltF4" xml:space="preserve"><value>Alt+F4 is reserved by the system to close the window. Press a different key.</value></data>
+  <data name="Msg_ShortcutReservedWin" xml:space="preserve"><value>Windows-logo key combinations are preempted by the system. Press a different key.</value></data>
   <data name="Msg_EqNewProfileTitle" xml:space="preserve"><value>New EQ Profile</value></data>
   <data name="Msg_EqProfilePlaceholder" xml:space="preserve"><value>Enter profile name (e.g. Vocal Boost, Headphones)</value></data>
   <data name="Msg_EqProfileDefaultName" xml:space="preserve"><value>Profile {0}</value></data>
@@ -978,6 +981,7 @@
   <data name="Network_YouTube_TosNotice.Text" xml:space="preserve"><value>The YouTube source uses lossy streams (free Opus ~160k) and an unofficial route that may conflict with the YouTube Terms of Service. Personal playback only.</value></data>
   <data name="Network_YouTube_UrlLabel.Text" xml:space="preserve"><value>YouTube URL</value></data>
   <data name="Network_YouTube_Status_Resolving" xml:space="preserve"><value>Resolving… the first playback takes a few seconds</value></data>
+  <data name="Network_YouTube_RowProcessing" xml:space="preserve"><value>Loading…</value></data>
   <data name="Network_YouTube_Retry.Content" xml:space="preserve"><value>Retry</value></data>
   <data name="Network_YouTube_ResolveFailed" xml:space="preserve"><value>Could not fetch the item: {0}</value></data>
   <data name="Network_YouTube_RecentHeader.Text" xml:space="preserve"><value>Recent</value></data>
@@ -1091,6 +1095,7 @@
   <data name="LyricsSearch_EmbedButton.AutomationProperties.Name" xml:space="preserve"><value>Embed to tag</value></data>
   <data name="LyricsSearch_EmbedNotSupported" xml:space="preserve"><value>This file format or stream does not support embedding tags.</value></data>
   <data name="LyricsSearch_EmbedSuccess" xml:space="preserve"><value>Embedded lyrics into '{0}' audio tags.</value></data>
+  <data name="LyricsSearch_Embedding" xml:space="preserve"><value>Writing to the tag...</value></data>
   <data name="LyricsSearch_EmbedFailed" xml:space="preserve"><value>Failed to embed lyrics: {0}</value></data>
   <data name="Convert_NoValidFiles" xml:space="preserve"><value>No convertible local file tracks found (excluding streams/radio).</value></data>
   <data name="Convert_FormatHeader" xml:space="preserve"><value>Output Format</value></data>
@@ -1115,6 +1120,7 @@
   <data name="FileOps_ExecuteButton" xml:space="preserve"><value>Execute ({0})</value></data>
   <data name="FileOps_Started" xml:space="preserve"><value>Starting file operations for {0} files.</value></data>
   <data name="FileOps_Done" xml:space="preserve"><value>File operations completed: {0} succeeded, {1} failed, {2} skipped</value></data>
+  <data name="FileOps_DoneErrors" xml:space="preserve"><value> ({0} sync errors — see the log)</value></data>
   <data name="FileOps_NoValidFiles" xml:space="preserve"><value>No valid local files to organize (excluding streams and CUE virtual tracks).</value></data>
   <data name="Shortcut_Command_JumpToCurrentTrack" xml:space="preserve"><value>Jump to currently playing track</value></data>
   <data name="NowPlaying_JumpToTrackTooltip" xml:space="preserve"><value>Jump to current track (Ctrl+J)</value></data>

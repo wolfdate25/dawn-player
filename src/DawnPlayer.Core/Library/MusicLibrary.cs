@@ -302,10 +302,14 @@ public sealed class MusicLibrary : IMusicLibrary
                 for (int i = 0; i < members.Count; i++)
                 {
                     long startMs = (long)members[i].Start.TotalMilliseconds;
-                    // The last track of the file runs to the audio's own duration.
+                    // The last track of the file runs to the audio's own duration. When the cue's
+                    // last INDEX overshoots the declared duration (hand-edited cue, or STREAMINFO
+                    // stale after a truncation), max(DurationMs, startMs) folded the range to
+                    // zero length and silently dropped the row — keep a nominal tail instead and
+                    // let the cue reader clamp to the real audio end at playback.
                     long endMs = i + 1 < members.Count
                         ? (long)members[i + 1].Start.TotalMilliseconds
-                        : Math.Max((long)baseTrack.DurationMs, startMs);
+                        : Math.Max((long)baseTrack.DurationMs, startMs + 1);
                     if (endMs <= startMs) continue; // degenerate cue entry (zero-length range)
 
                     // A bare WAV/APE image often carries no tags at all — the cue sheet is the
@@ -441,7 +445,11 @@ public sealed class MusicLibrary : IMusicLibrary
 
                         // INSERT OR REPLACE rewrites the whole row, but listening history belongs
                         // to the file path, not to the tag snapshot: a retagged or rescanned file
-                        // must carry its play counts and first-seen stamp forward.
+                        // must carry its play counts and first-seen stamp forward. A nonzero tag
+                        // rating that DIFFERS from the stored one wins: this app's own writes keep
+                        // tag and store in sync, so a mismatch means an external tag editor wrote
+                        // it — and the old rule (always keep the store) made external rating
+                        // changes permanently invisible.
                         if (existing.TryGetValue(file, out var previous))
                         {
                             track = track with
@@ -450,7 +458,7 @@ public sealed class MusicLibrary : IMusicLibrary
                                 SkipCount = previous.SkipCount,
                                 LastPlayedUtcTicks = previous.LastPlayedUtcTicks,
                                 FirstSeenUtcTicks = previous.FirstSeenUtcTicks,
-                                Rating = previous.Rating,
+                                Rating = t.Rating > 0 && t.Rating != previous.Rating ? t.Rating : previous.Rating,
                             };
                         }
                         if (track.FirstSeenUtcTicks == 0)
@@ -507,6 +515,23 @@ public sealed class MusicLibrary : IMusicLibrary
 
         var next = new Dictionary<string, Track>(result, StringComparer.OrdinalIgnoreCase);
         foreach (var t in carriedOver) next[t.Path] = t;
+        // A tag-editor save (ReplaceTracks) or rating write that landed WHILE this scan ran replaced
+        // the live instance; the scan's cached-path entries still hold the scan-start instance, and
+        // swapping them back rolled the visible library to pre-edit metadata until the next scan.
+        // Where the scan did not produce a new instance, the live one wins.
+        lock (_ioLock)
+        {
+            foreach (var kv in next.ToList())
+            {
+                if (_tracks.TryGetValue(kv.Key, out var live) &&
+                    !ReferenceEquals(live, kv.Value) &&
+                    existing.TryGetValue(kv.Key, out var snapshot) &&
+                    ReferenceEquals(snapshot, kv.Value))
+                {
+                    next[kv.Key] = live;
+                }
+            }
+        }
         SwapTracks(next);
         ScanProgress?.Invoke(new ScanProgress(total, total, "", Finished: true));
     }
@@ -526,7 +551,22 @@ public sealed class MusicLibrary : IMusicLibrary
             if (hasUpserts)
             {
                 using var upsert = CreateUpsertCommand(tx);
-                foreach (var t in upserts!) ExecuteUpsert(upsert, t);
+                foreach (var t in upserts!)
+                {
+                    // The scan worker carried statistics forward from its START snapshot; a play or
+                    // rating that landed on the live instance while the scan ran would otherwise be
+                    // overwritten by the stale values here. Re-reading them from the live map under
+                    // the same lock that writes the row closes the window entirely (a cached-path
+                    // row IS the live instance and needs no merge).
+                    if (_tracks.TryGetValue(t.Path, out var live) && !ReferenceEquals(live, t))
+                    {
+                        t.PlayCount = live.PlayCount;
+                        t.SkipCount = live.SkipCount;
+                        t.LastPlayedUtcTicks = live.LastPlayedUtcTicks;
+                        t.Rating = live.Rating;
+                    }
+                    ExecuteUpsert(upsert, t);
+                }
             }
 
             if (hasDeletes)
@@ -859,7 +899,11 @@ public sealed class MusicLibrary : IMusicLibrary
             using var tx = _conn.BeginTransaction();
             using var cmd = _conn.CreateCommand();
             cmd.Transaction = tx;
-            cmd.CommandText = "UPDATE tracks SET path = @newPath WHERE path = @oldPath;";
+            // play_events carries the path, not a track id: without migrating it too, every
+            // relocated file's listening history detached from the track (the listening report's
+            // rankings lost the moved files while TotalPlays kept them).
+            cmd.CommandText = "UPDATE tracks SET path = @newPath WHERE path = @oldPath; " +
+                              "UPDATE play_events SET path = @newPath WHERE path = @oldPath;";
             var pOld = cmd.Parameters.Add("@oldPath", SqliteType.Text);
             var pNew = cmd.Parameters.Add("@newPath", SqliteType.Text);
 

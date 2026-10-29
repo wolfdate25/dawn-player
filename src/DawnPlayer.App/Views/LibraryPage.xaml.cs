@@ -193,7 +193,9 @@ public sealed partial class LibraryPage : Page
         if (TrackListViewContainer != null) TrackListViewContainer.Visibility = isList ? Visibility.Visible : Visibility.Collapsed;
         if (CoverGridViewContainer != null) CoverGridViewContainer.Visibility = isList ? Visibility.Collapsed : Visibility.Visible;
 
-        _currentSort = (SortColumn)Math.Clamp(ui.LibrarySortColumn, 0, 5);
+        // Clamp to the LAST enum member, not a literal: Rating (6) was added after the clamp was
+        // written, and a saved rating sort silently restored as "Duration" on every restart.
+        _currentSort = (SortColumn)Math.Clamp(ui.LibrarySortColumn, 0, (int)SortColumn.Rating);
         _sortAscending = ui.LibrarySortAscending;
         UpdateHeaderIndicators();
     }

@@ -70,7 +70,7 @@ public static class TranscodeDialog
                 case OutputAudioFormat.Wav:
                     qualityBox.Items.Add(new ComboBoxItem { Content = "16-bit PCM (표준 CD 품질)", Tag = "16" });
                     qualityBox.Items.Add(new ComboBoxItem { Content = "24-bit PCM (고해상도)", Tag = "24" });
-                    qualityBox.Items.Add(new ComboBoxItem { Content = "32-bit Float", Tag = "32" });
+                    qualityBox.Items.Add(new ComboBoxItem { Content = "32-bit PCM", Tag = "32" });
                     break;
                 case OutputAudioFormat.Flac:
                     qualityBox.Items.Add(new ComboBoxItem { Content = "Level 5 (기본 권장 압축)", Tag = "5" });
@@ -266,6 +266,7 @@ public static class TranscodeDialog
                                     dispatcher.TryEnqueue(() => progressBar.Value = pct / 100.0);
                                 }
                             },
+                            warning: AppServices.RaiseWarning,
                             cts.Token);
                         if (r == TranscodeResult.Ok && output != null) ok++;
                         else failed++;

@@ -42,7 +42,8 @@ public enum TranscodeResult
     WriteFailed,
     Cancelled,
     FfmpegMissing,
-    UnsupportedTrack
+    UnsupportedTrack,
+    UnsupportedDuration
 }
 
 /// <summary>
@@ -113,9 +114,9 @@ public static class AudioTranscoder
 
     /// <summary>Converts one track to WAV (backward-compatible overload). Calls <see cref="Convert"/>.</summary>
     public static string? ConvertToWav(Track track, TranscodeOptions options, out TranscodeResult result,
-        Action<double>? progress = null, CancellationToken ct = default)
+        Action<double>? progress = null, Action<string>? warning = null, CancellationToken ct = default)
     {
-        return Convert(track, options with { OutputFormat = OutputAudioFormat.Wav }, out result, progress, ct);
+        return Convert(track, options with { OutputFormat = OutputAudioFormat.Wav }, out result, progress, warning, ct);
     }
 
     /// <summary>
@@ -124,7 +125,7 @@ public static class AudioTranscoder
     /// describing the failure. Blocking with cancellation checks between decode slices.
     /// </summary>
     public static string? Convert(Track track, TranscodeOptions options, out TranscodeResult result,
-        Action<double>? progress = null, CancellationToken ct = default)
+        Action<double>? progress = null, Action<string>? warning = null, CancellationToken ct = default)
     {
         result = TranscodeResult.Ok;
 
@@ -137,14 +138,14 @@ public static class AudioTranscoder
 
         if (options.OutputFormat == OutputAudioFormat.Wav)
         {
-            return ConvertToWavInternal(track, options, out result, progress, ct);
+            return ConvertToWavInternal(track, options, out result, progress, warning, ct);
         }
 
-        return ConvertWithFfmpeg(track, options, out result, progress, ct);
+        return ConvertWithFfmpeg(track, options, out result, progress, warning, ct);
     }
 
     private static string? ConvertToWavInternal(Track track, TranscodeOptions options, out TranscodeResult result,
-        Action<double>? progress, CancellationToken ct)
+        Action<double>? progress, Action<string>? warning, CancellationToken ct)
     {
         result = TranscodeResult.Ok;
         string? outputPath = null;
@@ -169,6 +170,15 @@ public static class AudioTranscoder
             var fmt = reader.SourceFormat;
             int bits = options.BitsPerSample is 16 or 24 or 32 ? options.BitsPerSample : 16;
             long totalFrames = track.DurationMs > 0 ? (long)(track.DurationMs / 1000.0 * fmt.SampleRate) : 0;
+
+            // RIFF's 32-bit size fields cap a WAV at ~4 GiB; wrapping them produced a header
+            // every decoder misreads. Reject before writing rather than emit a broken file.
+            if (totalFrames * fmt.Channels * (bits / 8) > int.MaxValue - 44)
+            {
+                result = TranscodeResult.UnsupportedDuration;
+                warning?.Invoke($"WAV은 4GiB를 넘을 수 없어 변환하지 않았습니다: {track.Title}");
+                return null;
+            }
 
             using var output = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.None);
             WriteWavHeader(output, fmt.SampleRate, fmt.Channels, bits, dataSize: 0); // patched at the end
@@ -222,9 +232,10 @@ public static class AudioTranscoder
             output.Seek(0, SeekOrigin.Begin);
             WriteWavHeader(output, fmt.SampleRate, fmt.Channels, bits, dataBytes);
 
-            if (options.WriteTags)
+            if (options.WriteTags && !ApplyMetadataAndArt(outputPath, track, replayGainBakedIn: options.ApplyReplayGain))
             {
-                ApplyMetadataAndArt(outputPath, track);
+                Log.Warn($"[transcode] tag/art copy failed for '{outputPath}'");
+                warning?.Invoke("태그/표지 복사 실패: " + System.IO.Path.GetFileName(outputPath));
             }
         }
         catch (AudioOpenException)
@@ -251,7 +262,7 @@ public static class AudioTranscoder
     }
 
     private static string? ConvertWithFfmpeg(Track track, TranscodeOptions options, out TranscodeResult result,
-        Action<double>? progress, CancellationToken ct)
+        Action<double>? progress, Action<string>? warning, CancellationToken ct)
     {
         result = TranscodeResult.Ok;
         string? ffmpeg = ResolveFfmpegExecutable(options.FfmpegPath);
@@ -302,6 +313,23 @@ public static class AudioTranscoder
                 return null;
             }
 
+            // Drain stderr asynchronously from the start: a synced-after-exit ReadToEnd let a
+            // chatty ffmpeg fill the 4-64 KB stderr pipe and block on writing it, which stalled
+            // our stdin write, which made the cancel loop unreachable. (-nostats -loglevel error
+            // keeps this rare; the drain makes it impossible.)
+            var stderrTail = new System.Text.StringBuilder();
+            process.ErrorDataReceived += (_, e) =>
+            {
+                if (e.Data != null)
+                {
+                    lock (stderrTail)
+                    {
+                        if (stderrTail.Length < 8192) stderrTail.AppendLine(e.Data);
+                    }
+                }
+            };
+            process.BeginErrorReadLine();
+
             using (var stdin = process.StandardInput.BaseStream)
             {
                 var floatBuf = new float[fmt.SampleRate * fmt.Channels];
@@ -312,6 +340,11 @@ public static class AudioTranscoder
                     if (ct.IsCancellationRequested)
                     {
                         TryKill(process);
+                        // Kill is asynchronous — ffmpeg can still hold the output file handle.
+                        // Deleting before it exits threw IOException, the delete was swallowed,
+                        // and the truncated half-file stayed under its FINAL name (a later run
+                        // then renamed around it as if it were a real file).
+                        try { process.WaitForExit(5000); } catch { /* tearing down anyway */ }
                         ct.ThrowIfCancellationRequested();
                     }
 
@@ -347,19 +380,32 @@ public static class AudioTranscoder
                 }
             }
 
-            process.WaitForExit();
+            // Cancellable exit wait: an unbounded WaitForExit pinned the whole batch when ffmpeg
+            // wedged (a network-drive output, say) with no way to cancel. The trailing no-arg
+            // WaitForExit then flushes the async stderr reader (process already exited).
+            while (!process.WaitForExit(200))
+            {
+                if (ct.IsCancellationRequested)
+                {
+                    TryKill(process);
+                    try { process.WaitForExit(5000); } catch { }
+                    ct.ThrowIfCancellationRequested();
+                }
+            }
             if (process.ExitCode != 0)
             {
-                string err = process.StandardError.ReadToEnd();
+                string err;
+                lock (stderrTail) err = stderrTail.ToString();
                 Log.Warn($"[transcode] ffmpeg exited with code {process.ExitCode}: {err}");
                 result = TranscodeResult.WriteFailed;
                 TryDelete(outputPath);
                 return null;
             }
 
-            if (options.WriteTags)
+            if (options.WriteTags && !ApplyMetadataAndArt(outputPath, track, replayGainBakedIn: options.ApplyReplayGain))
             {
-                ApplyMetadataAndArt(outputPath, track);
+                Log.Warn($"[transcode] tag/art copy failed for '{outputPath}'");
+                warning?.Invoke("태그/표지 복사 실패: " + System.IO.Path.GetFileName(outputPath));
             }
         }
         catch (AudioOpenException)
@@ -370,6 +416,10 @@ public static class AudioTranscoder
         catch (OperationCanceledException)
         {
             result = TranscodeResult.Cancelled;
+            // Kill is asynchronous — wait the ffmpeg process out so the half-written file's
+            // handle is free before the delete, or the truncated file survives under its final
+            // name and later runs rename around it as if it were real output.
+            if (process != null) { try { process.WaitForExit(5000); } catch { } }
             TryDelete(outputPath);
             return null;
         }
@@ -393,9 +443,16 @@ public static class AudioTranscoder
         return outputPath;
     }
 
-    private static void ApplyMetadataAndArt(string outputPath, Track track)
+    /// <param name="replayGainBakedIn">
+    /// True when the samples were already scaled by the track's ReplayGain. Writing the ORIGINAL
+    /// gain tags on top of baked audio made playback apply the gain twice (−8 dB tracks played at
+    /// −16 dB); the baked file must carry no, or zeroed, ReplayGain tags.
+    /// </param>
+    /// <returns>True when the tags and artwork actually made it into the output file. Failures
+    /// used to vanish into a log line while the batch reported a clean success.</returns>
+    private static bool ApplyMetadataAndArt(string outputPath, Track track, bool replayGainBakedIn)
     {
-        Library.TagWriter.TryApplyAtomic(outputPath, new Library.TagEdit(
+        bool tagsOk = Library.TagWriter.TryApplyAtomic(outputPath, new Library.TagEdit(
             Title: track.Title,
             Artist: track.Artist,
             AlbumArtist: track.AlbumArtist,
@@ -405,14 +462,16 @@ public static class AudioTranscoder
             TrackNo: track.TrackNo,
             DiscNo: track.DiscNo,
             Art: string.IsNullOrEmpty(track.ArtPath) ? Library.TagEditorArt.None : Library.TagEditorArt.Embed,
-            ArtSourcePath: track.ArtPath));
+            ArtSourcePath: track.ArtPath)) == Library.TagWriteResult.Ok;
 
-        if (track.RgTrackGainDb.HasValue)
+        bool rgOk = true;
+        if (!replayGainBakedIn && track.RgTrackGainDb.HasValue)
         {
-            Library.TagWriter.TrySetReplayGain(outputPath,
+            rgOk = Library.TagWriter.TrySetReplayGain(outputPath,
                 track.RgTrackGainDb.Value, track.RgTrackPeak ?? 0,
                 track.RgAlbumGainDb, track.RgAlbumPeak);
         }
+        return tagsOk && rgOk;
     }
 
     private static void TryKill(Process p)

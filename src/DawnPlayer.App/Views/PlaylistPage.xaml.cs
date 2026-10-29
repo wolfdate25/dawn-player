@@ -225,6 +225,9 @@ public sealed partial class PlaylistPage : Page
                 SettingsWriter.Schedule(AppServices.Settings);
             }
             pl.Items.CollectionChanged += OnItemsChanged;
+            // A different playlist invalidates the previous search's match indices — F3 after a
+            // tab switch otherwise navigated THIS list with the OLD list's indices.
+            _searchMatches = Array.Empty<int>();
             Rebuild();
         }
     }
@@ -641,6 +644,13 @@ public sealed partial class PlaylistPage : Page
                 if (PlaylistList.ItemsSource != pl.Items)
                     PlaylistList.ItemsSource = pl.Items;
             }
+
+            // The matches index into Current.Items; any rebuild (add/remove/undo/sort/smart
+            // refresh) shifted that list, so recompute or Enter/F3 land on the wrong rows.
+            if (InlineSearchBar?.Visibility == Visibility.Visible)
+            {
+                PerformSearch(PlaylistSearchBox.Text);
+            }
         }
         catch (Exception ex)
         {
@@ -653,6 +663,16 @@ public sealed partial class PlaylistPage : Page
     private void OnGroupToggle(object sender, RoutedEventArgs e)
     {
         if (_vm.SetGrouped(GroupToggleMenuItem?.IsChecked == true)) Rebuild();
+    }
+
+    /// <summary>
+    /// Flat-mode drag reorder: the framework mutated pl.Items directly, bypassing every manager
+    /// path — the move was invisible to undo, and Ctrl+Z then rewound to an OLDER snapshot
+    /// wholesale. Record the post-drag order as a snapshot so the drag is one undo step.
+    /// </summary>
+    private void OnDragItemsCompleted(object sender, DragItemsCompletedEventArgs e)
+    {
+        if (Current is { IsSmart: false }) AppServices.Playlists.RecordReorderSnapshot(Current);
     }
 
     private void OnSortTitle(object sender, RoutedEventArgs e) => Sort(PlaylistSort.Title);

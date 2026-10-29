@@ -298,7 +298,7 @@ public class RegressionAuditFixTests
                     manager.LoadAll();
 
                     var loaded = manager.Playlists.First(p => p.Name == "Offline Volume");
-                    Assert.Contains(missingPath, loaded.UnresolvedPaths);
+                    Assert.Contains(loaded.UnresolvedEntries, e => e.Path == missingPath);
 
                     // Saving must put the unresolved entry back rather than dropping it.
                     manager.SavePlaylist(loaded);
@@ -327,7 +327,7 @@ public class RegressionAuditFixTests
             var present = new PlaylistItem(TrackAt(Path.Combine(dir, "here.flac"), "A", "B"));
             var offline = @"Z:\not-mounted\track.flac";
 
-            M3u.Write(file, new[] { present }, "list", new[] { offline });
+            M3u.Write(file, new[] { present }, "list", new List<(int, string)> { (1, offline) });
 
             var entries = M3u.Read(file);
             Assert.Equal(2, entries.Count);

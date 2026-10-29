@@ -19,6 +19,7 @@ public sealed class ScrobbleService : IDisposable
     private readonly Func<AppSettings> _settings;
     private readonly LastfmClient _client;
     private readonly Action<string> _log;
+    private readonly Action<Action>? _marshalUi;
     private readonly object _lock = new();
     private readonly Queue<Scrobble> _queue = new();
 
@@ -28,11 +29,14 @@ public sealed class ScrobbleService : IDisposable
 
     private long _currentStartedUtc;
 
-    public ScrobbleService(Func<AppSettings> settings, Action<string> log)
+    /// <param name="marshalUi">Marshals StateChanged onto the UI thread (StateChanged fires from
+    /// the flush worker too). Null (test/viewmodel paths) invokes inline.</param>
+    public ScrobbleService(Func<AppSettings> settings, Action<string> log, Action<Action>? marshalUi = null)
     {
         _settings = settings;
         _client = new LastfmClient(() => _settings().Lastfm);
         _log = log;
+        _marshalUi = marshalUi;
     }
 
     public bool Enabled => _settings().Lastfm.Enabled;
@@ -165,7 +169,7 @@ public sealed class ScrobbleService : IDisposable
                     {
                         for (int i = 0; i < batch.Length && _queue.Count > 0; i++) _queue.Dequeue();
                     }
-                    StateChanged?.Invoke();
+                    _marshalUi?.Invoke(() => StateChanged?.Invoke());
                 }
                 catch (Exception ex)
                 {

@@ -346,10 +346,23 @@ public sealed partial class PlaybackController : IPlaybackController
             case PlaybackState.Paused:
                 Interlocked.Increment(ref _commandGeneration);
                 {
+                    // Same drained-sequencer contract as the Buffering arm below: pausing in the
+                    // natural-advance resolve window cancelled the advance (generation bump), which
+                    // leaves a live session whose sequencer has no track left. Resuming that
+                    // served permanent silence under a "Playing" badge — take the advance's honest
+                    // fallback instead: nothing to play, so stop.
                     var seq = Sequencer;
-                    if (seq != null) seq.IsPaused = false;
+                    if (seq is { CurrentItem: not null })
+                    {
+                        seq.IsPaused = false;
+                        State = PlaybackState.Playing;
+                    }
+                    else
+                    {
+                        lock (_sessionLock) TeardownSessionLocked();
+                        State = PlaybackState.Stopped;
+                    }
                 }
-                State = PlaybackState.Playing;
                 StateChanged?.Invoke();
                 break;
             case PlaybackState.Buffering:
@@ -500,9 +513,42 @@ public sealed partial class PlaybackController : IPlaybackController
         }
     }
 
+    // A seek issued while a session rebuild is in flight (exclusive format change: _session is
+    // briefly null) used to vanish — the seekbar then jumped to wherever the new track started.
+    // The request is parked with the item it belonged to and replayed onto the new session.
+    private PlaylistItem? _pendingSeekItem;
+    private TimeSpan _pendingSeekPosition;
+    private long _pendingSeekStamp;
+
     public void Seek(TimeSpan position)
     {
-        Sequencer?.Seek(position);
+        var session = Volatile.Read(ref _session);
+        if (session != null)
+        {
+            session.Sequencer.Seek(position);
+            return;
+        }
+
+        var item = CurrentItem;
+        if (item != null)
+        {
+            _pendingSeekItem = item;
+            _pendingSeekPosition = position;
+            _pendingSeekStamp = Environment.TickCount64;
+        }
+    }
+
+    /// <summary>Replays a seek that landed during a rebuild onto the freshly started session,
+    /// when it still targets the item that is playing and is younger than the rebuild itself
+    /// (a stale park must not seek a user-chosen later track backwards).</summary>
+    private void ApplyPendingSeekIfRelevant(PendingTrack started)
+    {
+        long stamp = Interlocked.Exchange(ref _pendingSeekStamp, 0);
+        var item = Interlocked.Exchange(ref _pendingSeekItem, null);
+        if (item == null || stamp == 0 || !ReferenceEquals(item, started.Item)) return;
+        if (Environment.TickCount64 - stamp > 15_000) return;
+        try { started.Reader.CurrentTime = _pendingSeekPosition; }
+        catch (Exception ex) { Log.Trace($"[playback] carried-over seek failed: {ex.Message}"); }
     }
 
     // ---------------- A-B repeat ----------------
@@ -643,6 +689,11 @@ public sealed partial class PlaybackController : IPlaybackController
         lock (_stateLock) current = _currentItem;
         if (current?.Track == null) return;
 
+        // Rapid consecutive commands (Next twice inside the window before the successor's
+        // OnTrackStarted updates _currentItem) must not report the same leave twice — the stats
+        // sink counted both and the history doubled up. The marker is exactly the "already
+        // reported" latch; OnTrackStarted clears it for the next track.
+        if (ReferenceEquals(current, Volatile.Read(ref _manualLeaveMarker))) return;
         Volatile.Write(ref _manualLeaveMarker, current);
         TrackLeft?.Invoke(current, Position, reason);
     }
@@ -686,10 +737,13 @@ public sealed partial class PlaybackController : IPlaybackController
     {
         var seq = Sequencer;
         if (seq == null) return;
-        seq.SetNormalizer(_settings.Normalizer, ComputeReplayGain(CurrentItem?.Track));
-        // Toggling the normalizer moves ReplayGain ownership between the pre-chain node and the
-        // normalizer effect; the node must follow or the gain would apply twice (or not at all).
-        seq.SetReplayGainNode(ComputeReplayGainNodeGain(CurrentItem?.Track));
+        // One gated step: toggling moves ReplayGain ownership between the normalizer effect and
+        // the node, and a render block landing between the two updates doubled or dropped the
+        // gain for that block.
+        seq.SetNormalizerAndNode(
+            _settings.Normalizer,
+            ComputeReplayGain(CurrentItem?.Track),
+            ComputeReplayGainNodeGain(CurrentItem?.Track));
     }
 
     /// <summary>Re-applies crossfeed / mono-downmix settings live to the running stream.</summary>
@@ -704,6 +758,10 @@ public sealed partial class PlaybackController : IPlaybackController
     /// request wins, so dragging the IR picker cannot interleave stale loads.
     /// </summary>
     private int _convolutionGeneration;
+
+    // The radio reader the no-data warning already fired for (one warning per half-open link,
+    // cleared on teardown — a new station is a new reader and warns afresh).
+    private RadioStreamReader? _radioIdleWarned;
 
     public void ApplyConvolution()
     {
@@ -722,12 +780,31 @@ public sealed partial class PlaybackController : IPlaybackController
 
         Task.Run(() =>
         {
-            var impulse = ImpulseResponse.LoadMono(path);
+            // The convolver partitions are rate-specific: the IR is decoded AT THE SESSION'S rate
+            // (resampled when the file differs), so a 44.1 kHz file in a 48 kHz session no longer
+            // applies a filter stretched ~8.8% in time with no word to the user.
+            var sessionRate = Sequencer?.WaveFormat.SampleRate ?? 44100;
+            var impulse = ImpulseResponse.LoadMono(path, sessionRate);
             // A newer request (or a session rebuild) supersedes this one.
             if (Volatile.Read(ref _convolutionGeneration) != generation) return;
             var seq = Sequencer;
             if (seq == null) return;
-            seq.SetConvolution(enabled, impulse);
+            if (impulse == null)
+            {
+                seq.SetConvolution(false, null);
+                return;
+            }
+            if (impulse.Resampled)
+            {
+                Warning?.Invoke(CoreMessages.Encode(CoreMessageKey.ConvolutionIrResampled,
+                    $"임펄스({path})가 세션 레이트({sessionRate}Hz)로 변환되어 적용됩니다."));
+            }
+            if (impulse.Truncated)
+            {
+                Warning?.Invoke(CoreMessages.Encode(CoreMessageKey.ConvolutionIrTruncated,
+                    $"임펄스({path})가 최대 {ImpulseResponse.MaxSeconds:0.#}초로 잘려 적용됩니다."));
+            }
+            seq.SetConvolution(enabled, impulse.Samples);
         });
     }
 
@@ -945,7 +1022,10 @@ public sealed partial class PlaybackController : IPlaybackController
     private void ResolveRemoteArt(Models.Track? track)
     {
         if (track?.ArtUrl == null || !string.IsNullOrEmpty(track.ArtPath)) return;
-        if (!Uri.TryCreate(track.ArtUrl, UriKind.Absolute, out var url)) return;
+        // yt-dlp thumbnail URLs come in WebP variants the art cache rejects and BitmapImage
+        // cannot decode — request the JPEG variant of the same image.
+        var normalizedArtUrl = YouTubePageUrl.NormalizeThumbnailUrl(track.ArtUrl);
+        if (normalizedArtUrl == null || !Uri.TryCreate(normalizedArtUrl, UriKind.Absolute, out var url)) return;
 
         var cache = _remoteArt;
         _ = Task.Run(async () =>
@@ -1113,6 +1193,8 @@ public sealed partial class PlaybackController : IPlaybackController
             session.Exclusive, session.Driver, session.DeviceKey, session.IsDop,
             first.Reader as IStreamStallSource));
 
+        ApplyPendingSeekIfRelevant(first);
+
         CurrentSessionInfo = session.Info;
         SessionStarted?.Invoke(session.Info);
     }
@@ -1171,6 +1253,7 @@ public sealed partial class PlaybackController : IPlaybackController
         }
         Volatile.Write(ref _session, null);
         CurrentSessionInfo = null;
+        _radioIdleWarned = null;
         if (session == null) return;
 
         try { session.Sequencer.Cancel(); } catch (Exception ex) { Log.Trace($"[playback] sequencer cancel during teardown: {ex.Message}"); }
@@ -1489,8 +1572,14 @@ public sealed partial class PlaybackController : IPlaybackController
     {
         lock (_stateLock)
         {
-            if (_currentPlaylist != null && _currentItem != null)
+            // Same race as FireManualLeave: before the successor's OnTrackStarted runs, a second
+            // command would push the outgoing item again ([A, A]), and Previous then oscillated
+            // instead of walking back.
+            if (_currentPlaylist != null && _currentItem != null &&
+                !(_history.Count > 0 && ReferenceEquals(_history.Peek().Item, _currentItem)))
+            {
                 _history.Push((_currentPlaylist, _currentItem));
+            }
         }
     }
 
@@ -1529,7 +1618,33 @@ public sealed partial class PlaybackController : IPlaybackController
         var session = Volatile.Read(ref _session);
         var seq = session?.Sequencer;
         if (seq == null || seq.HasPrefetched || seq.PrefetchPending) return;
-        if (seq.RemainingTime > TimeSpan.FromSeconds(1.2)) return;
+
+        // Half-open radio connection watch: a station that dropped without FIN blocks its fill
+        // read forever, and the FIN-based StreamDied never fires. The elapsed-without-data clock
+        // is the only observable — announce once per reader instead of leaving the buffering
+        // badge up in unexplained silence.
+        if (session?.StallSource is RadioStreamReader radio && radio.TimeSinceLastData > TimeSpan.FromSeconds(15))
+        {
+            if (!ReferenceEquals(_radioIdleWarned, radio))
+            {
+                _radioIdleWarned = radio;
+                Warning?.Invoke(CoreMessages.Encode(CoreMessageKey.RadioNoData,
+                    ((int)radio.TimeSinceLastData.TotalSeconds).ToString(CultureInfo.InvariantCulture)));
+            }
+        }
+
+        // An endless source (radio: TotalTime 0) never reaches a boundary, but its RemainingTime
+        // (0 − position ≤ 0) sails through every lead check — the poll would open the next track,
+        // nothing would ever consume it, and a radio successor buffers without backpressure
+        // (megabytes a minute) for as long as it plays. Endless tracks only ever leave playback
+        // through user commands, which resolve their successor themselves.
+        if (seq.TotalTime <= TimeSpan.Zero) return;
+        // The lead must cover the configured crossfade: the fade arms the moment remaining time
+        // drops under the fade duration, and arming with no prefetch installed truncated the fade
+        // to whatever was left when the poll finally opened the file, then handed off mid-fade
+        // with an audible level step. +0.5s covers the 250ms poll period with margin.
+        var lead = TimeSpan.FromSeconds(Math.Max(1.2, _settings.Playback.CrossfadeDurationSeconds + 0.5));
+        if (seq.RemainingTime > lead) return;
 
         seq.PrefetchPending = true;
         Task.Run(() =>

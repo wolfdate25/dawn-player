@@ -78,8 +78,26 @@ internal sealed class ShortcutCaptureDialog : ContentDialog
             return;
         }
 
+        // Chords the OS preempts before an accelerator can ever fire: Windows-logo combinations go
+        // to the shell and Alt+F4 closes the window. Saving them produced a binding the settings
+        // page displayed as healthy but that never triggered. (ShortcutModifiers mirrors
+        // VirtualKeyModifiers numerically — see the enum's doc.)
+        var mods = KeyboardHelper.ReadModifiers();
+        if (e.Key == VirtualKey.F4 && mods.HasFlag(ShortcutModifiers.Menu))
+        {
+            _hint.Text = AppStrings.Get("Msg_ShortcutReservedAltF4", "Alt+F4는 시스템이 창을 닫는 데 사용합니다. 다른 키를 눌러 주세요.");
+            e.Handled = true;
+            return;
+        }
+        if (mods.HasFlag(ShortcutModifiers.Windows))
+        {
+            _hint.Text = AppStrings.Get("Msg_ShortcutReservedWin", "Windows 로고 키 조합은 시스템이 선점합니다. 다른 키를 눌러 주세요.");
+            e.Handled = true;
+            return;
+        }
+
         e.Handled = true;
-        CapturedChord = new KeyChord(KeyboardHelper.ReadModifiers(), code);
+        CapturedChord = new KeyChord(mods, code);
         Hide();
     }
 }

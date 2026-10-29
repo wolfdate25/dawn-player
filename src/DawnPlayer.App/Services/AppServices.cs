@@ -147,7 +147,7 @@ public static class AppServices
         services.AddSingleton<PlaybackController>(sp =>
             new PlaybackController(Settings, sp.GetRequiredService<PlaylistManager>()));
         services.AddSingleton(sp => new SleepTimerService());
-        services.AddSingleton(sp => new ScrobbleService(() => Settings, msg => App.Log(msg)));
+        services.AddSingleton(sp => new ScrobbleService(() => Settings, msg => App.Log(msg), action => RunOnUi(action)));
         services.AddSingleton(sp =>
         {
             var loader = new Core.Audio.Dsp.Plugins.DspPluginLoader(msg => App.Log($"[dsp-plugins] {msg}"));
@@ -427,7 +427,11 @@ public static class AppServices
         var since = period switch
         {
             ReportPeriod.Last30Days => now - TimeSpan.FromDays(30),
-            ReportPeriod.ThisYear => new DateTime(now.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            // "This year" is a calendar notion: build it in the user's LOCAL timezone and convert
+            // to UTC. The old UTC Jan-1 boundary pushed the KST New Year's morning (00:00–08:59)
+            // into the previous year — and the same offset error exists for every non-UTC zone.
+            ReportPeriod.ThisYear => TimeZoneInfo.ConvertTimeToUtc(
+                new DateTime(DateTime.Now.Year, 1, 1, 0, 0, 0, DateTimeKind.Local)),
             _ => DateTime.MinValue,
         };
 
@@ -534,7 +538,10 @@ public static class AppServices
                 App.Log($"[restart] failed to launch new process: {ex}");
             }
         }
-        App.MainWin?.Close();
+        // CloseForExit, not Close: Close-to-tray intercepts a plain Close and hides instead of
+        // shutting down, which left the old instance (and its audio engine) alive in the tray
+        // next to the freshly launched one.
+        App.MainWin?.CloseForExit();
     }
 
     /// <summary>Starts a library scan (cancels any running one).</summary>
@@ -554,9 +561,18 @@ public static class AppServices
         {
             try { await Library.ScanAsync(Settings, ct); }
             catch (OperationCanceledException) { }
-            catch (Exception ex) { RunOnUi(() => WarningRaised?.Invoke(AppStrings.Format("Msg_LibraryScanFailed", "라이브러리 스캔 실패: {0}", ex.Message))); }
+            catch (Exception ex)
+            {
+                RunOnUi(() => WarningRaised?.Invoke(AppStrings.Format("Msg_LibraryScanFailed", "라이브러리 스캔 실패: {0}", ex.Message)));
+            }
             finally
             {
+                // A failed (non-cancel) scan never raised the Finished progress event, so the
+                // page's progress bar stayed visible and the Rescan button stayed disabled until
+                // the next app start. Announce the end unconditionally — Finished also covers
+                // "the scan settled", and a normal completion already fired its own event (the
+                // page's gate treats a second Finished as a no-op).
+                RunOnUi(() => ScanProgressChanged?.Invoke(new DawnPlayer.Core.Library.ScanProgress(1, 1, "", Finished: true)));
                 Interlocked.CompareExchange(ref _scanCts, null, cts);
                 cts.Dispose();
             }
@@ -672,6 +688,10 @@ public static class AppServices
                     var result = trackScanner.Finish();
                     albumScanner ??= new Core.Audio.Dsp.LoudnessScanner(fmt.SampleRate, fmt.Channels);
                     albumScanner.AppendBlocks(trackScanner.BlockEnergies);
+                    // The album aggregate never decodes samples; its peak is the max of the
+                    // member peaks (AppendPeak), otherwise REPLAYGAIN_ALBUM_PEAK was written as
+                    // 0.0 and the anti-clipping clamp never fired on album-gain playback.
+                    albumScanner.AppendPeak(result.Peak);
 
                     track.RgTrackGainDb = Math.Round(SafeGainDb(result), 2);
                     track.RgTrackPeak = Math.Round(Math.Min(result.Peak, 1.0), 6);

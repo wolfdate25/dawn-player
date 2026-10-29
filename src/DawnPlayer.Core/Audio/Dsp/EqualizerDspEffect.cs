@@ -28,7 +28,9 @@ public sealed class EqualizerDspEffect : IAudioDspEffect
         public readonly BiquadCoefficients[] Bands;
 
         /// <summary>z1/z2 per (channel, band), laid out as [(c * Bands.Length + b) * 2 + 0|1].</summary>
-        public readonly float[] State;
+        // Not readonly: a replacement snapshot with the same band layout adopts the previous
+        // snapshot's State reference, so a live profile edit does not zero the delay lines.
+        public float[] State;
 
         public EqDspSnapshot(bool enabled, float preampGain, int sampleRate, int channels, BiquadCoefficients[] bands)
         {
@@ -76,7 +78,7 @@ public sealed class EqualizerDspEffect : IAudioDspEffect
         {
             _sampleRate = sampleRate > 0 ? sampleRate : 44100;
             _channels = channels > 0 ? channels : 2;
-            Volatile.Write(ref _snapshot, BuildSnapshot(_sampleRate, _channels, _currentProfile));
+            Volatile.Write(ref _snapshot, BuildSnapshot(_sampleRate, _channels, _currentProfile, previous: _snapshot));
         }
     }
 
@@ -88,7 +90,7 @@ public sealed class EqualizerDspEffect : IAudioDspEffect
         lock (_configLock)
         {
             _currentProfile = profile?.Clone();
-            Volatile.Write(ref _snapshot, BuildSnapshot(_sampleRate, _channels, _currentProfile));
+            Volatile.Write(ref _snapshot, BuildSnapshot(_sampleRate, _channels, _currentProfile, previous: _snapshot));
         }
     }
 
@@ -154,7 +156,7 @@ public sealed class EqualizerDspEffect : IAudioDspEffect
         Array.Clear(Volatile.Read(ref _snapshot).State);
     }
 
-    private static EqDspSnapshot BuildSnapshot(int sampleRate, int channels, EqProfile? profile)
+    private static EqDspSnapshot BuildSnapshot(int sampleRate, int channels, EqProfile? profile, EqDspSnapshot? previous = null)
     {
         if (profile == null || !profile.Enabled)
         {
@@ -175,6 +177,19 @@ public sealed class EqualizerDspEffect : IAudioDspEffect
             bands[b] = BiquadDesign.Create(band.Type, band.FrequencyHz, band.GainDb, band.Q, sampleRate);
         }
 
-        return new EqDspSnapshot(true, preampGain, sampleRate, channels, bands);
+        var snap = new EqDspSnapshot(true, preampGain, sampleRate, channels, bands);
+
+        // TDF2 delay lines hold the tail of the signal in flight: a low shelf at normal listening
+        // level keeps z1 at several times the signal amplitude, so zeroing them on a live profile
+        // edit injected a full-scale click for every 0.1 dB slider tick. Adopt the previous
+        // delay lines whenever the layout is identical — the coefficients change, the signal does
+        // not. (A band-count or channel change still re-zeroes; those are structural edits.)
+        var prev = previous;
+        if (prev is { Enabled: true } && prev.Channels == channels && prev.Bands.Length == bands.Length)
+        {
+            snap.State = prev.State;
+        }
+
+        return snap;
     }
 }

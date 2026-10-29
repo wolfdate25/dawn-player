@@ -130,32 +130,67 @@ public sealed partial class LyricsPane : UserControl
             return;
         }
 
-        // An explicit search-window pick outranks everything (see ApplyResult): without this,
-        // Apply re-showed the stale offline document the user opened search to replace.
-        var applied = AppServices.LyricsOnline?.GetAppliedResult(item.Track.Path);
-        var doc = applied is { Document.HasLines: true } ? applied.Document : null;
-        if (doc == null) doc = LyricsFinder.LoadLyrics(item.Track, AppServices.Settings);
-        string? onlineSource = null;
+        int generation = ++_loadGeneration;
+        var track = item.Track;
+        var settings = AppServices.Settings;
 
-        // Online fallback: lyrics fetched by a plugin earlier this session (auto lookup or the
-        // search window) display until an offline file shows up for the track.
-        if ((doc == null || !doc.HasLines) && AppServices.LyricsOnline != null)
-        {
-            var online = AppServices.LyricsOnline.GetSessionLyrics(item.Track.Path);
-            if (online is { Document.HasLines: true })
-            {
-                doc = online.Document;
-                onlineSource = online.IsSynced
-                    ? AppStrings.Format("LyricsPane_SourceOnlineFormat", "온라인 · {0}", online.PluginName)
-                    : AppStrings.Format("LyricsPane_SourceOnlineUnsyncedFormat", "온라인 · {0} · 비동기", online.PluginName);
-            }
-        }
+        // An explicit search-window pick outranks everything (see ApplyResult): without this,
+        // Apply re-showed the stale offline document the user opened search to replace. The
+        // in-memory caches are instant, so they stay synchronous.
+        var applied = AppServices.LyricsOnline?.GetAppliedResult(track.Path);
         if (applied is { Document.HasLines: true })
         {
-            onlineSource = applied.IsSynced
-                ? AppStrings.Format("LyricsPane_SourceOnlineFormat", "온라인 · {0}", applied.PluginName)
-                : AppStrings.Format("LyricsPane_SourceOnlineUnsyncedFormat", "온라인 · {0} · 비동기", applied.PluginName);
+            DisplayLyrics(applied.Document,
+                applied.IsSynced
+                    ? AppStrings.Format("LyricsPane_SourceOnlineFormat", "온라인 · {0}", applied.PluginName)
+                    : AppStrings.Format("LyricsPane_SourceOnlineUnsyncedFormat", "온라인 · {0} · 비동기", applied.PluginName));
+            return;
         }
+
+        // The disk lookup walks pattern×folder File.Exists probes plus a TagLib open — with a
+        // network search folder that froze the UI for hundreds of ms on EVERY track change.
+        // Load on a worker; a completion for a superseded track is dropped.
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                var doc = LyricsFinder.LoadLyrics(track, settings);
+                string? source = null;
+                // Online fallback keeps the original precedence (offline file > session cache);
+                // the badge is decided here on the worker so the UI thread never re-probes.
+                if (doc is not { HasLines: true })
+                {
+                    var online = AppServices.LyricsOnline?.GetSessionLyrics(track.Path);
+                    if (online is { Document.HasLines: true })
+                    {
+                        doc = online.Document;
+                        source = online.IsSynced
+                            ? AppStrings.Format("LyricsPane_SourceOnlineFormat", "온라인 · {0}", online.PluginName)
+                            : AppStrings.Format("LyricsPane_SourceOnlineUnsyncedFormat", "온라인 · {0} · 비동기", online.PluginName);
+                    }
+                }
+
+                DispatcherQueue?.TryEnqueue(() =>
+                {
+                    if (generation != _loadGeneration ||
+                        !string.Equals(_currentItem?.Track.Path, track.Path, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return;
+                    }
+                    DisplayLyrics(doc, source);
+                });
+            }
+            catch (Exception ex)
+            {
+                App.Log($"[lyrics-pane] async load failed for '{track.Path}': {ex.Message}");
+            }
+        });
+    }
+
+    private int _loadGeneration;
+
+    private void DisplayLyrics(LyricsDocument? doc, string? onlineSource)
+    {
         SetSourceBadge(onlineSource);
 
         if (doc != null && doc.HasLines)

@@ -77,6 +77,13 @@ public sealed class DsfTrackReader : ITrackReader
             _channelCount = _reader.ReadInt32();
             int dsdSampleRate = _reader.ReadInt32();
             int bitsPerSample = _reader.ReadInt32(); // 1 = bit-packed, 8 = byte per (1-bit) sample
+            if (bitsPerSample != 1)
+            {
+                // The spec allows 8 (one byte per 1-bit sample, different data layout); decoding
+                // those bytes as a bitstream produced garbage audio.
+                throw new AudioOpenException($"DSF bitsPerSample={bitsPerSample}은(는) 지원하지 않습니다(1만 지원): {path}",
+                    new NotSupportedException("unsupported dsf bit packing"));
+            }
             _reader.ReadInt64(); // sample count (per channel, DSD samples)
             _blockSizePerChannel = _reader.ReadInt32();
             _reader.ReadInt32(); // reserved
@@ -110,6 +117,10 @@ public sealed class DsfTrackReader : ITrackReader
             }
             _dataBytes = _reader.ReadInt64() - 8; // the size field includes itself
             _dataOffset = _stream.Position;
+            // Clamp to the real file: a truncated download/rift declares more data than it
+            // holds, and without the clamp the stale-buffer tail played as audio while the
+            // (overlong) total time never ran out.
+            _dataBytes = Math.Max(0, Math.Min(_dataBytes, _stream.Length - _dataOffset));
 
             SourceFormat = WaveFormat.CreateIeeeFloatWaveFormat(dsdSampleRate / _decimation, _channelCount);
             TotalTime = TimeSpan.FromSeconds(TotalDsdFrames / _decimation / (double)SourceFormat.SampleRate);
@@ -153,6 +164,10 @@ public sealed class DsfTrackReader : ITrackReader
 
             int take = (int)Math.Min((long)(frames - decoded) * _decimation, blockSamples - frameInBlock);
 
+            // EOF can stop one channel's byte read short — at a truncated file the channels no
+            // longer see the same bit count, so the minimum consumed frames across channels is
+            // what may be produced (returning the declared count served stale buffer bytes).
+            int minWritten = int.MaxValue;
             for (int c = 0; c < channels; c++)
             {
                 long pos = blockFileOffset + (long)c * _blockSizePerChannel + frameInBlock / 8;
@@ -189,10 +204,11 @@ public sealed class DsfTrackReader : ITrackReader
                         }
                     }
                 }
-                // Every channel sees the same bit count, so `written` matches across channels.
+                minWritten = Math.Min(minWritten, written);
             }
 
-            int producedFrames = take / _decimation;
+            int producedFrames = Math.Min(take / _decimation, Math.Max(0, minWritten - decoded));
+            if (producedFrames <= 0) break; // true EOF inside this block — do not spin
             decoded += producedFrames;
             _dsdFrameOffset += producedFrames * _decimation;
         }

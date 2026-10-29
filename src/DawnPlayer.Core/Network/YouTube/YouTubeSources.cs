@@ -60,6 +60,38 @@ public static class YouTubePageUrl
         }
         return null;
     }
+
+    /// <summary>
+    /// Rewrites a ytimg thumbnail URL to the JPEG variant the art cache can actually store and
+    /// render. yt-dlp hands out <c>i.ytimg.com/vi_webp/&lt;id&gt;/…webp</c> for some videos; the
+    /// art cache's magic-byte check rejects WebP (only JPEG/PNG/BMP pass) AND the stock Windows
+    /// <c>BitmapImage</c> cannot decode WebP without the Store codec — so such thumbnails
+    /// silently never appeared. The image server serves the same image as
+    /// <c>i.ytimg.com/vi/&lt;id&gt;/…jpg</c>. Non-ytimg and already-JPEG URLs pass through
+    /// untouched.
+    /// </summary>
+    public static string? NormalizeThumbnailUrl(string? thumbnailUrl)
+    {
+        if (string.IsNullOrWhiteSpace(thumbnailUrl)) return thumbnailUrl;
+        if (!Uri.TryCreate(thumbnailUrl.Trim(), UriKind.Absolute, out var uri)) return thumbnailUrl;
+
+        var host = uri.Host.ToLowerInvariant();
+        if (host is not ("i.ytimg.com" or "yt3.ggpht.com")) return thumbnailUrl;
+
+        var path = uri.AbsolutePath;
+        var rewritten = path.Replace("/vi_webp/", "/vi/", StringComparison.OrdinalIgnoreCase);
+        if (rewritten.EndsWith(".webp", StringComparison.OrdinalIgnoreCase))
+        {
+            rewritten = rewritten[..^".webp".Length] + ".jpg";
+        }
+
+        var builder = new UriBuilder(uri)
+        {
+            Path = rewritten,
+            Query = string.Empty, // thumbnail URLs carry no meaningful query
+        };
+        return builder.Uri.AbsoluteUri;
+    }
 }
 
 /// <summary>Display metadata for a resolved video, taken from yt-dlp's -J output. A zero

@@ -20,7 +20,9 @@ public static class LyricsFinder
         return candidates.FirstOrDefault(File.Exists);
     }
 
-    /// <summary>Loads lyrics from an external .lrc file, or falls back to embedded audio tags.</summary>
+    /// <summary>Loads lyrics from an external .lrc file, or falls back to embedded audio tags.
+    /// A file that parses to zero lines (empty, metadata-only) does not count as found — it
+    /// would block the embedded-tag fallback that the auto online search already honors.</summary>
     public static LyricsDocument? LoadLyrics(Track track, AppSettings settings)
     {
         var path = FindLrcPath(track, settings);
@@ -28,7 +30,8 @@ public static class LyricsFinder
         {
             try
             {
-                return LrcParser.ParseFile(path);
+                var parsed = LrcParser.ParseFile(path);
+                if (parsed.HasLines) return parsed;
             }
             catch (Exception ex) { Log.Debug($"[lyrics] parse failed for '{path}': {ex.Message}"); }
         }

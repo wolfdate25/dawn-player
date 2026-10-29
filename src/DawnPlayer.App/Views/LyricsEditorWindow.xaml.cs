@@ -92,6 +92,9 @@ public sealed class LrcEditLineVm : INotifyPropertyChanged
         {
             ms = frac * 1000;
         }
+        // A negative field parsed fine and was written back as "[00:-30.000]" — a timestamp the
+        // parser then rejected on the next load. Refuse negatives instead.
+        if (min < 0 || sec < 0) return false;
         time = TimeSpan.FromMinutes(min) + TimeSpan.FromSeconds(sec) + TimeSpan.FromMilliseconds(ms);
         return true;
     }
@@ -270,7 +273,8 @@ public sealed partial class LyricsEditorWindow : Window
     {
         if (double.TryParse(StepDeltaBox.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out var val) && val > 0)
         {
-            _stepMs = val;
+            _stepMs = ClampOffsetMs(val);
+            StepDeltaBox.Text = _stepMs.ToString("G", CultureInfo.InvariantCulture);
             UpdateStepButtonLabels();
         }
     }
@@ -301,9 +305,17 @@ public sealed partial class LyricsEditorWindow : Window
         AdjustTotalOffset(+_stepMs);
     }
 
+    // Offset magnitudes beyond an hour are always typos, and TimeSpan.FromMilliseconds overflows
+    // (uncaught handler abort mid-way) somewhere near ±9e11 ms — an extreme paste then updated the
+    // total display while the line times stayed put. Clamp everything to ±1 h.
+    private const double MaxOffsetMs = 3600_000;
+
+    private static double ClampOffsetMs(double ms) => Math.Clamp(ms, -MaxOffsetMs, MaxOffsetMs);
+
     private void AdjustTotalOffset(double deltaMs)
     {
-        _totalOffsetMs = Math.Round(_totalOffsetMs + deltaMs, 4);
+        deltaMs = ClampOffsetMs(deltaMs);
+        _totalOffsetMs = ClampOffsetMs(Math.Round(_totalOffsetMs + deltaMs, 4));
         UpdateOffsetUi();
         ApplyOffsetDeltaToLines(deltaMs);
     }
@@ -321,6 +333,7 @@ public sealed partial class LyricsEditorWindow : Window
         if (_updatingFromSync) return;
         if (double.TryParse(TotalOffsetBox.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out var val))
         {
+            val = ClampOffsetMs(val);
             double delta = val - _totalOffsetMs;
             _totalOffsetMs = val;
             TotalOffsetSecLabel.Text = AppStrings.Format("LyricsEditor_TotalOffsetSecondsFormat", "(= {0}초)", $"{(_totalOffsetMs / 1000.0):+0.0000;-0.0000;0.0000}");

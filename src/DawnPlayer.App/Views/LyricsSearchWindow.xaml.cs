@@ -178,6 +178,11 @@ public sealed partial class LyricsSearchWindow : Window
         {
             var outcomes = await Task.Run(() => AppServices.LyricsOnline.SearchAsync(query, token)).ConfigureAwait(false);
 
+            // The generation was created but never checked here: re-targeting the window to
+            // another track (or a plugin that ignored the cancel token) let the OLD track's
+            // results land in the NEW window, where Apply would save them onto the wrong song.
+            if (Volatile.Read(ref _previewGeneration) != generation) return;
+
             DispatcherQueue?.TryEnqueue(() =>
             {
                 if (_closed) return;
@@ -301,10 +306,13 @@ public sealed partial class LyricsSearchWindow : Window
         }
 
         string lrcContent = LrcParser.Format(fetched.Document);
-        var writeRes = Core.Library.TagWriter.TryApplyAtomic(_track!.Path, new Core.Library.TagEdit(Lyrics: lrcContent));
+        // The atomic swap copies the whole file — a second of freeze per 100 MB on the UI thread.
+        string path = _track!.Path;
+        StatusText.Text = AppStrings.Get("LyricsSearch_Embedding", "태그에 저장하는 중...");
+        var writeRes = await Task.Run(() => Core.Library.TagWriter.TryApplyAtomic(path, new Core.Library.TagEdit(Lyrics: lrcContent)));
         if (writeRes == Core.Library.TagWriteResult.Ok)
         {
-            StatusText.Text = AppStrings.Format("LyricsSearch_EmbedSuccess", "'{0}' 오디오 태그에 가사를 저장했습니다.", System.IO.Path.GetFileName(_track.Path)) + StaleTrackNote();
+            StatusText.Text = AppStrings.Format("LyricsSearch_EmbedSuccess", "'{0}' 오디오 태그에 가사를 저장했습니다.", System.IO.Path.GetFileName(path)) + StaleTrackNote();
             AppServices.LyricsOnline?.ApplyResult(fetched, _track);
         }
         else

@@ -83,12 +83,25 @@ public sealed class DopTrackReader : ITrackReader
 
     public DopTrackReader(IDsdRawReader raw, string path)
     {
-        _raw = raw;
-        Path = path;
-        int pcmRate = (int)(raw.DsdSampleRate / DsdFramesPerSample);
+        // The raw reader holds a FileStream: a constructor throw must not leak it.
+        int pcmRate;
+        try
+        {
+            pcmRate = (int)(raw.DsdSampleRate / DsdFramesPerSample);
+        }
+        catch
+        {
+            raw.Dispose();
+            throw;
+        }
         if (pcmRate <= 0)
+        {
+            raw.Dispose();
             throw new AudioOpenException("DSD 샘플레이트가 DoP 레이트로 변환될 수 없습니다.",
                 new NotSupportedException("unsupported dsd rate"));
+        }
+        _raw = raw;
+        Path = path;
         SourceFormat = new WaveFormat(pcmRate, 24, raw.Channels);
         TotalTime = TimeSpan.FromSeconds(raw.TotalDsdFrames / (double)raw.DsdSampleRate);
         _samples = new Provider(this);
@@ -196,11 +209,26 @@ public sealed class DsdPcmTrackReader : ITrackReader
 
     internal DsdPcmTrackReader(IDsdRawReader raw)
     {
-        _raw = raw;
-        _decimation = DsfTrackReaderRate.DecimationFor((int)raw.DsdSampleRate)
-            ?? throw new AudioOpenException(
+        // The raw reader holds a FileStream: a constructor throw must not leak it.
+        int? decimation;
+        try
+        {
+            decimation = DsfTrackReaderRate.DecimationFor((int)raw.DsdSampleRate);
+        }
+        catch
+        {
+            raw.Dispose();
+            throw;
+        }
+        if (decimation == null)
+        {
+            raw.Dispose();
+            throw new AudioOpenException(
                 $"지원하지 않는 DSD 샘플레이트({raw.DsdSampleRate}Hz)",
                 new NotSupportedException("unsupported dsd rate"));
+        }
+        _raw = raw;
+        _decimation = decimation.Value;
         SourceFormat = WaveFormat.CreateIeeeFloatWaveFormat((int)(raw.DsdSampleRate / _decimation), raw.Channels);
         TotalTime = TimeSpan.FromSeconds(raw.TotalDsdFrames / (double)raw.DsdSampleRate);
     }

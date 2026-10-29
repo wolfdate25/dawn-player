@@ -31,6 +31,10 @@ public static class DlnaDeviceDescriptionParser
         try { doc = XDocument.Parse(xml); }
         catch { return null; }
 
+        // A comment-only document parses fine but has no root element; the null-forgiving
+        // traversal below would NRE. The contract is "null when not a browsable server".
+        if (doc.Root == null) return null;
+
         var rootDevice = FirstElement(doc.Root, "device");
         var friendlyName = TextOf(rootDevice, "friendlyName") ?? descriptionUrl.Host;
         var udn = TextOf(rootDevice, "UDN") ?? "";
@@ -42,7 +46,7 @@ public static class DlnaDeviceDescriptionParser
             Uri.TryCreate(baseUrlText, UriKind.Absolute, out baseUrl);
         baseUrl ??= descriptionUrl;
 
-        foreach (var service in doc.Root!.Descendants())
+        foreach (var service in doc.Root.Descendants())
         {
             if (service.Name.LocalName != "service") continue;
 

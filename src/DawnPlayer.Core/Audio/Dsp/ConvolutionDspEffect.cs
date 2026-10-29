@@ -278,6 +278,12 @@ public sealed class ConvolutionDspEffect : IAudioDspEffect
         {
             _activeIr = pending;
             ClearState();
+            // ACCEPTED (2026-10-24 review, B12): the swap clears the overlap-add state, so the
+            // first block after it passes through the new IR with an empty output ring — the old
+            // IR's reverb tail is cut and roughly one 512-sample block (≈11.6 ms @44.1k) sounds
+            // "drier" for a moment. Masking this needs a concurrent old-IR tail render (a second
+            // full partition pipeline), which is out of proportion to an inaudible blip that
+            // happens only when the user swaps IRs mid-playback. Revisit if it is ever reported.
         }
     }
 }

@@ -104,6 +104,18 @@ public sealed class LoudnessScanner
     }
 
     /// <summary>
+    /// Folds another pass's sample peak into this scanner's. An album aggregate never calls
+    /// <see cref="ProcessSamples"/>, so without this its Peak stayed 0.0 — which the anti-clipping
+    /// path treats as "no peak known" and skipped the 1/peak clamp entirely, and the bogus 0 was
+    /// then written into REPLAYGAIN_ALBUM_PEAK tags. The album peak is by definition the max of
+    /// the member track peaks.
+    /// </summary>
+    public void AppendPeak(double peak)
+    {
+        if (peak > _peak) _peak = peak;
+    }
+
+    /// <summary>
     /// Feeds interleaved float samples (-1..1 nominal). Channel weights default to equal energy;
     /// pass the BS.1770 weights (L 1.0, R 1.0, C 1.0, LFE 0.0, Ls 1.41, Rs 1.41) for surround.
     /// </summary>

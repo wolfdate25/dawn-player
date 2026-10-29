@@ -17,7 +17,11 @@ namespace DawnPlayer.App;
 
 public sealed partial class MainWindow : Window
 {
-    private bool _closing;
+    // _shutdownStarted latches the one-shot real shutdown (Closing/Closed both guard on it);
+    // _exitRequested marks a Close() as a real exit (tray Exit, code exit) so Close-to-tray
+    // cannot swallow it.
+    private bool _shutdownStarted;
+    private bool _exitRequested;
     private readonly Services.NotificationPresenter _notifications = new();
     private Microsoft.UI.Dispatching.DispatcherQueueTimer _notifyCloseTimer = null!;
 
@@ -136,25 +140,27 @@ public sealed partial class MainWindow : Window
 
         Closed += (_, _) =>
         {
-            if (_closing) return;
-            _closing = true;
+            if (_shutdownStarted) return;
+            _shutdownStarted = true;
             ShutdownForReal();
         };
         AppWindow.Closing += (sender, args) =>
         {
-            if (_closing) return;
+            if (_shutdownStarted) return;
 
-            // "Close to tray": hide instead of shutting down so playback keeps running. The tray
-            // icon's Exit entry (and any real exit path) comes back through CloseFromTray, which
-            // pre-sets _closing and lands here for the actual shutdown.
-            if (AppServices.Settings.Ui.CloseToTray && Services.TrayIconService.IsRunning)
+            // "Close to tray": hide instead of shutting down so playback keeps running — but only
+            // when this Close() is an ordinary window close. CloseFromTray pre-sets _exitRequested,
+            // so the tray Exit lands here for the actual shutdown instead of hiding again (for
+            // v1.0.0 the tray Exit path early-returned on the latch and skipped the entire
+            // shutdown: session, window placement, playlist flush, log).
+            if (!_exitRequested && AppServices.Settings.Ui.CloseToTray && Services.TrayIconService.IsRunning)
             {
                 args.Cancel = true;
                 Services.TrayIconService.HideToTray();
                 return;
             }
 
-            _closing = true;
+            _shutdownStarted = true;
             ShutdownForReal();
         };
 
@@ -216,11 +222,21 @@ public sealed partial class MainWindow : Window
         });
     }
 
-    /// <summary>Real exit from the tray: pre-set the closing latch so AppWindow.Closing runs the
+    /// <summary>Real exit from the tray: pre-request the exit so AppWindow.Closing runs the
     /// shutdown path instead of hiding to the tray again.</summary>
     public void CloseFromTray()
     {
-        _closing = true;
+        _exitRequested = true;
+        Close();
+    }
+
+    /// <summary>Programmatic exit that must actually shut down (language-switch restart, code
+    /// paths): a plain <see cref="Close"/> is a window close, which Close-to-tray intercepts to
+    /// hide — spawning the replacement process left the old instance alive in the tray with two
+    /// engines running.</summary>
+    public void CloseForExit()
+    {
+        _exitRequested = true;
         Close();
     }
 

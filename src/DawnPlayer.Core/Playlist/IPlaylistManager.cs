@@ -39,7 +39,9 @@ public interface IPlaylistManager
     void SelectPlaylist(Playlist pl);
     void RemovePlaylist(Playlist pl);
     void RemovePlaylist(string playlistIdOrName);
-    void RenamePlaylist(Playlist pl, string newName);
+    /// <summary>Renames a user playlist. Returns false when the new name is already taken —
+    /// never overwrites another playlist's file.</summary>
+    bool RenamePlaylist(Playlist pl, string newName);
 
     List<PlaylistItem> AddPaths(Playlist pl, IEnumerable<string> paths, int? insertAt = null);
     Task<List<PlaylistItem>> AddPathsAsync(Playlist pl, IEnumerable<string> paths, int? insertAt = null, CancellationToken ct = default);

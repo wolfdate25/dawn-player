@@ -127,8 +127,22 @@ public sealed class DynamicNormalizerDspEffect : IAudioDspEffect
         if (settings == null) return;
         lock (_configLock)
         {
+            var before = Volatile.Read(ref _snapshot);
+            bool wasRidingReplayGain = before is { Enabled: true } &&
+                before.StaticReplayGainLinear is { } g && Math.Abs(g - 1f) > 1e-4f;
             _currentSettings = settings.Clone();
             Volatile.Write(ref _snapshot, BuildSnapshot(_sampleRate, _channels, _currentSettings, _staticReplayGainLinear));
+
+            // Disabling while the converged gain WAS a static ReplayGain value: the controller
+            // hands that same gain to the pre-chain node in the same breath, so fading from RG
+            // down to unity here multiplied the node's RG by a decaying RG — an instant RG²
+            // boost (+6 dB tag → +12 dB spike) before the fade landed. Snap to unity instead:
+            // the product node×effect stays RG throughout with no step. A purely dynamic AGC
+            // gain is NOT transferred anywhere, so that path keeps its smooth fade.
+            if (!settings.Enabled && wasRidingReplayGain)
+            {
+                _currentGain = 1.0f;
+            }
         }
     }
 

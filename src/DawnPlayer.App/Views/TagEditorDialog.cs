@@ -5,6 +5,7 @@ using DawnPlayer.App.Localization;
 using DawnPlayer.App.Services;
 using DawnPlayer.Core.Library;
 using DawnPlayer.Core.Models;
+using DawnPlayer.Core.Util;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -27,7 +28,7 @@ public static class TagEditorDialogs
         var state = Build(track, multi: false);
         var dialog = BuildDialog(track.Path, root, state, multi: false);
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return false;
-        return Apply(new List<(Track Original, TagEdit Edit)> { (track, CollectTrackEdit(state)) }, root);
+        return await ApplyAsync(new List<(Track Original, TagEdit Edit)> { (track, CollectTrackEdit(state)) });
     }
 
     public static async Task<bool> ShowForAlbumAsync(IReadOnlyList<Track> tracks, XamlRoot root)
@@ -43,7 +44,7 @@ public static class TagEditorDialogs
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return false;
 
         var edits = list.Select(t => (t, CollectAlbumEdit(state))).ToList();
-        return Apply(edits, root);
+        return await ApplyAsync(edits);
     }
 
     // ---------------- form ----------------
@@ -335,37 +336,18 @@ public static class TagEditorDialogs
             System.Globalization.CultureInfo.InvariantCulture, out int value) ? value : null;
     }
 
-    private static bool Apply(IReadOnlyList<(Track Original, TagEdit Edit)> edits, XamlRoot root)
+    /// <summary>Writes the edits and re-reads the files. The per-file loop (a full file copy +
+    /// TagLib rewrite + atomic replace per track) runs on a worker — an album batch on the UI
+    /// thread froze the window for seconds on large files.</summary>
+    private static async Task<bool> ApplyAsync(IReadOnlyList<(Track Original, TagEdit Edit)> edits)
     {
-        var failed = new List<string>();
-        var replaced = new List<Track>();
-
-        foreach (var (original, edit) in edits)
+        var (replaced, failed) = await Task.Run(() =>
         {
-            var result = TagWriter.TryApplyAtomic(original.Path, edit);
-            if (result != TagWriteResult.Ok)
-            {
-                failed.Add(original.Path);
-                continue;
-            }
-
-            // Re-read so the library snaps to the edited tags while the row keeps its listening
-            // history and ReplayGain values the edit did not touch.
-            var fresh = TagReader.TryRead(original.Path, out var pic);
-            if (fresh == null)
-            {
-                failed.Add(original.Path);
-                continue;
-            }
-
-            replaced.Add(fresh with
-            {
-                PlayCount = original.PlayCount,
-                SkipCount = original.SkipCount,
-                LastPlayedUtcTicks = original.LastPlayedUtcTicks,
-                FirstSeenUtcTicks = original.FirstSeenUtcTicks != 0 ? original.FirstSeenUtcTicks : fresh.FirstSeenUtcTicks
-            });
-        }
+            var replacedList = new List<Track>();
+            var failedList = new List<string>();
+            ApplyCore(edits, replacedList, failedList);
+            return (replacedList, failedList);
+        }).ConfigureAwait(true);
 
         if (replaced.Count > 0)
         {
@@ -377,5 +359,69 @@ public static class TagEditorDialogs
             AppServices.RaiseWarning(AppStrings.Format("Msg_TagEditorFailedFormat", "태그 저장 실패: {0}개 파일", failed.Count));
         }
         return replaced.Count > 0;
+    }
+
+    private static void ApplyCore(IReadOnlyList<(Track Original, TagEdit Edit)> edits, List<Track> replaced, List<string> failed)
+    {
+        foreach (var (original, edit) in edits)
+        {
+            // CUE fragment paths ("image.flac#cue=…") are virtual; tags live on the image file.
+            // Writing the fragment path failed File.Exists and every fragment edit was refused.
+            bool isFragment = AppPaths.IsCueFragment(original.Path);
+            string writePath = AppPaths.PhysicalPath(original.Path);
+
+            var result = TagWriter.TryApplyAtomic(writePath, edit);
+            if (result != TagWriteResult.Ok)
+            {
+                failed.Add(original.Path);
+                continue;
+            }
+
+            if (isFragment)
+            {
+                // Re-reading the image would hand back whole-image tags under this row; keep the
+                // fragment's identity and CUE-derived fields, apply only what was edited.
+                replaced.Add(original with
+                {
+                    Title = edit.Title ?? original.Title,
+                    Artist = edit.Artist ?? original.Artist,
+                    AlbumArtist = edit.AlbumArtist ?? original.AlbumArtist,
+                    Album = edit.Album ?? original.Album,
+                    Genre = edit.Genre ?? original.Genre,
+                    Year = edit.Year ?? original.Year,
+                });
+                continue;
+            }
+
+            // Re-read so the library snaps to the edited tags while the row keeps its listening
+            // history, rating and ReplayGain values the edit did not touch. Dropping the rating
+            // here erased a rating the app had promised to keep library-only (read-only files).
+            var fresh = TagReader.TryRead(writePath, out var pic);
+            if (fresh == null)
+            {
+                failed.Add(original.Path);
+                continue;
+            }
+
+            var albumKey = AlbumArtService.ComputeAlbumKey(fresh);
+            var art = (pic != null ? TagReader.TryExtractArt(fresh, albumKey, pic) : null)
+                      ?? TagReader.FindFolderArt(writePath);
+
+            replaced.Add(fresh with
+            {
+                PlayCount = original.PlayCount,
+                SkipCount = original.SkipCount,
+                LastPlayedUtcTicks = original.LastPlayedUtcTicks,
+                FirstSeenUtcTicks = original.FirstSeenUtcTicks != 0 ? original.FirstSeenUtcTicks : fresh.FirstSeenUtcTicks,
+                Rating = original.Rating,
+                ArtPath = art,
+                // RG tags survive the rewrite on the file, but a row whose tags failed to write
+                // (or a scan-only value) must not lose them to the re-read either.
+                RgTrackGainDb = fresh.RgTrackGainDb ?? original.RgTrackGainDb,
+                RgTrackPeak = fresh.RgTrackPeak ?? original.RgTrackPeak,
+                RgAlbumGainDb = fresh.RgAlbumGainDb ?? original.RgAlbumGainDb,
+                RgAlbumPeak = fresh.RgAlbumPeak ?? original.RgAlbumPeak,
+            });
+        }
     }
 }

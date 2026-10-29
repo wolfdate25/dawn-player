@@ -79,7 +79,9 @@ public sealed class OnlineLyricsService
             IReadOnlyList<LyricsSearchResult> results;
             try
             {
-                results = await plugin.Plugin.SearchAsync(query, cancellationToken).ConfigureAwait(false);
+                results = await RunWithTimeoutAsync(
+                    token => plugin.Plugin.SearchAsync(query, token),
+                    plugin.Info.Id, cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -101,6 +103,29 @@ public sealed class OnlineLyricsService
         return null;
     }
 
+    /// <summary>
+    /// Third-party plugins run in-process and may ignore the cancellation token — a hung plugin
+    /// then wedged Task.WhenAll forever and locked the search window with "검색 중..." and a
+    /// disabled button. Every plugin call gets a hard timeout: the abandoned call keeps running
+    /// (nothing can reclaim an in-process thread), but the caller is released and the plugin
+    /// reports as failed.
+    /// </summary>
+    private const int PluginTimeoutSeconds = 20;
+
+    private static async Task<T> RunWithTimeoutAsync<T>(Func<CancellationToken, Task<T>> work, string pluginId, CancellationToken token)
+    {
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+        timeoutCts.CancelAfter(TimeSpan.FromSeconds(PluginTimeoutSeconds));
+        try
+        {
+            return await work(timeoutCts.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!token.IsCancellationRequested)
+        {
+            throw new TimeoutException($"{pluginId} timed out after {PluginTimeoutSeconds}s.");
+        }
+    }
+
     /// <summary>Searches every enabled plugin in parallel for the search window. Errors become outcomes, never throw.</summary>
     public async Task<IReadOnlyList<PluginSearchOutcome>> SearchAllAsync(LyricsSearchQuery query, CancellationToken cancellationToken)
     {
@@ -109,10 +134,12 @@ public sealed class OnlineLyricsService
         {
             try
             {
-                var results = await plugin.Plugin.SearchAsync(query, cancellationToken).ConfigureAwait(false);
+                var results = await RunWithTimeoutAsync(
+                    token => plugin.Plugin.SearchAsync(query, token),
+                    plugin.Info.Id, cancellationToken).ConfigureAwait(false);
                 return new PluginSearchOutcome(plugin.Info, results.ToList());
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 throw;
             }
@@ -132,7 +159,14 @@ public sealed class OnlineLyricsService
         LyricsContent? content;
         try
         {
-            content = await plugin.Plugin.GetAsync(match, cancellationToken).ConfigureAwait(false);
+            content = await RunWithTimeoutAsync(
+                token => plugin.Plugin.GetAsync(match, token),
+                plugin.Info.Id, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            _log?.Invoke($"[lyrics-online] {plugin.Info.Id} 다운로드 시간 초과");
+            return null;
         }
         catch (OperationCanceledException)
         {

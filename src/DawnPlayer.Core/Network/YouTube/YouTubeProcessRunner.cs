@@ -339,8 +339,12 @@ public sealed class YouTubeProcessRunner : IYouTubeProcessRunner
 
         public bool ExitedCleanly()
         {
-            if (!ytDlp.WaitForExit(2000)) return false;
-            if (!ffmpeg.WaitForExit(2000)) return false;
+            // A natural EOF is followed by the pipe closing; ffmpeg/yt-dlp still need a moment
+            // to flush and exit. The old 2 s grace fired a false "ended early" warning whenever
+            // a legitimate teardown took longer (AV scanners, slow disks). 10 s still bounds the
+            // wait on a genuinely hung chain, and a real failure exits non-zero well inside it.
+            if (!ytDlp.WaitForExit(10_000)) return false;
+            if (!ffmpeg.WaitForExit(10_000)) return false;
             try { return ytDlp.ExitCode == 0 && ffmpeg.ExitCode == 0; }
             catch { return false; }
         }

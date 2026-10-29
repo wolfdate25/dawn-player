@@ -246,7 +246,7 @@ public class FileOperationServiceTests : IDisposable
         public void SelectPlaylist(Playlist pl) => throw new NotSupportedException();
         public void RemovePlaylist(Playlist pl) => throw new NotSupportedException();
         public void RemovePlaylist(string playlistIdOrName) => throw new NotSupportedException();
-        public void RenamePlaylist(Playlist pl, string newName) => throw new NotSupportedException();
+        public bool RenamePlaylist(Playlist pl, string newName) => throw new NotSupportedException();
         public System.Collections.Generic.List<PlaylistItem> AddPaths(Playlist pl, IEnumerable<string> paths, int? insertAt = null) => throw new NotSupportedException();
         public Task<System.Collections.Generic.List<PlaylistItem>> AddPathsAsync(Playlist pl, IEnumerable<string> paths, int? insertAt = null, CancellationToken ct = default) => throw new NotSupportedException();
         public System.Collections.Generic.List<PlaylistItem> AddFiles(Playlist pl, IEnumerable<string> files, int? insertAt = null) => throw new NotSupportedException();

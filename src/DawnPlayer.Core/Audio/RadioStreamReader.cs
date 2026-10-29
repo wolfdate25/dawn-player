@@ -21,6 +21,8 @@ public sealed class RadioStreamReader : ITrackReader, ILiveMetadataSource, IStre
     private readonly StreamStallTracker _stall = new();
     private readonly string _url;
     private readonly Stopwatch _playedClock = Stopwatch.StartNew();
+    private readonly Stopwatch _dataClock = Stopwatch.StartNew();
+    private AcmMp3FrameDecompressor? _decompressor;
     private Task? _fillTask;
     private volatile string _streamTitle = "";
     private volatile bool _disposed;
@@ -36,6 +38,12 @@ public sealed class RadioStreamReader : ITrackReader, ILiveMetadataSource, IStre
     /// the controller surfaces this as buffering feedback. A dead stream keeps it set — it never
     /// recovers, and "버퍼링" is the honest description of that state.</summary>
     public bool IsStalled => _stall.IsStalled;
+
+    /// <summary>Time since the last decoded MP3 frame. A half-open TCP connection (the station
+    /// dropped without FIN) blocks the fill read forever, so elapsed-without-data is the only
+    /// observable — the controller polls it to announce the dead link instead of leaving the
+    /// buffering badge up in unexplained silence.</summary>
+    public TimeSpan TimeSinceLastData => _dataClock.Elapsed;
 
     /// <summary>Station name announced via the ICY <c>icy-name</c> header; empty when absent.</summary>
     public string StationName { get; private set; } = "";
@@ -110,6 +118,7 @@ public sealed class RadioStreamReader : ITrackReader, ILiveMetadataSource, IStre
             ?? throw new AudioOpenException($"MP3 스트림이 아닙니다 ({contentType}): {_url}",
                 new NotSupportedException(contentType));
         var decompressor = new AcmMp3FrameDecompressor(new Mp3WaveFormat(firstFrame.SampleRate, firstFrame.ChannelMode == ChannelMode.Mono ? 1 : 2, firstFrame.FrameLength, firstFrame.BitRate));
+        _decompressor = decompressor;
 
         SourceFormat = decompressor.OutputFormat;
         Samples = new PcmSampleProvider(_pcm, SourceFormat, _stall);
@@ -122,6 +131,10 @@ public sealed class RadioStreamReader : ITrackReader, ILiveMetadataSource, IStre
     {
         try
         {
+            // Backpressure cap: a radio nobody drains (a prefetched next-track that never chains,
+            // a paused session) would otherwise buffer the station into memory indefinitely —
+            // tens of MB per minute of decoded PCM. The consumer pulling normally never reaches it.
+            long capBytes = (long)decompressor.OutputFormat.AverageBytesPerSecond * 30;
             var frame = first;
             while (frame != null)
             {
@@ -129,6 +142,11 @@ public sealed class RadioStreamReader : ITrackReader, ILiveMetadataSource, IStre
                 int decodedBytes = decompressor.DecompressFrame(frame, decoded, 0);
                 if (decodedBytes > 0)
                 {
+                    _dataClock.Restart();
+                    while (_pcm.BufferedBytes > capBytes && !_disposed && !_pcm.HasEnded)
+                    {
+                        Thread.Sleep(100);
+                    }
                     _pcm.AddBytes(decoded, decodedBytes);
                     // Clear the stall only above the resume threshold: one refilled frame must
                     // not flip the flag while the next read would immediately re-assert it.
@@ -166,6 +184,7 @@ public sealed class RadioStreamReader : ITrackReader, ILiveMetadataSource, IStre
     {
         _disposed = true;
         _pcm.MarkDead();
+        try { _decompressor?.Dispose(); } catch { }
         try { _client.Dispose(); } catch { }
         try { _fillTask?.Wait(TimeSpan.FromSeconds(2)); } catch { }
     }

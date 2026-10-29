@@ -64,6 +64,13 @@ public static class FileOperationService
 
         var plans = new List<FileOpPlan>();
         var reservedDestinations = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        // Every source path in this batch. A destination that converges onto a LATER plan's
+        // SOURCE would destroy that source before it could be moved (Move ran A → B.src, then B
+        // moved B.src's new occupant away and its own audio was lost) — v1.8's fix only caught
+        // destination-vs-destination convergence.
+        var batchSources = tracks.Where(t => t != null)
+            .Select(t => AppPaths.PhysicalPath(t.Path))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         foreach (var track in tracks)
         {
@@ -99,8 +106,11 @@ public static class FileOperationService
             {
                 bool destExistsOnDisk = File.Exists(dest);
                 bool destReserved = reservedDestinations.Contains(dest);
+                // The destination is another track's source in this batch: overwriting it eats
+                // that track's original audio regardless of what exists on disk.
+                bool destIsBatchSource = batchSources.Contains(dest);
 
-                if (destExistsOnDisk || destReserved)
+                if (destExistsOnDisk || destReserved || destIsBatchSource)
                 {
                     switch (collisionPolicy)
                     {
@@ -110,10 +120,10 @@ public static class FileOperationService
 
                         case CollisionPolicy.Overwrite:
                             // Overwrite is legitimate only against a file that already exists on
-                            // disk. A destination reserved by an earlier plan of this same batch
-                            // would clobber that track's just-moved data (source is gone by then),
-                            // so a batch-internal convergence is blocked as a conflict instead.
-                            if (destReserved)
+                            // disk and belongs to no member of this batch. A destination reserved
+                            // by an earlier plan would clobber that track's just-moved data, and
+                            // one that IS a later plan's source would destroy its original.
+                            if (destReserved || destIsBatchSource)
                             {
                                 plans.Add(new FileOpPlan(track, src, dest, FileOpStatus.Conflict,
                                     "Another track in this batch already targets this destination."));
@@ -149,21 +159,52 @@ public static class FileOperationService
 
     /// <summary>
     /// Executes planned file operations and synchronizes library database and playlists when files are moved.
+    /// At most one execution runs per process: the dialog is fire-and-forget and non-modal, and
+    /// two concurrent batches converged on the same destinations overwrote files the policy had
+    /// promised to skip or rename.
     /// </summary>
+    private static int _executing;
+
     public static async Task<FileOpResult> ExecuteAsync(
         IReadOnlyList<FileOpPlan> plans,
         FileOpMode mode,
         IMusicLibrary? libraryStore = null,
         IPlaylistManager? playlistManager = null,
         Action<int, int>? progress = null,
+        CollisionPolicy collisionPolicy = CollisionPolicy.Skip,
         CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(plans);
 
+        if (Interlocked.CompareExchange(ref _executing, 1, 0) != 0)
+        {
+            return new FileOpResult(0, 0, 0, new List<string> { "Another file operation is already running." });
+        }
+
+        try
+        {
+            return await ExecuteCoreAsync(plans, mode, libraryStore, playlistManager, progress, collisionPolicy, ct);
+        }
+        finally
+        {
+            Volatile.Write(ref _executing, 0);
+        }
+    }
+
+    private static async Task<FileOpResult> ExecuteCoreAsync(
+        IReadOnlyList<FileOpPlan> plans,
+        FileOpMode mode,
+        IMusicLibrary? libraryStore,
+        IPlaylistManager? playlistManager,
+        Action<int, int>? progress,
+        CollisionPolicy collisionPolicy,
+        CancellationToken ct)
+    {
         var readyPlans = plans.Where(p => p.Status == FileOpStatus.Ready).ToList();
         int skippedCount = plans.Count - readyPlans.Count;
         int succeeded = 0;
         int failed = 0;
+        int runtimeSkipped = 0;
         var errors = new List<string>();
         var relocations = new List<(string OldPath, Track Track)>();
 
@@ -199,6 +240,34 @@ public static class FileOperationService
                     if (!Directory.Exists(destDir))
                         Directory.CreateDirectory(destDir);
 
+                    // Execution-time re-check: the preview ran minutes ago and the plan-time
+                    // policy applied to THAT world. A destination that appeared since (another
+                    // batch, an external copy) must go through the same policy again instead of
+                    // silently obeying overwrite:true.
+                    if (File.Exists(dest) && !string.Equals(src, dest, StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (collisionPolicy == CollisionPolicy.Skip)
+                        {
+                            runtimeSkipped++;
+                            continue;
+                        }
+                        if (collisionPolicy == CollisionPolicy.AutoRename)
+                        {
+                            string dir2 = Path.GetDirectoryName(dest)!;
+                            string name2 = Path.GetFileNameWithoutExtension(dest);
+                            string ext2 = Path.GetExtension(dest);
+                            int counter2 = 1;
+                            string candidate;
+                            do
+                            {
+                                candidate = Path.Combine(dir2, $"{name2} ({counter2}){ext2}");
+                                counter2++;
+                            } while (File.Exists(candidate));
+                            dest = candidate;
+                        }
+                        // Overwrite: keep the planned destination and proceed.
+                    }
+
                     if (mode == FileOpMode.Move)
                     {
                         bool isCaseOnly = string.Equals(src, dest, StringComparison.OrdinalIgnoreCase) &&
@@ -206,10 +275,21 @@ public static class FileOperationService
 
                         if (isCaseOnly)
                         {
-                            // Two-step rename for Windows case-only change
+                            // Two-step rename for Windows case-only change. If the second hop
+                            // fails, the original is stranded under the temp name — roll it back
+                            // so the batch reports a failure instead of a vanished file.
                             string tempPath = dest + ".dawn_case_tmp_" + Guid.NewGuid().ToString("N");
-                            File.Move(src, tempPath);
-                            File.Move(tempPath, dest);
+                            try
+                            {
+                                File.Move(src, tempPath);
+                                File.Move(tempPath, dest);
+                            }
+                            catch
+                            {
+                                try { if (File.Exists(tempPath) && !File.Exists(src)) File.Move(tempPath, src); }
+                                catch { /* stranded temp is reported by the outer failure path */ }
+                                throw;
+                            }
                         }
                         else
                         {
@@ -279,6 +359,6 @@ public static class FileOperationService
             }
         }, ct);
 
-        return new FileOpResult(succeeded, failed, skippedCount, errors);
+        return new FileOpResult(succeeded, failed, skippedCount + runtimeSkipped, errors);
     }
 }

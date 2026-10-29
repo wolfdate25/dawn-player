@@ -287,10 +287,14 @@ public sealed class SmtcService : ISmtcService
         }
     }
 
-    /// <summary>Called on the UI thread periodically (position is reflected where supported).</summary>
+    /// <summary>No-op, deliberately. The Windows SDK projection for this TFM does NOT surface
+    /// <c>SystemMediaTransportControls.UpdateTimeline</c> (verified empirically 2026-10-24: the
+    /// call fails to compile against net10.0-windows10.0.19041.0) and the MediaPlayer-owned SMTC
+    /// normally derives its timeline from the media player itself, which Dawn Player does not
+    /// use. Kept as a seam — when a future SDK projects the type, wire it here. The OS overlay
+    /// simply shows no progress bar; the app's own seekbar is unaffected.</summary>
     public void UpdateTimeline(TimeSpan position, TimeSpan duration)
     {
-        // TimelineProperties is not projected in this SDK surface; keep as safe no-op.
     }
 
     public void Dispose()

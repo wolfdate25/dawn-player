@@ -25,7 +25,6 @@ public sealed partial class NowPlayingBar : UserControl
     private bool _updatingSliderFromTimer;
     private bool _volumeDragging;
     private double _lastVolume = 0.8;
-    private int _smtcTick;
     private string _formatBadgeText = "";
     private string _outputBadgeText = "";
     private bool _volumeAvailableInSession = true;
@@ -663,8 +662,8 @@ public sealed partial class NowPlayingBar : UserControl
             AutomationProperties.SetName(PlayButton, playing ? "\uC77C\uC2DC\uC815\uC9C0" : "\uC7AC\uC0DD");
         }
 
-        if (++_smtcTick % 5 == 0)
-            AppServices.Smtc.UpdateTimeline(position, duration);
+        // UpdateTimeline is a documented no-op (no SDK projection); the dead per-5-ticks call
+        // and its counter are gone rather than pretending the OS overlay tracks progress.
     }
 
     // ---------- seek ----------

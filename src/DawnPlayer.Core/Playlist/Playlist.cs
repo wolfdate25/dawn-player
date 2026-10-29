@@ -58,10 +58,11 @@ public sealed class Playlist : INotifyPropertyChanged
     /// <summary>
     /// Path lines from the playlist file that could not be resolved to a track at load time —
     /// almost always because the volume holding them was not mounted. They are kept verbatim and
-    /// written back out, so opening the app with a drive unplugged no longer erases those entries
-    /// from the saved playlist.
+    /// written back out at their original list position (<c>#DPUNRESOLVED:</c> marker lines), so
+    /// opening the app with a drive unplugged no longer erases those entries from the saved
+    /// playlist — nor shuffles them to its end.
     /// </summary>
-    public List<string> UnresolvedPaths { get; } = new();
+    public List<(int Index, string Path)> UnresolvedEntries { get; } = new();
 
     public string Name
     {

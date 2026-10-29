@@ -88,6 +88,10 @@ public sealed class SleepTimerService : IDisposable
                     break;
 
                 default:
+                    // A countdown must clear a borrowed stop-after-current flag from a previous
+                    // "after current track" selection: the countdown menu showed while playback
+                    // still stopped at the end of the current track — reported state ≠ behavior.
+                    AppServices.Playback.StopAfterCurrent = false;
                     Volatile.Write(ref _deadlineTick64, Environment.TickCount64 + (long)delay.TotalMilliseconds);
                     _countdown = new System.Threading.Timer(_ => Expire(), null, delay, Timeout.InfiniteTimeSpan);
                     break;

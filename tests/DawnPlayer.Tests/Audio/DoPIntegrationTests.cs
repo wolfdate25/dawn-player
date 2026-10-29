@@ -284,8 +284,10 @@ public sealed class DffRawReaderTests : IDisposable
             using (var prop = new MemoryStream())
             {
                 WriteChunk(prop, "SND", Array.Empty<byte>());
-                WriteChunk(prop, "FS", Extended80(2822400));
-                WriteChunk(prop, "CHAN", new byte[] { 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0 });
+                // DSDIFF 1.5 spec forms: FS is a 4-byte big-endian rate, CHNL is a 2-byte count
+                // followed by a 4-byte channel ID per channel ("SLFT", "SRGT").
+                WriteChunk(prop, "FS", new byte[] { 0x00, 0x2B, 0x11, 0x00 }); // 2822400
+                WriteChunk(prop, "CHNL", new byte[] { 0x00, 0x02, 0x53, 0x4C, 0x46, 0x54, 0x53, 0x52, 0x47, 0x54 }); // count=2, "SLFT","SRGT"
                 // PROP payload = the "SND " form type followed by property chunks.
                 WriteChunk(body, "PROP", Encoding.ASCII.GetBytes("SND ").Concat(prop.ToArray()).ToArray());
             }
@@ -324,6 +326,8 @@ public sealed class DffRawReaderTests : IDisposable
             using (var prop = new MemoryStream())
             {
                 WriteChunk(prop, "SND", Array.Empty<byte>());
+                // Legacy forms (80-bit extended FS, 4-byte 'CHAN') exercise the tolerant
+                // fallbacks; real files use the spec forms covered above.
                 WriteChunk(prop, "FS", Extended80(2822400));
                 WriteChunk(prop, "CHAN", new byte[] { 0, 0, 0, 2 });
                 // PROP payload = the "SND " form type followed by property chunks.

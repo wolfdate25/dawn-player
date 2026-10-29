@@ -28,7 +28,7 @@ public sealed class TranscoderAndDsfTests
             var options = new TranscodeOptions { OutputDirectory = outDir, ApplyReplayGain = false };
 
             var output = AudioTranscoder.ConvertToWav(track, options, out var result,
-                null, CancellationToken.None);
+                null, null, CancellationToken.None);
 
             Assert.Equal(TranscodeResult.Ok, result);
             Assert.NotNull(output);
@@ -71,10 +71,10 @@ public sealed class TranscoderAndDsfTests
 
             var withoutGain = AudioTranscoder.ConvertToWav(track,
                 new TranscodeOptions { OutputDirectory = outDir, ApplyReplayGain = false },
-                out _, null, CancellationToken.None);
+                out _, null, null, CancellationToken.None);
             var withGain = AudioTranscoder.ConvertToWav(track,
                 new TranscodeOptions { OutputDirectory = outDir, ApplyReplayGain = true },
-                out _, null, CancellationToken.None);
+                out _, null, null, CancellationToken.None);
 
             Assert.NotNull(withoutGain);
             Assert.NotNull(withGain);
@@ -116,7 +116,7 @@ public sealed class TranscoderAndDsfTests
             var track = AudioTranscoderTestTracks.CueTrack(source, 500, 1500);
             var output = AudioTranscoder.ConvertToWav(track,
                 new TranscodeOptions { OutputDirectory = outDir, WriteTags = false },
-                out var result, null, CancellationToken.None);
+                out var result, null, null, CancellationToken.None);
 
             Assert.Equal(TranscodeResult.Ok, result);
             using var reader = AudioFileReaderFactory.Open(output!);

@@ -196,9 +196,16 @@ public sealed class SmartPlaylistQuery
         private readonly List<Token> _tokens;
         private int _pos;
 
+        // Parentheses/NOT recurse through ParseOr → ParseAnd → ParseNot → ParsePrimary; an
+        // unbounded depth (a pasted "((((…))))" bomb) hit a StackOverflowException, which cannot
+        // be caught and killed the process. 64 nesting levels is far beyond any real query.
+        private const int MaxDepth = 64;
+
         public Parser(List<Token> tokens) => _tokens = tokens;
 
         public string? Error { get; private set; }
+
+        private int _depth;
 
         public bool AtEnd => _pos >= _tokens.Count;
 
@@ -232,6 +239,25 @@ public sealed class SmartPlaylistQuery
         // or := and (OR and)*     — lowest precedence
         public Node ParseOr()
         {
+            if (Error != null) return new TrueNode();
+            if (++_depth > MaxDepth)
+            {
+                Fail($"The query nests parentheses or NOT operators more than {MaxDepth} levels deep.");
+                _depth--;
+                return new TrueNode();
+            }
+            try
+            {
+                return ParseOrCore();
+            }
+            finally
+            {
+                _depth--;
+            }
+        }
+
+        private Node ParseOrCore()
+        {
             var left = ParseAnd();
             while (Error == null && PeekIsKeyword("or"))
             {
@@ -256,12 +282,29 @@ public sealed class SmartPlaylistQuery
         // not := NOT not | primary
         private Node ParseNot()
         {
-            if (PeekIsKeyword("not"))
+            if (Error != null) return new TrueNode();
+            // Each NOT/paren level passes through ParseOr, which enforces the depth cap, so no
+            // separate counter is needed here — but a NOT chain without parens recurses only
+            // through ParseNot itself, so count it directly.
+            if (++_depth > MaxDepth)
             {
-                Next();
-                return new NotNode(ParseNot());
+                Fail($"The query nests parentheses or NOT operators more than {MaxDepth} levels deep.");
+                _depth--;
+                return new TrueNode();
             }
-            return ParsePrimary();
+            try
+            {
+                if (PeekIsKeyword("not"))
+                {
+                    Next();
+                    return new NotNode(ParseNot());
+                }
+                return ParsePrimary();
+            }
+            finally
+            {
+                _depth--;
+            }
         }
 
         // primary := '(' or ')' | field op value | field MISSING | field PRESENT | field DURING LAST n UNIT
@@ -329,8 +372,12 @@ public sealed class SmartPlaylistQuery
                     Fail($"DURING LAST only applies to date fields ({Fields.LastPlayed}, {Fields.FirstSeen}).");
                     return new TrueNode();
                 }
-                // "3 WEEKS" = 3 × 7 days — the unit converts to days, the count scales it.
-                return new DuringNode(fieldToken.Text, count * days);
+                // "3 WEEKS" = 3 × 7 days — the unit converts to days, the count scales it. A huge
+                // count overflowed the int multiply into a negative, silently matching nothing.
+                const int MaxDays = 100 * 365;
+                long days_ = (long)count * days;
+                if (days_ > MaxDays) days_ = MaxDays;
+                return new DuringNode(fieldToken.Text, (int)days_);
             }
 
             QueryOp op;

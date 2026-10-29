@@ -194,6 +194,16 @@ public sealed partial class DlnaSection : UserControl
         }
         _lastBrowse = (reset, startIndex);
         BrowseRetryButton.Visibility = Visibility.Collapsed;
+        if (reset)
+        {
+            // Clear BEFORE the request: a failed first browse of a new server must not leave the
+            // previous server's rows sitting under the new server's selection.
+            _rows.Clear();
+            _loaded = 0;
+            EntryList.ItemsSource = _rows.ToArray();
+            LoadMoreButton.Visibility = Visibility.Collapsed;
+            RebuildCrumbs();
+        }
 
         SetBusy(true);
         try
@@ -204,7 +214,6 @@ public sealed partial class DlnaSection : UserControl
 
             if (reset)
             {
-                _rows.Clear();
                 _loaded = 0;
             }
             _totalMatches = page.TotalMatches;

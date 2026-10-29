@@ -109,18 +109,22 @@ internal sealed class DsfRawReader : IDsdRawReader
 
             int take = (int)Math.Min((long)(frames - done), blockFrames - frameInBlock);
             int bytes = take / 8;
+            // EOF can stop one channel short; the minimum valid byte count across channels is
+            // what may be returned (returning the declared count exposed stale buffer bytes as
+            // DoP audio at a truncated file's tail).
+            int minGot = bytes;
             for (int c = 0; c < _channelCount; c++)
             {
                 _stream.Seek(blockFileOffset + (long)c * _blockSizePerChannel + frameInBlock / 8, SeekOrigin.Begin);
                 int got = ReadExactly(_stream, channelBytes[c], done / 8, bytes);
-                if (got < bytes)
-                {
-                    // Partial tail read: shrink uniformly across channels.
-                    int gotFrames = got * 8;
-                    if (gotFrames <= done) return done;
-                    _positionFrames += gotFrames;
-                    return done + gotFrames;
-                }
+                if (got < minGot) minGot = got;
+            }
+            if (minGot <= 0) break;
+            int gotFrames = minGot * 8;
+            if (gotFrames < take)
+            {
+                _positionFrames += gotFrames;
+                return done + gotFrames;
             }
             done += bytes * 8;
             _positionFrames += bytes * 8;
@@ -205,16 +209,41 @@ public sealed class DffRawReader : IDsdRawReader
                         string innerId = new string(reader.ReadChars(4)).TrimEnd();
                         long innerSize = ReadInt64BigEndian(reader);
                         long body = innerSize + innerSize % 2;
-                        if (innerId == "FS" && innerSize >= 10)
+                        if (innerId == "FS" && innerSize >= 4)
                         {
-                            DsdSampleRate = ReadExtended80(reader);
-                            reader.BaseStream.Seek(innerSize - 10 + innerSize % 2, SeekOrigin.Current);
+                            // DSDIFF 1.5 defines FS as a 4-byte big-endian integer (ckDataSize 4).
+                            // The AIFF-style 80-bit extended float appears in files following the
+                            // old AIFF heritage; the chunk size is the discriminator.
+                            if (innerSize >= 10)
+                            {
+                                DsdSampleRate = ReadExtended80(reader);
+                                long rest = innerSize - 10;
+                                reader.BaseStream.Seek(rest + rest % 2, SeekOrigin.Current);
+                            }
+                            else
+                            {
+                                DsdSampleRate = ReadInt32BigEndian(reader);
+                                long rest = innerSize - 4;
+                                reader.BaseStream.Seek(rest + rest % 2, SeekOrigin.Current);
+                            }
                             haveRate = true;
+                        }
+                        else if (innerId == "CHNL" && innerSize >= 2)
+                        {
+                            // DSDIFF 1.5: 'CHNL' carries a 2-byte big-endian channel count followed
+                            // by a 4-byte ID per channel ('SLFT', 'SRGT', …). The previous 4-byte
+                            // 'CHAN' reading never matched a real file, so every .dff was refused.
+                            _channelCount = ReadInt16BigEndian(reader);
+                            long rest = innerSize - 2;
+                            reader.BaseStream.Seek(rest + rest % 2, SeekOrigin.Current);
+                            haveChannels = true;
                         }
                         else if (innerId == "CHAN" && innerSize >= 4)
                         {
+                            // Tolerant legacy form (a 4-byte count) kept for old fixtures.
                             _channelCount = ReadInt32BigEndian(reader);
-                            reader.BaseStream.Seek(innerSize - 4 + innerSize % 2, SeekOrigin.Current);
+                            long rest = innerSize - 4;
+                            reader.BaseStream.Seek(rest + rest % 2, SeekOrigin.Current);
                             haveChannels = true;
                         }
                         else if (innerId == "CMPD" && innerSize >= 4)
@@ -255,7 +284,7 @@ public sealed class DffRawReader : IDsdRawReader
             {
                 var missing = new List<string>();
                 if (!haveRate) missing.Add("FS");
-                if (!haveChannels) missing.Add("CHAN");
+                if (!haveChannels) missing.Add("CHNL");
                 if (_dataOffset < 0) missing.Add("DSD");
                 throw new AudioOpenException(
                     $"DFF 헤더가 비정상입니다 ({string.Join(",", missing)} 누락): {path}",
@@ -324,6 +353,14 @@ public sealed class DffRawReader : IDsdRawReader
         _ = reader.Read(b);
         if (BitConverter.IsLittleEndian) b.Reverse();
         return BitConverter.ToInt32(b);
+    }
+
+    internal static int ReadInt16BigEndian(BinaryReader reader)
+    {
+        Span<byte> b = stackalloc byte[2];
+        _ = reader.Read(b);
+        if (BitConverter.IsLittleEndian) b.Reverse();
+        return BitConverter.ToInt16(b);
     }
 
     /// <summary>AIFF-style 80-bit IEEE 754 extended float (DSDIFF 'FS' chunk format).</summary>

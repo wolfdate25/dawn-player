@@ -196,3 +196,31 @@ public sealed class YouTubeResolveCacheTests
         YouTubeResolveCache.Clear();
     }
 }
+
+public sealed class YouTubeThumbnailUrlTests
+{
+    [Theory]
+    [InlineData("https://i.ytimg.com/vi_webp/Ngi48RpgiJU/maxresdefault.webp",
+                "https://i.ytimg.com/vi/Ngi48RpgiJU/maxresdefault.jpg")]
+    [InlineData("https://i.ytimg.com/vi_webp/Ngi48RpgiJU/hq720.webp?sqp=-oaymw",
+                "https://i.ytimg.com/vi/Ngi48RpgiJU/hq720.jpg")]
+    [InlineData("https://i.ytimg.com/vi/4hNpxi0N-2U/maxresdefault.jpg",
+                "https://i.ytimg.com/vi/4hNpxi0N-2U/maxresdefault.jpg")]
+    [InlineData("https://i.ytimg.com/vi/4hNpxi0N-2U/hqdefault.jpg?custom=1",
+                "https://i.ytimg.com/vi/4hNpxi0N-2U/hqdefault.jpg")]
+    public void NormalizeThumbnailUrl_RewritesWebpVariantsToJpeg(string input, string expected)
+    {
+        Assert.Equal(expected, YouTubePageUrl.NormalizeThumbnailUrl(input));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("https://i9.ytimg.com/vi_webp/x/maxresdefault.webp")]
+    [InlineData("https://example.com/vi_webp/x/maxresdefault.webp")]
+    [InlineData("not a url")]
+    public void NormalizeThumbnailUrl_PassesThroughNonRewritableUrls(string? input)
+    {
+        Assert.Equal(input, YouTubePageUrl.NormalizeThumbnailUrl(input));
+    }
+}

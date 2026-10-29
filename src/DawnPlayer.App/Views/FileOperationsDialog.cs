@@ -188,6 +188,9 @@ public static class FileOperationsDialog
 
         baseDirBox.TextChanged += (_, _) => RefreshPreview();
         patternBox.SelectionChanged += (_, _) => RefreshPreview();
+        // An editable ComboBox only reports typed text through TextSubmitted — SelectionChanged
+        // never fires for keyboard input, so a typed pattern ran the PREVIOUS preset instead.
+        patternBox.TextSubmitted += (_, _) => RefreshPreview();
         modeBox.SelectionChanged += (_, _) => RefreshPreview();
         collisionBox.SelectionChanged += (_, _) => RefreshPreview();
 
@@ -213,6 +216,10 @@ public static class FileOperationsDialog
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
 
         var selectedMode = (modeBox.SelectedItem as ComboBoxItem)?.Tag as FileOpMode? ?? FileOpMode.Move;
+        var selectedCollision = (collisionBox.SelectedItem as ComboBoxItem)?.Tag as CollisionPolicy? ?? CollisionPolicy.Skip;
+        // Re-run the preview so a pattern typed straight into the editable combo (no
+        // SelectionChanged) executes what the user sees, not the previous preset.
+        RefreshPreview();
         var plansToRun = currentPlans;
 
         AppServices.RaiseWarning(AppStrings.Format("FileOps_Started", "{0}개 파일 정리를 시작합니다.", plansToRun.Count));
@@ -225,12 +232,19 @@ public static class FileOperationsDialog
                     plansToRun,
                     selectedMode,
                     AppServices.Library,
-                    AppServices.Playlists);
+                    AppServices.Playlists,
+                    collisionPolicy: selectedCollision);
 
+                // DB/playlist sync failures live in Errors while the success count still reads
+                // clean — swallowing them made a broken relocation look like a clean finish and
+                // the library pointed at the old paths until the next restart.
+                string detail = result.Errors.Count > 0
+                    ? AppStrings.Format("FileOps_DoneErrors", " (동기화 오류 {0}건 — 로그 참조)", result.Errors.Count)
+                    : "";
                 AppServices.RaiseWarning(AppStrings.Format(
                     "FileOps_Done",
                     "파일 정리 완료: {0}개 성공, {1}개 실패, {2}개 건너뜀",
-                    result.Succeeded, result.Failed, result.Skipped));
+                    result.Succeeded, result.Failed, result.Skipped) + detail);
             }
             catch (Exception ex)
             {

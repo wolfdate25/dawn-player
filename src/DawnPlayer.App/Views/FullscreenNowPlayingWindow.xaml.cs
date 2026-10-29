@@ -42,6 +42,12 @@ public sealed partial class FullscreenNowPlayingWindow : Window
         InitializeComponent();
         _current = this;
 
+        // Same pin the lyrics windows apply: without it this window follows
+        // Application.Current.RequestedTheme (the OS theme at startup, not the user's
+        // in-app choice) and live theme changes never reach it.
+        Services.ThemeService.ApplyTheme(this, AppServices.Settings.Ui);
+        Services.ThemeService.RegisterAuxiliaryWindow(this);
+
         TryEnterFullScreen();
         // Opt-in (default off — battery/GPU): acrylic behind the dim overlay keeps text contrast.
         if (AppServices.Settings.Ui.FullscreenAcrylic)
@@ -136,7 +142,8 @@ public sealed partial class FullscreenNowPlayingWindow : Window
     private void OnKeyDown(object sender, KeyRoutedEventArgs e)
     {
         // Escape was the only key this window took — immersive mode read as a trap (PT3-02/
-        // PT5-17). Space and the arrows mirror the main-window transport shortcuts.
+        // PT5-17). Space and the arrows go through the live shortcut map, so a rebind (and the
+        // documented ←/→ ±5s meaning) holds here too instead of hardcoded transport actions.
         switch (e.Key)
         {
             case Windows.System.VirtualKey.Escape:
@@ -144,16 +151,14 @@ public sealed partial class FullscreenNowPlayingWindow : Window
                 e.Handled = true;
                 break;
             case Windows.System.VirtualKey.Space:
-                AppServices.Playback?.PlayPause();
-                e.Handled = true;
-                break;
             case Windows.System.VirtualKey.Left:
-                _ = AppServices.Playback?.PreviousAsync();
-                e.Handled = true;
-                break;
             case Windows.System.VirtualKey.Right:
-                _ = AppServices.Playback?.NextAsync();
-                e.Handled = true;
+                var chord = new Shortcuts.KeyChord(Helpers.KeyboardHelper.ReadModifiers(), (int)e.Key);
+                if (AppServices.Shortcuts?.Map.TryFindCommand(chord, out var command) == true)
+                {
+                    Shortcuts.ShortcutCommandExecutor.Execute(command, null);
+                    e.Handled = true;
+                }
                 break;
         }
     }

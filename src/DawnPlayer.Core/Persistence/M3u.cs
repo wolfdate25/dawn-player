@@ -11,8 +11,10 @@ using DawnPlayer.Core.Util;
 namespace DawnPlayer.Core.Persistence;
 
 /// <summary>One playlist line. <see cref="DpTrackDirective"/> carries the preceding
-/// <c>#DPTRACK:</c> payload verbatim when present (remote tracks with metadata).</summary>
-public sealed record M3uEntry(string Path, string? Title, double? DurationSeconds, string? DpTrackDirective = null);
+/// <c>#DPTRACK:</c> payload verbatim when present (remote tracks with metadata). <see cref="Unresolved"/>
+/// marks a <c>#DPUNRESOLVED:</c> line — a path that was in the file but resolved to nothing on the
+/// load that captured it, kept positionally for the next write.</summary>
+public sealed record M3uEntry(string Path, string? Title, double? DurationSeconds, string? DpTrackDirective = null, bool Unresolved = false);
 
 /// <summary>High-performance streaming M3U / M3U8 reader &amp; atomic writer.</summary>
 public static class M3u
@@ -106,6 +108,14 @@ public static class M3u
                 pendingDirective = line[9..].Trim();
                 continue;
             }
+            if (line.StartsWith(UnresolvedMarker, StringComparison.Ordinal))
+            {
+                entries.Add(new M3uEntry(line[UnresolvedMarker.Length..].Trim(), null, null, Unresolved: true));
+                pendingTitle = null;
+                pendingDuration = null;
+                pendingDirective = null;
+                continue;
+            }
             if (line.StartsWith("#EXTINF:", StringComparison.OrdinalIgnoreCase))
             {
                 var body = line[8..];
@@ -137,15 +147,26 @@ public static class M3u
     }
 
     /// <summary>
-    /// Writes the playlist. <paramref name="unresolvedPaths"/> are raw path lines that were in the
-    /// file but could not be resolved to a track when it was loaded (offline volume, for example);
-    /// they are re-emitted verbatim so a save never silently drops them.
+    /// Writes the playlist. <paramref name="unresolvedEntries"/> are raw path lines that were in
+    /// the file but could not be resolved to a track when it was loaded (offline volume, for
+    /// example); each carries the position it should be re-emitted at, so a save neither drops
+    /// them nor silently shuffles them to the end of the list.
     /// </summary>
     public static void Write(string file, IReadOnlyList<PlaylistItem> items, string? playlistName = null,
-        IReadOnlyList<string>? unresolvedPaths = null)
+        IReadOnlyList<(int Index, string Path)>? unresolvedEntries = null)
     {
         var fullPath = Path.GetFullPath(file);
         var dir = Path.GetDirectoryName(fullPath) ?? "";
+
+        // Position the unresolved entries by item index; stale indices (the list changed since
+        // load) clamp to the end rather than vanishing.
+        var pending = unresolvedEntries is { Count: > 0 }
+            ? unresolvedEntries.Where(e => !string.IsNullOrWhiteSpace(e.Path))
+                .Select((e, ord) => (ItemIndex: Math.Clamp(e.Index, 0, items.Count), Ord: ord, e.Path))
+                .OrderBy(e => e.ItemIndex).ThenBy(e => e.Ord)
+                .ToList()
+            : new List<(int ItemIndex, int Ord, string Path)>();
+        var pendingPos = 0;
 
         AtomicFile.Write(fullPath, stream =>
         {
@@ -155,8 +176,15 @@ public static class M3u
             if (!string.IsNullOrEmpty(playlistName))
                 writer.WriteLine($"#PLAYLIST:{playlistName}");
 
-            for (int i = 0; i < items.Count; i++)
+            for (int i = 0; i <= items.Count; i++)
             {
+                while (pendingPos < pending.Count && pending[pendingPos].ItemIndex == i)
+                {
+                    writer.WriteLine(UnresolvedMarker + pending[pendingPos].Path);
+                    pendingPos++;
+                }
+                if (i == items.Count) break;
+
                 var item = items[i];
                 if (item?.Track == null) continue;
                 var t = item.Track;
@@ -183,18 +211,13 @@ public static class M3u
                 writer.WriteLine(MakeRelativeIfPossible(dir, t.Path));
             }
 
-            if (unresolvedPaths != null)
-            {
-                for (int i = 0; i < unresolvedPaths.Count; i++)
-                {
-                    var line = unresolvedPaths[i];
-                    if (!string.IsNullOrWhiteSpace(line)) writer.WriteLine(line);
-                }
-            }
-
             writer.Flush();
         }, keepBackup: true, flushToDisk: true);
     }
+
+    /// <summary>Marks an unresolvable path line so its LIST POSITION survives the save/reload
+    /// round trip (a bare path would parse as a normal entry pointing at a nonexistent file).</summary>
+    public const string UnresolvedMarker = "#DPUNRESOLVED:";
 
     private static string MakeRelativeIfPossible(string baseDir, string path)
     {

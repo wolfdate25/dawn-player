@@ -66,7 +66,26 @@ internal static class TrayIconService
             return;
         }
 
-        if (!AddTrayIcon()) RemoveAll();
+        if (!AddTrayIcon())
+        {
+            // A failed creation must not fall through to the subscriptions below: the settings
+            // toggle retried EnsureCreated, each failure added ANOTHER CurrentTrackChanged/
+            // PlaybackStateChanged subscription, and the leaked half-built state (message window
+            // + icon handles) kept IsRunning true so no retry could even start. Tear down the
+            // same pieces Destroy would and return unsubscribed.
+            RemoveAll();
+            if (_trayHwnd != IntPtr.Zero)
+            {
+                NativeMethods.DestroyWindow(_trayHwnd);
+                _trayHwnd = IntPtr.Zero;
+            }
+            if (_appIcon != IntPtr.Zero)
+            {
+                NativeMethods.DestroyIcon(_appIcon);
+                _appIcon = IntPtr.Zero;
+            }
+            return;
+        }
 
         // Thumbnail toolbar on the main window: buttons appear in the taskbar preview.
         try

@@ -37,7 +37,12 @@ public static class PlaylistDialogs
 
         if (await dialog.ShowAsync() == ContentDialogResult.Primary && box.Text.Trim().Length > 0)
         {
-            playlists.RenamePlaylist(pl, box.Text.Trim());
+            if (!playlists.RenamePlaylist(pl, box.Text.Trim()))
+            {
+                AppServices.RaiseWarning(AppStrings.Get("Msg_RenamePlaylistTaken",
+                    "이미 사용 중인 이름입니다. 다른 이름을 입력하세요."));
+                return false;
+            }
             return true;
         }
 

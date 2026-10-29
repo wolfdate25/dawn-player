@@ -38,6 +38,12 @@ public sealed class LyricsDocument
 /// [offset:] tag, metadata tags, and enhanced word-level tags which are stripped).</summary>
 public static partial class LrcParser
 {
+    static LrcParser()
+    {
+        // Needed for Encoding.GetEncoding(0) (the system ANSI code page) on .NET Core.
+        try { Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance); } catch { }
+    }
+
     [GeneratedRegex(@"\[(?:(?<hour>\d{1,2}):(?<min>\d{1,2}):(?<sec>\d{1,2})(?:[.:](?<frac>\d{1,3}))|(?<min>\d{1,3}):(?<sec>\d{1,2})(?:[.:](?<frac>\d{1,3}))?)\]")]
     private static partial Regex TimestampRegex();
 
@@ -143,7 +149,9 @@ public static partial class LrcParser
             finalLines.Add((t, textPart));
         }
 
-        finalLines.Sort((a, b) => a.t.CompareTo(b.t));
+        // OrderBy is a documented stable sort: duplicate timestamps (duet lines, dual-timestamp
+        // notation) keep their input order — List.Sort reordered them run to run.
+        finalLines = finalLines.OrderBy(l => l.t).ToList();
 
         return new LyricsDocument
         {
@@ -190,7 +198,21 @@ public static partial class LrcParser
             Directory.CreateDirectory(dir);
         }
         var utf8WithBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: true);
-        File.WriteAllText(path, lrcContent, utf8WithBom);
+        // Write-then-replace: a plain overwrite left a truncated file behind when the process
+        // died (or the power went) mid-write, destroying a curated .lrc. The temp file lives on
+        // the same volume, so the replace is atomic.
+        var tempPath = path + ".dawn-tmp-" + Guid.NewGuid().ToString("N");
+        try
+        {
+            File.WriteAllText(tempPath, lrcContent, utf8WithBom);
+            if (File.Exists(path)) File.Replace(tempPath, path, destinationBackupFileName: null);
+            else File.Move(tempPath, path);
+        }
+        catch
+        {
+            try { File.Delete(tempPath); } catch { /* best effort */ }
+            throw;
+        }
     }
 
     public static bool SaveOffsetToFile(string lrcPath, double offsetMs)
@@ -247,7 +269,24 @@ public static partial class LrcParser
         }
         catch (DecoderFallbackException)
         {
-            return Encoding.Default.GetString(bytes);
+            // Not UTF-8. .NET's Encoding.Default is ALWAYS UTF-8 — using it as the "ANSI" fallback
+            // mangled every CP949/EUC-KR lyric into U+FFFD and stray CJK, so the documented
+            // "UTF-8/ANSI auto detection" never actually happened. The system ANSI code page is
+            // the right legacy guess; Latin-1 (lossless per byte) covers systems running the
+            // UTF-8 code page itself.
+            try
+            {
+                var ansi = Encoding.GetEncoding(0);
+                if (ansi.CodePage != Encoding.UTF8.CodePage)
+                {
+                    return ansi.GetString(bytes);
+                }
+            }
+            catch (Exception)
+            {
+                // Code page provider unavailable — fall through to Latin-1.
+            }
+            return Encoding.Latin1.GetString(bytes);
         }
     }
 
