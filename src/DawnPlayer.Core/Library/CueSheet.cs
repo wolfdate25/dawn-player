@@ -18,26 +18,17 @@ public sealed record CueDocument(string? AlbumTitle, string? AlbumPerformer, IRe
 /// </summary>
 public static class CueSheet
 {
-    static CueSheet()
-    {
-        // Needed for Encoding.GetEncoding(0) (the system ANSI code page) on .NET Core.
-        try { Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance); } catch { }
-    }
-
     /// <summary>Parses a cue file. Returns null when nothing playable is in it.</summary>
     public static CueDocument? TryParseFile(string cuePath)
     {
         try
         {
             string text;
-            // CUE sheets from EAC/XLD are overwhelmingly UTF-8 (with or without BOM) or the system
-            // code page; M3u.DetectEncoding already solved this exact problem, but it lives on the
-            // persistence side, so keep a small local probe: BOM → strict-UTF8 → system ANSI.
-            using (var stream = File.OpenRead(cuePath))
-            using (var reader = new StreamReader(stream, DetectEncoding(stream), detectEncodingFromByteOrderMarks: false))
-            {
-                text = reader.ReadToEnd();
-            }
+            // CUE sheets from EAC/XLD are overwhelmingly UTF-8 (with or without BOM) or a legacy
+            // ANSI code page. The shared decoder handles the ANSI half by CONTENT (Hangul
+            // ratio), not by the machine's locale — a CP949 cue must decode on an en-US system
+            // too, where Encoding.GetEncoding(0) is 1252.
+            text = DecodeFile(File.ReadAllBytes(cuePath));
             return Parse(text, cuePath);
         }
         catch
@@ -198,50 +189,23 @@ public static class CueSheet
             : Path.GetFullPath(Path.Combine(string.IsNullOrEmpty(cueDir) ? "." : cueDir, unescaped));
     }
 
-    private static Encoding DetectEncoding(FileStream stream)
+    private static string DecodeFile(byte[] bytes)
     {
+        if (bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF)
+            return Encoding.UTF8.GetString(bytes, 3, bytes.Length - 3);
+        if (bytes.Length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE)
+            return Encoding.Unicode.GetString(bytes, 2, bytes.Length - 2);
+
+        // Strict validation: only commit to UTF-8 when the bytes really decode; otherwise the
+        // shared legacy decoder picks CP949 vs system ANSI by content.
+        var strict = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
         try
         {
-            Span<byte> bom = stackalloc byte[4];
-            stream.Position = 0;
-            int read = stream.Read(bom);
-            stream.Position = 0;
-
-            if (read >= 3 && bom[0] == 0xEF && bom[1] == 0xBB && bom[2] == 0xBF) return Encoding.UTF8;
-            if (read >= 2 && bom[0] == 0xFF && bom[1] == 0xFE) return Encoding.Unicode;
-
-            // Strict validation: only commit to UTF-8 when the bytes really decode.
-            var strict = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
-            var buffer = new byte[Math.Min(stream.Length, 1 << 16)];
-            int got = stream.Read(buffer, 0, buffer.Length);
-            stream.Position = 0;
-            try
-            {
-                strict.GetString(buffer, 0, got);
-                return Encoding.UTF8;
-            }
-            catch (DecoderFallbackException)
-            {
-                // Not UTF-8. The system code page is the right guess for a legacy EAC cue —
-                // but .NET's Encoding.Default is ALWAYS UTF-8, which mangled every CP949 title
-                // into U+FFFD and broke non-ASCII FILE paths. Mirror M3u.DetectEncoding: system
-                // ANSI when it is a real code page, Latin-1 (lossless per-byte) otherwise.
-                try
-                {
-                    var ansi = Encoding.GetEncoding(0);
-                    if (ansi.CodePage != Encoding.UTF8.CodePage) return ansi;
-                }
-                catch (Exception ex)
-                {
-                    Log.Debug($"[cue] ANSI code page unavailable: {ex.Message}");
-                }
-                return Encoding.Latin1;
-            }
+            return strict.GetString(bytes);
         }
-        catch
+        catch (DecoderFallbackException)
         {
-            stream.Position = 0;
-            return Encoding.UTF8;
+            return DawnPlayer.Core.Util.LegacyTextDecoder.DecodeNonUtf8(bytes);
         }
     }
 }

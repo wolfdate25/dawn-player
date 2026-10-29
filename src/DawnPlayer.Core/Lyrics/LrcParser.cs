@@ -38,12 +38,6 @@ public sealed class LyricsDocument
 /// [offset:] tag, metadata tags, and enhanced word-level tags which are stripped).</summary>
 public static partial class LrcParser
 {
-    static LrcParser()
-    {
-        // Needed for Encoding.GetEncoding(0) (the system ANSI code page) on .NET Core.
-        try { Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance); } catch { }
-    }
-
     [GeneratedRegex(@"\[(?:(?<hour>\d{1,2}):(?<min>\d{1,2}):(?<sec>\d{1,2})(?:[.:](?<frac>\d{1,3}))|(?<min>\d{1,3}):(?<sec>\d{1,2})(?:[.:](?<frac>\d{1,3}))?)\]")]
     private static partial Regex TimestampRegex();
 
@@ -269,24 +263,11 @@ public static partial class LrcParser
         }
         catch (DecoderFallbackException)
         {
-            // Not UTF-8. .NET's Encoding.Default is ALWAYS UTF-8 — using it as the "ANSI" fallback
-            // mangled every CP949/EUC-KR lyric into U+FFFD and stray CJK, so the documented
-            // "UTF-8/ANSI auto detection" never actually happened. The system ANSI code page is
-            // the right legacy guess; Latin-1 (lossless per byte) covers systems running the
-            // UTF-8 code page itself.
-            try
-            {
-                var ansi = Encoding.GetEncoding(0);
-                if (ansi.CodePage != Encoding.UTF8.CodePage)
-                {
-                    return ansi.GetString(bytes);
-                }
-            }
-            catch (Exception)
-            {
-                // Code page provider unavailable — fall through to Latin-1.
-            }
-            return Encoding.Latin1.GetString(bytes);
+            // Not UTF-8. .NET's Encoding.Default is ALWAYS UTF-8, and the system ANSI page only
+            // matches the file's encoding when the machine locale happens to — a CP949 lyric on
+            // an en-US system decoded as 1252 was still mojibake. The shared decoder decides by
+            // content (Hangul ratio), so it works on every system locale.
+            return DawnPlayer.Core.Util.LegacyTextDecoder.DecodeNonUtf8(bytes);
         }
     }
 
