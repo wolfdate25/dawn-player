@@ -250,9 +250,7 @@ public sealed class Review20261024RepairGateTests : IDisposable
         // markup-heavy LRC lines (most bytes are ASCII "[00:01.00]" markup) on non-Korean
         // systems. The decision is now the DELTA between candidates — pinned with the exact
         // short line that failed.
-        string content = "[ti:제목]
-[00:01.00]가사 줄
-";
+        string content = "[ti:제목]\n[00:01.00]가사 줄\n";
         var bytes = Encoding.GetEncoding(949).GetBytes(content);
 
         var decoded = DawnPlayer.Core.Util.LegacyTextDecoder.DecodeNonUtf8(bytes);
