@@ -119,7 +119,8 @@ public sealed class Review20261024RepairBatch2Tests : IDisposable
 
         LrcParser.SaveToFile(path, "[00:02.00]new");
         Assert.Equal("[00:02.00]new", File.ReadAllText(path));
-        Assert.False(Directory.GetFiles(_tempDir, "*.dawn-tmp-*").Any(), "temp files must be cleaned up");
+        // temp files must be cleaned up
+        Assert.Empty(Directory.GetFiles(_tempDir, "*.dawn-tmp-*"));
 
         // A brand-new path works too (no existing file to replace).
         string fresh = Path.Combine(_tempDir, "fresh.lrc");
@@ -210,7 +211,7 @@ public sealed class Review20261024RepairBatch2Tests : IDisposable
     // ---------------- B14: settings flush ordering ----------------
 
     [Fact]
-    public void SettingsWriter_ConcurrentFlushes_LandInSnapshotOrder()
+    public async Task SettingsWriter_ConcurrentFlushes_LandInSnapshotOrder()
     {
         SettingsWriter.DiscardPending();
         var written = new List<string>();
@@ -239,7 +240,8 @@ public sealed class Review20261024RepairBatch2Tests : IDisposable
         {
             SettingsWriter.Schedule(s1);
             var flush1 = Task.Run(() => SettingsWriter.Flush());
-            Assert.True(firstWriteStarted.Wait(2000), "first flush must reach the sink");
+            for (int i = 0; i < 200 && !firstWriteStarted.IsSet; i++) await Task.Delay(10);
+            Assert.True(firstWriteStarted.IsSet, "first flush must reach the sink");
 
             // A newer snapshot is scheduled and flushed while the older write is in flight.
             _ = Task.Run(() =>
@@ -251,11 +253,13 @@ public sealed class Review20261024RepairBatch2Tests : IDisposable
 
             // Without sequence-ordered writes, flush 2 could land first and be overwritten by
             // the slow older write afterwards.
-            Assert.False(flush2Done.Wait(400), "the newer flush must wait for the older snapshot's write");
+            await Task.Delay(400);
+            Assert.False(flush2Done.IsSet, "the newer flush must wait for the older snapshot's write");
 
             releaseFirstWrite.Set();
-            Assert.True(flush2Done.Wait(3000), "newer flush must proceed once the older one lands");
-            Assert.True(flush1.Wait(1000));
+            for (int i = 0; i < 300 && !flush2Done.IsSet; i++) await Task.Delay(10);
+            Assert.True(flush2Done.IsSet, "newer flush must proceed once the older one lands");
+            await flush1.WaitAsync(TimeSpan.FromSeconds(1));
 
             lock (written) Assert.Equal(2, written.Count);
         }

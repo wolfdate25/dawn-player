@@ -380,7 +380,7 @@
                 <!-- Lyrics Pane Toggle Button (Spotify/Apple Music Style) -->
                 <ToggleButton x:Uid="NowPlaying_LyricsButton" x:Name="LyricsButton" Style="{StaticResource TransportToggleButton}"
                               Click="OnLyricsClick" ToolTipService.ToolTip="가사 패널">
-                    <FontIcon Glyph="&#xEC4F;" FontSize="13"/>
+                    <FontIcon Glyph="&#xE7E7;" FontSize="13"/>
                 </ToggleButton>
 
                 <!-- 미니 전용 복원 버튼: 미니 문맥(MiniVolume 상태)에서만 보인다. 미니는

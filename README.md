@@ -125,6 +125,10 @@ this marker).
   folder and rescan to enable
 - Standard/multi-timestamp/`[offset:]`/extended (word-level) LRC support, UTF-8/ANSI auto
   detection
+- **Translation sub-lines** — duplicate-timestamp translation/romaji lines merge under the
+  original line (toggle in Settings); online plugins can supply translations via `TranslatedLrc`
+- **Word-level karaoke highlight** — enhanced-LRC word timings render as per-word highlight
+  (sung / current / upcoming) in the lyrics pane (toggle in Settings)
 - **LRC lyrics editor** — per-line timestamp editing/syncing, line reordering, clipboard import
 
 ### UI (Eole style × WinUI 3)

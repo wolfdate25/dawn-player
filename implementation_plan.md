@@ -2013,3 +2013,157 @@ DSF 8비트 거부, 절단 DSF 클램프·정상 종료, .lrc 원자 저장, M3U
 - obj/bin 삭제 후 콜드 리빌드 **0 Warning(s) 0 Error(s)** (DawnPlayer.slnx 전체).
 - 전체 테스트 스위트 1회 전수 실행 **2,333 / 2,333 100% 통과**(§8의 2,326 + 본 배치 신규 게이트 7건).
 - 필터 검증: 수정 영역(M3u·Regression·Transcoder·Settings·Scan·Cue·Lyrics·Playlist·Radio·Http·Dlna·Smtc·Tray·Shortcut) 740건 통과.
+
+---
+
+## 10. 가사 고도화 — 번역 2행 표시 + enhanced LRC 단어별 카라오케 (2026-10-30 계획 → 10-31 승인·구현·게이트 완료, 11-02 실행 육안 완료 — §10.6)
+
+> Mornye(https://github.com/mornyeapp/Mornye , Flutter+Rust 모바일 플레이어) 도입 후보 중 1순위로
+> 선정된 "가사 고도화"의 구체 계획. 대조 조사(2026-10-30) 결과 ReplayGain 스캔·배타 출력·수면 타이머·
+> 청취 리포트·온라인 가사 체인 등 Mornye의 주요 기능은 이미 보유·우위이므로 제외하고, Dawn Player에
+> 없는 ①번역/로마자 2행 표시 ②enhanced LRC 단어별 카라오케 하이라이트만 가져온다.
+> 2~4순위 후보(백업/복원, 개인화 자동재생, Subsonic)는 본 계획 승인·완료 후 개별 계획서로 회수.
+
+### 10.1 문제 배경 및 진단
+
+**현재 제한 (전수 확인 근거)**
+
+| 항목 | 현황 | 근거 |
+|---|---|---|
+| 가사 데이터 모델 | `LrcLine(TimeSpan, string)` 2필드뿐 — 번역·단어 개념 없음 | `LrcParser.cs:7` |
+| enhanced LRC `<mm:ss.xx>` 단어 태그 | 파스 시 **strip** (표시·보존 전무) | `LrcParser.cs:44,87` |
+| 동일 타임스탬프 중복행(번역 표기의 지배적 관례) | 독립 행으로 안정 정렬만 — 쌍 인식 없음 | `LrcParser.cs:146-148` |
+| 플러그인 계약 | `LyricsContent`는 SyncedLrc/PlainText뿐 — 번역 전달 불가 | `Plugin.Abstractions/Models.cs:45` |
+| LRCLIB | API가 번역 필드 자체가 없음(plain/synced만) — 번역원은 중복행 관례+계약 확장으로 확보 | `LrclibPlugin.cs:92-102` |
+| Alsong | GetResembleLyric2 응답에 번역 별도 필드 없음 | `AlsongPlugin.cs:189-217` |
+
+**진단 — 무손실 왕복이 전제 조건**: `Parse → Format` 라운드트립 소비처가 4계열 존재
+(편집기 저장 `LyricsEditorWindow.xaml.cs:625`·원시보기 `:514,573`, 검색창 미리보기/파일 저장
+`LyricsSearchWindow.xaml.cs:279,308`, 자동저장 `LyricsSavePathResolver.cs:71`, 오프셋 저장
+`SaveOffsetToFile`). 단어 태그·번역 행은 이 왕복을 무손실로 통과해야 하며, 그렇지 않으면
+**기존 사용자의 curated .lrc를 파괴**한다. 이미 잠재 결함 확인: 현재 enhanced LRC 파일을 오프셋
+저장/편집기로 건드리면 단어 태그가 조용히 소실된다 — 본 작업에서 같이 수리한다.
+
+**추가 확인 결함**: 편집기 3곳(`LyricsEditorWindow.xaml.cs:512,571,622`)이 `new LrcLine(l.Time, l.Text)`
+로 문서를 재구축 — Time/Text 외 필드는 편집기 저장 시 소실. 행 VM에 보존 패스스루 필요.
+
+### 10.2 설계 및 파일 수준 변경점
+
+**파일 형식은 변경하지 않는다.** 번역은 기존 지배 관례(동일 타임스탬프 중복행), 단어는 enhanced LRC
+표준(`<mm:ss.xx> 단어`)으로 그대로 재출력 — 타 플레이어 호환 유지.
+
+#### 1) Core (DawnPlayer.Core)
+
+| 파일 | 변경 |
+|---|---|
+| `Lyrics/LrcParser.cs` | ①`LrcWord(TimeSpan Start, string Text)` 신설 ②`LrcLine`에 `Words`·`Translation` optional 추가(기존 2인자 생성 호환) ③단어 태그 파싱: 행 시각 이후 첫 단어 태그부터 세그먼트화, 태그 밖 텍스트는 직전 세그먼트에 귀속, **비단조 단어 시각은 직전값으로 클램프**(I2) ④번역 쌍 병합 — 엄격 술어: 동일 시각 그룹 크기==2 ∧ 양측 비어있지 않음 ∧ 정규화 텍스트 상이(후렴 반복·듀엣 오판 방지, I4) ⑤`Format`: 번역행은 동일 시각 2행으로, 단어는 `<hh?:mm:ss.xx>` 태그로 재출력 — 왕복 무손실(I1) ⑥`Parse`에 `pairTranslationLines`(기본 true) 옵션 — TranslatedLrc 파싱 시 중복행이 번역이 아니므로 끔 |
+| `Lyrics/LyricsTranslationMerger.cs` (신규) | 플러그인 `TranslatedLrc` → 본문 문서 병합: 정확 시각 일치 ∧ 본문에 번역 없음 ∧ 텍스트 상이일 때만 대입, 미매칭 번역행 폐기(로그) |
+| `Lyrics/KaraokeTimeline.cs` (신규) | `WordIndexAt(IReadOnlyList<LrcWord>, TimeSpan)` 순수 정적 — 이분 탐색, UI 없이 테스트 가능 |
+| `Plugin.Abstractions/Models.cs` | `LyricsContent.TranslatedLrc`(init-only, **비포지셔널**) 추가 — 기존 컴파일 플러그인 소스·바이너리 호환(I8) |
+| `Lyrics/Online/OnlineLyricsService.cs` | `ParseContent`에서 TranslatedLrc 비었을 때 병합 호출. 점수·우선순위 로직 불변 |
+| `Persistence/AppSettings.cs` | `LyricsSettings`에 `ShowTranslation`(기본 true)·`KaraokeHighlight`(기본 true) — 없는 설정은 기본값으로 역호환 |
+
+#### 2) App (DawnPlayer.App)
+
+| 파일 | 변경 |
+|---|---|
+| `Controls/LyricsScrollSynchronizer.cs` | `LrcLineVm`에 `Translation`·`Words`·`HasWords`·`ActiveWordIndex` 추가. `FindActiveLineIndex` 등 기존 동기화 로직 불변(시각 정렬은 번역 병합 후에도 유지) |
+| `Controls/LyricsPane.xaml` | `DataTemplateSelector`(일반/단어 있음) 도입. 일반 템플릿에 번역 서브행 추가(주행보다 작은 크기·tertiary 색, `x:Phase="1"`, Wrap 필수 — 고정 높이 금지). 카라오케 템플릿은 `KaraokeTextBlock` + 번역 서브행 |
+| `Controls/KaraokeTextBlock.cs` (신규) | 단어 Runs는 `Words` 변경 시 1회 구축, 활성 단어 변경 시 **inline 재구축 없이 ≤2개 Run 브러시 교체**(I6). 색 3상: 지나감=TextPrimary / 현재=DawnAccentTextBrush / 예정=TextTertiary(테마 브러시 팔로우). 활성 행 크기 전환(FontSize 바인딩) 기존 행동 계승 |
+| `Controls/LyricsPane.xaml.cs` | ①`DisplayLyrics`가 VM에 번역·단어 주입 ②적응형 틱: 활성 행에 단어 시각 있으면 120ms→40ms, 없으면 복귀(틱당 작업: 이분 탐색+≤2 Run 교체라 부하 미미) ③단어 인덱스는 `KaraokeTimeline` 위임 — 보고 인덱스 == 실제 계산값(I7) ④기존 generation 가드·pointer-over 스크롤 억제 계승 ⑤`KaraokeHighlight` 끔이면 단어 있어도 일반 템플릿 사용 |
+| `Views/LyricsEditorWindow.xaml.cs` | 편집 행 VM에 `Translation`·`Words` 패스스루 — `:512,571,622` 재구축 3곳에서 보존(확인된 소실 경로 수리) |
+| `ViewModels/Settings`(가사 타이포그래피 영역) + `SettingsPage.xaml` | 토글 2종 UI 추가 |
+| `Strings/{ko-KR,en-US,ja-JP}` resw | 토글 2종·접근성 이름 키 추가(3개 국어 동시) |
+| `tests/DawnPlayer.Tests.csproj` | 신규 App 파일(KaraokeTextBlock 등) Compile-Include-Link 목록 추가(§5 규약 — 누락 시 CS0246) |
+
+**범위 밖 (명시)**: 전체화면 NowPlaying 창 가사(현재 미호출 — 별도 과제), 3행 그룹(가사/로마자/번역
+혼재 파일) 휴리스틱 — 순서 모호성으로 폐기, 기기 내 로마자 생성(한·중 문제) — 번역 서브행 슬롯으로
+향후 플러그인 공급만 지원, 가사 공유 카드.
+
+### 10.3 결함 트리 및 불변식 (Invariants)
+
+| 결함 후보 | 해결 전략 |
+|---|---|
+| 중복행 의미 중복: 번역 vs 듀엣 vs 후렴 반복 vs 이중 타임스탬프 | 엄격 술어(그룹==2 ∧ 텍스트 상이)만 병합, 나머지 전부 기존 독립행 유지 — 오판 시 기존 동작과 동일해 안전 |
+| `<3`, `〈Love〉` 등 리터럴 꺾쇠가 태그 오인 | 정규식이 완전 형태(`<digits:digits…>`)만 매칭 — 미매칭은 리터럴 보존, 적대 테스트 고정 |
+| 단어 시각 역행·행 시각 선행 | 클램프(직전 단어 시각과 행 시각의 max)로 I2 강제 |
+| 다중 타임스탬프 행에 단어 태그 | 각 타임스탬프마다 동일 단어 목록 복제 — Format 왕복 시 원형 보존 |
+| `[offset:]` 적용 후 단어 시각 드리프트 | 행 시각과 동일 오프셋을 단어에도 일괄 적용 후 클램프 |
+| all-zero 일반 텍스트 문서(비동기 가사)에 단어 태그 출력 | plain 경로는 단어 태그 미생성·미출력 |
+| 편집기·오프셋 저장의 기존 데이터 파괴 | 왕복 무손실(I1) + 편집기 패스스루 수리 |
+| 트랙 교체 직전 틱이 새 행에 옛 단어 인덱스 적용 | 기존 `_loadGeneration` 가드 계승 + 인덱스 리셋 동기화(I5) |
+| 비 UI 스레드 문서 교체·설정 변경 | 기존 TryEnqueue 경로 계승, 브러시 조회는 UI 스레드 한정 |
+| 가상화 컨테이너 재활용 시 카라오케 잔상 | ActiveWordIndex 바인딩 diff만 갱신, 재활용 시 VM 값이 진실 원천 — 잔상 불가 구조 |
+| 실현 안 된 행 컨테이너 조회 | `ContainerFromIndex` null 가드(기존 스크롤 코드와 동일 패턴) |
+| 기존 플러그인 DLL 파손 | 비포지셔널 init 속성만 추가(I8), 계약 테스트로 고정 |
+
+**불변식**: **I1** Parse→Format→Parse 무손실 왕복(단어·번역·이중 타임스탬프 포함; 정상 입력만).
+**I2** 단어 시각은 행 내 비감소이며 모든 단어 시각 ≥ 행 시각. **I3** 번역 병합은 행 시각 집합을
+바꾸지 않고 본문 텍스트를 절대 유실하지 않는다(병합 불가분은 원형 유지). **I4** 병합은 그룹==2 ∧
+양측 비어있지 않음 ∧ 정규화 텍스트 상이일 때만. **I5** UI 갱신 전부 UI 스레드 + generation 가드.
+**I6** 틱당 inline 재구축 금지 — Run 브러시 ≤2개 교체. **I7** 보고 활성 단어 인덱스 == `KaraokeTimeline`
+계산값. **I8** `LyricsContent`는 기존 플러그인과 소스·바이너리 호환 유지.
+
+### 10.4 선설계 테스트 (코드보다 먼저 설계 — 약 35건)
+
+| 테스트 클래스 | 실패 시나리오 (Adversarial Cases) |
+|---|---|
+| `LrcParserWordTimingTests` | 정상 파싱·태그 밖 prelude/trailing 텍스트 귀속·비단조 클램프·행 시각 선행 단어 클램프·`<3` 리터럴 보존·다중 타임스탬프 복제·frac 1~3자리·hour 형태·plain 문서 단어 미생성 |
+| `LrcParserTranslationTests` | 동일 시각 2행 병합·동일 텍스트 미병합·3행 그룹 미병합·공백 번역행 제외·offset 적용 후 병합·`pairTranslationLines:false` 비병합 |
+| `LrcParserRoundTripTests` | 표준/enhanced/번역 혼합 문서 Format 왕복 동등성(I1)·all-zero 문서·오프셋 재적용 왕복 |
+| `TranslationMergerTests` | 정확 시각 매칭·미매칭 폐기·본문 기존 번역 존중·자기 자신과 동일 텍스트 무시 |
+| `KaraokeTimelineTests` | 이분 탐색 경계(시각 정확 일치)·빈/단일 단어·역행 position -1·클램프된 단어 목록(I7) |
+| 게이트(기존 컨벤션) | `LyricsContent` 신규 속성이 기본 생성 경로를 깨지 않음(I8)·resw 3개 국어 키 존재·설정 기본값 |
+
+### 10.5 실행 순서 및 검증 게이트
+
+1. **T-L1 Core 파서**(단어·번역·왕복 + 테스트) → 2. **T-L2 계약·병합**(TranslatedLrc + 테스트) →
+3. **T-L3 App UI**(VM·템플릿·KaraokeTextBlock·적응형 틱·설정·3개 국어 + 테스트).
+   진행 중에는 수정 클래스 단위 `dotnet test --filter`만 실행(§4).
+- **완료 게이트**: obj/bin 삭제 콜드 리빌드 0경고 0오류 + 전체 스위트 1회 전수 통과 + 실행 육안
+  (번역 2행 파일·enhanced LRC 파일 각 1종 확인).
+- 버전 관례상 사용자 가시 기능이므로 착수 시 마이너 bump 대상이나, 배포·태그는 사용자 명시 지시까지
+  보류(§2).
+
+### 10.6 실행 기록 (2026-10-31 구현·게이트 → 2026-11-02 육안 완료)
+
+**구현 내역 (계획 §10.2 대비)**
+
+| 영역 | 결과 |
+|---|---|
+| T-L1 Core 파서 | `LrcWord` 신설, `LrcLine`에 Words·Translation, `KaraokeTimeline`(신규), 단어 태그 파싱+클램프, 번역 쌍 병합(엄격 술어), `Format` 왕복 재출력 — 모두 계획대로 |
+| T-L2 계약·병합 | `LyricsContent.TranslatedLrc`(비포지셔널, 기존 플러그인 호환), `LyricsTranslationMerger`(신규 — 시각 일치 소비 방식), `ParseContent` 병합 |
+| T-L3 App UI | `LrcLineVm` 확장(Tests 컴파일 제약으로 WinUI 타입 배제→bool+기존 컨버터), `KaraokeTextBlock`+`LyricsLineTemplateSelector`(신규 1파일), 2템플릿+셀렉터, 적응형 틱(120↔40ms), 편집기 Translation·Words 패스스루+오프셋 동행, 설정 토글 2종(`ShowTranslation`·`KaraokeHighlight`)+resw 3개 국어 6키×3 |
+| 아이콘 | 가사 아이콘 EC4F(MusicNote)→**E7E7** 4곳 교체(사용자 지정 — 하단바 토글·빈 상태·편집기 헤더·설정 내비) |
+
+**구현 중 발견·수리한 추가 결함 (계획 외)**
+1. 오프셋 클램프 충돌 행(0초로 뭉친 행들)이 번역 쌍으로 오병합 → `clamped` 플래그 배제(기존 테스트가 올바른 기대였음).
+2. `♪` 기악 플레이스홀더가 번역 후보로 병합 → 양방향 배제.
+3. `Format`이 기존 계약 `[stamp] text` 공백을 누락 → 원형 복원.
+4. `AppendLineBody` 후치 불변식 검증 추가 — 편집기에서 텍스트 재입력으로 단어 세그먼트가 어긋난 행은 태그 대신 일반 텍스트로 방출(손상 방지).
+5. 기존 경고 3건 부수 수리(xUnit2013·CA1860·xUnit1031 — 0경고 게이트 확보, 게이트 테스트 async 전환).
+
+**선설계 테스트 결과 (계획 §10.4 → 실적)**
+
+| 테스트 클래스 | 건수 |
+|---|---|
+| `LrcParserWordTimingTests` | 13 |
+| `LrcParserTranslationTests` | 13 |
+| `LrcParserRoundTripTests` | 6 |
+| `TranslationMergerTests` | 9 |
+| `KaraokeTimelineTests` | 7 |
+| 합계 | **48** |
+
+**검증 게이트 (2026-10-31 달성)**
+- obj/bin 삭제 콜드 리빌드 **0 Warning(s) 0 Error(s)** (DawnPlayer.slnx 전체).
+- 전체 스위트 1회 전수 **2,396 / 2,397** — 미통과 1건(`PlaybackController_ConcurrentPlaylistReorderingAndClearing_DoesNotThrow`)은 본 작업 무관 동시성 스트레스 테스트로 **격리 재실행 3/3 통과 → 플레이크 판정**(§4 절차).
+- 가사 관련 필터 실행: 신규 48 + 기존 가사·병합·게이트 전부 통과(169/169).
+
+**실행 육안 (2026-11-02, 테스트 포터블 v1.9.0 — dist SHA256 `d0401e68…`)**
+- 번역 2행: 동일 시각 쌍 LRC 6쌍 파일 — 원문(활성 액센트·비활성 디밍) 아래 한국어 서브행(작은 크기·삼차 색) 전 행 정상.
+- 단어 카라오케: enhanced LRC — 3상 색상(지나감=1차/현재=액센트/예정=삼차)이 재생 위치와 일치(0:02="by" 현재), 행 이동 후 과거 행 잔상 없음, 마지막 단어는 행 종료까지 현재 유지, 태그 없는 행은 일반 강조 유지.
+- 부수 확인: 미지원 DAC(44.1kHz/16-bit 거부) 공유 모드 자동 폴백 토스트 정상.
+
+**부산물 상태**: 테스트 감시 폴더 dev 인스턴스 settings 원복 완료, 포터블 테스트 추출본 삭제.
+테스트 미디어(`%TEMP%\dawn-lyrics-verify` — 번역·카라오케 LRC+WAV 각 1쌍)는 H: 인스턴스 수동 확인용으로 보존.
+배포·태그는 사용자 지시 대기(§2).

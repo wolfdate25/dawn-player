@@ -180,6 +180,11 @@ public sealed class LyricsSettings
     public bool EnableFocusEffect { get; set; } = true;
     public bool ReadEmbeddedLyrics { get; set; } = true;
 
+    /// <summary>Show a merged translation/romaji sub-line when the lyrics carry one.</summary>
+    public bool ShowTranslation { get; set; } = true;
+    /// <summary>Word-by-word karaoke highlighting when the lyrics carry enhanced-LRC word timings.</summary>
+    public bool KaraokeHighlight { get; set; } = true;
+
     // Editor step preference
     public double DefaultOffsetStepMs { get; set; } = 0.5; // 0.5 ms default
 }

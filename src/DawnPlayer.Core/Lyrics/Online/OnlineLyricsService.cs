@@ -291,13 +291,18 @@ public sealed class OnlineLyricsService
         if (!string.IsNullOrWhiteSpace(content.SyncedLrc))
         {
             var doc = LrcParser.Parse(content.SyncedLrc!, sourcePath);
-            if (doc.HasLines) return doc;
+            if (doc.HasLines) return MergeTranslation(doc, content);
         }
         if (!string.IsNullOrWhiteSpace(content.PlainText))
         {
             var doc = LrcParser.Parse(content.PlainText!, sourcePath);
-            if (doc.HasLines) return doc;
+            if (doc.HasLines) return MergeTranslation(doc, content);
         }
         return null;
     }
+
+    private static LyricsDocument MergeTranslation(LyricsDocument doc, LyricsContent content) =>
+        string.IsNullOrWhiteSpace(content.TranslatedLrc)
+            ? doc
+            : LyricsTranslationMerger.Merge(doc, content.TranslatedLrc);
 }

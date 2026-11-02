@@ -78,6 +78,12 @@ public sealed class LrcEditLineVm : INotifyPropertyChanged
         set { if (_text != value) { _text = value; OnPropertyChanged(); } }
     }
 
+    /// <summary>Merged translation sub-line, carried through untouched so saves never drop it.</summary>
+    public string? Translation { get; set; }
+
+    /// <summary>Enhanced-LRC word timings, carried through so saves never drop them.</summary>
+    public IReadOnlyList<LrcWord>? Words { get; set; }
+
     private static bool TryParseTimeString(string s, out TimeSpan time)
     {
         time = TimeSpan.Zero;
@@ -233,7 +239,9 @@ public sealed partial class LyricsEditorWindow : Window
                 {
                     LineNo = no++,
                     Time = l.Time,
-                    Text = l.Text
+                    Text = l.Text,
+                    Translation = l.Translation,
+                    Words = l.Words
                 });
             }
             StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_LinesLoaded", "가사 {0}줄 로드됨", doc.Lines.Count);
@@ -357,6 +365,21 @@ public sealed partial class LyricsEditorWindow : Window
             var newTime = line.Time + shift;
             if (newTime < TimeSpan.Zero) newTime = TimeSpan.Zero;
             line.Time = newTime;
+
+            // Word timings ride along with the line — a re-timed karaoke line whose word tags
+            // stayed behind would light up words before the line even starts.
+            if (line.Words is { Count: > 0 })
+            {
+                var shifted = new List<LrcWord>(line.Words.Count);
+                foreach (var w in line.Words)
+                {
+                    var ws = w.Start + shift;
+                    if (ws < TimeSpan.Zero) ws = TimeSpan.Zero;
+                    if (ws < newTime) ws = newTime;
+                    shifted.Add(w with { Start = ws });
+                }
+                line.Words = shifted;
+            }
         }
         SyncToRawText();
     }
@@ -470,7 +493,9 @@ public sealed partial class LyricsEditorWindow : Window
                         {
                             LineNo = no++,
                             Time = l.Time,
-                            Text = l.Text
+                            Text = l.Text,
+                            Translation = l.Translation,
+                            Words = l.Words
                         });
                     }
                     ReindexLines();
@@ -509,7 +534,7 @@ public sealed partial class LyricsEditorWindow : Window
             Title = _track.Title,
             Artist = _track.Artist,
             Album = _track.Album,
-            Lines = _lines.Select(l => new LrcLine(l.Time, l.Text)).ToList()
+            Lines = _lines.Select(l => new LrcLine(l.Time, l.Text, l.Words, l.Translation)).ToList()
         };
         RawTextEditorBox.Text = LrcParser.Format(doc);
         _updatingFromSync = false;
@@ -531,7 +556,9 @@ public sealed partial class LyricsEditorWindow : Window
                 {
                     LineNo = no++,
                     Time = l.Time,
-                    Text = l.Text
+                    Text = l.Text,
+                    Translation = l.Translation,
+                    Words = l.Words
                 });
             }
         }
@@ -568,7 +595,7 @@ public sealed partial class LyricsEditorWindow : Window
             Title = _track.Title,
             Artist = _track.Artist,
             Album = _track.Album,
-            Lines = _lines.Select(l => new LrcLine(l.Time, l.Text)).ToList()
+            Lines = _lines.Select(l => new LrcLine(l.Time, l.Text, l.Words, l.Translation)).ToList()
         };
         return LrcParser.Format(doc);
     }
@@ -619,7 +646,7 @@ public sealed partial class LyricsEditorWindow : Window
                 Title = _track.Title,
                 Artist = _track.Artist,
                 Album = _track.Album,
-                Lines = _lines.Select(l => new LrcLine(l.Time, l.Text)).ToList()
+                Lines = _lines.Select(l => new LrcLine(l.Time, l.Text, l.Words, l.Translation)).ToList()
             };
 
             var content = LrcParser.Format(doc);

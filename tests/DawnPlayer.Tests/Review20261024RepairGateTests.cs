@@ -146,7 +146,7 @@ public sealed class Review20261024RepairGateTests : IDisposable
         Assert.NotNull(query);
 
         var track = MakeTrack("t", "T") with { LastPlayedUtcTicks = DateTime.UtcNow.Ticks };
-        Assert.Equal(1, query!.Apply(new[] { track }).Count());
+        Assert.Single(query!.Apply(new[] { track }));
     }
 
     // ---------------- album ReplayGain peak aggregation ----------------

@@ -23,7 +23,7 @@
 
             <StackPanel Spacing="3">
                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                    <FontIcon Glyph="&#xEC4F;" FontSize="{StaticResource FontTitle}" Foreground="{ThemeResource DawnAccentTextBrush}"/>
+                    <FontIcon Glyph="&#xE7E7;" FontSize="{StaticResource FontTitle}" Foreground="{ThemeResource DawnAccentTextBrush}"/>
                     <TextBlock x:Name="TrackHeaderTitle" x:Uid="LyricsEditor_TrackHeaderTitle" Text="곡 제목" FontSize="{StaticResource FontTitle}" FontWeight="SemiBold"
                                Foreground="{ThemeResource TextPrimaryBrush}"/>
                     <TextBlock x:Name="TrackHeaderArtist" x:Uid="LyricsEditor_TrackHeaderArtist" Text="— 아티스트" FontSize="14"

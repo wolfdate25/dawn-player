@@ -101,7 +101,22 @@ public sealed partial class LyricsPane : UserControl
 
     private void OnLyricsSettingsChanged()
     {
-        DispatcherQueue?.TryEnqueue(ApplyLyricsStyle);
+        DispatcherQueue?.TryEnqueue(() =>
+        {
+            if (AppServices.Settings == null) return;
+            var s = AppServices.Settings.Lyrics;
+
+            // Template-affecting switches need a rebuild from the retained document; a realized
+            // container's template is only picked at realization, so a style pass can't swap it.
+            if (_currentDoc is { HasLines: true } &&
+                (s.KaraokeHighlight != _lastKaraokeHighlight || s.ShowTranslation != _lastShowTranslation))
+            {
+                DisplayLyrics(_currentDoc, _currentSource);
+                return;
+            }
+
+            ApplyLyricsStyle();
+        });
     }
 
     private void OnExternalLyricsChanged(Track? track)
@@ -120,6 +135,8 @@ public sealed partial class LyricsPane : UserControl
     {
         _currentItem = item;
         _currentIndex = -1;
+        _currentDoc = null;
+        _currentSource = null;
         _lines.Clear();
         LinesList.ItemsSource = null;
 
@@ -188,20 +205,35 @@ public sealed partial class LyricsPane : UserControl
     }
 
     private int _loadGeneration;
+    private LyricsDocument? _currentDoc;
+    private string? _currentSource;
+    private bool _lastKaraokeHighlight;
+    private bool _lastShowTranslation;
 
     private void DisplayLyrics(LyricsDocument? doc, string? onlineSource)
     {
+        _currentDoc = doc is { HasLines: true } ? doc : null;
+        _currentSource = onlineSource;
         SetSourceBadge(onlineSource);
+
+        _lines.Clear();
+        _currentIndex = -1;
 
         if (doc != null && doc.HasLines)
         {
             var s = AppServices.Settings.Lyrics;
+            _lastKaraokeHighlight = s.KaraokeHighlight;
+            _lastShowTranslation = s.ShowTranslation;
             foreach (var line in doc.Lines)
             {
                 _lines.Add(new LrcLineVm
                 {
                     Time = line.Time,
                     Text = line.Text,
+                    Translation = line.Translation,
+                    Words = line.Words is { Count: > 0 } ? line.Words : null,
+                    ShowTranslationSubLine = s.ShowTranslation,
+                    UseKaraoke = s.KaraokeHighlight && line.Words is { Count: > 0 },
                     BaseFontSize = s.FontSize,
                     ActiveFontSize = s.ActiveFontSize,
                     EnableFocusEffect = s.EnableFocusEffect,
@@ -221,6 +253,7 @@ public sealed partial class LyricsPane : UserControl
 
         EmptyState.Visibility = Visibility.Collapsed;
         LinesList.Visibility = Visibility.Visible;
+        LinesList.ItemsSource = null;
         LinesList.ItemsSource = _lines;
 
         // Cached once per track instead of scanning every line on every timer tick.
@@ -245,6 +278,7 @@ public sealed partial class LyricsPane : UserControl
             l.CharacterSpacing = s.CharacterSpacing;
             l.LineHeight = s.LineHeight;
             l.TextAlignment = s.Alignment;
+            l.ShowTranslationSubLine = s.ShowTranslation;
             l.NotifyTypographyChanged();
         }
 
@@ -302,15 +336,47 @@ public sealed partial class LyricsPane : UserControl
         if (AppServices.Playback == null || _lines.Count == 0 || !_hasTimedLines) return;
         if (AppServices.Playback.State == PlaybackState.Stopped) return;
 
-        int targetIdx = LyricsScrollSynchronizer.FindActiveLineIndex(_lines, AppServices.Playback.Position, 0);
+        var position = AppServices.Playback.Position;
+        var previousIndex = _currentIndex;
+        int targetIdx = LyricsScrollSynchronizer.FindActiveLineIndex(_lines, position, 0);
         if (LyricsScrollSynchronizer.UpdateActiveLineState(_lines, ref _currentIndex, targetIdx))
         {
+            // Deactivate the previous line's karaoke residue: a recycled/dimmed line must not
+            // keep half-lit "sung" runs from its moment in the spotlight.
+            if (previousIndex >= 0 && previousIndex < _lines.Count)
+            {
+                _lines[previousIndex].ActiveWordIndex = -1;
+            }
+            SyncTimerInterval();
+
             // Highlight always follows; the scroll only follows when the user isn't reading.
             if (!_pointerOverLines && _currentIndex >= 0 && _currentIndex < _lines.Count)
             {
                 ScrollActiveLineToViewportRatio(_currentIndex, 0.33);
             }
         }
+
+        UpdateActiveWordIndex(position);
+    }
+
+    /// <summary>Word highlighting polls faster only while the active line actually has word timings.</summary>
+    private void SyncTimerInterval()
+    {
+        bool fast = _currentIndex >= 0 && _currentIndex < _lines.Count && _lines[_currentIndex].UseKaraoke;
+        var interval = TimeSpan.FromMilliseconds(fast ? 40 : 120);
+        if (_timer.Interval != interval) _timer.Interval = interval;
+    }
+
+    /// <summary>
+    /// The VM mirrors KaraokeTimeline's answer for the current position (invariant I7: the
+    /// highlighted word is the computed word, never a stale or hand-waved index).
+    /// </summary>
+    private void UpdateActiveWordIndex(TimeSpan position)
+    {
+        if (_currentIndex < 0 || _currentIndex >= _lines.Count) return;
+        var vm = _lines[_currentIndex];
+        if (!vm.UseKaraoke) return;
+        vm.ActiveWordIndex = KaraokeTimeline.WordIndexAt(vm.Words, position);
     }
 
     private void OnLineClick(object sender, ItemClickEventArgs e)

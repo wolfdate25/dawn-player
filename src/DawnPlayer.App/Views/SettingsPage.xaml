@@ -129,7 +129,7 @@
                     <!-- 5. Lyrics & Typography -->
                     <ListViewItem Tag="Lyrics">
                         <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                            <FontIcon Glyph="&#xEC4F;" FontSize="{StaticResource FontSubtitle}" Foreground="{ThemeResource TextSecondaryBrush}"/>
+                            <FontIcon Glyph="&#xE7E7;" FontSize="{StaticResource FontSubtitle}" Foreground="{ThemeResource TextSecondaryBrush}"/>
                             <TextBlock x:Uid="Settings_Nav_Lyrics" Text="가사 (Lyrics)" FontSize="13" FontWeight="SemiBold"/>
                         </StackPanel>
                     </ListViewItem>
@@ -1191,6 +1191,36 @@
                                     </StackPanel>
                                     <ToggleSwitch x:Uid="Settings_Lyrics_FocusDimming_A11yName" Grid.Column="1" HorizontalAlignment="Right"
                                                   IsOn="{x:Bind ViewModel.Lyrics.EnableFocusEffect, Mode=TwoWay}"/>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock x:Uid="Settings_Lyrics_ShowTranslation_Title" Text="번역 가사 함께 표시 (Translation Line)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_ShowTranslation_Desc" Text="가사에 번역·로마자 행이 포함되어 있을 때 원문 아래 작은 글씨로 함께 표시합니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch x:Uid="Settings_Lyrics_ShowTranslation_A11yName" Grid.Column="1" HorizontalAlignment="Right"
+                                                  IsOn="{x:Bind ViewModel.Lyrics.ShowTranslation, Mode=TwoWay}"/>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock x:Uid="Settings_Lyrics_Karaoke_Title" Text="단어별 가사 하이라이트 (Karaoke)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_Karaoke_Desc" Text="단어 타이밍이 있는 가사(enhanced LRC)에서 부른 단어를 순서대로 채워 나갑니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch x:Uid="Settings_Lyrics_Karaoke_A11yName" Grid.Column="1" HorizontalAlignment="Right"
+                                                  IsOn="{x:Bind ViewModel.Lyrics.KaraokeHighlight, Mode=TwoWay}"/>
                                 </Grid>
 
                                 <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>

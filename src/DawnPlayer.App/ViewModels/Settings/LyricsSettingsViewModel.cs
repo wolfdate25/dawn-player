@@ -248,6 +248,34 @@ public sealed class LyricsSettingsViewModel : ViewModelBase
         }
     }
 
+    public bool ShowTranslation
+    {
+        get => _settings.Lyrics.ShowTranslation;
+        set
+        {
+            if (_settings.Lyrics.ShowTranslation != value)
+            {
+                _settings.Lyrics.ShowTranslation = value;
+                OnPropertyChanged();
+                SaveAndNotify();
+            }
+        }
+    }
+
+    public bool KaraokeHighlight
+    {
+        get => _settings.Lyrics.KaraokeHighlight;
+        set
+        {
+            if (_settings.Lyrics.KaraokeHighlight != value)
+            {
+                _settings.Lyrics.KaraokeHighlight = value;
+                OnPropertyChanged();
+                SaveAndNotify();
+            }
+        }
+    }
+
     public string LrcPatternsText
     {
         get => _lrcPatternsText;

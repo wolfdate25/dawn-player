@@ -486,6 +486,12 @@
   <data name="Settings_Lyrics_LineHeight_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Line Height</value></data>
   <data name="Settings_Lyrics_Alignment_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Text Alignment</value></data>
   <data name="Settings_Lyrics_FocusDimming_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Focus Dimming Effect</value></data>
+  <data name="Settings_Lyrics_ShowTranslation_Title.Text" xml:space="preserve"><value>Show Translation Line</value></data>
+  <data name="Settings_Lyrics_ShowTranslation_Desc.Text" xml:space="preserve"><value>When lyrics include a translation or romanization line, show it in small text under the original.</value></data>
+  <data name="Settings_Lyrics_ShowTranslation_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Show Translation Line</value></data>
+  <data name="Settings_Lyrics_Karaoke_Title.Text" xml:space="preserve"><value>Word-by-word Karaoke Highlight</value></data>
+  <data name="Settings_Lyrics_Karaoke_Desc.Text" xml:space="preserve"><value>For lyrics with word timings (enhanced LRC), lights up each sung word in sequence.</value></data>
+  <data name="Settings_Lyrics_Karaoke_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Word-by-word Karaoke Highlight</value></data>
   <data name="Settings_Lyrics_Embedded_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Read Embedded Lyrics</value></data>
   <data name="Settings_Lyrics_LrcPattern_A11yName.AutomationProperties.Name" xml:space="preserve"><value>.lrc File Search Patterns</value></data>
   <data name="Settings_OnlineLyrics_SaveLoc_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Save Location</value></data>

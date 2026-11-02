@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using DawnPlayer.App.Localization;
+using DawnPlayer.Core.Lyrics;
 
 namespace DawnPlayer.App.Controls;
 
@@ -8,6 +9,12 @@ public sealed class LrcLineVm : INotifyPropertyChanged
 {
     public TimeSpan Time { get; init; }
     public string Text { get; init; } = "";
+
+    /// <summary>Merged translation/romaji sub-line text; null when the line has none.</summary>
+    public string? Translation { get; init; }
+
+    /// <summary>Enhanced-LRC word timings for the line; null when it has none.</summary>
+    public IReadOnlyList<LrcWord>? Words { get; init; }
 
     private bool _isCurrent;
     public bool IsCurrent
@@ -28,12 +35,67 @@ public sealed class LrcLineVm : INotifyPropertyChanged
 
     public bool IsActive => IsCurrent;
 
+    private bool _showTranslationSubLine;
+    /// <summary>Settings-driven switch (LyricsSettings.ShowTranslation); the pane keeps VMs in sync.</summary>
+    public bool ShowTranslationSubLine
+    {
+        get => _showTranslationSubLine;
+        set
+        {
+            if (_showTranslationSubLine != value)
+            {
+                _showTranslationSubLine = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(HasVisibleTranslation));
+            }
+        }
+    }
+
+    /// <summary>True when the sub-line should actually render (switch on AND translation present).</summary>
+    public bool HasVisibleTranslation => _showTranslationSubLine && !string.IsNullOrEmpty(Translation);
+
+    private bool _useKaraoke;
+    /// <summary>True when the pane wants the word-highlight template (words present ∧ setting on).</summary>
+    public bool UseKaraoke
+    {
+        get => _useKaraoke;
+        set
+        {
+            if (_useKaraoke != value)
+            {
+                _useKaraoke = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    private int _activeWordIndex = -1;
+    /// <summary>
+    /// Word the playback position is on, per KaraokeTimeline — the template only mirrors this
+    /// value (invariant I7: the reported word is the computed word).
+    /// </summary>
+    public int ActiveWordIndex
+    {
+        get => _activeWordIndex;
+        set
+        {
+            if (_activeWordIndex != value)
+            {
+                _activeWordIndex = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public double BaseFontSize { get; set; } = 13.5;
     public double ActiveFontSize { get; set; } = 16.5;
     public bool EnableFocusEffect { get; set; } = true;
 
     public double FontSize => IsCurrent ? ActiveFontSize : BaseFontSize;
     public double Opacity => IsCurrent ? 1.0 : (EnableFocusEffect ? 0.40 : 0.85);
+
+    /// <summary>Sub-line renders smaller than the base line and never above it.</summary>
+    public double TranslationFontSize => Math.Max(9.0, BaseFontSize * 0.85);
 
     public string FontFamily { get; set; } = "Segoe UI Variable, Malgun Gothic";
     public int CharacterSpacing { get; set; }
@@ -52,6 +114,7 @@ public sealed class LrcLineVm : INotifyPropertyChanged
         OnPropertyChanged(nameof(CharacterSpacing));
         OnPropertyChanged(nameof(LineHeight));
         OnPropertyChanged(nameof(TextAlignment));
+        OnPropertyChanged(nameof(TranslationFontSize));
     }
 }
 

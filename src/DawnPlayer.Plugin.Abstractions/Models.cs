@@ -50,6 +50,13 @@ public sealed record LyricsContent
     /// <summary>타임스탬프 없는 일반 가사</summary>
     public string? PlainText { get; init; }
 
+    /// <summary>
+    /// 선택: 번역 가사 LRC 텍스트 전체. 본문과 같은 줄 수일 필요는 없으며, 타임스탬프가 일치하는
+    /// 본문 행에 번역으로 병합된다. 비포지셔널 속성이라 이 속성을 모르는 기존 플러그인도 그대로
+    /// 동작한다.
+    /// </summary>
+    public string? TranslatedLrc { get; init; }
+
     /// <summary>둘 중 하나라도 비지 않았는지</summary>
     public bool HasContent => !string.IsNullOrWhiteSpace(SyncedLrc) || !string.IsNullOrWhiteSpace(PlainText);
 }

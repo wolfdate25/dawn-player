@@ -486,6 +486,12 @@
   <data name="Settings_Lyrics_LineHeight_A11yName.AutomationProperties.Name" xml:space="preserve"><value>行の高さ (Line Height)</value></data>
   <data name="Settings_Lyrics_Alignment_A11yName.AutomationProperties.Name" xml:space="preserve"><value>歌詞の配置方法</value></data>
   <data name="Settings_Lyrics_FocusDimming_A11yName.AutomationProperties.Name" xml:space="preserve"><value>歌詞フォーカス演出 (Focus Dimming)</value></data>
+  <data name="Settings_Lyrics_ShowTranslation_Title.Text" xml:space="preserve"><value>翻訳行を一緒に表示 (Translation Line)</value></data>
+  <data name="Settings_Lyrics_ShowTranslation_Desc.Text" xml:space="preserve"><value>歌詞に翻訳・ローマ字行が含まれる場合、原文の下に小さく表示します。</value></data>
+  <data name="Settings_Lyrics_ShowTranslation_A11yName.AutomationProperties.Name" xml:space="preserve"><value>翻訳行を一緒に表示 (Translation Line)</value></data>
+  <data name="Settings_Lyrics_Karaoke_Title.Text" xml:space="preserve"><value>単語ごとカラオケハイライト (Karaoke)</value></data>
+  <data name="Settings_Lyrics_Karaoke_Desc.Text" xml:space="preserve"><value>単語タイミングのある歌詞(enhanced LRC)で、歌われた単語を順に表示します。</value></data>
+  <data name="Settings_Lyrics_Karaoke_A11yName.AutomationProperties.Name" xml:space="preserve"><value>単語ごとカラオケハイライト (Karaoke)</value></data>
   <data name="Settings_Lyrics_Embedded_A11yName.AutomationProperties.Name" xml:space="preserve"><value>音源内蔵歌詞(Embedded Lyrics)の自動読み込み</value></data>
   <data name="Settings_Lyrics_LrcPattern_A11yName.AutomationProperties.Name" xml:space="preserve"><value>.lrc ファイル検索パターン</value></data>
   <data name="Settings_OnlineLyrics_SaveLoc_A11yName.AutomationProperties.Name" xml:space="preserve"><value>保存場所</value></data>

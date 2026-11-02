@@ -4,7 +4,16 @@ using System.Text.RegularExpressions;
 
 namespace DawnPlayer.Core.Lyrics;
 
-public sealed record LrcLine(TimeSpan Time, string Text);
+/// <summary>One word segment of an enhanced-LRC line: when it starts and the exact text run it owns.</summary>
+public sealed record LrcWord(TimeSpan Start, string Text);
+
+/// <summary>
+/// One lyric line. <paramref name="Words"/> carries enhanced-LRC word timings when present
+/// (Text is always the exact tag-stripped line text: prelude + concatenated word segments).
+/// <paramref name="Translation"/> is a second line written at the same timestamp — the dominant
+/// on-disk translation convention — merged at parse time; null when the line has none.
+/// </summary>
+public sealed record LrcLine(TimeSpan Time, string Text, IReadOnlyList<LrcWord>? Words = null, string? Translation = null);
 
 public sealed class LyricsDocument
 {
@@ -18,6 +27,20 @@ public sealed class LyricsDocument
     public IReadOnlyList<LrcLine> Lines { get; init; } = Array.Empty<LrcLine>();
 
     public bool HasLines => Lines.Count > 0;
+
+    /// <summary>True when any line carries enhanced-LRC word timings (drives karaoke rendering).</summary>
+    public bool HasWordTimings
+    {
+        get
+        {
+            var lines = Lines;
+            for (int i = 0; i < lines.Count; i++)
+            {
+                if (lines[i].Words is { Count: > 0 }) return true;
+            }
+            return false;
+        }
+    }
 
     /// <summary>Index of the line active at <paramref name="time"/> (-1 before the first line).</summary>
     public int LineIndexAt(TimeSpan time)
@@ -35,19 +58,23 @@ public sealed class LyricsDocument
 }
 
 /// <summary>Parser for .lrc files (standard timestamps, multiple timestamps per line,
-/// [offset:] tag, metadata tags, and enhanced word-level tags which are stripped).</summary>
+/// [offset:] tag, metadata tags, enhanced word-level tags, and duplicate-timestamp translation
+/// lines which are merged into the first line of the pair). Formatting a parsed document
+/// round-trips all of it losslessly.</summary>
 public static partial class LrcParser
 {
     [GeneratedRegex(@"\[(?:(?<hour>\d{1,2}):(?<min>\d{1,2}):(?<sec>\d{1,2})(?:[.:](?<frac>\d{1,3}))|(?<min>\d{1,3}):(?<sec>\d{1,2})(?:[.:](?<frac>\d{1,3}))?)\]")]
     private static partial Regex TimestampRegex();
 
-    private static readonly Regex WordTagRegex = new(@"<(?:(?:\d{1,2}:)?\d{1,3}:\d{1,2}(?:[.:]\d{1,3})?)>", RegexOptions.Compiled);
+    private static readonly Regex WordTagRegex = new(
+        @"<(?:(?<hour>\d{1,2}):)?(?<min>\d{1,3}):(?<sec>\d{1,2})(?:[.:](?<frac>\d{1,3}))?>",
+        RegexOptions.Compiled);
 
-    public static LyricsDocument Parse(string text, string? sourcePath = null)
+    public static LyricsDocument Parse(string text, string? sourcePath = null, bool pairTranslationLines = true)
     {
         string? title = null, artist = null, album = null, by = null;
         double offsetMs = 0;
-        var rawLines = new List<(TimeSpan t, string s)>();
+        var rawLines = new List<(TimeSpan t, string s, IReadOnlyList<LrcWord>? w)>();
 
         // Pass 1: Extract metadata and raw timestamped lines
         foreach (var rawLine in text.Split('\n'))
@@ -82,29 +109,16 @@ public static partial class LrcParser
                 continue;
             }
 
-            // strip all timestamp tags → text remainder
-            var textPart = TimestampRegex().Replace(line, "").Trim();
-            textPart = WordTagRegex.Replace(textPart, ""); // enhanced-lrc word tags
+            // strip all timestamp tags → text remainder, keeping word-level tags as segments
+            var stripped = TimestampRegex().Replace(line, "").Trim();
+            var lineTime = matches.Count > 0 && TryParseTimestampMatch(matches[0], out var first) ? first : TimeSpan.Zero;
+            var (textPart, words) = ExtractWordTimings(stripped, lineTime);
             if (textPart.Length == 0) textPart = "♪";
 
             foreach (Match m in matches)
             {
-                int hour = 0;
-                if (m.Groups["hour"].Success && int.TryParse(m.Groups["hour"].Value, CultureInfo.InvariantCulture, out int h))
-                {
-                    hour = h;
-                }
-
-                int min = int.Parse(m.Groups["min"].Value, CultureInfo.InvariantCulture);
-                int sec = int.Parse(m.Groups["sec"].Value, CultureInfo.InvariantCulture);
-                var fracStr = m.Groups["frac"].Value;
-                // frac digits: 1 → tenths, 2 → hundredths, 3 → ms
-                double frac = 0;
-                if (fracStr.Length > 0)
-                    frac = int.Parse(fracStr, CultureInfo.InvariantCulture) / Math.Pow(10, fracStr.Length);
-
-                var t = TimeSpan.FromSeconds(hour * 3600 + min * 60 + sec + frac);
-                rawLines.Add((t, textPart));
+                if (!TryParseTimestampMatch(m, out var t)) continue;
+                rawLines.Add((t, textPart, words));
             }
         }
 
@@ -131,21 +145,73 @@ public static partial class LrcParser
             }
         }
 
-        // Pass 2: Apply global offset uniformly to all lines and sort
-        var finalLines = new List<(TimeSpan t, string s)>(rawLines.Count);
+        // Pass 2: Apply global offset uniformly to all lines (and their word timings) and sort
+        var finalLines = new List<(TimeSpan t, string s, IReadOnlyList<LrcWord>? w, bool clamped)>(rawLines.Count);
         var offsetSpan = TimeSpan.FromMilliseconds(offsetMs);
 
-        foreach (var (rawTime, textPart) in rawLines)
+        foreach (var (rawTime, textPart, words) in rawLines)
         {
             // Positive [offset:] shifts lyrics earlier per the LRC convention.
             var t = rawTime - offsetSpan;
-            if (t < TimeSpan.Zero) t = TimeSpan.Zero;
-            finalLines.Add((t, textPart));
+            bool clamped = t < TimeSpan.Zero;
+            if (clamped) t = TimeSpan.Zero;
+
+            IReadOnlyList<LrcWord>? finalWords = null;
+            if (words is { Count: > 0 })
+            {
+                // The word times shift by the same uniform offset; the re-clamp per line keeps
+                // the invariant "words never precede their line" for duplicated timestamps too
+                // (a line copied to a later stamp highlights from that stamp, not from the past).
+                var clampedWords = new List<LrcWord>(words.Count);
+                foreach (var w in words)
+                {
+                    var ws = w.Start - offsetSpan;
+                    if (ws < TimeSpan.Zero) ws = TimeSpan.Zero;
+                    if (ws < t) ws = t;
+                    clampedWords.Add(w with { Start = ws });
+                }
+                finalWords = clampedWords;
+            }
+
+            finalLines.Add((t, textPart, finalWords, clamped));
         }
 
         // OrderBy is a documented stable sort: duplicate timestamps (duet lines, dual-timestamp
         // notation) keep their input order — List.Sort reordered them run to run.
         finalLines = finalLines.OrderBy(l => l.t).ToList();
+
+        var lines = new List<LrcLine>(finalLines.Count);
+        // Pairing needs a timeline: an all-zero "document" is unsynced text where duplicate
+        // adjacent lines are just more text, never a translation pair. Offset-clamp collisions
+        // (several lines pushed to zero) are artifacts, not translations, and are excluded too.
+        bool anyTimed = finalLines.Any(l => l.t > TimeSpan.Zero);
+        if (pairTranslationLines && anyTimed)
+        {
+            int i = 0;
+            while (i < finalLines.Count)
+            {
+                var cur = finalLines[i];
+                int j = i + 1;
+                while (j < finalLines.Count && finalLines[j].t == cur.t) j++;
+
+                if (j - i == 2 && TryMergeTranslation(cur, finalLines[i + 1], out var merged))
+                {
+                    lines.Add(merged);
+                    i += 2;
+                    continue;
+                }
+
+                for (int k = i; k < j; k++)
+                {
+                    lines.Add(new LrcLine(finalLines[k].t, finalLines[k].s, finalLines[k].w));
+                }
+                i = j;
+            }
+        }
+        else
+        {
+            lines.AddRange(finalLines.Select(l => new LrcLine(l.t, l.s, l.w)));
+        }
 
         return new LyricsDocument
         {
@@ -154,8 +220,92 @@ public static partial class LrcParser
             Album = album,
             By = by,
             SourcePath = sourcePath ?? "",
-            Lines = finalLines.Select(l => new LrcLine(l.t, l.s)).ToList()
+            Lines = lines
         };
+    }
+
+    /// <summary>
+    /// Strict translation-pair predicate (plan §10.3, I4): the candidate must be an un-timed
+    /// second line with a normalized-different text. Duet lines, repeated chorus (identical
+    /// text) and 3+ line groups all stay flat — an over-eager merge would corrupt real lyrics.
+    /// The "♪" instrumental placeholder is never a translation candidate or a translatable
+    /// original (a bare timestamp line decays to "♪", which would otherwise pair as one).
+    /// </summary>
+    private static bool TryMergeTranslation(
+        (TimeSpan t, string s, IReadOnlyList<LrcWord>? w, bool clamped) primary,
+        (TimeSpan t, string s, IReadOnlyList<LrcWord>? w, bool clamped) candidate,
+        out LrcLine merged)
+    {
+        merged = new LrcLine(primary.t, primary.s, primary.w);
+        if (primary.clamped || candidate.clamped) return false;
+        if (candidate.w is { Count: > 0 }) return false;
+        if (primary.s.Length == 0 || candidate.s.Length == 0) return false;
+        if (string.Equals(primary.s, "♪", StringComparison.Ordinal) ||
+            string.Equals(candidate.s, "♪", StringComparison.Ordinal)) return false;
+        if (string.Equals(NormalizeForPairing(primary.s), NormalizeForPairing(candidate.s), StringComparison.Ordinal)) return false;
+        merged = new LrcLine(primary.t, primary.s, primary.w, candidate.s);
+        return true;
+    }
+
+    internal static string NormalizeForPairing(string s) =>
+        string.Join(' ', s.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)).ToLowerInvariant();
+
+    /// <summary>
+    /// Splits enhanced-LRC word tags out of the timestamp-stripped line text. Returns the exact
+    /// tag-stripped text (prelude + concatenated segments — identical to a plain tag strip) and
+    /// the word list, or null when the line has no usable word tags. Word starts are clamped to
+    /// be non-decreasing and never precede the line time (invariant I2).
+    /// </summary>
+    private static (string CleanText, IReadOnlyList<LrcWord>? Words) ExtractWordTimings(string text, TimeSpan lineTime)
+    {
+        var matches = WordTagRegex.Matches(text);
+        if (matches.Count == 0) return (text, null);
+
+        var builder = new StringBuilder(text.Length);
+        var words = new List<LrcWord>(matches.Count);
+        int cursor = 0;
+        var prevStart = lineTime;
+
+        for (int i = 0; i < matches.Count; i++)
+        {
+            var m = matches[i];
+            builder.Append(text, cursor, m.Index - cursor);
+            cursor = m.Index + m.Length;
+
+            int segEnd = i + 1 < matches.Count ? matches[i + 1].Index : text.Length;
+            var segment = text[cursor..segEnd];
+            if (segment.Length == 0) continue;
+            if (!TryParseTimestampMatch(m, out var start)) continue;
+
+            if (start < prevStart) start = prevStart;
+            prevStart = start;
+            words.Add(new LrcWord(start, segment));
+        }
+        builder.Append(text, cursor, text.Length - cursor);
+
+        return (builder.ToString(), words.Count > 0 ? words : null);
+    }
+
+    private static bool TryParseTimestampMatch(Match m, out TimeSpan time)
+    {
+        time = TimeSpan.Zero;
+        int hour = 0;
+        if (m.Groups["hour"].Success && int.TryParse(m.Groups["hour"].Value, CultureInfo.InvariantCulture, out int h))
+        {
+            hour = h;
+        }
+
+        if (!int.TryParse(m.Groups["min"].Value, CultureInfo.InvariantCulture, out int min)) return false;
+        if (!int.TryParse(m.Groups["sec"].Value, CultureInfo.InvariantCulture, out int sec)) return false;
+
+        // frac digits: 1 → tenths, 2 → hundredths, 3 → ms
+        double frac = 0;
+        var fracStr = m.Groups["frac"].Value;
+        if (fracStr.Length > 0)
+            frac = int.Parse(fracStr, CultureInfo.InvariantCulture) / Math.Pow(10, fracStr.Length);
+
+        time = TimeSpan.FromSeconds(hour * 3600 + min * 60 + sec + frac);
+        return true;
     }
 
     public static string Format(LyricsDocument doc, double offsetMs = 0)
@@ -167,21 +317,78 @@ public static partial class LrcParser
         if (!string.IsNullOrWhiteSpace(doc.By)) sb.AppendLine(CultureInfo.InvariantCulture, $"[by:{doc.By.Trim()}]");
         if (Math.Abs(offsetMs) > 0.0001) sb.AppendLine(CultureInfo.InvariantCulture, $"[offset:{(long)Math.Round(offsetMs)}]");
 
+        // Unsynced documents (every line at zero) are written without timestamps; a translation
+        // then re-emits as the following text line, which parses back identically.
+        bool plainMode = doc.Lines.Count > 0 && doc.Lines.All(l => l.Time == TimeSpan.Zero);
+
         foreach (var line in doc.Lines)
         {
-            if (line.Time == TimeSpan.Zero && doc.Lines.All(l => l.Time == TimeSpan.Zero))
+            if (plainMode)
             {
                 sb.AppendLine(line.Text);
+                if (!string.IsNullOrEmpty(line.Translation)) sb.AppendLine(line.Translation);
+                continue;
             }
-            else
+
+            int min = (int)line.Time.TotalMinutes;
+            int sec = line.Time.Seconds;
+            int ms = line.Time.Milliseconds;
+            var stamp = string.Create(CultureInfo.InvariantCulture, $"[{min:D2}:{sec:D2}.{ms:D3}] ");
+
+            sb.Append(stamp);
+            AppendLineBody(sb, line);
+            sb.AppendLine();
+
+            if (!string.IsNullOrEmpty(line.Translation))
             {
-                int min = (int)line.Time.TotalMinutes;
-                int sec = line.Time.Seconds;
-                int ms = line.Time.Milliseconds;
-                sb.AppendLine(CultureInfo.InvariantCulture, $"[{min:D2}:{sec:D2}.{ms:D3}] {line.Text}");
+                sb.Append(stamp).AppendLine(line.Translation);
             }
         }
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// Writes a line body, re-emitting enhanced word tags when the line carries them. The stored
+    /// Text must be exactly prelude + concatenated word segments — verified by comparing the tail
+    /// of Text with the segments; a foreign construction (e.g. the editor re-typing the text of a
+    /// word-timed line) falls back to plain text rather than emitting a corrupt split.
+    /// </summary>
+    private static void AppendLineBody(StringBuilder sb, LrcLine line)
+    {
+        var words = line.Words;
+        if (words is not { Count: > 0 })
+        {
+            sb.Append(line.Text);
+            return;
+        }
+
+        int wordChars = 0;
+        var concat = new StringBuilder(words.Sum(w => w.Text.Length));
+        foreach (var w in words)
+        {
+            wordChars += w.Text.Length;
+            concat.Append(w.Text);
+        }
+        if (wordChars > line.Text.Length ||
+            !string.Equals(line.Text[^wordChars..], concat.ToString(), StringComparison.Ordinal))
+        {
+            sb.Append(line.Text);
+            return;
+        }
+
+        sb.Append(line.Text, 0, line.Text.Length - wordChars);
+        foreach (var w in words)
+        {
+            sb.Append('<').Append(FormatTimestamp(w.Start)).Append('>').Append(w.Text);
+        }
+    }
+
+    private static string FormatTimestamp(TimeSpan time)
+    {
+        int min = (int)time.TotalMinutes;
+        int sec = time.Seconds;
+        int ms = time.Milliseconds;
+        return string.Create(CultureInfo.InvariantCulture, $"{min:D2}:{sec:D2}.{ms:D3}");
     }
 
     public static void SaveToFile(string path, string lrcContent)
