@@ -3,7 +3,8 @@
     x:Class="DawnPlayer.App.Views.FullscreenNowPlayingWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:DawnPlayer.App.Views">
+    xmlns:local="using:DawnPlayer.App.Views"
+    xmlns:controls="using:DawnPlayer.App.Controls">
 
     <!-- U4 fullscreen Now Playing: immersive cover hero + waveform seek canvas + spectrum.
          Contrast note (skill glassmorphism risk:conditional): text and bars always sit on the
@@ -14,15 +15,16 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Cover hero (PT3-17: a cover-less track shows the same placeholder glyph as the
-             bar instead of a fully black screen) -->
-        <Grid Grid.Row="0">
+        <!-- Cover hero ↔ lyrics surface (§11): one Row-0 slot, the toggle decides which is
+             visible. A cover-less track shows the same placeholder glyph as the bar (PT3-17). -->
+        <Grid Grid.Row="0" x:Name="CoverArea">
             <FontIcon x:Name="CoverPlaceholder" Glyph="&#xE90B;" FontSize="56"
                       Foreground="{ThemeResource TextTertiaryBrush}"
                       HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
             <Image x:Name="CoverImage" Stretch="Uniform" Margin="48,32,48,8"
                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </Grid>
+        <controls:FullscreenLyricsView Grid.Row="0" x:Name="LyricsSurface" Visibility="Collapsed"/>
 
         <!-- Bottom info panel -->
         <Border Grid.Row="1" Background="{ThemeResource GlassFillBrush}"
@@ -110,6 +112,11 @@
                             Click="OnFsNextClick">
                         <FontIcon Glyph="&#xE76C;" FontSize="14" Foreground="{ThemeResource TextPrimaryBrush}"/>
                     </Button>
+                    <ToggleButton x:Uid="Fullscreen_LyricsToggle" x:Name="FsLyricsToggle"
+                                  Style="{StaticResource TransportToggleButton}"
+                                  Click="OnFsLyricsToggleClick">
+                        <FontIcon Glyph="&#xE7E7;" FontSize="14" Foreground="{ThemeResource TextPrimaryBrush}"/>
+                    </ToggleButton>
                 </StackPanel>
 
                 <!-- Visible exit hint (PT3-02): Escape used to be an undiscoverable hidden exit -->

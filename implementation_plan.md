@@ -2167,3 +2167,104 @@ DSF 8비트 거부, 절단 DSF 클램프·정상 종료, .lrc 원자 저장, M3U
 **부산물 상태**: 테스트 감시 폴더 dev 인스턴스 settings 원복 완료, 포터블 테스트 추출본 삭제.
 테스트 미디어(`%TEMP%\dawn-lyrics-verify` — 번역·카라오케 LRC+WAV 각 1쌍)는 H: 인스턴스 수동 확인용으로 보존.
 배포·태그는 사용자 지시 대기(§2).
+
+---
+
+## 11. 전체화면 Now Playing 가사 표시 (2026-11-03 계획 → 승인, 구현·게이트·육안 완료 — §11.6)
+
+> §10에서 범위 밖으로 보류했던 "전체화면 NowPlaying 창 가사"를 사용자 지시로 회수. §10의
+> 데이터·렌더 기반(LrcLineVm·KaraokeTextBlock·템플릿 셀렉터·설정 토글)을 재사용하고,
+> 가사 로드 우선순위·틱 로직이 두 번째 소비자를 맞아 사본 갈라짐 트리거(M5 추출 신호 3·4)를 만나므로
+> 공유 피드로 추출한다.
+
+### 11.1 문제 배경 및 진단
+
+**현황 (전수 확인 근거)**
+
+| 항목 | 현황 | 근거 |
+|---|---|---|
+| 전체화면 창 구성 | Row0 = 커버 히어로(Placeholder+Image), Row1 = 글래스 하단 패널(제목/아티스트·상태 행·파형 시크 72px·시간·스펙트럼 56px·트랜스포트) — **가사 표면 없음** | `FullscreenNowPlayingWindow.xaml:11-121` |
+| 프레임 루프 | 10Hz DispatcherQueueTimer(진행·스펙트럼·트랜스포트 미러). 창 비활성 시 정지, 재활성 시 재개 | `.xaml.cs:60-69` |
+| 키 처리 | Escape 닫기 + Space/←/→만 라이브 단축키 맵 경유 — `L` 미처리 | `.xaml.cs:142-164` |
+| 수명 모델 | 단일 라이브 인스턴스(`ShowOrActivate`), Closed에서 AppServices 이벤트 4종 해제 | `.xaml.cs:70-113` |
+| 가사 로직 위치 | 로드 우선순위(적용 override → 오프라인 → 세션 온라인)+VM 빌드+틱+스타일이 `LyricsPane`에만 존재 — 전체화면이 두 번째 소비자가 되는 순간 **사본 갈라짐** | `LyricsPane.xaml.cs:119-330` |
+
+### 11.2 설계 및 파일 수준 변경점
+
+**배치 결정**: 커버 히어로 **↔ 가사 표면 토글**(Row0 내용 교체). 좌우 분할은 폐기 — 넓은 화면에서
+커버 히어로가 훼손되고 하단 패널과 경쟁한다. 토글은 ①트랜스포트 행 E7E7 토글 버튼 ②`L` 키(전체화면
+한정 하드코딩 — 기존 `L lyrics` 커맨드는 MainWindow 대상이라 공유 불가, 계획서에 명시). 상태는
+세션 한정(창을 닫으면 커버로 복귀), 설정 저장 없음. 기본은 커버(기존 경험 불변).
+
+#### 1) 공유 피드 추출 (App)
+
+| 파일 | 변경 |
+|---|---|
+| `Controls/LyricsFeed.cs` (신규) | 두 창이 먹는 가사 엔진: ①`LoadAsync(track)` — 우선순위(적용 override → 오프라인 LyricsFinder → 세션 온라인) 해소 + 소스 배지 문자열 + generation 가드 ②`BuildLines(doc, settings)` — LrcLineVm 목록 생성(Translation·Words·UseKaraoke·배지) ③`Tick(lines, ref index, position)` — 행 인덱스 갱신 + 단어 인덱스 미러 + 적응형 틱 간격 판정(120↔40ms) ④`ApplyStyle(lines, settings)` — 타이포·번역 토글 재적용. 순수 로직(UI 없음)으로 Tests에서 헤드리스 검증 |
+| `Controls/LyricsPane.xaml.cs` (리팩터) | 위 4 책임을 LyricsFeed 위임으로 교체 — **외부 동작 불변**(청크·이벤트·스크롤·편집기/검색 진입 유지). 헤더·336px 폭·도구 버튼 등 크롬은 그대로 |
+
+#### 2) 전체화면 표면 (App)
+
+| 파일 | 변경 |
+|---|---|
+| `Controls/FullscreenLyricsView.xaml(.cs)` (신규) | ListView 기반 가사 표면(가상화+템플릿 셀렉터 재사용): 전체화면 스케일 템플릿 2종(일반/카라오케)+번역 서브행. **스케일은 설정 파생** — base=`clamp(FontSize×1.6, 18, 44)`, active=`clamp(ActiveFontSize×1.5, 24, 56)`, translation=base×0.8, lineheight 동일 배율(메인 창 A-/A+가 비례 반영). 자동 중앙 스크롤(0.38 비율), pointer-over 스크롤 보류(PT3-04 규약 계승), 행 클릭 시크, 빈 상태(아이콘+안내 문구, 버튼 없음 — 전체화면 미니멀). 소스 배지는 미표시(크롬 최소화) |
+| `Views/FullscreenNowPlayingWindow.xaml(.cs)` | ①Row0에 FullscreenLyricsView 추가(커버 Grid와 Visibility 스왑 — MotionHelper 페이드, MotionService 게이트·reduced-motion 즉시 전환) ②트랜스포트 행에 E7E7 ToggleButton(TransportButton 스타일, x:Uid 자동화 이름 — U5 규칙) ③`OnKeyDown`에 `L` 토글 추가 ④가사 전용 적응형 DispatcherQueueTimer(120↔40ms) — 기존 10Hz 프레임 루프와 분리(단어 전이 100ms 지연 방지), Activated 비활성 시 같이 정지 ⑤Closed에서 LyricsChanged·LyricsSettingsChanged·LyricsFeed 이벤트 해제(기존 4종에 추가) ⑥트랙 교체 시 feed 재로드(기존 LoadTrack에 위임) |
+| `Strings/{ko-KR,en-US,ja-JP}` resw | 토글 자동화 이름·툴팁, 빈 상태 문구 키 추가(3개 국어) |
+| `tests/DawnPlayer.Tests.csproj` | `LyricsFeed.cs` Compile-Include-Link 추가(§5 규약). FullscreenLyricsView는 WinUI 의존이라 미링크 — 테스트는 LyricsFeed·기존 동기화 수학 중심 |
+
+**범위 밖 (명시)**: 가사 표시 상태 저장(설정·세션 복원), A-/A+·편집기·검색 진입 버튼(전체화면 미니멀 — 메인 창 사용), 소스 배지, 3행 그룹 휴리스틱(§10 폐기 유지), 전체화면 내 온라인 자동 fetch 트리거 변경 없음(기존 AppServices 자동 fetch가 그대로 흐른다).
+
+### 11.3 결함 트리 및 불변식
+
+| 결함 후보 | 해결 전략 |
+|---|---|
+| 이중 타이머(10Hz 프레임 + 가사 틱) 충돌 | 가사 타이머는 별도 인스턴스, Activated 비활성에서 같이 정지 — 프레임 루프는 건드리지 않음 |
+| 창 비활성→재활성 후 가사 인덱스 뒤처짐 | 틱을 position에서 매번 재계산(상태 없음) — 재활성 첫 틱에 즉시 수렴 |
+| 닫힌 창의 이벤트 리크 | Closed에서 feed·LyricsChanged·LyricsSettingsChanged 해제(기존 Closed 패턴 확장) |
+| 커버↔가사 전환 중 트랙 교체 | feed generation 가드 + 전환 애니메이션은 Visibility 스왑이 진실 원천(애니메이션이 상태를 만들지 않음) |
+| `L` 키가 다른 입력과 충돌 | 전체화면 창에는 텍스트 입력이 없음 — OnKeyDown에서 직접 처리, Space/화살표 기존 맵 경로 불변 |
+| 큰 글꼴+번역 2행에서 스크롤 측정 오차 | 컨테이너 TransformToVisual 측정 패턴(§10 계승), 미실현 컨테이너 null 가드 |
+| 스트림(라디오) duration 0 | 가사는 트랙 경로 기반 — 스트림은 빈 상태 또는 비동기 문서만, 시크 시도 없음 |
+| LyricsPane 리팩터 회귀 | 외부 동작 불변 원칙 + 기존 가사 스위트 전수 재실행 |
+| SMTC·재생 비간섭 | 전체화면은 순수 뷰(기존 원칙) — 가사도 읽기 전용, Seek만 기존 OnLineClick 경로 |
+
+**불변식**: §10 I1~I8 전부 계승(피드가 같은 VM·틱을 쓰므로 자동 적용). 신규 **I9** 전체화면 가사 틱은
+언제나 `KaraokeTimeline`·`FindActiveLineIndex`의 계산값을 미러한다(보고 ≠ 계산 금지, I7의 전체화면
+확장). **I10** 가사 타이머는 창 비활성·닫힘에서 반드시 정지한다(고아 타이머 금지).
+
+### 11.4 선설계 테스트 (코드보다 먼저)
+
+| 테스트 클래스 | 실패 시나리오 |
+|---|---|
+| `LyricsFeedTests` | 우선순위(override>오프라인>세션)·generation 폐기(교체 트랙 결과 무시)·VM 빌드(Translation/Words/UseKaraoke·설정 반영)·틱(행+단어 인덱스 미러·적응 간격 판정)·배지 문자열(동기/비동기)·빈 문서 |
+| 기존 스위트 회귀 | LyricsPane 리팩터 후 가사·타이포그래피·동기화 테스트 전수 — 동작 불변 증명 |
+
+### 11.5 실행 순서 및 검증 게이트
+
+1. **F-L1** LyricsFeed 추출+LyricsPane 위임 리팩터+LyricsFeedTests → 2. **F-L2**
+   FullscreenLyricsView+토글·L키·타이머 수명 → 3. **F-L3** resw 3종+CUA 육안(번역·카라오케·전환
+   페이드·L키·빈 상태·재활성 수렴).
+- **완료 게이트**: 콜드 리빌드 0경고 0오류 + 전체 스위트 1회 전수 + CUA 실행 육안.
+- 사용자 가시 기능 → 마이너 bump 대상, 배포·태그는 사용자 지시까지 보류(§2).
+
+### 11.6 실행 기록 (2026-11-03)
+
+**구현 내역**: 계획 §11.2 그대로 — `LyricsFeed`(신규, ILyricsOnlineService 기반), `LyricsPane`
+위임 리팩터(외부 동작 불변), `FullscreenLyricsView`(신규 — 스케일 ×1.6/×1.5, 중앙비 0.42),
+전체화면 창 통합(Row0 스왑·E7E7 토글·`L` 키·가사 전용 타이머·Activated/Closed 수명), resw 3종
+(토글·빈 상태·종료 힌트에 `L: 가사` 추가). 계획 대비 조정: 피드 의존을 Core `OnlineLyricsService`
+대신 App `ILyricsOnlineService`로(Tests에 이미 링크된 인터페이스 — 스텁 테스트 가능), 전체화면
+스케일 클램프는 불필요(설정 범위×스케일이 자연 범위)로 생략.
+
+**선설계 테스트**: `LyricsFeedTests` 13건(우선순위·배지·VM 빌드·토글 소비·틱 미러·스타일).
+
+**검증 게이트 (2026-11-03 달성)**
+- 콜드 리빌드: 1차 WMC 과도 6경고(CS 오류 없음) → 2차 **0경고 0오류**(§5 문서화 패턴).
+- 전체 스위트 1회 전수 **2,416 / 2,416 100% 통과**.
+- 가사 관련 필터 184/184(피드 신규 13 + 기존 회귀 전부).
+
+**실행 육안 (CUA — 격리 데이터 인스턴스)**: 번역 6쌍 파일 전 행 원문+한국어 서브행 렌더, 활성 행
+액센트+볼드 강조가 재생 위치와 정확히 일치(24s=5행 구간), 자동 중앙 배치, 비활성 행 디밍, 토글
+버튼 동작, 종료 힌트에 L 표기. **단어 카라오케 전체화면 캡처는 사용자 지시로 생략**(사이드 패널에서
+검증된 KaraokeTextBlock·VM 경로의 재사용이므로 커버리지 유지). `L` 키는 토글 버튼과 동일
+`ToggleLyricsSurface()` 경로로 CUA 물리입력 제약상 미직접 검증.

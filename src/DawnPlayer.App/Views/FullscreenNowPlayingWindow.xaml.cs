@@ -36,6 +36,7 @@ public sealed partial class FullscreenNowPlayingWindow : Window
     private double _dragFraction;
     private WaveEnvelope? _envelope;   // peak + RMS scan buckets for the current track
     private int _generation;
+    private bool _lyricsVisible;
 
     public FullscreenNowPlayingWindow()
     {
@@ -61,15 +62,24 @@ public sealed partial class FullscreenNowPlayingWindow : Window
         _timer.Interval = TimeSpan.FromSeconds(FrameSeconds);
         _timer.Tick += (_, _) => OnFrame();
 
-        // Deactivation pauses the frame pump; nothing else needs to pause.
+        // Deactivation pauses the frame pump and the lyrics clock; nothing else needs to pause.
         Activated += (_, e) =>
         {
-            if (e.WindowActivationState == WindowActivationState.Deactivated) _timer.Stop();
-            else _timer.Start();
+            if (e.WindowActivationState == WindowActivationState.Deactivated)
+            {
+                _timer.Stop();
+                LyricsSurface.PauseClock();
+            }
+            else
+            {
+                _timer.Start();
+                LyricsSurface.ResumeClock();
+            }
         };
         Closed += (_, _) =>
         {
             _timer.Stop();
+            LyricsSurface.Detach();
             AppServices.CurrentTrackChanged -= OnTrackChanged;
             AppServices.LiveStreamTitleChanged -= OnLiveStreamTitle;
             AppServices.PlaybackStateChanged -= OnPlaybackStateChanged;
@@ -160,6 +170,12 @@ public sealed partial class FullscreenNowPlayingWindow : Window
                     e.Handled = true;
                 }
                 break;
+            case Windows.System.VirtualKey.L:
+                // Fullscreen-local lyrics toggle — the app's "L lyrics" command targets the
+                // main window pane, so the shortcut map can't serve this surface.
+                ToggleLyricsSurface();
+                e.Handled = true;
+                break;
         }
     }
 
@@ -179,6 +195,41 @@ public sealed partial class FullscreenNowPlayingWindow : Window
     private void OnFsPreviousClick(object sender, RoutedEventArgs e) => _ = AppServices.Playback?.PreviousAsync();
     private void OnFsNextClick(object sender, RoutedEventArgs e) => _ = AppServices.Playback?.NextAsync();
     private void OnFsPlayPauseClick(object sender, RoutedEventArgs e) => AppServices.Playback?.PlayPause();
+
+    // ---------- lyrics surface toggle (§11) ----------
+
+    private void OnFsLyricsToggleClick(object sender, RoutedEventArgs e)
+    {
+        _lyricsVisible = FsLyricsToggle.IsChecked == true;
+        ApplyLyricsVisibility();
+    }
+
+    private void ToggleLyricsSurface()
+    {
+        _lyricsVisible = !_lyricsVisible;
+        FsLyricsToggle.IsChecked = _lyricsVisible;
+        ApplyLyricsVisibility();
+    }
+
+    /// <summary>Swaps the Row-0 slot between the cover hero and the lyrics surface. The
+    /// visibility swap is the state — the fade is decoration only (MotionHelper already lands
+    /// on the final state when motion is off).</summary>
+    private void ApplyLyricsVisibility()
+    {
+        bool motion = AppServices.Motion?.MotionEnabled ?? false;
+        if (_lyricsVisible)
+        {
+            CoverArea.Visibility = Visibility.Collapsed;
+            LyricsSurface.Visibility = Visibility.Visible;
+            Helpers.MotionHelper.FadeIn(LyricsSurface, motion);
+        }
+        else
+        {
+            LyricsSurface.Visibility = Visibility.Collapsed;
+            CoverArea.Visibility = Visibility.Visible;
+            Helpers.MotionHelper.FadeIn(CoverArea, motion);
+        }
+    }
 
     /// <summary>Mirrors shuffle/repeat/A-B state every frame — cheap reads, and WinUI no-ops
     /// when a value is unchanged (PT3-10).</summary>
@@ -258,7 +309,11 @@ public sealed partial class FullscreenNowPlayingWindow : Window
 
     // ---------- track + waveform ----------
 
-    private void OnTrackChanged(PlaylistItem? item) => DispatcherQueue.TryEnqueue(() => LoadTrack(item));
+    private void OnTrackChanged(PlaylistItem? item) => DispatcherQueue.TryEnqueue(() =>
+    {
+        LoadTrack(item);
+        LyricsSurface.OnTrackChanged(item);
+    });
 
     /// <summary>Already on the UI thread via the AppServices relay; guards against a metadata
     /// racing a track change the same way the bar does.</summary>

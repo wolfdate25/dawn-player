@@ -286,7 +286,11 @@
   <data name="LyricsEditor_SaveBtn.AutomationProperties.Name" xml:space="preserve"><value>LRCファイルとして保存</value></data>
   <data name="LyricsEditor_SaveBtnText.Text" xml:space="preserve"><value>LRCファイルとして保存</value></data>
   <data name="LyricsEditor_UnsavedTitle" xml:space="preserve"><value>未保存の変更</value></data>
-  <data name="Fullscreen_ExitHint.Text" xml:space="preserve"><value>Esc: 閉じる · Space: 再生/一時停止 · ←/→: 曲の移動</value></data>
+  <data name="Fullscreen_ExitHint.Text" xml:space="preserve"><value>Esc: 閉じる · Space: 再生/一時停止 · ←/→: 曲の移動 · L: 歌詞</value></data>
+  <data name="Fullscreen_LyricsToggle.AutomationProperties.Name" xml:space="preserve"><value>歌詞表示</value></data>
+  <data name="Fullscreen_LyricsToggle.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>歌詞表示</value></data>
+  <data name="Fullscreen_Lyrics_EmptyTitle.Text" xml:space="preserve"><value>歌詞なし</value></data>
+  <data name="Fullscreen_Lyrics_EmptyDesc.Text" xml:space="preserve"><value>このトラックに表示する歌詞がありません。メイン画面でオンライン歌詞を検索できます。</value></data>
   <data name="Fullscreen_Buffering.Text" xml:space="preserve"><value>バッファリング中…</value></data>
   <data name="LyricsEditor_UnsavedMessage" xml:space="preserve"><value>保存されていない歌詞の編集があります。破棄して閉じますか？</value></data>
   <data name="LyricsEditor_UnsavedDiscard" xml:space="preserve"><value>破棄して閉じる</value></data>

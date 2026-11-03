@@ -44,6 +44,7 @@ public sealed class IsCurrentToFontWeightConverter : IValueConverter
 public sealed partial class LyricsPane : UserControl
 {
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(120) };
+    private readonly LyricsFeed _feed;
     private readonly List<LrcLineVm> _lines = new();
     private int _currentIndex = -1;
     private PlaylistItem? _currentItem;
@@ -52,6 +53,7 @@ public sealed partial class LyricsPane : UserControl
     public LyricsPane()
     {
         InitializeComponent();
+        _feed = new LyricsFeed(AppServices.LyricsOnline, () => AppServices.Settings);
         _timer.Tick += (_, _) => OnTimer();
 
         // PT3-04: auto-scroll must not fight the reader — while the pointer rests over the
@@ -104,12 +106,10 @@ public sealed partial class LyricsPane : UserControl
         DispatcherQueue?.TryEnqueue(() =>
         {
             if (AppServices.Settings == null) return;
-            var s = AppServices.Settings.Lyrics;
 
-            // Template-affecting switches need a rebuild from the retained document; a realized
-            // container's template is only picked at realization, so a style pass can't swap it.
-            if (_currentDoc is { HasLines: true } &&
-                (s.KaraokeHighlight != _lastKaraokeHighlight || s.ShowTranslation != _lastShowTranslation))
+            // Template-affecting switches (karaoke/translation) need a rebuild from the retained
+            // document; a realized container's template is only picked at realization.
+            if (_currentDoc is { HasLines: true } && _feed.ConsumeToggleChange(AppServices.Settings))
             {
                 DisplayLyrics(_currentDoc, _currentSource);
                 return;
@@ -154,13 +154,10 @@ public sealed partial class LyricsPane : UserControl
         // An explicit search-window pick outranks everything (see ApplyResult): without this,
         // Apply re-showed the stale offline document the user opened search to replace. The
         // in-memory caches are instant, so they stay synchronous.
-        var applied = AppServices.LyricsOnline?.GetAppliedResult(track.Path);
-        if (applied is { Document.HasLines: true })
+        var applied = _feed.PeekAppliedOverride(track.Path);
+        if (applied != null)
         {
-            DisplayLyrics(applied.Document,
-                applied.IsSynced
-                    ? AppStrings.Format("LyricsPane_SourceOnlineFormat", "온라인 · {0}", applied.PluginName)
-                    : AppStrings.Format("LyricsPane_SourceOnlineUnsyncedFormat", "온라인 · {0} · 비동기", applied.PluginName));
+            DisplayLyrics(applied.Document, applied.Source);
             return;
         }
 
@@ -171,19 +168,23 @@ public sealed partial class LyricsPane : UserControl
         {
             try
             {
-                var doc = LyricsFinder.LoadLyrics(track, settings);
+                var loaded = settings == null ? null : _feed.LoadOffline(track, settings);
+                LyricsDocument? doc = null;
                 string? source = null;
-                // Online fallback keeps the original precedence (offline file > session cache);
-                // the badge is decided here on the worker so the UI thread never re-probes.
-                if (doc is not { HasLines: true })
+                if (loaded != null)
                 {
-                    var online = AppServices.LyricsOnline?.GetSessionLyrics(track.Path);
-                    if (online is { Document.HasLines: true })
+                    doc = loaded.Document;
+                    source = loaded.Source;
+                }
+                else
+                {
+                    // Online fallback keeps the original precedence (offline file > session
+                    // cache); the badge is decided on the worker so the UI never re-probes.
+                    var session = _feed.PeekSessionLyrics(track.Path);
+                    if (session != null)
                     {
-                        doc = online.Document;
-                        source = online.IsSynced
-                            ? AppStrings.Format("LyricsPane_SourceOnlineFormat", "온라인 · {0}", online.PluginName)
-                            : AppStrings.Format("LyricsPane_SourceOnlineUnsyncedFormat", "온라인 · {0} · 비동기", online.PluginName);
+                        doc = session.Document;
+                        source = session.Source;
                     }
                 }
 
@@ -207,8 +208,6 @@ public sealed partial class LyricsPane : UserControl
     private int _loadGeneration;
     private LyricsDocument? _currentDoc;
     private string? _currentSource;
-    private bool _lastKaraokeHighlight;
-    private bool _lastShowTranslation;
 
     private void DisplayLyrics(LyricsDocument? doc, string? onlineSource)
     {
@@ -218,32 +217,7 @@ public sealed partial class LyricsPane : UserControl
 
         _lines.Clear();
         _currentIndex = -1;
-
-        if (doc != null && doc.HasLines)
-        {
-            var s = AppServices.Settings.Lyrics;
-            _lastKaraokeHighlight = s.KaraokeHighlight;
-            _lastShowTranslation = s.ShowTranslation;
-            foreach (var line in doc.Lines)
-            {
-                _lines.Add(new LrcLineVm
-                {
-                    Time = line.Time,
-                    Text = line.Text,
-                    Translation = line.Translation,
-                    Words = line.Words is { Count: > 0 } ? line.Words : null,
-                    ShowTranslationSubLine = s.ShowTranslation,
-                    UseKaraoke = s.KaraokeHighlight && line.Words is { Count: > 0 },
-                    BaseFontSize = s.FontSize,
-                    ActiveFontSize = s.ActiveFontSize,
-                    EnableFocusEffect = s.EnableFocusEffect,
-                    FontFamily = s.FontFamily,
-                    CharacterSpacing = s.CharacterSpacing,
-                    LineHeight = s.LineHeight,
-                    TextAlignment = s.Alignment
-                });
-            }
-        }
+        _lines.AddRange(_feed.BuildLines(doc));
 
         if (_lines.Count == 0)
         {
@@ -267,20 +241,7 @@ public sealed partial class LyricsPane : UserControl
     private void ApplyLyricsStyle()
     {
         if (AppServices.Settings == null) return;
-        var s = AppServices.Settings.Lyrics;
-
-        foreach (var l in _lines)
-        {
-            l.BaseFontSize = s.FontSize;
-            l.ActiveFontSize = s.ActiveFontSize;
-            l.EnableFocusEffect = s.EnableFocusEffect;
-            l.FontFamily = s.FontFamily;
-            l.CharacterSpacing = s.CharacterSpacing;
-            l.LineHeight = s.LineHeight;
-            l.TextAlignment = s.Alignment;
-            l.ShowTranslationSubLine = s.ShowTranslation;
-            l.NotifyTypographyChanged();
-        }
+        _feed.ApplyStyle(_lines);
 
         if (_currentIndex >= 0 && _currentIndex < _lines.Count)
         {
@@ -336,18 +297,12 @@ public sealed partial class LyricsPane : UserControl
         if (AppServices.Playback == null || _lines.Count == 0 || !_hasTimedLines) return;
         if (AppServices.Playback.State == PlaybackState.Stopped) return;
 
-        var position = AppServices.Playback.Position;
-        var previousIndex = _currentIndex;
-        int targetIdx = LyricsScrollSynchronizer.FindActiveLineIndex(_lines, position, 0);
-        if (LyricsScrollSynchronizer.UpdateActiveLineState(_lines, ref _currentIndex, targetIdx))
+        var tick = _feed.Tick(_lines, _currentIndex, AppServices.Playback.Position);
+        _currentIndex = tick.Index;
+
+        if (tick.Changed)
         {
-            // Deactivate the previous line's karaoke residue: a recycled/dimmed line must not
-            // keep half-lit "sung" runs from its moment in the spotlight.
-            if (previousIndex >= 0 && previousIndex < _lines.Count)
-            {
-                _lines[previousIndex].ActiveWordIndex = -1;
-            }
-            SyncTimerInterval();
+            SyncTimerInterval(tick.Fast);
 
             // Highlight always follows; the scroll only follows when the user isn't reading.
             if (!_pointerOverLines && _currentIndex >= 0 && _currentIndex < _lines.Count)
@@ -355,28 +310,13 @@ public sealed partial class LyricsPane : UserControl
                 ScrollActiveLineToViewportRatio(_currentIndex, 0.33);
             }
         }
-
-        UpdateActiveWordIndex(position);
     }
 
     /// <summary>Word highlighting polls faster only while the active line actually has word timings.</summary>
-    private void SyncTimerInterval()
+    private void SyncTimerInterval(bool fast)
     {
-        bool fast = _currentIndex >= 0 && _currentIndex < _lines.Count && _lines[_currentIndex].UseKaraoke;
         var interval = TimeSpan.FromMilliseconds(fast ? 40 : 120);
         if (_timer.Interval != interval) _timer.Interval = interval;
-    }
-
-    /// <summary>
-    /// The VM mirrors KaraokeTimeline's answer for the current position (invariant I7: the
-    /// highlighted word is the computed word, never a stale or hand-waved index).
-    /// </summary>
-    private void UpdateActiveWordIndex(TimeSpan position)
-    {
-        if (_currentIndex < 0 || _currentIndex >= _lines.Count) return;
-        var vm = _lines[_currentIndex];
-        if (!vm.UseKaraoke) return;
-        vm.ActiveWordIndex = KaraokeTimeline.WordIndexAt(vm.Words, position);
     }
 
     private void OnLineClick(object sender, ItemClickEventArgs e)

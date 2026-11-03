@@ -286,7 +286,11 @@
   <data name="LyricsEditor_SaveBtn.AutomationProperties.Name" xml:space="preserve"><value>LRC 파일로 저장</value></data>
   <data name="LyricsEditor_SaveBtnText.Text" xml:space="preserve"><value>LRC 파일로 저장</value></data>
   <data name="LyricsEditor_UnsavedTitle" xml:space="preserve"><value>저장하지 않은 변경</value></data>
-  <data name="Fullscreen_ExitHint.Text" xml:space="preserve"><value>Esc: 닫기 · Space: 재생/일시정지 · ←/→: 트랙 이동</value></data>
+  <data name="Fullscreen_ExitHint.Text" xml:space="preserve"><value>Esc: 닫기 · Space: 재생/일시정지 · ←/→: 트랙 이동 · L: 가사</value></data>
+  <data name="Fullscreen_LyricsToggle.AutomationProperties.Name" xml:space="preserve"><value>가사 표시</value></data>
+  <data name="Fullscreen_LyricsToggle.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>가사 표시</value></data>
+  <data name="Fullscreen_Lyrics_EmptyTitle.Text" xml:space="preserve"><value>가사 없음</value></data>
+  <data name="Fullscreen_Lyrics_EmptyDesc.Text" xml:space="preserve"><value>이 트랙에는 표시할 가사가 없습니다. 메인 창에서 온라인 가사를 찾아보세요.</value></data>
   <data name="Fullscreen_Buffering.Text" xml:space="preserve"><value>버퍼링…</value></data>
   <data name="LyricsEditor_UnsavedMessage" xml:space="preserve"><value>저장하지 않은 가사 편집이 있습니다. 변경 내용을 버리고 닫을까요?</value></data>
   <data name="LyricsEditor_UnsavedDiscard" xml:space="preserve"><value>버리고 닫기</value></data>

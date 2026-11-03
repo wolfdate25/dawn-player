@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="DawnPlayer.App.Controls.FullscreenLyricsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:DawnPlayer.App.Controls"
+    xmlns:svc="using:DawnPlayer.App.Services">
+
+    <UserControl.Resources>
+        <local:IsCurrentToBrushConverter x:Key="CurrentBrush"/>
+        <local:IsCurrentToFontWeightConverter x:Key="CurrentFontWeight"/>
+        <svc:BoolToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Same VM contract as the side pane; the fullscreen scale arrives through the VM
+             properties, so the templates stay byte-identical in shape. -->
+        <DataTemplate x:Key="NormalLineTemplate" x:DataType="local:LrcLineVm">
+            <StackPanel>
+                <TextBlock Text="{x:Bind Text}" TextWrapping="Wrap"
+                           HorizontalAlignment="Stretch"
+                           Foreground="{x:Bind IsCurrent, Converter={StaticResource CurrentBrush}, Mode=OneWay}"
+                           FontWeight="{x:Bind IsCurrent, Converter={StaticResource CurrentFontWeight}, Mode=OneWay}"
+                           Opacity="{x:Bind Opacity, Mode=OneWay}"
+                           FontSize="{x:Bind FontSize, Mode=OneWay}"
+                           FontFamily="{x:Bind FontFamily, Mode=OneWay}"
+                           CharacterSpacing="{x:Bind CharacterSpacing, Mode=OneWay}"
+                           LineHeight="{x:Bind LineHeight, Mode=OneWay}"
+                           LineStackingStrategy="BlockLineHeight"
+                           TextAlignment="{x:Bind TextAlignment, Mode=OneWay}"/>
+                <TextBlock Text="{x:Bind Translation}" TextWrapping="Wrap"
+                           HorizontalAlignment="Stretch"
+                           Visibility="{x:Bind HasVisibleTranslation, Converter={StaticResource BoolToVis}, Mode=OneWay}"
+                           Opacity="{x:Bind Opacity, Mode=OneWay}"
+                           FontSize="{x:Bind TranslationFontSize, Mode=OneWay}"
+                           Foreground="{ThemeResource TextTertiaryBrush}"
+                           FontFamily="{x:Bind FontFamily, Mode=OneWay}"
+                           CharacterSpacing="{x:Bind CharacterSpacing, Mode=OneWay}"
+                           LineHeight="{x:Bind TranslationFontSize, Mode=OneWay}"
+                           LineStackingStrategy="BlockLineHeight"
+                           TextAlignment="{x:Bind TextAlignment, Mode=OneWay}"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="KaraokeLineTemplate" x:DataType="local:LrcLineVm">
+            <StackPanel>
+                <local:KaraokeTextBlock Text="{x:Bind Text}" Words="{x:Bind Words}"
+                           ActiveWordIndex="{x:Bind ActiveWordIndex, Mode=OneWay}"
+                           HorizontalAlignment="Stretch"
+                           Opacity="{x:Bind Opacity, Mode=OneWay}"
+                           FontSize="{x:Bind FontSize, Mode=OneWay}"
+                           FontFamily="{x:Bind FontFamily, Mode=OneWay}"
+                           CharacterSpacing="{x:Bind CharacterSpacing, Mode=OneWay}"
+                           LineHeight="{x:Bind LineHeight, Mode=OneWay}"
+                           LineTextAlignment="{x:Bind TextAlignment, Mode=OneWay}"/>
+                <TextBlock Text="{x:Bind Translation}" TextWrapping="Wrap"
+                           HorizontalAlignment="Stretch"
+                           Visibility="{x:Bind HasVisibleTranslation, Converter={StaticResource BoolToVis}, Mode=OneWay}"
+                           Opacity="{x:Bind Opacity, Mode=OneWay}"
+                           FontSize="{x:Bind TranslationFontSize, Mode=OneWay}"
+                           Foreground="{ThemeResource TextTertiaryBrush}"
+                           FontFamily="{x:Bind FontFamily, Mode=OneWay}"
+                           CharacterSpacing="{x:Bind CharacterSpacing, Mode=OneWay}"
+                           LineHeight="{x:Bind TranslationFontSize, Mode=OneWay}"
+                           LineStackingStrategy="BlockLineHeight"
+                           TextAlignment="{x:Bind TextAlignment, Mode=OneWay}"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <local:LyricsLineTemplateSelector x:Key="LineTemplateSelector"
+                                          NormalTemplate="{StaticResource NormalLineTemplate}"
+                                          KaraokeTemplate="{StaticResource KaraokeLineTemplate}"/>
+    </UserControl.Resources>
+
+    <Grid>
+        <ListView x:Name="LinesList" SelectionMode="None" IsItemClickEnabled="True"
+                  ItemClick="OnLineClick" Padding="64,140,64,220"
+                  ItemTemplateSelector="{StaticResource LineTemplateSelector}">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="MinHeight" Value="44"/>
+                    <Setter Property="Padding" Value="16,6"/>
+                    <Setter Property="Margin" Value="0,4"/>
+                    <Setter Property="CornerRadius" Value="10"/>
+                </Style>
+            </ListView.ItemContainerStyle>
+        </ListView>
+
+        <!-- Empty state: minimal chrome — no editor/search entries in fullscreen. -->
+        <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Spacing="10" Margin="48,0" IsHitTestVisible="False">
+            <FontIcon Glyph="&#xE7E7;" FontSize="40" Foreground="{ThemeResource TextTertiaryBrush}"/>
+            <TextBlock x:Uid="Fullscreen_Lyrics_EmptyTitle" Text="가사 없음" FontSize="{StaticResource FontSubtitle}"
+                       FontWeight="SemiBold" HorizontalAlignment="Center"
+                       Foreground="{ThemeResource TextSecondaryBrush}"/>
+            <TextBlock x:Uid="Fullscreen_Lyrics_EmptyDesc"
+                       Text="이 트랙에는 표시할 가사가 없습니다."
+                       FontSize="{StaticResource FontBodySmall}" HorizontalAlignment="Center"
+                       TextAlignment="Center" TextWrapping="Wrap" MaxWidth="420"
+                       Foreground="{ThemeResource TextTertiaryBrush}"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -286,7 +286,11 @@
   <data name="LyricsEditor_SaveBtn.AutomationProperties.Name" xml:space="preserve"><value>Save as LRC File</value></data>
   <data name="LyricsEditor_SaveBtnText.Text" xml:space="preserve"><value>Save as LRC File</value></data>
   <data name="LyricsEditor_UnsavedTitle" xml:space="preserve"><value>Unsaved changes</value></data>
-  <data name="Fullscreen_ExitHint.Text" xml:space="preserve"><value>Esc: close · Space: play/pause · ←/→: change track</value></data>
+  <data name="Fullscreen_ExitHint.Text" xml:space="preserve"><value>Esc: close · Space: play/pause · ←/→: change track · L: lyrics</value></data>
+  <data name="Fullscreen_LyricsToggle.AutomationProperties.Name" xml:space="preserve"><value>Show lyrics</value></data>
+  <data name="Fullscreen_LyricsToggle.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Show lyrics</value></data>
+  <data name="Fullscreen_Lyrics_EmptyTitle.Text" xml:space="preserve"><value>No lyrics</value></data>
+  <data name="Fullscreen_Lyrics_EmptyDesc.Text" xml:space="preserve"><value>This track has no lyrics to show. Search online lyrics from the main window.</value></data>
   <data name="Fullscreen_Buffering.Text" xml:space="preserve"><value>Buffering…</value></data>
   <data name="LyricsEditor_UnsavedMessage" xml:space="preserve"><value>There are unsaved lyrics edits. Discard them and close?</value></data>
   <data name="LyricsEditor_UnsavedDiscard" xml:space="preserve"><value>Discard and close</value></data>
