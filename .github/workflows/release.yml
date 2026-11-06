@@ -101,6 +101,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: release-${{ matrix.runtime }}
+          retention-days: 3
           path: |
             dist/installer/*.exe
             dist/*.zip

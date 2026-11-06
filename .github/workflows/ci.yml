@@ -64,6 +64,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: coverage-report
+          retention-days: 7
           path: coverage-report
           if-no-files-found: ignore
 
@@ -72,6 +73,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: test-results
+          retention-days: 7
           path: tests/DawnPlayer.Tests/TestResults/**/*.trx
           if-no-files-found: ignore
 
@@ -162,6 +164,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: dawnplayer-ci-build-${{ matrix.runtime }}
+          retention-days: 7
           path: |
             dist/installer/*.exe
             dist/*.zip

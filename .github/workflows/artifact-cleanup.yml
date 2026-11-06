@@ -1,0 +1,32 @@
+name: Artifact Cleanup
+
+# §12 후속: CI/release 빌드 아티팩트가 기본 90일 동안 누적되지 않도록 매일 청소한다.
+# 업로드 스텝 자체에 retention-days를 지정했지만(근본 차단), 수동 실행·구 버전 워크플로 등
+# 누수 경로를 위한 안전망. 공개 저장소 러너라 무료이며, 서드파티 액션 없이 자체 스크립트로 처리.
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete artifacts older than 7 days
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          cutoff=$(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%SZ)
+          ids=$(gh api --paginate "repos/$REPO/actions/artifacts?per_page=100" \
+            --jq ".artifacts[] | select(.created_at < \"$cutoff\") | .id")
+          count=0
+          for id in $ids; do
+            if gh api -X DELETE "repos/$REPO/actions/artifacts/$id"; then
+              count=$((count+1))
+            fi
+          done
+          echo "deleted: $count artifact(s) older than $cutoff"
