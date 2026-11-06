@@ -97,6 +97,7 @@
   <data name="NowPlaying_QueueButton.AutomationProperties.Name" xml:space="preserve"><value>再生キュー</value></data>
   <data name="NowPlaying_QueueButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>再生キュー</value></data>
   <data name="NowPlaying_QueueTitle.Text" xml:space="preserve"><value>再生キュー</value></data>
+  <data name="NowPlaying_QueueShuffleButton.AutomationProperties.Name" xml:space="preserve"><value>キューをシャッフル</value></data>
   <data name="NowPlaying_QueueSaveButton.Content" xml:space="preserve"><value>プレイリストとして保存</value></data>
   <data name="NowPlaying_QueueClearButton.Content" xml:space="preserve"><value>クリア</value></data>
   <data name="NowPlaying_SpectrumCanvas.AutomationProperties.Name" xml:space="preserve"><value>スペクトラム</value></data>
@@ -429,6 +430,9 @@
   <data name="Msg_RemovedMissingFiles" xml:space="preserve"><value>存在しないファイル {0}曲をプレイリストから削除しました。</value></data>
   <data name="Msg_NoMissingFiles" xml:space="preserve"><value>削除対象の見つからないファイルはありません。</value></data>
   <data name="Msg_AddedTracksToCurrentPlaylist" xml:space="preserve"><value>現在のプレイリストに {0}曲を追加しました。</value></data>
+  <data name="Library_AlbumMenu_ReplayGain.Text" xml:space="preserve"><value>ReplayGain 解析</value></data>
+  <data name="Library_TrackMenu_ReplayGain.Text" xml:space="preserve"><value>ReplayGain 解析</value></data>
+  <data name="Msg_RgScanStarted" xml:space="preserve"><value>ReplayGain 解析を開始します（{0}曲）。</value></data>
   <data name="Msg_AddedTracksToQueue" xml:space="preserve"><value>キューに {0}曲を追加しました。</value></data>
   <data name="Msg_AddedTracksToNamedPlaylist" xml:space="preserve"><value>'{0}' に {1}曲を追加しました。</value></data>
   <data name="Msg_CreateNewPlaylistAndAdd" xml:space="preserve"><value>新規プレイリストを作成して追加...</value></data>
@@ -709,6 +713,7 @@
   <data name="Settings_Library_Rg_Desc.Text" xml:space="preserve"><value>ライブラリのトラック別・アルバム別音量を解析し、REPLAYGAIN_*タグに記録します。初回はタグのない曲のみ解析します。</value></data>
   <data name="Settings_Library_Rg_Scan_Button.Content" xml:space="preserve"><value>解析開始</value></data>
   <data name="Settings_Library_Rg_Rescan_Button.Content" xml:space="preserve"><value>全曲再解析</value></data>
+  <data name="Settings_Library_Rg_Cancel_Button.Content" xml:space="preserve"><value>キャンセル</value></data>
   <data name="Settings_Library_Rg_NothingToScan" xml:space="preserve"><value>解析するトラックがありません (すべてにReplayGainタグがあります)。</value></data>
   <data name="Settings_Library_Rg_AlreadyRunning" xml:space="preserve"><value>ReplayGain解析がすでに実行中です。</value></data>
   <data name="Settings_Library_Rg_Starting" xml:space="preserve"><value>解析を開始…</value></data>
@@ -780,6 +785,23 @@
   <data name="Settings_OnlineLyrics_MoveDown.AutomationProperties.Name" xml:space="preserve"><value>優先度を下げる</value></data>
   <data name="Settings_OnlineLyrics_MoveDown.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>優先度を下げる</value></data>
   <data name="Settings_OnlineLyrics_Plugin_Toggle.OnContent" xml:space="preserve"><value>有効</value></data>
+  <data name="Settings_Lyrics_BoldActive_Title.Text" xml:space="preserve"><value>アクティブ行を太字 (Bold)</value></data>
+  <data name="Settings_Lyrics_BoldActive_Desc.Text" xml:space="preserve"><value>再生中の歌詞行を太字で強調します。</value></data>
+  <data name="Settings_Lyrics_BoldActive_A11yName.AutomationProperties.Name" xml:space="preserve"><value>アクティブ行を太字 (Bold)</value></data>
+  <data name="Settings_Lyrics_StepMs_Title.Text" xml:space="preserve"><value>歌詞オフセット調整ステップ (ms)</value></data>
+  <data name="Settings_Lyrics_StepMs_Desc.Text" xml:space="preserve"><value>歌詞エディターの ◀/▶ ボタン 1 回あたりの移動時間 (0.1 ～ 1000ms)。</value></data>
+  <data name="Settings_Lyrics_StepMs_A11yName.AutomationProperties.Name" xml:space="preserve"><value>歌詞オフセット調整ステップ (ms)</value></data>
+  <data name="Settings_Lyrics_SearchFolders_Title.Text" xml:space="preserve"><value>歌詞追加検索フォルダー</value></data>
+  <data name="Settings_Lyrics_SearchFolders_Desc.Text" xml:space="preserve"><value>音源フォルダー以外に .lrc ファイルを探す追加フォルダーを 1 行に 1 つ指定します。存在しないフォルダーは無視されます。</value></data>
+  <data name="Settings_Lyrics_SearchFolders_A11yName.AutomationProperties.Name" xml:space="preserve"><value>歌詞追加検索フォルダー</value></data>
+  <data name="Settings_OnlineLyrics_Options_Header.Text" xml:space="preserve"><value>プラグインオプション</value></data>
+  <data name="Settings_OnlineLyrics_OptionAdd_Button.Content" xml:space="preserve"><value>オプション追加</value></data>
+  <data name="Settings_OnlineLyrics_OptionRemove_Button.AutomationProperties.Name" xml:space="preserve"><value>オプション削除</value></data>
+  <data name="Settings_OnlineLyrics_Options_Hint.Text" xml:space="preserve"><value>プラグインが文書化しているキーと値を入力してください。値はそのままプラグインに渡されます。</value></data>
+  <data name="Settings_OnlineLyrics_OptionKey_Box.PlaceholderText" xml:space="preserve"><value>キー</value></data>
+  <data name="Settings_OnlineLyrics_OptionKey_Box.AutomationProperties.Name" xml:space="preserve"><value>キー</value></data>
+  <data name="Settings_OnlineLyrics_OptionValue_Box.PlaceholderText" xml:space="preserve"><value>値</value></data>
+  <data name="Settings_OnlineLyrics_OptionValue_Box.AutomationProperties.Name" xml:space="preserve"><value>値</value></data>
   <data name="Settings_OnlineLyrics_Plugin_Toggle.OffContent" xml:space="preserve"><value>無効</value></data>
   <data name="Settings_OnlineLyrics_AutoSave_Title.Text" xml:space="preserve"><value>歌詞の自動保存</value></data>
   <data name="Settings_OnlineLyrics_AutoSave_Desc.Text" xml:space="preserve"><value>オンラインから取得した歌詞を以下の場所とテンプレートで自動保存します</value></data>

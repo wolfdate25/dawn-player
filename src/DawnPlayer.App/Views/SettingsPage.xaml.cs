@@ -76,6 +76,7 @@ public sealed partial class SettingsPage : Page
         var scanRunning = AppServices.IsReplayGainScanRunning;
         RgScanStartButton.IsEnabled = !scanRunning;
         RgRescanAllButton.IsEnabled = !scanRunning;
+        RgScanCancelButton.IsEnabled = scanRunning;
         // Seed the masked secret box from the saved credential (PasswordBox has no bindable
         // two-way Password; see OnLastfmSecretPasswordChanged).
         LastfmApiSecretBox.Password = ViewModel.Lastfm.ApiSecret ?? "";
@@ -456,6 +457,40 @@ public sealed partial class SettingsPage : Page
         }
     }
 
+    // ---------------- plugin options (§12 A8) ----------------
+
+    private void OnPluginOptionAddClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: ViewModels.Settings.LyricsPluginItemVm item })
+        {
+            ViewModel.OnlineLyrics.AddPluginOption(item);
+        }
+    }
+
+    private void OnPluginOptionRemoveClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: ViewModels.Settings.PluginOptionVm option }
+            && FindOptionOwner(option) is { } owner)
+        {
+            ViewModel.OnlineLyrics.RemovePluginOption(owner, option);
+        }
+    }
+
+    private void OnPluginOptionEdited(object sender, TextChangedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: ViewModels.Settings.PluginOptionVm option }
+            && FindOptionOwner(option) is { } owner)
+        {
+            ViewModel.OnlineLyrics.PersistPluginOptions(owner);
+        }
+    }
+
+    private ViewModels.Settings.LyricsPluginItemVm? FindOptionOwner(ViewModels.Settings.PluginOptionVm option) =>
+        ViewModel.OnlineLyrics.Plugins.FirstOrDefault(p => p.Options.Contains(option));
+
+    private void OnSearchFoldersLostFocus(object sender, RoutedEventArgs e) =>
+        ViewModel.Lyrics.SaveSearchFolders(SearchFoldersBox.Text);
+
     // ---------------- keyboard shortcuts ----------------
 
     private async void OnShortcutRebindClick(object sender, RoutedEventArgs e)
@@ -762,6 +797,8 @@ public sealed partial class SettingsPage : Page
 
     private void OnRgScanStart(object sender, RoutedEventArgs e) => RunRgScan(rescanAll: false);
 
+    private void OnRgScanCancel(object sender, RoutedEventArgs e) => AppServices.CancelReplayGainScan();
+
     private async void OnPickImpulseClick(object sender, RoutedEventArgs e)
     {
         try
@@ -814,6 +851,7 @@ public sealed partial class SettingsPage : Page
         }
         RgScanStartButton.IsEnabled = false;
         RgRescanAllButton.IsEnabled = false;
+        RgScanCancelButton.IsEnabled = true;
         if (RgScanStatusText != null)
         {
             RgScanStatusText.Text = AppStrings.Get("Settings_Library_Rg_Starting", "분석 시작…");
@@ -827,6 +865,7 @@ public sealed partial class SettingsPage : Page
         // Raised on a worker thread — the button unlock must hop back to the UI thread.
         RgScanStartButton.IsEnabled = true;
         RgRescanAllButton.IsEnabled = true;
+        RgScanCancelButton.IsEnabled = false;
     });
 
     private void OnLrcPatternsLostFocus(object sender, RoutedEventArgs e) =>

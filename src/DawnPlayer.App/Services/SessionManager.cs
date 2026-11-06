@@ -29,6 +29,10 @@ public static class SessionManager
     {
         var p = settings.Playback;
 
+        // Stop-after-current is session state, not a persistent setting: restore it before any
+        // track starts so the flag governs the very first playback too.
+        playback.StopAfterCurrent = p.StopAfterCurrent;
+
         // Restore Queue
         if (p.QueueItems.Count > 0)
         {
@@ -109,6 +113,8 @@ public static class SessionManager
             p.QueueItems = playback.Queue.Entries
                 .Select(e => new QueueSavedEntry { PlaylistName = e.Playlist?.Name ?? "", TrackPath = e.Item.Track.Path })
                 .ToList();
+
+            p.StopAfterCurrent = playback.StopAfterCurrent;
 
             SettingsWriter.FlushNow(settings);
         }

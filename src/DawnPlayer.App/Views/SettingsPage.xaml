@@ -1033,6 +1033,7 @@
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                         <Button x:Name="RgScanStartButton" x:Uid="Settings_Library_Rg_Scan_Button" Content="분석 시작" FontSize="12" Click="OnRgScanStart"/>
                                         <Button x:Name="RgRescanAllButton" x:Uid="Settings_Library_Rg_Rescan_Button" Content="전체 재분석" FontSize="12" Click="OnRgScanRescanAll"/>
+                                        <Button x:Name="RgScanCancelButton" x:Uid="Settings_Library_Rg_Cancel_Button" Content="취소" FontSize="12" IsEnabled="False" Click="OnRgScanCancel"/>
                                     </StackPanel>
                                 </Grid>
                                 <Grid Style="{StaticResource RowGrid}">
@@ -1231,6 +1232,37 @@
                                         <ColumnDefinition Width="340"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock x:Uid="Settings_Lyrics_BoldActive_Title" Text="활성 가사 굵게 (Bold)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_BoldActive_Desc" Text="현재 재생 중인 가사 줄을 굵은 글씨로 강조합니다." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch x:Uid="Settings_Lyrics_BoldActive_A11yName" Grid.Column="1" HorizontalAlignment="Right"
+                                                  IsOn="{x:Bind ViewModel.Lyrics.BoldActiveLine, Mode=TwoWay}"/>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock x:Uid="Settings_Lyrics_StepMs_Title" Text="가사 오프셋 조정 단계 (ms)" Style="{StaticResource SettingTitle}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_StepMs_Desc" Text="가사 편집기의 ◀/▶ 오프셋 버튼 한 번당 이동할 시간 (0.1 ~ 1000ms)." Style="{StaticResource SettingDesc}"/>
+                                    </StackPanel>
+                                    <NumberBox x:Uid="Settings_Lyrics_StepMs_A11yName" Grid.Column="1" Width="140" HorizontalAlignment="Right"
+                                               Minimum="0.1" Maximum="1000" SmallChange="0.1" SpinButtonPlacementMode="Compact"
+                                               Value="{x:Bind ViewModel.Lyrics.OffsetStepMs, Mode=TwoWay}"/>
+                                </Grid>
+
+                                <Border Background="{ThemeResource SeparatorSubtleBrush}" Height="1"/>
+
+                                <Grid Style="{StaticResource RowGrid}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="340"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                         <TextBlock x:Uid="Settings_Lyrics_Embedded_Title" Text="음원 파일 내장 가사(Embedded Lyrics) 자동 읽기" Style="{StaticResource SettingTitle}"/>
                                         <TextBlock x:Uid="Settings_Lyrics_Embedded_Desc" Text="외부 .lrc 파일이 없을 때 MP3(ID3v2), FLAC, M4A 태그에 저장된 가사를 자동으로 읽어옵니다." Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
@@ -1257,6 +1289,27 @@
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
+                        </Border>
+
+                        <!-- Extra .lrc search folders card (12-A7) -->
+                        <Border Style="{StaticResource SectionCard}">
+                            <Grid Style="{StaticResource RowGrid}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="340"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Spacing="6" VerticalAlignment="Top">
+                                    <TextBlock x:Uid="Settings_Lyrics_SearchFolders_Title" Text="가사 추가 검색 폴더" Style="{StaticResource SettingTitle}"/>
+                                    <TextBlock x:Uid="Settings_Lyrics_SearchFolders_Desc" Text="음원 폴더 외에 .lrc 파일을 찾을 추가 폴더를 한 줄에 하나씩 지정합니다. 없는 폴더는 무시됩니다."
+                                               Style="{StaticResource SettingDesc}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Top">
+                                    <TextBox x:Uid="Settings_Lyrics_SearchFolders_A11yName" x:Name="SearchFoldersBox" AcceptsReturn="True" Height="100" TextWrapping="Wrap"
+                                             FontSize="12" FontFamily="Consolas, Cascadia Code, monospace"
+                                             Text="{x:Bind ViewModel.Lyrics.SearchFoldersText, Mode=TwoWay}"
+                                             LostFocus="OnSearchFoldersLostFocus"/>
+                                </StackPanel>
+                            </Grid>
                         </Border>
 
                         <!-- LRC Pattern Card -->
@@ -1395,6 +1448,7 @@
                                     </ListView.ItemContainerStyle>
                                     <ListView.ItemTemplate>
                                         <DataTemplate x:DataType="vm:LyricsPluginItemVm">
+                                            <StackPanel Spacing="2">
                                             <Grid ColumnSpacing="8">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -1420,6 +1474,42 @@
                                                 <ToggleSwitch x:Uid="Settings_OnlineLyrics_Plugin_Toggle" Grid.Column="2" IsOn="{x:Bind IsEnabled, Mode=TwoWay}" OnContent="사용" OffContent="사용 안 함"
                                                               Toggled="OnPluginToggled" Tag="{x:Bind}" VerticalAlignment="Center"/>
                                             </Grid>
+                                            <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Margin="0,4,0,0">
+                                                <Expander.Header>
+                                                    <TextBlock x:Uid="Settings_OnlineLyrics_Options_Header" Text="플러그인 옵션" FontSize="{StaticResource FontBodySmall}"/>
+                                                </Expander.Header>
+                                                <StackPanel Spacing="6" Padding="8,8,8,10">
+                                                    <ItemsControl ItemsSource="{x:Bind Options}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate x:DataType="vm:PluginOptionVm">
+                                                                <Grid ColumnSpacing="6">
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="150"/>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <TextBox x:Uid="Settings_OnlineLyrics_OptionKey_Box" Grid.Column="0"
+                                                                             PlaceholderText="키"
+                                                                             Text="{x:Bind Key, Mode=TwoWay}" TextChanged="OnPluginOptionEdited"/>
+                                                                    <TextBox x:Uid="Settings_OnlineLyrics_OptionValue_Box" Grid.Column="1"
+                                                                             PlaceholderText="값"
+                                                                             Text="{x:Bind Value, Mode=TwoWay}" TextChanged="OnPluginOptionEdited"/>
+                                                                    <Button x:Uid="Settings_OnlineLyrics_OptionRemove_Button" Grid.Column="2" Style="{StaticResource TransportButton}" Width="32" Height="32" Padding="0"
+                                                                            Click="OnPluginOptionRemoveClick" Tag="{x:Bind}">
+                                                                        <FontIcon Glyph="&#xE74D;" FontSize="{StaticResource FontCaption}"/>
+                                                                    </Button>
+                                                                </Grid>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                    <Button x:Uid="Settings_OnlineLyrics_OptionAdd_Button" Content="옵션 추가" FontSize="{StaticResource FontBodySmall}"
+                                                            Click="OnPluginOptionAddClick" Tag="{x:Bind}"/>
+                                                    <TextBlock x:Uid="Settings_OnlineLyrics_Options_Hint"
+                                                               Text="플러그인이 문서화한 키와 값을 입력하세요. 값은 플러그인에 그대로 전달됩니다."
+                                                               FontSize="11" Foreground="{ThemeResource TextTertiaryBrush}" TextWrapping="Wrap"/>
+                                                </StackPanel>
+                                            </Expander>
+                                        </StackPanel>
                                         </DataTemplate>
                                     </ListView.ItemTemplate>
                                 </ListView>

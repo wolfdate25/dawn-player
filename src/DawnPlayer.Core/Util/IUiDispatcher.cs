@@ -23,11 +23,3 @@ public sealed class DelegateUiDispatcher : IUiDispatcher
 
     public void Post(Action action) => _post(action);
 }
-
-/// <summary>Headless dispatcher: runs actions inline. The default when no UI thread exists.</summary>
-public sealed class InlineUiDispatcher : IUiDispatcher
-{
-    public static readonly InlineUiDispatcher Instance = new();
-
-    public void Post(Action action) => action();
-}

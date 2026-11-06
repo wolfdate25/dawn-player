@@ -981,6 +981,44 @@ public sealed partial class NowPlayingBar : UserControl
         }
     }
 
+    // ---------------- queue reorder + shuffle (§12 A1) ----------------
+
+    private int? _queueDragFrom;
+
+    private void OnQueueDragStarting(object sender, DragItemsStartingEventArgs e)
+    {
+        // Single-item drags only: the calculator maps one from→to permutation, which is also
+        // what a queue flyout drag realistically is.
+        _queueDragFrom = e.Items.Count == 1 && e.Items[0] is QueueUiEntry entry
+            ? _queueController.Entries.IndexOf(entry)
+            : null;
+        if (_queueDragFrom is null or < 0) e.Cancel = true;
+    }
+
+    private void OnQueueDragCompleted(object sender, DragItemsCompletedEventArgs e)
+    {
+        var from = _queueDragFrom;
+        _queueDragFrom = null;
+        if (from is not int f || e.Items.Count != 1 || e.Items[0] is not QueueUiEntry dragged) return;
+
+        // CanReorderItems already reordered the ObservableCollection, so its current index of
+        // the dragged entry IS the drop position; Move(f, that) (RemoveAt+Insert) reproduces the
+        // same permutation on the core queue (invariant I11), and its Changed event re-numbers
+        // the visible indexes.
+        var to = _queueController.Entries.IndexOf(dragged);
+        var target = QueueReorderCalculator.TargetIndex(f, to, _queueController.Entries.Count);
+        if (target is int t && AppServices.Playback?.Queue.Move(f, t) != true)
+        {
+            // A concurrent queue change made the drop stale — resync to the core truth.
+            _queueController.SyncFromQueue(AppServices.Playback?.Queue.Entries);
+        }
+    }
+
+    private void OnQueueShuffleClick(object sender, RoutedEventArgs e)
+    {
+        AppServices.Playback?.Queue.Shuffle();
+    }
+
     // ---------- lyrics ----------
 
     private void OnLyricsClick(object sender, RoutedEventArgs e) => LyricsToggleRequested?.Invoke();

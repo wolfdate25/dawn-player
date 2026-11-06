@@ -167,6 +167,21 @@ public class SessionRestoreAndPlaylistGroupingTests
         Assert.Same(currentPl, resolvedPl);
     }
 
+    /// <summary>I13 (persistence half): the stop-after-current session flag survives the
+    /// settings JSON round trip, so the App-layer restore can re-apply it on the next launch.
+    /// The restore application itself lives in App/Services/SessionManager.RestoreSession.</summary>
+    [Fact]
+    public void TestSession_StopAfterCurrent_RoundTrip()
+    {
+        var settings = new AppSettings();
+        Assert.False(settings.Playback.StopAfterCurrent); // fresh session: flag off
+
+        settings.Playback.StopAfterCurrent = true;
+        var json = JsonSerializer.Serialize(settings);
+        var loaded = JsonSerializer.Deserialize<AppSettings>(json)!;
+        Assert.True(loaded.Playback.StopAfterCurrent);
+    }
+
     #endregion
 
     #region 2. Playlist Grouping Algorithm Tests

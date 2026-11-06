@@ -1066,6 +1066,13 @@ public sealed partial class LibraryPage : Page
         PlaybackUiHelper.EnqueueAlbumNowPlaying(AppServices.Playlists, AppServices.Playback, _drawerMenuTracks);
     }
 
+    private void OnDrawerTrackReplayGainScan(object sender, RoutedEventArgs e)
+    {
+        if (_drawerMenuTracks.Count == 0) return;
+        AppServices.StartReplayGainScan(_drawerMenuTracks);
+        AppServices.RaiseWarning(AppStrings.Format("Msg_RgScanStarted", "ReplayGain 분석을 시작합니다 ({0}곡).", _drawerMenuTracks.Count));
+    }
+
     private void OnDrawerTrackShowInExplorer(object sender, RoutedEventArgs e)
     {
         foreach (var t in _drawerMenuTracks)
@@ -1131,6 +1138,13 @@ public sealed partial class LibraryPage : Page
         if (_albumMenuTracks.Count == 0) return;
         PlaybackUiHelper.EnqueueAlbumNowPlaying(AppServices.Playlists, AppServices.Playback, _albumMenuTracks);
         AppServices.RaiseWarning(AppStrings.Format("Msg_AddedTracksToQueue", "대기열에 {0}곡을 추가했습니다.", _albumMenuTracks.Count));
+    }
+
+    private void OnAlbumReplayGainScan(object sender, RoutedEventArgs e)
+    {
+        if (_albumMenuTracks.Count == 0) return;
+        AppServices.StartReplayGainScan(_albumMenuTracks);
+        AppServices.RaiseWarning(AppStrings.Format("Msg_RgScanStarted", "ReplayGain 분석을 시작합니다 ({0}곡).", _albumMenuTracks.Count));
     }
 
     private async void OnRightQueueTrackDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)

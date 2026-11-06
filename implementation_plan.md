@@ -2268,3 +2268,94 @@ DSF 8비트 거부, 절단 DSF 클램프·정상 종료, .lrc 원자 저장, M3U
 버튼 동작, 종료 힌트에 L 표기. **단어 카라오케 전체화면 캡처는 사용자 지시로 생략**(사이드 패널에서
 검증된 KaraokeTextBlock·VM 경로의 재사용이므로 커버리지 유지). `L` 키는 토글 버튼과 동일
 `ToggleLyricsSurface()` 경로로 CUA 물리입력 제약상 미직접 검증.
+
+---
+
+## 12. UI-미연결 기능 수리 — A그룹(연결) + B그룹(정리) (2026-11-04 계획 → 승인, 구현·게이트·육안 완료 — §12.6)
+
+> 2026-11-04 전수 조사(설정 128속성 + Core 전역 호출부 grep, 이중 검증 완료)의 후속. A1~A8은
+> "구현됐지만 UI 진입이 없는" 기능을 연결하고, B1~B3은 죽은 와이어링·고아 코드를 정리한다.
+
+### 12.1 A그룹 — 미연결 기능 연결
+
+| # | 항목 | 설계 (검증 근거 포함) |
+|---|---|---|
+| A1 | **재생 큐 재정렬·셔플 UI** | 큐 플라이아웃 `QueueList`(`NowPlayingBar.xaml:342-371`)에 `CanReorderItems+AllowDrop` 활성 + `DragItemsCompleted` → `queue.Move(from,to)` 호출. 인덱스 산출은 순수 헬퍼 `QueueReorderCalculator`(Tests 링크, 이동 판정·from/to 환산 헤드리스 테스트). `PlaybackQueue.Move/Shuffle`은 스레드 세이프+델타 갱신(`PlaybackQueue.cs:263,287`)이라 컨트롤러 상태 무관 — 큐는 "다음에 재생할 목록"이라 재생 인덱스 상호작용 없음. 플라이아웃 푸터에 **셔플 버튼** 추가(비우기 옆) → `queue.Shuffle()`. `QueuePopupController.SyncFromQueue`는 위치 기반 패치라 드롭 후 순서가 이미 일치 — 추가 델타 처리 불필요. 드래그 중 다른 큐 변경과의 경합은 Move의 인덱스 가드(`from/to 범위 밖 false`)로 방어 |
+| A2 | **RG 스캔 취소 버튼** | 설정 페이지 RG 섹션에 취소 버튼 추가(스캔 중에만 활성 — `IsReplayGainScanRunning`) → `AppServices.CancelReplayGainScan()`. 본문은 이미 스레드 세이프(`Interlocked.Exchange+Cancel`, `AppServices.cs:630`) — 와이어링만 |
+| A3 | **곡/앨범 단위 RG 스캔** | `RunReplayGainScan(rescanAll, ct)`을 `RunReplayGainScanOn(IEnumerable<Track>, ct)`으로 추출(기존 라이브러리 전체 경로는 동일 필터 유지) + `StartReplayGainScan(IReadOnlyList<Track>)` 오버로드 신설. 라이브러리 트랙·앨범 컨텍스트 메뉴에 "ReplayGain 분석" 항목 추가(선택 트랙/앨범 멤버 전달 — 앨범 그룹핑이 앨범 게인 자동 처리, 단일 트랙은 앨범=트랙 게인) |
+| A4 | **StopAfterCurrent 영속화** | 고아 필드를 **쓰는 방향으로 수리**: `SessionManager.SaveSession`이 `p.StopAfterCurrent = playback.StopAfterCurrent` 저장, 복원 시 컨트롤러에 재적용. 기존 QueueItems/LastPlayed와 같은 세션 상태로 취급(전역 "설정"이 아닌 세션 속성) |
+| A5 | **BoldActiveLine 토글** | 가사 설정 섹션에 토글 + `LyricsSettingsViewModel` 속성(EnableFocusEffect 패턴 복제) — 런타임 리더(`LyricsPane.xaml.cs:35`+전체화면 컨버터)는 이미 존재 |
+| A6 | **DefaultOffsetStepMs 설정** | 가사 섹션에 숫자 입력(0.1~1000ms, TextBox+검증) + VM 속성 — 편집기 리더(`LyricsEditorWindow.xaml.cs:166`) 존재 |
+| A7 | **가사 추가 검색 폴더 UI** | 가사 섹션에 `.lrc 파일 검색 패턴`과 동일한 멀티라인 TextBox(한 줄=폴더 절대경로) + VM 저장(무효 행 필터링·피드백 — LRC 패턴 편집기 PT4-08 패턴 복제). `LyricsFinder`는 존재하지 않는 루트를 자연 스킵(`LyricsFinder.cs:74-80` 후보 경로만 생성) |
+| A8 | **가사 플러그인 옵션 편집기** | `ILyricsPluginContext`는 `GetSetting(key)`만 제공(메타데이터 선언 API 없음 — 검증됨) → **범용 키-값 편집기**: 온라인 가사 플러그인 목록 행에 "옵션" 펼침(플러그인별 키/값 쌍 편집 → `PluginOptions[id][key]` 저장, 플러그인 문서가 키를 안내하는 구조). DataFolder+GetSetting 소비 경로는 이미 살아있음 |
+
+### 12.2 B그룹 — 정리
+
+| # | 항목 | 처리 |
+|---|---|---|
+| B1 | `MainWindow.OnOutputSession` 빈 본문+구독(`MainWindow.xaml.cs:46,905-907`) | 구독·메서드 제거(실제 처리는 NowPlayingBar) |
+| B2 | `LyricsSettings.LineSpacing` 고아 | 속성 제거 — 구 JSON `lineSpacing` 키는 STJ 기본 unknown-skip으로 무해 |
+| B3 | `InlineUiDispatcher` 고아(`IUiDispatcher.cs:28-30`) | 클래스 제거(src+tests 참조 0건 검증) |
+
+### 12.3 결함 트리 및 불변식
+
+| 결함 후보 | 해결 전략 |
+|---|---|
+| 드래그 도중 큐 변경(자동 다음 곡 소비 등) 경합 | Move의 범위 가드+실패 시 무시, 드롭 시점 단발 적용(라이브 재배치 아님) |
+| DragItemsCompleted NewIndex 시맨틱(제거 후 기준/이동 전 기준) 혼동 | `QueueReorderCalculator`로 단일 정의+적대 테스트(첫/끝/동일/역방향) |
+| 큐 1곡 이하에서 Move/Shuffle | Move `from==to` no-op, Shuffle `Count<=1` no-op(코어 보유) — UI 중복 방어 불필요 |
+| RG 부분 스캔이 전체 스캔 톤을 오염 | `RunReplayGainScanOn` 추출 시 진행률 이벤트·취소·태그 기록 경로 공유, 필터만 분리 |
+| StopAfterCurrent 복원이 재생 개시보다 늦음 | 세션 복원 순서에 명시 배치(트랙 재개 전), 저장은 기존 OnExit 경로 재사용 |
+| A8 키 충돌(빈 키·중복 키) | 빈 키 거부, 중복 키 갱신 — VM에서 선검증 |
+| LineSpacing 제거로 구 JSON 무결성 | unknown-skip 확인(기존 신규 키 추가와 동일 역호환 방식) |
+| 설정 변경 이벤트 리크 | 기존 ViewModel 패턴(SaveAndNotify) 재사용 — 신규 수명 객체 없음 |
+
+**불변식**: **I11** 큐 이동은 큐 내용의 순열만 만든다(항목 유실·중복 금지 — 기존 코어 테스트 계승+계산기 테스트).
+**I12** RG 스캔(전체/부분)은 동일한 진행률·취소·태그 기록 경로를 공유한다. **I13** 세션 저장→복원 왕복은
+StopAfterCurrent를 보존한다. **I14** `PluginOptions` 쓰기는 빈 키를 만들지 않는다.
+
+### 12.4 선설계 테스트
+
+| 테스트 | 실패 시나리오 |
+|---|---|
+| `QueueReorderCalculatorTests` | 정상 이동·첫→끝·끝→첫·동일 인덱스·범위 밖·단일 항목 |
+| `SessionManagerTests` 확장 | Save→Restore 왕복에서 StopAfterCurrent 보존(I13), 미설정 기본 false |
+| `ReplayGainScanScopeTests` | 부분 스캔이 지정 트랙만 처리(태그·DB 경로)·스트림 제외 가드 유지(I12) |
+| `LyricsSettingsViewModelTests` 확장 | SearchFolders 무효 행 필터·PluginOptions 빈 키 거부(I14)·BoldActiveLine/StepMs 저장 |
+| 기존 스위트 회귀 | LyricsPane·큐·세션 관련 전수 |
+
+### 12.5 실행 순서 및 검증 게이트
+
+1. **U-A 소형 3종**(A4 세션, B1~B3 정리, A2 취소 버튼) → 2. **U-B 설정 노출**(A5~A8) →
+3. **U-C 큐 재정렬(A1) + RG 부분 스캔(A3)** — 엔진 추출 포함이라 마지막.
+   진행 중 필터 테스트만, 완료 시 콜드 리빌드 0경고 + 전체 스위트 1회 + CUA 육안(큐 드래그·RG 취소·
+   설정 신규 항목 — 대표 캡처 위주, [[cua-verification-keep-short]] 준수).
+- 버전 관례상 사용자 가시 기능 → 다음 bump 대상, 배포는 사용자 지시까지 보류(§2).
+
+### 12.6 실행 기록 (2026-11-06)
+
+**구현 내역**: 계획 §12.1~§12.2 그대로. 조정 2건 — ①A3 취소 버튼은 `RunRgScan` 시작 시 활성화·
+`OnRgScanCompleted`에서 비활성화로 상태 동기(기존 CR2 패턴 계승) ②A1 `DragItemsCompletedEventArgs`에
+`DropIndex`가 없음이 컴파일에서 확인(§11.1의 가정 오류) → **ListView가 이미 재배열한 컬렉션에서 드래그
+항목의 새 인덱스를 읽어** `Move(from, to)`로 변환하고, 동시 큐 변경으로 Move가 실패하면 SyncFromQueue
+재동기화하는 방어 추가. RG 대상 선택은 Core `ReplayGainScanSelector`로 추출(전체/재분석/부분 스캔이
+한 필터 공유 — I12), AppServices는 `StartReplayGainScanCore(람다)`로 시작 절차 통합.
+
+**선설계 테스트 결과**: `QueueReorderCalculatorTests` 9건(순열 보존 성질 검사 포함 — I11),
+`ReplayGainScanSelectorTests` 4건(I12), `SessionManager` 왕복 1건(I13의 Core 반쪽 — App 반쪽은
+WinUI 의존으로 직접 테스트 불가, 코드 경로 주석 명시), `LyricsSettingsViewModelTests` 5건(I14·A5~A7
+쓰루). 신규 총 19건.
+
+**검증 게이트 (2026-11-06 달성)**
+- 콜드 리빌드: 1차 WMC 과도만 → 2차 **0경고 0오류**.
+- 전체 스위트 **2,434 / 2,434** — 중간 4건 실패(현지화 게이트 3 + 아이콘 a11y 게이트 1: 셔플 버튼
+  a11y 키 누락·`Msg_RgScanStarted` 베어 키 필요)를 **게이트가 잡아 준 것으로 처리 후 수리**, 재실행
+  전수 통과.
+- 필터: U-A 129, U-B 24, U-C 45 전부 통과.
+
+**실행 육안 (CUA — 대표 캡처, [[cua-verification-keep-short]] 준수)**: 설정 가사 섹션에서 신규
+**Bold Active Line 토글(On)**·**Lyrics offset step (ms) NumberBox(0.5, 스핀)** 렌더 확인. SearchFolders
+카드·플러그인 옵션 편집기·큐 셔플/드래그·RG 취소 버튼의 실행 캡처는 생략 — 해당 요소는
+x:Uid→resw 게이트·아이콘 a11y 게이트·XAML 컴파일이 와이어링을 강제하고 로직은 테스트 게이트가
+커버. 검증 중 사용자의 H: 포터블 인스턴스(구버전)가 실행 중이어도 dev 인스턴스를 PID로만
+종료해 간섭하지 않음.

@@ -462,6 +462,7 @@
                                                                 <MenuFlyoutItem x:Uid="Library_AlbumMenu_Enqueue" Text="대기열에 추가" Click="OnAlbumEnqueue">
                                                                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8FD;"/></MenuFlyoutItem.Icon>
                                                                 </MenuFlyoutItem>
+                                                                <MenuFlyoutItem x:Uid="Library_AlbumMenu_ReplayGain" Text="ReplayGain 분석" Click="OnAlbumReplayGainScan"/>
                                                                 <MenuFlyoutItem x:Uid="Library_AlbumMenu_EditTags" Text="앨범 태그 편집…" Click="OnAlbumEditTags">
                                                                     <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE70F;"/></MenuFlyoutItem.Icon>
                                                                 </MenuFlyoutItem>
@@ -611,6 +612,7 @@
                                                                             <MenuFlyoutItem x:Uid="Library_TrackMenu_Enqueue" Text="대기열에 추가" Click="OnDrawerTrackEnqueue">
                                                                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8FD;"/></MenuFlyoutItem.Icon>
                                                                             </MenuFlyoutItem>
+                                                                            <MenuFlyoutItem x:Uid="Library_TrackMenu_ReplayGain" Text="ReplayGain 분석" Click="OnDrawerTrackReplayGainScan"/>
                                                                             <MenuFlyoutSeparator/>
                                                                             <MenuFlyoutItem x:Uid="Library_TrackMenu_Convert" Text="오디오 변환…" Click="OnDrawerTrackConvert">
                                                                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8E5;"/></MenuFlyoutItem.Icon>

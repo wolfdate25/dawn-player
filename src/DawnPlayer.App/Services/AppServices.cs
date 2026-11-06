@@ -603,6 +603,18 @@ public static class AppServices
     /// <param name="rescanAll">False analyzes only tracks whose tags are missing.</param>
     public static void StartReplayGainScan(bool rescanAll)
     {
+        StartReplayGainScanCore(ct => RunReplayGainScan(Core.Audio.ReplayGainScanSelector.Select(Library.Tracks, rescanAll), ct));
+    }
+
+    /// <summary>§12 A3: scoped scan from a track/album context menu — the picked tracks are
+    /// analyzed regardless of existing tags (explicit intent), streams still excluded (I12).</summary>
+    public static void StartReplayGainScan(IReadOnlyList<Track> targets)
+    {
+        StartReplayGainScanCore(ct => RunReplayGainScan(Core.Audio.ReplayGainScanSelector.Select(targets, rescanAll: true), ct));
+    }
+
+    private static void StartReplayGainScanCore(Action<CancellationToken> run)
+    {
         var previous = Interlocked.Exchange(ref _rgScanCts, null);
         try { previous?.Cancel(); } catch (ObjectDisposedException) { }
 
@@ -610,7 +622,7 @@ public static class AppServices
         _rgScanCts = cts;
         var ct = cts.Token;
 
-        _rgScanTask = Task.Run(() => RunReplayGainScan(rescanAll, ct), ct)
+        _rgScanTask = Task.Run(() => run(ct), ct)
             .ContinueWith(t =>
             {
                 Interlocked.CompareExchange(ref _rgScanCts, null, cts);
@@ -633,13 +645,8 @@ public static class AppServices
         try { cts?.Cancel(); } catch (ObjectDisposedException) { }
     }
 
-    private static void RunReplayGainScan(bool rescanAll, CancellationToken ct)
+    private static void RunReplayGainScan(List<Track> tracks, CancellationToken ct)
     {
-        var tracks = Library.Tracks
-            .Where(t => rescanAll
-                || !t.RgTrackGainDb.HasValue || !t.RgTrackPeak.HasValue
-                || !t.RgAlbumGainDb.HasValue || !t.RgAlbumPeak.HasValue)
-            .ToList();
         // Radio URLs are not in the library, but guard anyway: decoding a live stream would
         // never finish.
         tracks.RemoveAll(t => Core.Audio.RadioTrack.IsStreamUrl(t.Path));

@@ -333,6 +333,11 @@
                                 <Grid Margin="4,0,4,8">
                                     <TextBlock x:Uid="NowPlaying_QueueTitle" Text="재생 대기열" FontWeight="SemiBold" FontSize="{StaticResource FontSubtitle}" VerticalAlignment="Center"/>
                                     <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
+                                        <Button x:Uid="NowPlaying_QueueShuffleButton" x:Name="QueueShuffleButton" Width="32" Height="32" Padding="0"
+                                                Style="{StaticResource TransportButton}"
+                                                Click="OnQueueShuffleClick">
+                                            <FontIcon Glyph="&#xE8B1;" FontSize="{StaticResource FontCaption}"/>
+                                        </Button>
                                         <Button x:Uid="NowPlaying_QueueSaveButton" x:Name="QueueSaveButton" Content="재생목록으로 저장" FontSize="{StaticResource FontBodySmall}"
                                                 Click="OnQueueSaveClick"/>
                                         <Button x:Uid="NowPlaying_QueueClearButton" x:Name="QueueClearButton" Content="비우기" FontSize="{StaticResource FontBodySmall}"
@@ -340,6 +345,8 @@
                                     </StackPanel>
                                 </Grid>
                                 <ListView x:Name="QueueList" SelectionMode="None" IsItemClickEnabled="False"
+                                          CanReorderItems="True" AllowDrop="True"
+                                          DragItemsStarting="OnQueueDragStarting" DragItemsCompleted="OnQueueDragCompleted"
                                           MaxHeight="300">
                                     <ListView.ItemTemplate>
                                         <DataTemplate x:DataType="local:QueueUiEntry">

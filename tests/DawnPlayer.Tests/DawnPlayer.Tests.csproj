@@ -52,6 +52,7 @@
     <Compile Include="..\..\src\DawnPlayer.App\Controls\AudioFormatBadgeFormatter.cs" Link="Controls\AudioFormatBadgeFormatter.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Controls\LyricsScrollSynchronizer.cs" Link="Controls\LyricsScrollSynchronizer.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Controls\LyricsFeed.cs" Link="Controls\LyricsFeed.cs" />
+    <Compile Include="..\..\src\DawnPlayer.App\Controls\QueueReorderCalculator.cs" Link="Controls\QueueReorderCalculator.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Controls\PlaybackUiHelper.cs" Link="Controls\PlaybackUiHelper.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Controls\TransportToggleCalculator.cs" Link="Controls\TransportToggleCalculator.cs" />
     <Compile Include="..\..\src\DawnPlayer.App\Shortcuts\ShortcutCommand.cs" Link="Shortcuts\ShortcutCommand.cs" />

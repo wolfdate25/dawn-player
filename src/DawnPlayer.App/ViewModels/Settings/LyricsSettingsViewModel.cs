@@ -18,6 +18,7 @@ public sealed class LyricsSettingsViewModel : ViewModelBase
     private int _fontFamilyIndex;
     private string _customFontFamily = "";
     private string _lrcPatternsText = "";
+    private string _searchFoldersText = "";
 
     private static readonly char[] LrcPatternSeparators = { '\r', '\n' };
 
@@ -34,6 +35,7 @@ public sealed class LyricsSettingsViewModel : ViewModelBase
 
         InitializeFontState();
         _lrcPatternsText = string.Join(Environment.NewLine, _settings.Lyrics.FilePatterns);
+        _searchFoldersText = string.Join(Environment.NewLine, _settings.Lyrics.SearchFolders);
     }
 
     private void InitializeFontState()
@@ -274,6 +276,56 @@ public sealed class LyricsSettingsViewModel : ViewModelBase
                 SaveAndNotify();
             }
         }
+    }
+
+    public bool BoldActiveLine
+    {
+        get => _settings.Lyrics.BoldActiveLine;
+        set
+        {
+            if (_settings.Lyrics.BoldActiveLine != value)
+            {
+                _settings.Lyrics.BoldActiveLine = value;
+                OnPropertyChanged();
+                SaveAndNotify();
+            }
+        }
+    }
+
+    public double OffsetStepMs
+    {
+        get => _settings.Lyrics.DefaultOffsetStepMs;
+        set
+        {
+            var clamped = Math.Clamp(value, 0.1, 1000.0);
+            if (Math.Abs(_settings.Lyrics.DefaultOffsetStepMs - clamped) > 1e-9)
+            {
+                _settings.Lyrics.DefaultOffsetStepMs = clamped;
+                OnPropertyChanged();
+                _settingsSaver?.Invoke(_settings);
+            }
+        }
+    }
+
+    public string SearchFoldersText
+    {
+        get => _searchFoldersText;
+        set => SetProperty(ref _searchFoldersText, value);
+    }
+
+    /// <summary>§12 A7: persists the extra .lrc search folders (one per line; blanks dropped).
+    /// Non-existent folders are harmless — the finder's candidate paths simply don't match.</summary>
+    public void SaveSearchFolders(string? rawText)
+    {
+        var folders = (rawText ?? SearchFoldersText)
+            .Split(LrcPatternSeparators, StringSplitOptions.TrimEntries)
+            .Where(l => l.Length > 0)
+            .ToList();
+
+        _settings.Lyrics.SearchFolders = folders;
+        _searchFoldersText = string.Join(Environment.NewLine, folders);
+        OnPropertyChanged(nameof(SearchFoldersText));
+        _settingsSaver?.Invoke(_settings);
     }
 
     public string LrcPatternsText

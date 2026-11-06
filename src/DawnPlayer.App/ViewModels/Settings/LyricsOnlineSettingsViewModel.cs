@@ -27,6 +27,19 @@ public sealed class LyricsPluginItemVm : ViewModelBase
         get => _isEnabled;
         set => SetProperty(ref _isEnabled, value);
     }
+
+    /// <summary>Per-plugin user options (§12 A8) — plugins read them via ILyricsPluginContext.GetSetting.</summary>
+    public System.Collections.ObjectModel.ObservableCollection<PluginOptionVm> Options { get; } = new();
+}
+
+/// <summary>One editable key/value row of a plugin's user options.</summary>
+public sealed class PluginOptionVm : ViewModelBase
+{
+    private string _key = "";
+    private string _value = "";
+
+    public string Key { get => _key; set => SetProperty(ref _key, value); }
+    public string Value { get => _value; set => SetProperty(ref _value, value); }
 }
 
 /// <summary>
@@ -162,7 +175,7 @@ public sealed class LyricsOnlineSettingsViewModel : ViewModelBase
 
             foreach (var info in infos)
             {
-                Plugins.Add(new LyricsPluginItemVm
+                var item = new LyricsPluginItemVm
                 {
                     Id = info.Id,
                     Name = info.Name,
@@ -170,7 +183,15 @@ public sealed class LyricsOnlineSettingsViewModel : ViewModelBase
                     Author = info.Author,
                     IsExternal = info.IsExternal,
                     IsEnabled = !online.PluginEnabled.TryGetValue(info.Id, out var enabled) || enabled
-                });
+                };
+                if (online.PluginOptions.TryGetValue(info.Id, out var options))
+                {
+                    foreach (var (key, value) in options)
+                    {
+                        item.Options.Add(new PluginOptionVm { Key = key, Value = value });
+                    }
+                }
+                Plugins.Add(item);
             }
         }
 
@@ -188,6 +209,31 @@ public sealed class LyricsOnlineSettingsViewModel : ViewModelBase
     public void SetPluginEnabled(LyricsPluginItemVm item)
     {
         _settings.LyricsOnline.PluginEnabled[item.Id] = item.IsEnabled;
+        Save();
+    }
+
+    // ---------------- plugin options (§12 A8) ----------------
+
+    public void AddPluginOption(LyricsPluginItemVm item) =>
+        item.Options.Add(new PluginOptionVm());
+
+    public void RemovePluginOption(LyricsPluginItemVm item, PluginOptionVm option)
+    {
+        item.Options.Remove(option);
+        PersistPluginOptions(item);
+    }
+
+    /// <summary>Writes the row state back into PluginOptions[id]. Blank keys are rejected and
+    /// duplicate keys resolve to the last value (invariant I14: no empty keys stored).</summary>
+    public void PersistPluginOptions(LyricsPluginItemVm item)
+    {
+        var cleaned = item.Options
+            .Where(o => !string.IsNullOrWhiteSpace(o.Key))
+            .GroupBy(o => o.Key.Trim(), StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => g.Last().Value, StringComparer.Ordinal);
+
+        if (cleaned.Count == 0) _settings.LyricsOnline.PluginOptions.Remove(item.Id);
+        else _settings.LyricsOnline.PluginOptions[item.Id] = cleaned;
         Save();
     }
 

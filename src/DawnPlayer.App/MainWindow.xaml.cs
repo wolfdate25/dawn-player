@@ -43,7 +43,6 @@ public sealed partial class MainWindow : Window
 
         AppServices.CurrentTrackChanged += OnCurrentTrackChanged;
         AppServices.WarningRaised += ShowWarning;
-        AppServices.OutputSessionChanged += OnOutputSession;
         AppServices.LanguageChanged += OnLanguageChanged;
 
         // U2: one policy for the single InfoBar slot — transient messages auto-close, warnings
@@ -900,10 +899,6 @@ public sealed partial class MainWindow : Window
                 AppStrings.Get("Toast_NowPlaying", "재생 중"),
                 $"{item.Track.Title} — {item.Track.Artist}");
         }
-    }
-
-    private void OnOutputSession(DawnPlayer.Core.Audio.SessionInfo info)
-    {
     }
 
     private void ShowWarning(string message)

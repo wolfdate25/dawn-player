@@ -174,7 +174,6 @@ public sealed class LyricsSettings
     public double ActiveFontSize { get; set; } = 16.5;    // 12.0 .. 32.0 px
     public int CharacterSpacing { get; set; }        // -50 .. 200 (1/1000 em)
     public double LineHeight { get; set; } = 24.0;        // 16.0 .. 48.0 px
-    public double LineSpacing { get; set; } = 4.0;        // 0.0 .. 20.0 px
     public string Alignment { get; set; } = "Center";     // Center, Left, Right
     public bool BoldActiveLine { get; set; } = true;
     public bool EnableFocusEffect { get; set; } = true;

@@ -97,6 +97,7 @@
   <data name="NowPlaying_QueueButton.AutomationProperties.Name" xml:space="preserve"><value>재생 대기열</value></data>
   <data name="NowPlaying_QueueButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>재생 대기열</value></data>
   <data name="NowPlaying_QueueTitle.Text" xml:space="preserve"><value>재생 대기열</value></data>
+  <data name="NowPlaying_QueueShuffleButton.AutomationProperties.Name" xml:space="preserve"><value>대기열 섞기</value></data>
   <data name="NowPlaying_QueueSaveButton.Content" xml:space="preserve"><value>재생목록으로 저장</value></data>
   <data name="NowPlaying_QueueClearButton.Content" xml:space="preserve"><value>비우기</value></data>
   <data name="NowPlaying_SpectrumCanvas.AutomationProperties.Name" xml:space="preserve"><value>스펙트럼</value></data>
@@ -429,6 +430,9 @@
   <data name="Msg_RemovedMissingFiles" xml:space="preserve"><value>존재하지 않는 파일 {0}곡을 재생목록에서 제거했습니다.</value></data>
   <data name="Msg_NoMissingFiles" xml:space="preserve"><value>제거할 누락된 파일이 없습니다.</value></data>
   <data name="Msg_AddedTracksToCurrentPlaylist" xml:space="preserve"><value>현재 재생목록에 {0}곡을 추가했습니다.</value></data>
+  <data name="Library_AlbumMenu_ReplayGain.Text" xml:space="preserve"><value>ReplayGain 분석</value></data>
+  <data name="Library_TrackMenu_ReplayGain.Text" xml:space="preserve"><value>ReplayGain 분석</value></data>
+  <data name="Msg_RgScanStarted" xml:space="preserve"><value>ReplayGain 분석을 시작합니다 ({0}곡).</value></data>
   <data name="Msg_AddedTracksToQueue" xml:space="preserve"><value>대기열에 {0}곡을 추가했습니다.</value></data>
   <data name="Msg_AddedTracksToNamedPlaylist" xml:space="preserve"><value>'{0}'에 {1}곡을 추가했습니다.</value></data>
   <data name="Msg_CreateNewPlaylistAndAdd" xml:space="preserve"><value>새 재생목록 생성 후 추가...</value></data>
@@ -709,6 +713,7 @@
   <data name="Settings_Library_Rg_Desc.Text" xml:space="preserve"><value>라이브러리의 곡별·앨범별 음량을 분석해 태그(REPLAYGAIN_*)에 기록합니다. 처음에는 태그가 없는 곡만 분석합니다.</value></data>
   <data name="Settings_Library_Rg_Scan_Button.Content" xml:space="preserve"><value>분석 시작</value></data>
   <data name="Settings_Library_Rg_Rescan_Button.Content" xml:space="preserve"><value>전체 재분석</value></data>
+  <data name="Settings_Library_Rg_Cancel_Button.Content" xml:space="preserve"><value>취소</value></data>
   <data name="Settings_Library_Rg_NothingToScan" xml:space="preserve"><value>분석할 트랙이 없습니다 (모두 ReplayGain 태그가 있습니다).</value></data>
   <data name="Settings_Library_Rg_AlreadyRunning" xml:space="preserve"><value>ReplayGain 분석이 이미 실행 중입니다.</value></data>
   <data name="Settings_Library_Rg_Starting" xml:space="preserve"><value>분석 시작…</value></data>
@@ -780,6 +785,23 @@
   <data name="Settings_OnlineLyrics_MoveDown.AutomationProperties.Name" xml:space="preserve"><value>우선순위 내리기</value></data>
   <data name="Settings_OnlineLyrics_MoveDown.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>우선순위 내리기</value></data>
   <data name="Settings_OnlineLyrics_Plugin_Toggle.OnContent" xml:space="preserve"><value>사용</value></data>
+  <data name="Settings_Lyrics_BoldActive_Title.Text" xml:space="preserve"><value>활성 가사 굵게 (Bold)</value></data>
+  <data name="Settings_Lyrics_BoldActive_Desc.Text" xml:space="preserve"><value>현재 재생 중인 가사 줄을 굵은 글씨로 강조합니다.</value></data>
+  <data name="Settings_Lyrics_BoldActive_A11yName.AutomationProperties.Name" xml:space="preserve"><value>활성 가사 굵게 (Bold)</value></data>
+  <data name="Settings_Lyrics_StepMs_Title.Text" xml:space="preserve"><value>가사 오프셋 조정 단계 (ms)</value></data>
+  <data name="Settings_Lyrics_StepMs_Desc.Text" xml:space="preserve"><value>가사 편집기의 ◀/▶ 오프셋 버튼 한 번당 이동할 시간 (0.1 ~ 1000ms).</value></data>
+  <data name="Settings_Lyrics_StepMs_A11yName.AutomationProperties.Name" xml:space="preserve"><value>가사 오프셋 조정 단계 (ms)</value></data>
+  <data name="Settings_Lyrics_SearchFolders_Title.Text" xml:space="preserve"><value>가사 추가 검색 폴더</value></data>
+  <data name="Settings_Lyrics_SearchFolders_Desc.Text" xml:space="preserve"><value>음원 폴더 외에 .lrc 파일을 찾을 추가 폴더를 한 줄에 하나씩 지정합니다. 없는 폴더는 무시됩니다.</value></data>
+  <data name="Settings_Lyrics_SearchFolders_A11yName.AutomationProperties.Name" xml:space="preserve"><value>가사 추가 검색 폴더</value></data>
+  <data name="Settings_OnlineLyrics_Options_Header.Text" xml:space="preserve"><value>플러그인 옵션</value></data>
+  <data name="Settings_OnlineLyrics_OptionAdd_Button.Content" xml:space="preserve"><value>옵션 추가</value></data>
+  <data name="Settings_OnlineLyrics_OptionRemove_Button.AutomationProperties.Name" xml:space="preserve"><value>옵션 삭제</value></data>
+  <data name="Settings_OnlineLyrics_Options_Hint.Text" xml:space="preserve"><value>플러그인이 문서화한 키와 값을 입력하세요. 값은 플러그인에 그대로 전달됩니다.</value></data>
+  <data name="Settings_OnlineLyrics_OptionKey_Box.PlaceholderText" xml:space="preserve"><value>키</value></data>
+  <data name="Settings_OnlineLyrics_OptionKey_Box.AutomationProperties.Name" xml:space="preserve"><value>키</value></data>
+  <data name="Settings_OnlineLyrics_OptionValue_Box.PlaceholderText" xml:space="preserve"><value>값</value></data>
+  <data name="Settings_OnlineLyrics_OptionValue_Box.AutomationProperties.Name" xml:space="preserve"><value>값</value></data>
   <data name="Settings_OnlineLyrics_Plugin_Toggle.OffContent" xml:space="preserve"><value>사용 안 함</value></data>
   <data name="Settings_OnlineLyrics_AutoSave_Title.Text" xml:space="preserve"><value>가사 자동 저장</value></data>
   <data name="Settings_OnlineLyrics_AutoSave_Desc.Text" xml:space="preserve"><value>온라인에서 가져온 가사를 아래 위치와 템플릿으로 자동 저장합니다</value></data>

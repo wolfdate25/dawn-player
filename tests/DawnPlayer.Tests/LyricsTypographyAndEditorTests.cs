@@ -22,7 +22,6 @@ public class LyricsTypographyAndEditorTests
         Assert.Equal(16.5, s.ActiveFontSize);
         Assert.Equal(0, s.CharacterSpacing);
         Assert.Equal(24.0, s.LineHeight);
-        Assert.Equal(4.0, s.LineSpacing);
         Assert.Equal("Center", s.Alignment);
         Assert.True(s.BoldActiveLine);
         Assert.True(s.EnableFocusEffect);
