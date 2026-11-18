@@ -2359,3 +2359,128 @@ WinUI 의존으로 직접 테스트 불가, 코드 경로 주석 명시), `Lyric
 x:Uid→resw 게이트·아이콘 a11y 게이트·XAML 컴파일이 와이어링을 강제하고 로직은 테스트 게이트가
 커버. 검증 중 사용자의 H: 포터블 인스턴스(구버전)가 실행 중이어도 dev 인스턴스를 PID로만
 종료해 간섭하지 않음.
+
+---
+
+## 13. 가사 오프셋 수리 + 가사 UI 통일성 정리 (2026-11-11 계획 → 승인, 구현·게이트 완료)
+
+사용자 보고 "가사 패널이 깔끔하지 못하고 통일성이 없고 불편하다 — 특히 오프셋은 제대로 동작하지
+않고 수정해도 적용됐는지 알 수 없다"에 대한 원인 규명(병렬 탐색 2 + 코드 직접 검증) 후 **B안(에디터
+수리 중심) + 기본 스텝 0.5초 + 통일성 정리 포함**으로 구현.
+
+### 13.1 원인 (전부 코드 검증, 5결함)
+
+1. **서브밀리초 노오프** — 기본 스텝 0.5ms(v1.0.0부터, `AppSettings.cs`)이 에디터 표시
+   (`TimeString` 정수 ms)·저장(`[mm:ss.fff]` 정수 ms) 해상도보다 작아 ±버튼 1회 클릭이 리스트·
+   파일·싱크 어디에도 변화를 만들지 않음. 프리셋에 0.001ms까지 존재.
+2. **런타임 오프셋 유령** — `FindActiveLineIndex`의 오프셋 파라미터가 항상 0 하드코딩
+   (`LyricsFeed.Tick`), `StepOffset`/`FormatOffsetLabel`/resw `LyricsPane_Offset*`은 호출부 없는
+   죽은 코드(패널 오프셋 UI를 만들다 만 흔적).
+3. **파괴적 적용** — `line.Time += delta` 후 음수 0 클램프로 원본 영구 손실; 총오프셋 직접 입력은
+   키스트로크마다 즉시 적용되어 타이핑 중간값+클램프로 손실 가중.
+4. **피드백 부재** — 에디터에 재생헤드(현재 재생 줄) 표시 없음. 저장→패널 자동 재로드
+   (`RaiseLyricsChanged`)는 동작하지만 사용자가 알 방법이 없음.
+5. **통일성 결여** — A-/A+ 쌍 버튼조차 토큰/하드코딩 상이, 명칭 3종("가사 창/가사 표시/가사 패널"),
+   창 제목 문자열 3벌, 프리셋 라벨 x:Uid 없음(로캘 불가), 아이콘 크기 표면별 제각각.
+
+### 13.2 구현 (사용자 결정: 런타임 오프셋 UI는 불요 — 에디터 경로 수리)
+
+- **단위 수리**: 기본 스텝 500ms + `SettingsStore.Normalize` 마이그레이션(기존 저장값 <1ms → 500) +
+  설정 NumberBox/VM 클램프 1~5000ms. 프리셋 6종(0.001~500ms) → 5종(10/50/100/500/1000ms) + x:Uid.
+- **정수 ms 스냅**: `LrcEditLineVm.SnapToWholeMs` — 모든 입력 경로(오프셋 이동·F5 스탬프·직접 입력)에서
+  표시 == 저장 == 실제 시간 불변식. `LrcEditLineVm`을 `Views/LrcEditLineVm.cs`로 분리(테스트 링크).
+- **재생헤드**: `IsCurrentLine` + 폴 타이머에서 `FindActiveLineIndex` 재사용(신설 `ITimedLyricsLine`
+  인터페이스로 패널 VM·에디터 VM 공용) → 행 소프트 하이라이트(`DawnAccentMutedBrush` 오버레이,
+  수치 x:Bind — LrcLineVm 패턴) + 좌측 액센트 바. 오프셋을 돌리면 하이라이트가 즉시 이동.
+- **NumberBox 전환**: StepDeltaBox(스핀 1~5000)·TotalOffsetBox(Enter·포커스 아웃 확정 적용 —
+  키스트로크 중간 적용 결함 제거).
+- **"0 초기화" → "원본 시간으로 되돌리기"**: 로드/붙여넣기 시 (Time, Words) 구조화 스냅샷 보관,
+  0-클램프로 손상된 타임스탬프도 복원(줄 수 변경 시는 복원 거부 + 안내).
+- **죽은 코드 제거**: `StepOffset`/`FormatOffsetLabel`/`CalculateSeekTarget`/`LrcParser.SaveOffsetToFile` +
+  resw `LyricsPane_Offset*` 3개 언어. `FindActiveLineIndex`의 offsetMs 파라미터는 ±시맨틱 테스트가
+  있어 유지.
+- **통일성**: 가사 4개 XAML FontSize 리터럴 전면 토큰화(>20 히어로 아이콘 제외), 패널 툴바 아이콘
+  13 통일, 편집기 툴팁 간소화("가사 편집기 열기"), 단축키 명칭 "가사 패널 열기/닫기"로 단일화,
+  창 Title 하드코딩 제거(resw·코드 단일), A-/A+ 현재 크기 툴팁 + 10/24 경계 비활성화, 패널 기본
+  Width 336 중복 제거(페이지 300 단일), 전체화면 종료 힌트 fallback에 "L: 가사" 정합.
+
+### 13.3 게이트 (선설계 → 구현 검증)
+
+- `LyricsTypographyAndEditorTests` 재구성 + 신설: 기본 스텝 1회 클릭 가시성(노옠프 회귀), 분수 스텝
+  정수 스냅 불변식(표시==Format 스탬프), 음수 클램프→원본 복원, 서브밀리초 직접 입력 스냅,
+  재생헤드 경계(`ITimedLyricsLine` 공용 경로), `SettingsStore.Normalize` 마이그레이션 5케이스
+  (AppPaths 전역 리디렉션 대신 Normalize 공개 직접 테스트 — 샌드박스 격리 게이트 보호).
+- 신설 `LyricsUiTypographyGateTests`: 가사 XAML FontSize 리터럸 금지(≤20) + x:Uid↔resw 키 존재 게이트.
+- 정리 대상 테스트: `ControlsCalculatorTests`·`PlaybackUiHelperTests`의 죽은 API 3종 테스트 제거,
+  `LrcParserRoundTripTests`의 SaveOffsetToFile 분기 제거, `LyricsSettingsViewModelTests` 클램프
+  기대치 갱신(1~5000).
+
+### 13.4 검증 (2026-11-11)
+
+- **레이아웃 결함 1건 발견·수리(구현 중)**: 오프셋 행 재작성 시 `StepPlusBtn`에 `Grid.Column="2"`가
+  누락되어 플러스 버튼이 컬럼 0에서 마이너스를 덮는 결함 — 육안 1차 캡처에서 액센트 버튼 1개로
+  감지되어 발견. 3열 Grid 대신 단일 수평 StackPanel(중앙 정렬)로 재작성해 구조적으로 재발 방지.
+  검증 교훈: 0.447 스케일 래스터의 색상 휴리스틱은 텍스트 전용 액센트 렌더를 놓치고 y밴드를
+  오식별한다 — 1:1 캡처(편집기 창 크기 축소) + 빨강 배경 마커 실험으로 판별했다.
+
+- 전체 스위트 **2,429 / 2,429** (재실행 포함 3회 green; 1회의 `PlaybackController_Concurrent…`
+  실패는 격리 재실행 통과로 플레이크 판별 — §4 절차).
+- 콜드 리빌드(obj/bin 삭제): App **0 오류, 경고 3** — 전량 main 순정 콜드 빌드에도 동일 존재하는
+  **선경고 CA1822 3건**(`LyricsFeed.LoadOffline/Tick`, `LyricsOnlineSettingsViewModel.AddPluginOption`,
+  본 작업 미수정 파일). 스태시→순정 빌드→언스태시로 동일성 입증. §12의 "0경고" 기록은 콜드 기준
+  미달이었던 것으로 정정. 신규 경고 0.
+
+- **실행 육안 (CUA, 대표 캡처 2컷 — [[cua-verification-keep-short]] 준수)**: dev 인스턴스에서
+  Sincerely(.lrc 99줄) 재생 → 편집기: 스텝 500ms(기존 settings.json 0.5 → **마이그레이션 실증**),
+  프리셋 5종, Total Offset 0(= 0.0000s), "원본 시간으로 되돌리기", ±버튼 라벨 "◀ 가사 앞당김 0.5s" /
+  "가사 뒤로 미룸 0.5s ▶" 좌우 배치, **재생헤드 하이라이트(앰버 워시+좌측 바)가 재생을 따라 이동 +
+  뷰 밖 스크롤 따라가기** 확인. 창 제목 resw 단일화("Lyrics Editor — Dawn Player") 확인.
+  환경 제약 기록: 이 세션의 CUA는 독립 서페이스(편집기 창)에서 물리 키보드가 금지되고 좌표 클릭이
+  실제 커서 위치로 발송되어, 실행 중 ±버튼 클릭 관통(오프셋 실시간 이동)은 UI 자동화로 검증 불가 —
+  해당 경로는 단위 게이트(노오프 회귀·스냅 불변식·복원)가 커버하고 렌더는 육안으로 확인.
+- 최종 전체 스위트 **2,429 / 2,429** (XAML 게이트 35건 필터 통과 포함, 완료 시점 1회 재실행).
+
+## 14. 퍼징 테스트 게이트 도입 (2026-11-18 구현·게이트 완료)
+
+외부 비신뢰 입력(파일·바이트)을 받는 파서에 결정론적 뮤테이션 퍼징을 도입했다. 커버리지 기반
+(libFuzzer/SharpFuzz)는 Windows 전용 저장소에서 호스팅 불가(리눅스 중심 툴링)이므로, 시드 고정
+`Random` + 뮤테이션 연산자(비트 플립·스팬 복제·절단·숫자 오염·흥미로운 바이트/문자 삽입)로 자체
+제작했다. 실패 시 (target, seed, iteration) 삼중항이 곧 최소 재현이다.
+
+### 14.1 신설 파일
+
+- `tests/DawnPlayer.Tests/Fuzzing/FuzzInputGenerator.cs` — 시드 고정 뮤테이터(Latin-1 바이트
+  이미지 변이 + 유니코드 문자 오버레이[서로게이트·BOM·한글]).
+- `tests/DawnPlayer.Tests/Fuzzing/ParserFuzzingTests.cs` — 대상별 불변식 I-F1~I-F8 선설정 게이트
+  + 발견 결함의 최소 재현 핀 테스트. 기본 1,000세대(디스크 바인딩 타깃 ¼),
+  `DAWN_PLAYER_FUZZ_ITERATIONS` 환경변수로 딥 버스트.
+
+### 14.2 불변식(요지)
+
+I-F1 파서 비크래시 / I-F2 LRC 타임라인 정렬·단어 단조(I2) / I-F3 LineIndexAt 이진탐색 정합 /
+I-F4 Format∘Parse 불변점(2회차 이후 안정) / I-F5 CUE 엔트리·TryParseTime 음수 금지 / I-F6 M3U
+경로·duration 계약 / I-F7 AutoEq 클램프 계약(문서화됨) / I-F8 LegacyTextDecoder 임의 바이트 수용.
+
+### 14.3 발견·수리 6건 (전부 기계적 수리, 재현 핀 테스트 동반)
+
+1. **LrcParser** 거대 `[offset:]` → `TimeSpan.FromMilliseconds` OverflowException(가사 창 크래시).
+   ±24h 클램프 + 비유한값 0 처리.
+2. **M3u.Read** NUL 포함 경로 행 → GetFullPath ArgumentException(ImportPlaylist에 catch 없음 →
+   앱 전파). try/catch로 원문 보존.
+3. **CueSheet.ResolveFile** NUL FILE 인수 → 예외로 앨범 전체 폐기(TryParseFile이 전부 catch →
+   조용한 손실). 원문 보존으로 엔트리 생존.
+4. **CueSheet.TryParseTime** `2147483647:00:00` → `mm*60` int 랩어라운드로 **음수 트랙 시작**.
+   long 합산 + int.MaxValue 초 상한 초과 거부.
+5. **LrcParser 밀리초 정밀도** — `TimeSpan.FromSeconds(0.087)`가 869,999틱(실증)이라 표기 ms가
+   회차마다 −1 워크("087"→"086"→"085"). 정수 조립(ms→틱)으로 근본 수리. §3 "보고 값 ≠ 실제
+   상태" 계열.
+6. **CueSheet** 겹따옴표 `FILE ""x` → 빈 AudioPath 엔트리. 빈 파일명은 FILE 없는 트랙과 동일하게
+   폐기(기존 의미론 일관).
+
+### 14.4 검증 (2026-11-18)
+
+- 기본 1,000세대: 16/16 green. **딥 버스트 50,000세대: 16/16 green**(3분 10초) — 5·6번 결함은
+  기본 세대에서 발견(306·1021회차), 6번은 20k 재현으로 좁힘.
+- 콜드 리빌드(obj/bin 삭제, Core+Tests): 신규/수정 파일 경고 0. 존재 경고 6건은 전부 §13 진행
+  중인 가사 파일(LyricsFeed·LyricsOnlineSettingsViewModel 등)의 선경고 — 본 작업 미수정 파일.
+- 전체 스위트 **2,445 / 2,445** (기존 2,429 + 신규 퍼징 16, 콜드 빌드 산출물로 1회).

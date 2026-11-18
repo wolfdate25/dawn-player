@@ -80,7 +80,11 @@ public static class CueSheet
             {
                 case "FILE":
                     FlushTrack();
-                    currentFile = Unquote(argument.TakeFirstToken());
+                    // A doubled opening quote ("") makes TakeFirstToken yield an empty name; an
+                    // empty FILE resolves to nothing, so drop it — tracks with no FILE behave
+                    // exactly like the pre-FILE tracks already discarded by FlushTrack.
+                    var fileToken = Unquote(argument.TakeFirstToken());
+                    currentFile = fileToken.Length > 0 ? fileToken : null;
                     break;
 
                 case "TRACK":
@@ -146,7 +150,12 @@ public static class CueSheet
             return false;
         }
         if (mm < 0 || ss < 0 || frames < 0) return false;
-        time = TimeSpan.FromSeconds(mm * 60 + ss) + TimeSpan.FromTicks((long)Math.Round(frames * TimeSpan.TicksPerSecond / 75.0));
+        // mm lives near int.MaxValue for corrupt sheets and the mm*60 multiply then wraps into a
+        // NEGATIVE total — a cue track would start before the beginning of the file. Do the sum
+        // in long and reject anything that no longer fits a representable seconds count.
+        long seconds = (long)mm * 60 + ss;
+        if (seconds > int.MaxValue) return false;
+        time = TimeSpan.FromSeconds(seconds) + TimeSpan.FromTicks((long)Math.Round(frames * TimeSpan.TicksPerSecond / 75.0));
         return true;
     }
 
@@ -184,9 +193,19 @@ public static class CueSheet
     {
         if (string.IsNullOrWhiteSpace(file)) return file;
         var unescaped = file.Replace('\\', Path.DirectorySeparatorChar);
-        return Path.IsPathRooted(unescaped)
-            ? unescaped
-            : Path.GetFullPath(Path.Combine(string.IsNullOrEmpty(cueDir) ? "." : cueDir, unescaped));
+        if (Path.IsPathRooted(unescaped)) return unescaped;
+        // A corrupted FILE argument (embedded NUL, …) throws inside GetFullPath; aborting here
+        // would discard the whole album (TryParseFile catches everything and turns it into a
+        // silent null). Keep the raw name instead — the entry survives and resolves to nothing,
+        // exactly like a file that does not exist.
+        try
+        {
+            return Path.GetFullPath(Path.Combine(string.IsNullOrEmpty(cueDir) ? "." : cueDir, unescaped));
+        }
+        catch (ArgumentException)
+        {
+            return unescaped;
+        }
     }
 
     private static string DecodeFile(byte[] bytes)

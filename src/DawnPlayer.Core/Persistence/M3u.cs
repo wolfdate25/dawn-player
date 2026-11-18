@@ -137,7 +137,13 @@ public static class M3u
             // "http://host/x" into "<dir>\\http:\\host\\x", which silently broke radio (and now
             // remote-track) round-trips on reload. They are always stored absolute.
             if (!Audio.RadioTrack.IsStreamUrl(path) && !Path.IsPathRooted(path))
-                path = Path.GetFullPath(Path.Combine(dir, path));
+            {
+                // A corrupted line (embedded NUL, …) throws inside GetFullPath, and the import
+                // callers carry no catch — one bad line must not abort the whole import. Keep
+                // the raw token: it resolves to nothing, exactly like a file that is not there.
+                try { path = Path.GetFullPath(Path.Combine(dir, path)); }
+                catch (Exception ex) { Log.Debug($"[m3u] path normalization failed, keeping raw entry: {ex.Message}"); }
+            }
             entries.Add(new M3uEntry(path, pendingTitle, pendingDuration, pendingDirective));
             pendingTitle = null;
             pendingDuration = null;
