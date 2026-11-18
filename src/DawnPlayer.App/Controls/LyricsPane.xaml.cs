@@ -76,6 +76,7 @@ public sealed partial class LyricsPane : UserControl
             AppServices.LyricsChanged -= OnExternalLyricsChanged;
             AppServices.LyricsSettingsChanged += OnLyricsSettingsChanged;
             AppServices.LyricsChanged += OnExternalLyricsChanged;
+            UpdateFontToolState();
             SyncTimer();
         };
         Unloaded += (_, _) =>
@@ -112,10 +113,12 @@ public sealed partial class LyricsPane : UserControl
             if (_currentDoc is { HasLines: true } && _feed.ConsumeToggleChange(AppServices.Settings))
             {
                 DisplayLyrics(_currentDoc, _currentSource);
+                UpdateFontToolState();
                 return;
             }
 
             ApplyLyricsStyle();
+            UpdateFontToolState();
         });
     }
 
@@ -345,6 +348,22 @@ public sealed partial class LyricsPane : UserControl
         s.ActiveFontSize = Math.Clamp(s.ActiveFontSize + 1.0, 12.0, 32.0);
         SettingsWriter.Schedule(AppServices.Settings);
         AppServices.RaiseLyricsSettingsChanged();
+    }
+
+    /// <summary>
+    /// A-/A+ feedback: the tooltips carry the live size and the buttons disable at the 10–24
+    /// range ends — a click that silently does nothing reads as a broken button.
+    /// </summary>
+    private void UpdateFontToolState()
+    {
+        var size = AppServices.Settings?.Lyrics.FontSize ?? 13.5;
+        FontSmallerBtn.IsEnabled = size > 10.0 + 0.001;
+        FontBiggerBtn.IsEnabled = size < 24.0 - 0.001;
+        string current = size % 1 == 0
+            ? ((int)size).ToString(System.Globalization.CultureInfo.InvariantCulture)
+            : size.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+        ToolTipService.SetToolTip(FontSmallerBtn, AppStrings.Format("LyricsPane_FontSmallerTooltip", "글꼴 축소 (현재 {0})", current));
+        ToolTipService.SetToolTip(FontBiggerBtn, AppStrings.Format("LyricsPane_FontBiggerTooltip", "글꼴 확대 (현재 {0})", current));
     }
 
     private void OnOpenEditorClick(object sender, RoutedEventArgs e)

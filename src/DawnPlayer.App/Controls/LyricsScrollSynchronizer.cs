@@ -1,11 +1,10 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using DawnPlayer.App.Localization;
 using DawnPlayer.Core.Lyrics;
 
 namespace DawnPlayer.App.Controls;
 
-public sealed class LrcLineVm : INotifyPropertyChanged
+public sealed class LrcLineVm : INotifyPropertyChanged, ITimedLyricsLine
 {
     public TimeSpan Time { get; init; }
     public string Text { get; init; } = "";
@@ -118,9 +117,16 @@ public sealed class LrcLineVm : INotifyPropertyChanged
     }
 }
 
+/// <summary>A lyrics line view-model that knows its timestamp — lets the binary search serve both
+/// the pane's <see cref="LrcLineVm"/> and the editor's line VM without duplicating the algorithm.</summary>
+public interface ITimedLyricsLine
+{
+    TimeSpan Time { get; }
+}
+
 public static class LyricsScrollSynchronizer
 {
-    public static int FindActiveLineIndex(IReadOnlyList<LrcLineVm>? lines, TimeSpan playbackPosition, double offsetMs)
+    public static int FindActiveLineIndex(IReadOnlyList<ITimedLyricsLine>? lines, TimeSpan playbackPosition, double offsetMs)
     {
         if (lines == null || lines.Count == 0)
             return -1;
@@ -149,36 +155,6 @@ public static class LyricsScrollSynchronizer
         }
 
         return result;
-    }
-
-    public static double StepOffset(double currentOffsetMs, double deltaMs, double minOffsetMs = -10000, double maxOffsetMs = 10000)
-    {
-        if (double.IsNaN(currentOffsetMs) || double.IsInfinity(currentOffsetMs)) currentOffsetMs = 0;
-        if (double.IsNaN(deltaMs) || double.IsInfinity(deltaMs)) deltaMs = 0;
-
-        double min = Math.Min(minOffsetMs, maxOffsetMs);
-        double max = Math.Max(minOffsetMs, maxOffsetMs);
-
-        return Math.Clamp(currentOffsetMs + deltaMs, min, max);
-    }
-
-    public static string FormatOffsetLabel(double offsetMs)
-    {
-        if (double.IsNaN(offsetMs) || double.IsInfinity(offsetMs) || Math.Abs(offsetMs) < 0.001)
-            return AppStrings.Get("LyricsPane_OffsetZero", "오프셋 0.0s");
-
-        double sec = offsetMs / 1000.0;
-        string sign = offsetMs > 0 ? "+" : "";
-        return AppStrings.Format("LyricsPane_OffsetFormat", "오프셋 {0}", $"{sign}{sec:0.#}s");
-    }
-
-    public static TimeSpan CalculateSeekTarget(TimeSpan lineTimestamp, double offsetMs)
-    {
-        if (double.IsNaN(offsetMs) || double.IsInfinity(offsetMs))
-            offsetMs = 0;
-
-        var target = lineTimestamp + TimeSpan.FromMilliseconds(offsetMs);
-        return target < TimeSpan.Zero ? TimeSpan.Zero : target;
     }
 
     public static bool UpdateActiveLineState(IReadOnlyList<LrcLineVm>? lines, ref int currentIndex, int targetIndex)

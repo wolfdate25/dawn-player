@@ -39,10 +39,10 @@ public class LyricsSettingsViewModelTests
         Assert.Equal(50, settings.Lyrics.DefaultOffsetStepMs, 10);
 
         vm.OffsetStepMs = 50000; // beyond the clamp ceiling
-        Assert.Equal(1000, settings.Lyrics.DefaultOffsetStepMs, 10);
+        Assert.Equal(5000, settings.Lyrics.DefaultOffsetStepMs, 10);
 
-        vm.OffsetStepMs = 0; // below the clamp floor
-        Assert.Equal(0.1, settings.Lyrics.DefaultOffsetStepMs, 10);
+        vm.OffsetStepMs = 0; // below the clamp floor — sub-ms steps cannot surface anywhere
+        Assert.Equal(1, settings.Lyrics.DefaultOffsetStepMs, 10);
     }
 
     [Fact]

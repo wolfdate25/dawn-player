@@ -61,9 +61,11 @@ public static class SettingsStore
     /// <summary>
     /// Fills in sections that deserialized to null. A hand-edited or partially written file with
     /// <c>"Playback": null</c> deserializes successfully and then throws a NullReferenceException
-    /// deep in the playback path instead of at load time.
+    /// deep in the playback path instead of at load time. Also carries one-shot value
+    /// migrations for settings whose old defaults turned out to be defective — public so tests
+    /// can exercise migrations without touching the real settings file.
     /// </summary>
-    private static AppSettings Normalize(AppSettings settings)
+    public static AppSettings Normalize(AppSettings settings)
     {
         settings.Output ??= new OutputSettings();
         settings.Playback ??= new PlaybackSettings();
@@ -78,6 +80,11 @@ public static class SettingsStore
         // recognize; fall back to the safe default so the load never throws.
         if (!Enum.IsDefined<UiLanguage>(settings.Ui.Language))
             settings.Ui.Language = UiLanguage.System;
+        // Legacy builds shipped a 0.5 ms offset step — below the 1 ms resolution of the editor
+        // list and the saved stamps, so a saved sub-ms value could never do anything. Bump those
+        // legacy values (and any sub-1 hand edit) to the current 500 ms default.
+        if (settings.Lyrics.DefaultOffsetStepMs < 1)
+            settings.Lyrics.DefaultOffsetStepMs = 500;
         return settings;
     }
 

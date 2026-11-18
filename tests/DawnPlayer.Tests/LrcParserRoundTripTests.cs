@@ -6,9 +6,8 @@ namespace DawnPlayer.Tests;
 
 /// <summary>
 /// Invariant I1 gate: Parse → Format → Parse is lossless for standard lines, enhanced word tags,
-/// duplicate-timestamp translations, dual timestamps and plain-text documents. SaveOffsetToFile
-/// and the lyrics editor both rewrite user .lrc files through this path — any loss destroys
-/// curated files.
+/// duplicate-timestamp translations, dual timestamps and plain-text documents. The lyrics editor
+/// rewrites user .lrc files through this path — any loss destroys curated files.
 /// </summary>
 public class LrcParserRoundTripTests
 {
@@ -66,28 +65,6 @@ public class LrcParserRoundTripTests
         var second = LrcParser.Parse(LrcParser.Format(first));
 
         AssertDocumentEqual(first, second);
-    }
-
-    [Fact]
-    public void SaveOffsetToFilePreservesWordsAndTranslations()
-    {
-        var path = Path.Combine(Path.GetTempPath(), $"dawn-rt-{Guid.NewGuid():N}.lrc");
-        try
-        {
-            File.WriteAllText(path, "[00:01.00]<00:01.00>Hey<00:01.50>ho\n[00:01.00]번역\n[00:05.00]plain");
-
-            Assert.True(LrcParser.SaveOffsetToFile(path, 500));
-
-            var doc = LrcParser.ParseFile(path);
-            var merged = doc.Lines.Single(l => l.Text == "Heyho");
-            Assert.Equal(2, merged.Words!.Count);
-            Assert.Equal("번역", merged.Translation);
-            Assert.Equal(TimeSpan.FromSeconds(0.5), merged.Time);
-        }
-        finally
-        {
-            File.Delete(path);
-        }
     }
 
     private static void AssertDocumentEqual(LyricsDocument expected, LyricsDocument actual)

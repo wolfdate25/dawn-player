@@ -184,8 +184,9 @@ public sealed class LyricsSettings
     /// <summary>Word-by-word karaoke highlighting when the lyrics carry enhanced-LRC word timings.</summary>
     public bool KaraokeHighlight { get; set; } = true;
 
-    // Editor step preference
-    public double DefaultOffsetStepMs { get; set; } = 0.5; // 0.5 ms default
+    // Editor step preference. Steps below 1 ms cannot surface anywhere: the editor list and the
+    // saved [mm:ss.fff] stamps both resolve to whole milliseconds, so sub-ms defaults were no-ops.
+    public double DefaultOffsetStepMs { get; set; } = 500; // 0.5 s default
 }
 
 /// <summary>Where an online-lyrics file is written: next to the track, or into a chosen folder.</summary>

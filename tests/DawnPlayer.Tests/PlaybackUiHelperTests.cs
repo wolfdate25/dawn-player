@@ -437,59 +437,6 @@ public class PlaybackUiHelperTests
     }
 
     [Fact]
-    public void LyricsScrollSynchronizer_StepOffset_SteppingAndClamping()
-    {
-        Assert.Equal(500, LyricsScrollSynchronizer.StepOffset(0, 500));
-        Assert.Equal(0, LyricsScrollSynchronizer.StepOffset(500, -500));
-
-        // Clamping at default [-10000, 10000]
-        Assert.Equal(10000, LyricsScrollSynchronizer.StepOffset(9800, 500));
-        Assert.Equal(-10000, LyricsScrollSynchronizer.StepOffset(-9800, -500));
-
-        // Custom clamp range [-5000, 5000]
-        Assert.Equal(5000, LyricsScrollSynchronizer.StepOffset(4800, 500, -5000, 5000));
-        Assert.Equal(-5000, LyricsScrollSynchronizer.StepOffset(-4800, -500, -5000, 5000));
-
-        // NaN safety
-        Assert.Equal(500, LyricsScrollSynchronizer.StepOffset(double.NaN, 500));
-    }
-
-    [Theory]
-    [InlineData(0, "오프셋 0.0s")]
-    [InlineData(500, "오프셋 +0.5s")]
-    [InlineData(-500, "오프셋 -0.5s")]
-    [InlineData(1500, "오프셋 +1.5s")]
-    [InlineData(-2000, "오프셋 -2s")]
-    public void LyricsScrollSynchronizer_FormatOffsetLabel_FormatsCorrectly(double offsetMs, string expected)
-    {
-        Assert.Equal(expected, LyricsScrollSynchronizer.FormatOffsetLabel(offsetMs));
-    }
-
-    [Fact]
-    public void LyricsScrollSynchronizer_CalculateSeekTarget_ComputesTarget()
-    {
-        // Normal offset 0
-        var target1 = LyricsScrollSynchronizer.CalculateSeekTarget(TimeSpan.FromSeconds(10), 0);
-        Assert.Equal(TimeSpan.FromSeconds(10), target1);
-
-        // Positive offset +500ms
-        var target2 = LyricsScrollSynchronizer.CalculateSeekTarget(TimeSpan.FromSeconds(10), 500);
-        Assert.Equal(TimeSpan.FromSeconds(10.5), target2);
-
-        // Negative offset -500ms
-        var target3 = LyricsScrollSynchronizer.CalculateSeekTarget(TimeSpan.FromSeconds(10), -500);
-        Assert.Equal(TimeSpan.FromSeconds(9.5), target3);
-
-        // Negative offset exceeding timestamp -> clamped to TimeSpan.Zero
-        var target4 = LyricsScrollSynchronizer.CalculateSeekTarget(TimeSpan.FromSeconds(1), -2000);
-        Assert.Equal(TimeSpan.Zero, target4);
-
-        // NaN handling
-        var targetNaN = LyricsScrollSynchronizer.CalculateSeekTarget(TimeSpan.FromSeconds(5), double.NaN);
-        Assert.Equal(TimeSpan.FromSeconds(5), targetNaN);
-    }
-
-    [Fact]
     public void LyricsScrollSynchronizer_UpdateActiveLineState_StateTransitions()
     {
         var lines = new List<LrcLineVm>

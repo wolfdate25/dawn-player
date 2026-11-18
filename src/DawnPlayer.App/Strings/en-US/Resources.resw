@@ -120,8 +120,6 @@
   <data name="LyricsPane_EmptyTitle.Text" xml:space="preserve"><value>No lyrics available</value></data>
   <data name="LyricsPane_SourceOnlineFormat" xml:space="preserve"><value>Online · {0}</value></data>
   <data name="LyricsPane_SourceOnlineUnsyncedFormat" xml:space="preserve"><value>Online · {0} · unsynced</value></data>
-  <data name="LyricsPane_OffsetZero" xml:space="preserve"><value>Offset 0.0s</value></data>
-  <data name="LyricsPane_OffsetFormat" xml:space="preserve"><value>Offset {0}</value></data>
   <data name="LyricsPane_EmptyDesc.Text" xml:space="preserve"><value>Place a .lrc file in the same folder as the audio file or click [Edit lyrics] to create one.</value></data>
   <data name="LyricsPane_CreateLyricsButton.Content" xml:space="preserve"><value>Create new lyrics</value></data>
   <data name="LyricsPane_SearchOnlineButton.Content" xml:space="preserve"><value>Search online</value></data>
@@ -266,8 +264,20 @@
   <data name="LyricsEditor_StepDeltaLabel.Text" xml:space="preserve"><value>Step Delta:</value></data>
   <data name="LyricsEditor_StepPresetsLabel.Text" xml:space="preserve"><value>Step Presets:</value></data>
   <data name="LyricsEditor_TotalOffsetLabel.Text" xml:space="preserve"><value>Total Offset:</value></data>
-  <data name="LyricsEditor_ResetOffsetBtn.Content" xml:space="preserve"><value>Reset to 0</value></data>
   <data name="LyricsEditor_TotalOffsetSecondsFormat" xml:space="preserve"><value>(= {0}s)</value></data>
+  <data name="LyricsEditor_RestoreOriginalTimesBtn.Content" xml:space="preserve"><value>Restore original times</value></data>
+  <data name="LyricsEditor_RestoreOriginalTimesBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Restores every line's time to what it was when loaded (useful only before saving)</value></data>
+  <data name="LyricsEditor_StepMinusFormat" xml:space="preserve"><value>◀ Lyrics earlier {0}</value></data>
+  <data name="LyricsEditor_StepPlusFormat" xml:space="preserve"><value>Lyrics later {0} ▶</value></data>
+  <data name="LyricsEditor_Status_RestoreUnavailable" xml:space="preserve"><value>Line count changed — cannot restore original times; close and discard instead (before saving)</value></data>
+  <data name="LyricsEditor_Status_Restored" xml:space="preserve"><value>Line times restored to their load-time originals</value></data>
+  <data name="LyricsPane_FontSmallerTooltip" xml:space="preserve"><value>Decrease font size (now {0})</value></data>
+  <data name="LyricsPane_FontBiggerTooltip" xml:space="preserve"><value>Increase font size (now {0})</value></data>
+  <data name="LyricsEditor_Preset10.Content" xml:space="preserve"><value>10ms</value></data>
+  <data name="LyricsEditor_Preset50.Content" xml:space="preserve"><value>50ms</value></data>
+  <data name="LyricsEditor_Preset100.Content" xml:space="preserve"><value>100ms</value></data>
+  <data name="LyricsEditor_Preset500.Content" xml:space="preserve"><value>500ms</value></data>
+  <data name="LyricsEditor_Preset1000.Content" xml:space="preserve"><value>1000ms</value></data>
   <data name="LyricsEditor_TabSync.Header" xml:space="preserve"><value>Line-by-Line Sync Editor</value></data>
   <data name="LyricsEditor_StampCurrentTimeText.Text" xml:space="preserve"><value>Stamp Current Time (F5)</value></data>
   <data name="LyricsEditor_AddLineText.Text" xml:space="preserve"><value>Add Line</value></data>
@@ -300,7 +310,7 @@
   <data name="LyricsEditor_Status_NoExistingLyrics" xml:space="preserve"><value>No existing lyrics (Ready to create new)</value></data>
   <data name="LyricsEditor_Status_ClipboardImported" xml:space="preserve"><value>Loaded {0} lines of lyrics from clipboard.</value></data>
   <data name="LyricsEditor_Status_PasteError" xml:space="preserve"><value>Paste error: {0}</value></data>
-  <data name="LyricsEditor_Status_SaveSuccess" xml:space="preserve"><value>Successfully saved: {0} ({1})</value></data>
+  <data name="LyricsEditor_Status_SaveSuccess" xml:space="preserve"><value>Saved ({0}) — applied to the lyrics panel instantly: {1}</value></data>
   <data name="LyricsEditor_Status_SaveFailed" xml:space="preserve"><value>Failed to save: {0}</value></data>
 
   <!-- Module 4: Lyrics Tools & Windows (LyricsSearch) -->
@@ -789,7 +799,7 @@
   <data name="Settings_Lyrics_BoldActive_Desc.Text" xml:space="preserve"><value>Renders the currently playing lyrics line in bold.</value></data>
   <data name="Settings_Lyrics_BoldActive_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Bold Active Line</value></data>
   <data name="Settings_Lyrics_StepMs_Title.Text" xml:space="preserve"><value>Lyrics offset step (ms)</value></data>
-  <data name="Settings_Lyrics_StepMs_Desc.Text" xml:space="preserve"><value>How far the editor's ◀/▶ offset buttons move per press (0.1 – 1000 ms).</value></data>
+  <data name="Settings_Lyrics_StepMs_Desc.Text" xml:space="preserve"><value>How far the editor's offset buttons move per press (1 – 5000 ms). Timestamps are saved at 1 ms resolution.</value></data>
   <data name="Settings_Lyrics_StepMs_A11yName.AutomationProperties.Name" xml:space="preserve"><value>Lyrics offset step (ms)</value></data>
   <data name="Settings_Lyrics_SearchFolders_Title.Text" xml:space="preserve"><value>Extra lyrics search folders</value></data>
   <data name="Settings_Lyrics_SearchFolders_Desc.Text" xml:space="preserve"><value>Additional folders to search for .lrc files, one per line. Missing folders are ignored.</value></data>

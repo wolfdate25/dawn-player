@@ -1,16 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using DawnPlayer.App.Helpers;
 using DawnPlayer.App.Localization;
 using DawnPlayer.App.Services;
+using DawnPlayer.App.Controls;
 using DawnPlayer.Core.Audio;
 using DawnPlayer.Core.Lyrics;
 using DawnPlayer.Core.Models;
@@ -23,93 +22,6 @@ using Windows.ApplicationModel.DataTransfer;
 
 namespace DawnPlayer.App.Views;
 
-public sealed class LrcEditLineVm : INotifyPropertyChanged
-{
-    private int _lineNo;
-    private TimeSpan _time;
-    private string _timeString = "00:00.000";
-    private string _text = "";
-
-    public int LineNo
-    {
-        get => _lineNo;
-        set { if (_lineNo != value) { _lineNo = value; OnPropertyChanged(); } }
-    }
-
-    public TimeSpan Time
-    {
-        get => _time;
-        set
-        {
-            if (_time != value)
-            {
-                _time = value;
-                int min = (int)value.TotalMinutes;
-                int sec = value.Seconds;
-                int ms = value.Milliseconds;
-                _timeString = $"{min:D2}:{sec:D2}.{ms:D3}";
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(TimeString));
-            }
-        }
-    }
-
-    public string TimeString
-    {
-        get => _timeString;
-        set
-        {
-            if (_timeString != value)
-            {
-                _timeString = value;
-                OnPropertyChanged();
-                if (TryParseTimeString(value, out var parsed))
-                {
-                    _time = parsed;
-                    OnPropertyChanged(nameof(Time));
-                }
-            }
-        }
-    }
-
-    public string Text
-    {
-        get => _text;
-        set { if (_text != value) { _text = value; OnPropertyChanged(); } }
-    }
-
-    /// <summary>Merged translation sub-line, carried through untouched so saves never drop it.</summary>
-    public string? Translation { get; set; }
-
-    /// <summary>Enhanced-LRC word timings, carried through so saves never drop them.</summary>
-    public IReadOnlyList<LrcWord>? Words { get; set; }
-
-    private static bool TryParseTimeString(string s, out TimeSpan time)
-    {
-        time = TimeSpan.Zero;
-        if (string.IsNullOrWhiteSpace(s)) return false;
-        var parts = s.Trim().Split(':');
-        if (parts.Length < 2) return false;
-        if (!int.TryParse(parts[0], out int min)) return false;
-        var secParts = parts[1].Split('.');
-        if (!int.TryParse(secParts[0], out int sec)) return false;
-        double ms = 0;
-        if (secParts.Length > 1 && double.TryParse("0." + secParts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double frac))
-        {
-            ms = frac * 1000;
-        }
-        // A negative field parsed fine and was written back as "[00:-30.000]" — a timestamp the
-        // parser then rejected on the next load. Refuse negatives instead.
-        if (min < 0 || sec < 0) return false;
-        time = TimeSpan.FromMinutes(min) + TimeSpan.FromSeconds(sec) + TimeSpan.FromMilliseconds(ms);
-        return true;
-    }
-
-    public event PropertyChangedEventHandler? PropertyChanged;
-    private void OnPropertyChanged([CallerMemberName] string? name = null) =>
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-}
-
 public sealed partial class LyricsEditorWindow : Window
 {
     private static LyricsEditorWindow? s_activeWindow;
@@ -121,10 +33,15 @@ public sealed partial class LyricsEditorWindow : Window
     private bool _closed;
     private readonly ObservableCollection<LrcEditLineVm> _lines = new();
 
-    private double _stepMs = 0.5;
+    private double _stepMs = 500;
     private double _totalOffsetMs;
     private string _targetLrcPath = "";
     private bool _updatingFromSync;
+
+    // Loaded-time (Time, Words) per line — the restore button recovers from destructive offset
+    // moves even after lines hit the zero clamp, which a reverse delta can never undo.
+    private readonly List<(TimeSpan Time, IReadOnlyList<LrcWord>? Words)> _originalTimes = new();
+    private int _currentLineIndex = -1;
 
     public static void OpenForTrack(Track track)
     {
@@ -163,8 +80,8 @@ public sealed partial class LyricsEditorWindow : Window
         WindowPlacementHelper.TryRestoreWindowSize(this, AppServices.Settings.Ui.LyricsEditorWidth, AppServices.Settings.Ui.LyricsEditorHeight, _hwnd);
         _track = track;
 
-        _stepMs = AppServices.Settings.Lyrics.DefaultOffsetStepMs > 0 ? AppServices.Settings.Lyrics.DefaultOffsetStepMs : 0.5;
-        StepDeltaBox.Text = _stepMs.ToString("G", CultureInfo.InvariantCulture);
+        _stepMs = AppServices.Settings.Lyrics.DefaultOffsetStepMs >= 1 ? AppServices.Settings.Lyrics.DefaultOffsetStepMs : 500;
+        StepDeltaBox.Value = _stepMs;
         UpdateStepButtonLabels();
 
         LinesListView.ItemsSource = _lines;
@@ -200,6 +117,7 @@ public sealed partial class LyricsEditorWindow : Window
         FilePathLabel.Text = _targetLrcPath;
         _totalOffsetMs = 0;
         UpdateOffsetUi();
+        _currentLineIndex = -1;
         LoadTrackLyrics();
     }
 
@@ -251,10 +169,18 @@ public sealed partial class LyricsEditorWindow : Window
             StatusLabel.Text = AppStrings.Get("LyricsEditor_Status_NoExistingLyrics", "기존 가사 없음 (신규 작성 가능)");
         }
 
+        _currentLineIndex = -1;
+        CaptureOriginalTimes();
         SyncToRawText();
         // Baseline for the unsaved-change guard — also refreshed when LoadTrack re-points the
         // editor at another track.
         _savedSnapshot = CurrentContent();
+    }
+
+    private void CaptureOriginalTimes()
+    {
+        _originalTimes.Clear();
+        foreach (var l in _lines) _originalTimes.Add((l.Time, l.Words));
     }
 
     private void OnPollPlayback()
@@ -268,6 +194,32 @@ public sealed partial class LyricsEditorWindow : Window
 
         bool isPlaying = AppServices.Playback.State == PlaybackState.Playing;
         PlayPauseIcon.Glyph = isPlaying ? "\uE769" : "\uE768";
+
+        UpdateCurrentLineHighlight(pos);
+    }
+
+    /// <summary>
+    /// Playhead: the line the playback position lands on gets a row highlight, so turning the
+    /// offset moves the highlight immediately — the edit's effect is visible without saving.
+    /// </summary>
+    private void UpdateCurrentLineHighlight(TimeSpan pos)
+    {
+        int target = LyricsScrollSynchronizer.FindActiveLineIndex(_lines, pos, 0);
+        if (target == _currentLineIndex) return;
+
+        if (_currentLineIndex >= 0 && _currentLineIndex < _lines.Count)
+        {
+            _lines[_currentLineIndex].IsCurrentLine = false;
+        }
+        _currentLineIndex = target;
+        if (target >= 0 && target < _lines.Count)
+        {
+            _lines[target].IsCurrentLine = true;
+            // ScrollIntoView is a no-op while the item is already on screen, so this only
+            // follows the playhead when it drifts out of view — explicit list editing is never
+            // yanked around while the line stays visible.
+            LinesListView.ScrollIntoView(_lines[target]);
+        }
     }
 
     private void OnPlayPauseClick(object sender, RoutedEventArgs e)
@@ -277,30 +229,32 @@ public sealed partial class LyricsEditorWindow : Window
 
     // ---------------- Offset Controls ----------------
 
-    private void OnStepDeltaTextChanged(object sender, TextChangedEventArgs e)
+    private void OnStepDeltaValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
     {
-        if (double.TryParse(StepDeltaBox.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out var val) && val > 0)
-        {
-            _stepMs = ClampOffsetMs(val);
-            StepDeltaBox.Text = _stepMs.ToString("G", CultureInfo.InvariantCulture);
-            UpdateStepButtonLabels();
-        }
+        // The box clamps to [1, 5000] itself; anything that still arrives out of band (program
+        // set, corner rounding) is clamped again rather than trusted.
+        var val = Math.Clamp(args.NewValue, 1, 5000);
+        if (val != args.NewValue) StepDeltaBox.Value = val;
+        if (_stepMs == val) return;
+        _stepMs = val;
+        UpdateStepButtonLabels();
     }
 
     private void OnPresetStepClick(object sender, RoutedEventArgs e)
     {
         if (sender is Button btn && btn.Tag is string s && double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var val))
         {
-            _stepMs = val;
-            StepDeltaBox.Text = val.ToString("G", CultureInfo.InvariantCulture);
-            UpdateStepButtonLabels();
+            StepDeltaBox.Value = val; // ValueChanged routes through OnStepDeltaValueChanged
         }
     }
 
     private void UpdateStepButtonLabels()
     {
-        StepMinusBtn.Content = $"◀ - {_stepMs:G}ms";
-        StepPlusBtn.Content = $"+ {_stepMs:G}ms ▶";
+        // Direction words beat signs: "앞당김" (minus — lines fire earlier) / "뒤로 미룀" (plus).
+        // Seconds read better than raw ms at the 0.5 s default.
+        string sec = $"{_stepMs / 1000.0:0.###}s";
+        StepMinusBtn.Content = AppStrings.Format("LyricsEditor_StepMinusFormat", "◀ 가사 앞당김 {0}", sec);
+        StepPlusBtn.Content = AppStrings.Format("LyricsEditor_StepPlusFormat", "가사 뒤로 미룀 {0} ▶", sec);
     }
 
     private void OnStepMinusClick(object sender, RoutedEventArgs e)
@@ -328,31 +282,63 @@ public sealed partial class LyricsEditorWindow : Window
         ApplyOffsetDeltaToLines(deltaMs);
     }
 
-    private void OnResetOffsetClick(object sender, RoutedEventArgs e)
+    /// <summary>
+    /// Restores every line to its loaded-time (Time, Words). Unlike a reverse delta, this also
+    /// undoes damage from the zero clamp — a line pushed below 0 ms by a negative move comes
+    /// back exactly. Explicit user edits to individual stamps (typing in the time box, F5) are
+    /// also reverted by design: the button promises the load-time original, nothing partial.
+    /// </summary>
+    private void OnRestoreOriginalTimesClick(object sender, RoutedEventArgs e)
     {
-        double diff = -_totalOffsetMs;
+        if (_lines.Count == 0) return;
+        if (_lines.Count != _originalTimes.Count)
+        {
+            // Lines were added/deleted since load — "original times" no longer line up 1:1, and
+            // pairing them by index would silently retime the wrong rows.
+            StatusLabel.Text = AppStrings.Get("LyricsEditor_Status_RestoreUnavailable", "줄 수가 달라져 원본 시간 복원 불가 — 저장 전이라면 닫기(취소)로 버릴 수 있습니다");
+            return;
+        }
+
+        for (int i = 0; i < _lines.Count; i++)
+        {
+            _lines[i].Time = _originalTimes[i].Time;
+            _lines[i].Words = _originalTimes[i].Words;
+        }
         _totalOffsetMs = 0;
         UpdateOffsetUi();
-        ApplyOffsetDeltaToLines(diff);
+        SyncToRawText();
+        StatusLabel.Text = AppStrings.Get("LyricsEditor_Status_Restored", "라인 시간을 로드 시점 원본으로 되돌렸습니다");
     }
 
-    private void OnTotalOffsetBoxChanged(object sender, TextChangedEventArgs e)
+    // The total box commits on Enter / focus leave — a per-keystroke apply meant typing "-500"
+    // sequentially applied -5 and -50, and any mid-typing zero-clamp permanently ate the line's
+    // original timestamp.
+    private void OnTotalOffsetBoxKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.Enter)
+        {
+            ApplyTotalOffsetFromBox();
+            e.Handled = true;
+        }
+    }
+
+    private void OnTotalOffsetBoxLostFocus(object sender, RoutedEventArgs e) => ApplyTotalOffsetFromBox();
+
+    private void ApplyTotalOffsetFromBox()
     {
         if (_updatingFromSync) return;
-        if (double.TryParse(TotalOffsetBox.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out var val))
-        {
-            val = ClampOffsetMs(val);
-            double delta = val - _totalOffsetMs;
-            _totalOffsetMs = val;
-            TotalOffsetSecLabel.Text = AppStrings.Format("LyricsEditor_TotalOffsetSecondsFormat", "(= {0}초)", $"{(_totalOffsetMs / 1000.0):+0.0000;-0.0000;0.0000}");
-            ApplyOffsetDeltaToLines(delta);
-        }
+        var val = ClampOffsetMs(TotalOffsetBox.Value);
+        if (Math.Abs(val - _totalOffsetMs) < 0.0001) return;
+        double delta = val - _totalOffsetMs;
+        _totalOffsetMs = val;
+        UpdateOffsetUi();
+        ApplyOffsetDeltaToLines(delta);
     }
 
     private void UpdateOffsetUi()
     {
         _updatingFromSync = true;
-        TotalOffsetBox.Text = _totalOffsetMs >= 0 ? $"+{_totalOffsetMs:F3}" : $"{_totalOffsetMs:F3}";
+        TotalOffsetBox.Value = _totalOffsetMs;
         TotalOffsetSecLabel.Text = AppStrings.Format("LyricsEditor_TotalOffsetSecondsFormat", "(= {0}초)", $"{(_totalOffsetMs / 1000.0):+0.0000;-0.0000;0.0000}");
         _updatingFromSync = false;
     }
@@ -364,6 +350,7 @@ public sealed partial class LyricsEditorWindow : Window
         {
             var newTime = line.Time + shift;
             if (newTime < TimeSpan.Zero) newTime = TimeSpan.Zero;
+            newTime = LrcEditLineVm.SnapToWholeMs(newTime);
             line.Time = newTime;
 
             // Word timings ride along with the line — a re-timed karaoke line whose word tags
@@ -375,6 +362,7 @@ public sealed partial class LyricsEditorWindow : Window
                 {
                     var ws = w.Start + shift;
                     if (ws < TimeSpan.Zero) ws = TimeSpan.Zero;
+                    ws = LrcEditLineVm.SnapToWholeMs(ws);
                     if (ws < newTime) ws = newTime;
                     shifted.Add(w with { Start = ws });
                 }
@@ -499,6 +487,8 @@ public sealed partial class LyricsEditorWindow : Window
                         });
                     }
                     ReindexLines();
+                    _currentLineIndex = -1;
+                    CaptureOriginalTimes(); // wholesale document load — offset restores promise these times
                     SyncToRawText();
                     StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_ClipboardImported", "클립보드에서 {0}줄 가사를 불러왔습니다.", doc.Lines.Count);
                 }
@@ -549,6 +539,7 @@ public sealed partial class LyricsEditorWindow : Window
         {
             var doc = LrcParser.Parse(RawTextEditorBox.Text);
             _lines.Clear();
+            _currentLineIndex = -1; // highlight flags died with the old items
             int no = 1;
             foreach (var l in doc.Lines)
             {
@@ -657,7 +648,7 @@ public sealed partial class LyricsEditorWindow : Window
             AppServices.LyricsOnline?.ClearAppliedResult(_track.Path);
 
             AppServices.RaiseLyricsChanged(_track);
-            StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_SaveSuccess", "성공적으로 저장됨: {0} ({1})", DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture), _targetLrcPath);
+            StatusLabel.Text = AppStrings.Format("LyricsEditor_Status_SaveSuccess", "저장됨 ({0}) — 가사 패널에 즉시 반영됨: {1}", DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture), _targetLrcPath);
         }
         catch (Exception ex)
         {

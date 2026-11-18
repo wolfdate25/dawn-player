@@ -129,7 +129,9 @@ this marker).
   original line (toggle in Settings); online plugins can supply translations via `TranslatedLrc`
 - **Word-level karaoke highlight** — enhanced-LRC word timings render as per-word highlight
   (sung / current / upcoming) in the lyrics pane (toggle in Settings)
-- **LRC lyrics editor** — per-line timestamp editing/syncing, line reordering, clipboard import
+- **LRC lyrics editor** — per-line timestamp editing/syncing, line reordering, clipboard import,
+  offset stepping with a live playhead highlight (see the shifted line move as you adjust) and
+  restore-to-original-times
 
 ### UI (Eole style × WinUI 3)
 - Dark-first palette + Mica backdrop, amber accent, light theme toggle

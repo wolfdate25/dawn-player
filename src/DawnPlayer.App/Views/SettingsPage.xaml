@@ -1248,10 +1248,10 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                         <TextBlock x:Uid="Settings_Lyrics_StepMs_Title" Text="가사 오프셋 조정 단계 (ms)" Style="{StaticResource SettingTitle}"/>
-                                        <TextBlock x:Uid="Settings_Lyrics_StepMs_Desc" Text="가사 편집기의 ◀/▶ 오프셋 버튼 한 번당 이동할 시간 (0.1 ~ 1000ms)." Style="{StaticResource SettingDesc}"/>
+                                        <TextBlock x:Uid="Settings_Lyrics_StepMs_Desc" Text="가사 편집기의 오프셋 버튼 한 번당 이동할 시간 (1 ~ 5000ms). 타임스탬프는 1ms 단위로 저장됩니다." Style="{StaticResource SettingDesc}"/>
                                     </StackPanel>
                                     <NumberBox x:Uid="Settings_Lyrics_StepMs_A11yName" Grid.Column="1" Width="140" HorizontalAlignment="Right"
-                                               Minimum="0.1" Maximum="1000" SmallChange="0.1" SpinButtonPlacementMode="Compact"
+                                               Minimum="1" Maximum="5000" SmallChange="10" LargeChange="100" SpinButtonPlacementMode="Compact"
                                                Value="{x:Bind ViewModel.Lyrics.OffsetStepMs, Mode=TwoWay}"/>
                                 </Grid>
 

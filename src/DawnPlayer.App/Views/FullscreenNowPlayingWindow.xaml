@@ -120,7 +120,7 @@
                 </StackPanel>
 
                 <!-- Visible exit hint (PT3-02): Escape used to be an undiscoverable hidden exit -->
-                <TextBlock x:Uid="Fullscreen_ExitHint" Text="Esc: 닫기 · Space: 재생/일시정지 · ←/→: 트랙 이동"
+                <TextBlock x:Uid="Fullscreen_ExitHint" Text="Esc: 닫기 · Space: 재생/일시정지 · ←/→: 트랙 이동 · L: 가사"
                            FontSize="{StaticResource FontCaption}" Foreground="{ThemeResource TextTertiaryBrush}"
                            HorizontalAlignment="Center" Opacity="0.8"/>
             </StackPanel>

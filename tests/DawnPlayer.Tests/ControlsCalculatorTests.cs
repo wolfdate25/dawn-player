@@ -192,55 +192,6 @@ public class ControlsCalculatorTests
         Assert.Equal(-100, currentIndex);
     }
 
-    [Fact]
-    public void LyricsScrollSynchronizer_StepOffset_AdversarialClampingAndInvertedBounds()
-    {
-        // Inverted min/max: min=5000, max=-5000 should handle gracefully via Math.Min / Math.Max
-        double stepped = LyricsScrollSynchronizer.StepOffset(0, 2000, minOffsetMs: 5000, maxOffsetMs: -5000);
-        Assert.Equal(2000, stepped);
-
-        double steppedOverflow = LyricsScrollSynchronizer.StepOffset(0, 10000, minOffsetMs: 5000, maxOffsetMs: -5000);
-        Assert.Equal(5000, steppedOverflow);
-
-        // Extreme delta (+1e12, -1e12)
-        Assert.Equal(10000, LyricsScrollSynchronizer.StepOffset(0, 1e12));
-        Assert.Equal(-10000, LyricsScrollSynchronizer.StepOffset(0, -1e12));
-
-        // NaN & Infinity inputs
-        Assert.Equal(0, LyricsScrollSynchronizer.StepOffset(double.NaN, double.NaN));
-        Assert.Equal(0, LyricsScrollSynchronizer.StepOffset(double.PositiveInfinity, double.NegativeInfinity));
-    }
-
-    [Theory]
-    [InlineData(0.00001, "오프셋 0.0s")]
-    [InlineData(-0.00001, "오프셋 0.0s")]
-    [InlineData(double.NaN, "오프셋 0.0s")]
-    [InlineData(double.PositiveInfinity, "오프셋 0.0s")]
-    [InlineData(double.NegativeInfinity, "오프셋 0.0s")]
-    [InlineData(100, "오프셋 +0.1s")]
-    [InlineData(-100, "오프셋 -0.1s")]
-    [InlineData(100000, "오프셋 +100s")]
-    public void LyricsScrollSynchronizer_FormatOffsetLabel_AdversarialInputs(double offsetMs, string expected)
-    {
-        Assert.Equal(expected, LyricsScrollSynchronizer.FormatOffsetLabel(offsetMs));
-    }
-
-    [Fact]
-    public void LyricsScrollSynchronizer_CalculateSeekTarget_NegativeAndExtremeValues()
-    {
-        // Negative offset larger than timestamp -> clamps to TimeSpan.Zero
-        var res1 = LyricsScrollSynchronizer.CalculateSeekTarget(TimeSpan.FromSeconds(5), -10000);
-        Assert.Equal(TimeSpan.Zero, res1);
-
-        // Infinite offset
-        var resInf = LyricsScrollSynchronizer.CalculateSeekTarget(TimeSpan.FromSeconds(5), double.PositiveInfinity);
-        Assert.Equal(TimeSpan.FromSeconds(5), resInf);
-
-        // Negative infinity
-        var resNegInf = LyricsScrollSynchronizer.CalculateSeekTarget(TimeSpan.FromSeconds(5), double.NegativeInfinity);
-        Assert.Equal(TimeSpan.FromSeconds(5), resNegInf);
-    }
-
     // =========================================================================
     // 2. SeekbarScrubbingCalculator Adversarial & Stress Tests
     // =========================================================================

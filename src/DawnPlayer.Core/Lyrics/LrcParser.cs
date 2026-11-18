@@ -147,6 +147,12 @@ public static partial class LrcParser
 
         // Pass 2: Apply global offset uniformly to all lines (and their word timings) and sort
         var finalLines = new List<(TimeSpan t, string s, IReadOnlyList<LrcWord>? w, bool clamped)>(rawLines.Count);
+        // A corrupt [offset:] tag can carry an astronomically large (or non-finite) number;
+        // FromMilliseconds would throw and take the whole lyrics pane down with it. Real offsets
+        // are seconds-to-minutes — clamp to ±24h, far past anything a legitimate file contains.
+        if (!double.IsFinite(offsetMs)) offsetMs = 0;
+        else if (offsetMs > 86_400_000) offsetMs = 86_400_000;
+        else if (offsetMs < -86_400_000) offsetMs = -86_400_000;
         var offsetSpan = TimeSpan.FromMilliseconds(offsetMs);
 
         foreach (var (rawTime, textPart, words) in rawLines)
@@ -298,13 +304,25 @@ public static partial class LrcParser
         if (!int.TryParse(m.Groups["min"].Value, CultureInfo.InvariantCulture, out int min)) return false;
         if (!int.TryParse(m.Groups["sec"].Value, CultureInfo.InvariantCulture, out int sec)) return false;
 
+        // Milliseconds must come from exact integer math: FromSeconds(sec + frac/10^n) lets the
+        // sub-tick double rounding leak into a visible 1 ms drift per parse/format cycle (a
+        // written "00:00.087" parses to 869,999 ticks, formats as "086", parses to 859,999 …).
+        // The regex caps the fraction at 3 digits, so scale it to whole milliseconds instead.
         // frac digits: 1 → tenths, 2 → hundredths, 3 → ms
-        double frac = 0;
+        int fracMs = 0;
         var fracStr = m.Groups["frac"].Value;
         if (fracStr.Length > 0)
-            frac = int.Parse(fracStr, CultureInfo.InvariantCulture) / Math.Pow(10, fracStr.Length);
+        {
+            int digits = int.Parse(fracStr, CultureInfo.InvariantCulture);
+            fracMs = fracStr.Length switch
+            {
+                1 => digits * 100,
+                2 => digits * 10,
+                _ => digits,
+            };
+        }
 
-        time = TimeSpan.FromSeconds(hour * 3600 + min * 60 + sec + frac);
+        time = TimeSpan.FromTicks(((hour * 3600L + min * 60L + sec) * 1000 + fracMs) * TimeSpan.TicksPerMillisecond);
         return true;
     }
 
@@ -413,23 +431,6 @@ public static partial class LrcParser
         {
             try { File.Delete(tempPath); } catch { /* best effort */ }
             throw;
-        }
-    }
-
-    public static bool SaveOffsetToFile(string lrcPath, double offsetMs)
-    {
-        if (string.IsNullOrWhiteSpace(lrcPath) || !File.Exists(lrcPath)) return false;
-        try
-        {
-            var text = DecodeBytes(File.ReadAllBytes(lrcPath));
-            var doc = Parse(text, lrcPath);
-            var newContent = Format(doc, offsetMs);
-            SaveToFile(lrcPath, newContent);
-            return true;
-        }
-        catch
-        {
-            return false;
         }
     }
 

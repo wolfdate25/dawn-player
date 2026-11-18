@@ -120,8 +120,6 @@
   <data name="LyricsPane_EmptyTitle.Text" xml:space="preserve"><value>歌詞がありません</value></data>
   <data name="LyricsPane_SourceOnlineFormat" xml:space="preserve"><value>オンライン · {0}</value></data>
   <data name="LyricsPane_SourceOnlineUnsyncedFormat" xml:space="preserve"><value>オンライン · {0} · 非同期</value></data>
-  <data name="LyricsPane_OffsetZero" xml:space="preserve"><value>オフセット 0.0s</value></data>
-  <data name="LyricsPane_OffsetFormat" xml:space="preserve"><value>オフセット {0}</value></data>
   <data name="LyricsPane_EmptyDesc.Text" xml:space="preserve"><value>音源ファイルと同じフォルダーに .lrc ファイルを配置するか、[歌詞を作成] をクリックして作成してください。</value></data>
   <data name="LyricsPane_CreateLyricsButton.Content" xml:space="preserve"><value>新しい歌詞を作成</value></data>
   <data name="LyricsPane_SearchOnlineButton.Content" xml:space="preserve"><value>オンラインで検索</value></data>
@@ -266,8 +264,20 @@
   <data name="LyricsEditor_StepDeltaLabel.Text" xml:space="preserve"><value>調整ステップ単位:</value></data>
   <data name="LyricsEditor_StepPresetsLabel.Text" xml:space="preserve"><value>ステッププリセット:</value></data>
   <data name="LyricsEditor_TotalOffsetLabel.Text" xml:space="preserve"><value>現在の総オフセット:</value></data>
-  <data name="LyricsEditor_ResetOffsetBtn.Content" xml:space="preserve"><value>0にリセット</value></data>
   <data name="LyricsEditor_TotalOffsetSecondsFormat" xml:space="preserve"><value>(= {0}秒)</value></data>
+  <data name="LyricsEditor_RestoreOriginalTimesBtn.Content" xml:space="preserve"><value>元の時間に戻す</value></data>
+  <data name="LyricsEditor_RestoreOriginalTimesBtn.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>全ラインの時間を読み込み時点の元に戻します (保存前のみ意味があります)</value></data>
+  <data name="LyricsEditor_StepMinusFormat" xml:space="preserve"><value>◀ 歌詞を早める {0}</value></data>
+  <data name="LyricsEditor_StepPlusFormat" xml:space="preserve"><value>歌詞を遅らせる {0} ▶</value></data>
+  <data name="LyricsEditor_Status_RestoreUnavailable" xml:space="preserve"><value>行数が変わったため元の時間に戻せません — 保存前なら閉じて破棄できます</value></data>
+  <data name="LyricsEditor_Status_Restored" xml:space="preserve"><value>ライン時間を読み込み時点の元に戻しました</value></data>
+  <data name="LyricsPane_FontSmallerTooltip" xml:space="preserve"><value>フォント縮小 (現在 {0})</value></data>
+  <data name="LyricsPane_FontBiggerTooltip" xml:space="preserve"><value>フォント拡大 (現在 {0})</value></data>
+  <data name="LyricsEditor_Preset10.Content" xml:space="preserve"><value>10ms</value></data>
+  <data name="LyricsEditor_Preset50.Content" xml:space="preserve"><value>50ms</value></data>
+  <data name="LyricsEditor_Preset100.Content" xml:space="preserve"><value>100ms</value></data>
+  <data name="LyricsEditor_Preset500.Content" xml:space="preserve"><value>500ms</value></data>
+  <data name="LyricsEditor_Preset1000.Content" xml:space="preserve"><value>1000ms</value></data>
   <data name="LyricsEditor_TabSync.Header" xml:space="preserve"><value>行別シンクエディター</value></data>
   <data name="LyricsEditor_StampCurrentTimeText.Text" xml:space="preserve"><value>現在時刻スタンプ (F5)</value></data>
   <data name="LyricsEditor_AddLineText.Text" xml:space="preserve"><value>行追加</value></data>
@@ -300,7 +310,7 @@
   <data name="LyricsEditor_Status_NoExistingLyrics" xml:space="preserve"><value>既存の歌詞なし (新規作成可能)</value></data>
   <data name="LyricsEditor_Status_ClipboardImported" xml:space="preserve"><value>クリップボードから {0}行の歌詞を読み込みました。</value></data>
   <data name="LyricsEditor_Status_PasteError" xml:space="preserve"><value>貼り付けエラー: {0}</value></data>
-  <data name="LyricsEditor_Status_SaveSuccess" xml:space="preserve"><value>正常に保存されました: {0} ({1})</value></data>
+  <data name="LyricsEditor_Status_SaveSuccess" xml:space="preserve"><value>保存しました ({0}) — 歌詞パネルに即時反映: {1}</value></data>
   <data name="LyricsEditor_Status_SaveFailed" xml:space="preserve"><value>保存に失敗しました: {0}</value></data>
 
   <!-- Module 4: Lyrics Tools & Windows (LyricsSearch) -->
@@ -789,7 +799,7 @@
   <data name="Settings_Lyrics_BoldActive_Desc.Text" xml:space="preserve"><value>再生中の歌詞行を太字で強調します。</value></data>
   <data name="Settings_Lyrics_BoldActive_A11yName.AutomationProperties.Name" xml:space="preserve"><value>アクティブ行を太字 (Bold)</value></data>
   <data name="Settings_Lyrics_StepMs_Title.Text" xml:space="preserve"><value>歌詞オフセット調整ステップ (ms)</value></data>
-  <data name="Settings_Lyrics_StepMs_Desc.Text" xml:space="preserve"><value>歌詞エディターの ◀/▶ ボタン 1 回あたりの移動時間 (0.1 ～ 1000ms)。</value></data>
+  <data name="Settings_Lyrics_StepMs_Desc.Text" xml:space="preserve"><value>歌詞エディターのオフセットボタン 1 回あたりの移動時間 (1 ～ 5000ms)。タイムスタンプは 1ms 単位で保存されます。</value></data>
   <data name="Settings_Lyrics_StepMs_A11yName.AutomationProperties.Name" xml:space="preserve"><value>歌詞オフセット調整ステップ (ms)</value></data>
   <data name="Settings_Lyrics_SearchFolders_Title.Text" xml:space="preserve"><value>歌詞追加検索フォルダー</value></data>
   <data name="Settings_Lyrics_SearchFolders_Desc.Text" xml:space="preserve"><value>音源フォルダー以外に .lrc ファイルを探す追加フォルダーを 1 行に 1 つ指定します。存在しないフォルダーは無視されます。</value></data>

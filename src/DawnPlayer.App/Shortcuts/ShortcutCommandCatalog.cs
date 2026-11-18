@@ -85,7 +85,7 @@ public static class ShortcutCommandCatalog
         new(ShortcutCommand.MuteToggle, ShortcutCategory.Volume, "음소거 전환",
             new KeyChord(ShortcutModifiers.Control, 'M'), false),
 
-        new(ShortcutCommand.ToggleLyrics, ShortcutCategory.Navigation, "가사 창 열기 / 닫기",
+        new(ShortcutCommand.ToggleLyrics, ShortcutCategory.Navigation, "가사 패널 열기 / 닫기",
             new KeyChord(ShortcutModifiers.None, 'L'), true),
         new(ShortcutCommand.FocusSearch, ShortcutCategory.Navigation, "라이브러리 검색으로 이동",
             new KeyChord(ShortcutModifiers.Control, 'F'), false),

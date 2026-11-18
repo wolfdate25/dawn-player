@@ -1,8 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using DawnPlayer.App.Controls;
+using DawnPlayer.App.Views;
 using DawnPlayer.Core.Lyrics;
 using DawnPlayer.Core.Models;
 using DawnPlayer.Core.Persistence;
@@ -26,7 +27,9 @@ public class LyricsTypographyAndEditorTests
         Assert.True(s.BoldActiveLine);
         Assert.True(s.EnableFocusEffect);
         Assert.True(s.ReadEmbeddedLyrics);
-        Assert.Equal(0.5, s.DefaultOffsetStepMs);
+        // 0.5 ms was below the 1 ms resolution of the editor list and the saved stamps — one
+        // click of ± changed nothing anywhere. 500 ms (0.5 s) is the default now.
+        Assert.Equal(500, s.DefaultOffsetStepMs);
     }
 
     [Fact]
@@ -97,27 +100,6 @@ public class LyricsTypographyAndEditorTests
     }
 
     [Fact]
-    public void LrcParser_SaveOffsetToFile_UpdatesOffsetProperly()
-    {
-        var tempFile = Path.Combine(Path.GetTempPath(), $"lrc_offset_{Guid.NewGuid():N}.lrc");
-        try
-        {
-            var initialContent = "[ti:Offset Test]\r\n[00:10.000] Line 1\r\n";
-            LrcParser.SaveToFile(tempFile, initialContent);
-
-            bool ok = LrcParser.SaveOffsetToFile(tempFile, 250);
-            Assert.True(ok);
-
-            var updatedText = File.ReadAllText(tempFile, Encoding.UTF8);
-            Assert.Contains("[offset:250]", updatedText);
-        }
-        finally
-        {
-            if (File.Exists(tempFile)) File.Delete(tempFile);
-        }
-    }
-
-    [Fact]
     public void LrcLineVm_TypographyProperties_ReflectStateAndNotify()
     {
         var vm = new LrcLineVm
@@ -151,25 +133,118 @@ public class LyricsTypographyAndEditorTests
         Assert.True(notifyCount > 0);
     }
 
+    // =========================================================================
+    // Offset repair gates (2026-11 가사 오프셋 수리). The old default step (0.5 ms) was
+    // below the 1 ms resolution of the editor list and the saved [mm:ss.fff] stamps: one
+    // click changed nothing visible. These gates pin the invariants that kill that class
+    // of defect: displayed == saved == actual, and the default step is human-scale.
+    // =========================================================================
+
     [Fact]
-    public void LyricsOffsetCalculation_VariableStep_PreservesPrecision()
+    public void EditorOffset_DefaultStepMove_IsVisibleInListAndSavedFile()
     {
-        double currentOffsetMs = 0.0;
-        double stepMs = 0.5;
+        // A single click at the default 500 ms step must move both the list display and the
+        // serialized stamp — the exact path that used to be a silent no-op.
+        var line = new LrcEditLineVm { Time = TimeSpan.FromSeconds(12.345), Text = "hook" };
 
-        // Add 5 times (+2.5ms)
-        for (int i = 0; i < 5; i++)
+        line.Time = line.Time + TimeSpan.FromMilliseconds(500);
+
+        Assert.Equal("00:12.845", line.TimeString);
+        var doc = new LyricsDocument { Lines = new[] { new LrcLine(line.Time, line.Text) } };
+        Assert.Contains("[00:12.845] hook", LrcParser.Format(doc));
+    }
+
+    [Theory]
+    [InlineData(0.5)]     // legacy sub-ms default — two clicks must land on a whole ms
+    [InlineData(0.25)]
+    [InlineData(10.5)]    // fractional step rounds, never truncates into a third value
+    [InlineData(100)]
+    [InlineData(-100.5)]
+    public void EditorOffset_FractionalSteps_AlwaysSnapToWholeMilliseconds(double stepMs)
+    {
+        var line = new LrcEditLineVm { Time = TimeSpan.FromSeconds(5), Text = "x" };
+        line.Time = line.Time + TimeSpan.FromMilliseconds(stepMs);
+        line.Time = line.Time + TimeSpan.FromMilliseconds(stepMs);
+
+        // Invariant: displayed == saved == actual — the time is whole-ms, so the TimeString
+        // (which formats whole ms) and the Format stamp can never disagree with the value.
+        Assert.Equal(0, line.Time.Ticks % TimeSpan.TicksPerMillisecond);
+        var doc = new LyricsDocument { Lines = new[] { new LrcLine(line.Time, line.Text) } };
+        Assert.Contains($"[{line.TimeString}] ", LrcParser.Format(doc));
+    }
+
+    [Fact]
+    public void EditorOffset_NegativeMove_ClampsAtZeroAndRestoresFromOriginal()
+    {
+        // A negative move past zero clamps (the line cannot start before the song) — and the
+        // load-time original must survive that clamp so "restore original times" can recover.
+        var original = TimeSpan.FromMilliseconds(300);
+        var line = new LrcEditLineVm { Time = original, Text = "x" };
+        var snapshot = (line.Time, line.Words);
+
+        line.Time = line.Time - TimeSpan.FromMilliseconds(1000); // clamps
+        Assert.Equal(TimeSpan.Zero, line.Time);
+
+        line.Time = snapshot.Time; // restore path
+        Assert.Equal(original, line.Time);
+        Assert.Equal("00:00.300", line.TimeString);
+    }
+
+    [Fact]
+    public void EditorOffset_SubMsTimeEntry_SnapsToWholeMsEverywhere()
+    {
+        // Direct entry paths (typing in the time box, F5 stamping a sub-ms playback position)
+        // funnel through the same snap — what gets SAVED is always whole-ms. The time box may
+        // keep the raw typed text until the next programmatic touch (rewriting it mid-keystroke
+        // would fight the caret), so the gate pins the saved value, not the transient box text.
+        var stamped = new LrcEditLineVm { Text = "x" };
+        stamped.Time = TimeSpan.FromSeconds(3.4567);
+        Assert.Equal("00:03.457", stamped.TimeString); // rounded, not truncated to .456
+
+        var typed = new LrcEditLineVm { Text = "y" };
+        typed.TimeString = "00:03.4567";
+        Assert.Equal(0, typed.Time.Ticks % TimeSpan.TicksPerMillisecond);
+        var doc = new LyricsDocument { Lines = new[] { new LrcLine(typed.Time, typed.Text) } };
+        Assert.Contains("[00:03.457] y", LrcParser.Format(doc));
+    }
+
+    [Fact]
+    public void EditorPlayhead_FindActiveLineIndex_WorksOnEditorLineViewModels()
+    {
+        // The editor playhead reuses the pane's binary search through the shared
+        // ITimedLyricsLine interface — boundary semantics must match the pane exactly.
+        List<LrcEditLineVm> lines = new()
         {
-            currentOffsetMs = Math.Round(currentOffsetMs + stepMs, 4);
+            new() { Time = TimeSpan.FromSeconds(1) },
+            new() { Time = TimeSpan.FromSeconds(3) },
+            new() { Time = TimeSpan.FromSeconds(5) },
+        };
+
+        Assert.Equal(-1, LyricsScrollSynchronizer.FindActiveLineIndex(lines, TimeSpan.FromSeconds(0.999), 0));
+        Assert.Equal(0, LyricsScrollSynchronizer.FindActiveLineIndex(lines, TimeSpan.FromSeconds(1), 0));
+        Assert.Equal(1, LyricsScrollSynchronizer.FindActiveLineIndex(lines, TimeSpan.FromSeconds(3.5), 0));
+        Assert.Equal(2, LyricsScrollSynchronizer.FindActiveLineIndex(lines, TimeSpan.FromSeconds(99), 0));
+    }
+
+    [Fact]
+    public void SettingsStore_LegacySubMsOffsetStep_MigratesToDefaultOnLoad()
+    {
+        // Exercised through Normalize directly — redirecting AppPaths.BaseDir in a test would
+        // unset the sandbox base dir the isolation gate depends on.
+        // Legacy default (v1.0–v1.9), a zero hand-edit, and a sane value: sub-1 values bump to
+        // 500, real values survive untouched.
+        foreach (var (json, expected) in new[]
+        {
+            ("{\"Lyrics\":{\"DefaultOffsetStepMs\":0.5}}", 500.0),
+            ("{\"Lyrics\":{\"DefaultOffsetStepMs\":0}}", 500.0),
+            ("{\"Lyrics\":{\"DefaultOffsetStepMs\":0.9}}", 500.0),
+            ("{\"Lyrics\":{\"DefaultOffsetStepMs\":1}}", 1.0),
+            ("{\"Lyrics\":{\"DefaultOffsetStepMs\":1000}}", 1000.0),
+        })
+        {
+            var settings = System.Text.Json.JsonSerializer.Deserialize<AppSettings>(json,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+            Assert.Equal(expected, SettingsStore.Normalize(settings).Lyrics.DefaultOffsetStepMs);
         }
-        Assert.Equal(2.5, currentOffsetMs);
-
-        // Add tiny 0.001ms step
-        currentOffsetMs = Math.Round(currentOffsetMs + 0.001, 4);
-        Assert.Equal(2.501, currentOffsetMs);
-
-        // Subtract 0.5ms step
-        currentOffsetMs = Math.Round(currentOffsetMs - stepMs, 4);
-        Assert.Equal(2.001, currentOffsetMs);
     }
 }

@@ -297,7 +297,9 @@ public sealed class LyricsSettingsViewModel : ViewModelBase
         get => _settings.Lyrics.DefaultOffsetStepMs;
         set
         {
-            var clamped = Math.Clamp(value, 0.1, 1000.0);
+            // Stamps resolve to whole ms — a sub-ms step is invisible in the editor and in the
+            // saved file, i.e. a no-op. Floor at 1 ms.
+            var clamped = Math.Clamp(value, 1.0, 5000.0);
             if (Math.Abs(_settings.Lyrics.DefaultOffsetStepMs - clamped) > 1e-9)
             {
                 _settings.Lyrics.DefaultOffsetStepMs = clamped;
