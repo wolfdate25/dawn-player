@@ -2484,3 +2484,40 @@ I-F4 Format∘Parse 불변점(2회차 이후 안정) / I-F5 CUE 엔트리·TryPa
 - 콜드 리빌드(obj/bin 삭제, Core+Tests): 신규/수정 파일 경고 0. 존재 경고 6건은 전부 §13 진행
   중인 가사 파일(LyricsFeed·LyricsOnlineSettingsViewModel 등)의 선경고 — 본 작업 미수정 파일.
 - 전체 스위트 **2,445 / 2,445** (기존 2,429 + 신규 퍼징 16, 콜드 빌드 산출물로 1회).
+
+## 15. "교정은 게이트로" — 밴 API 게이트 + 계산기 속성 테스트 (2026-11-18 계획 → 승인, 구현·게이트 완료)
+
+AgentOS 영상 정리(Grok Bot 팀 발표 "모든 코드는 슬롭이다")의 포테이토 피라미드 원칙 — 코드 베이스 →
+정적 분석 → 검증 → 산문 → 사람 리뷰(위에서 넓게) — 을 이 저장소에 맞게 적용. 기존 정합 자산(게이트
+테스트 ~10종, §3 선설계, §14 퍼징, CUA 증거 리뷰)은 중복 투자 없이 그대로 두고, 실측으로 확인된
+갭 2종 + 규약 1줄만 추가했다. 미적용(맥락 상충 명시): 주석 99% 금지(이 저장소 주석은 교훈 연계
+고밸류), TLA+/Lean(규모 밖), PR 자동 병합(1인+CI 릴리스 흐름).
+
+### 15.1 신설
+
+- `tests/DawnPlayer.Tests/BannedApiGateTests.cs` — 문서로만 존재하던 함정 3종을 결정론적 밴으로:
+  R1 `Encoding.Default` 금지(App/Core, 항상 UTF-8 — CP949 교훈), R2 `TimeSpan.FromSeconds` 금지
+  (Core/Lyrics — §14.3-5 −1ms 드리프트), R3 코어 in-place `.Sort(` 금지(불안정 정렬, LrcParser 교훈).
+  주석 스트라이핑 후 스캔, obj/bin 제외, allowlist로 의도적 예외 근거 기록.
+- `tests/DawnPlayer.Tests/Fuzzing/CalculatorPropertyTests.cs` — 순수 계산기 5종(WindowPlacementMath·
+  QueueReorder·AbRepeatOverlay·MiniPlayerPlacement·SeekbarScrubbing)에 속성 기반 테스트
+  (불변식 P-W/Q/A/M/S 9종 선설계 + 시드 고정 무작위 입력, §14 퍼저 관례 재사).
+- AGENTS.md §3에 "교정은 게이트로 전환한다" 원칙 명문화.
+
+### 15.2 첫 실행에서 게이트가 잡은 것 (신규 차단·기존 이관 분리 — 영상의 순서 원칙)
+
+- R2 오탐 정밀화: `OnlineLyricsService.PluginTimeoutSeconds`는 정수초 타임아웃(틱 정확) —
+  FromSecondsAllowlist에 근거 기록.
+- R3 실존 3곳: MusicLibrary `Array.Sort(keys)`는 Index 동률 파괴로 전순서(의도적 설계, allowlist),
+  PlaylistManager 2곳(`files.Sort(OrdinalIgnoreCase)`·`items.Sort(cmp)`)은 동률 시 비결정적 —
+  코스메틱 수준이나 **기존 코드 수정은 본 건 범위 밖**이라 allowlist 이관, 향후 청소 후보.
+- 속성 테스트가 찾은 결함 1건(테스트 자체): 원본 double과 `FromSeconds` 왕복 값(틱 절단) 비교 오판 —
+  계산기가 보는 `duration.TotalSeconds` 기준으로 수정. 계산기 자체는 무결.
+
+### 15.3 검증 (2026-11-18)
+
+- 필터 실행 11/11 green, 딥 버스트 100,000세대 8/8 green(0.4초 — 순수 함수).
+- (전체 스위트 결과는 아래에 추가)
+- 콜드 리빌드(obj/bin 삭제): **0 오류, 경고 6 — 전량 §13 선경고**(커밋 52798bc 파일, 본 작업 미수정).
+  신규 파일 기여 경고 0.
+- 전체 스위트 **2,456 / 2,456** (기존 2,445 + 신규 11: 밴 게이트 3 + 계산기 속성 8, 콜드 빌드 산출물).
