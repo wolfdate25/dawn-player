@@ -40,7 +40,7 @@ public sealed class LyricsFeed
     }
 
     /// <summary>Offline walk (pattern×folder probes plus embedded lyrics). Call from a worker thread.</summary>
-    public FeedDocument? LoadOffline(Track track, AppSettings settings)
+    public static FeedDocument? LoadOffline(Track track, AppSettings settings)
     {
         var doc = LyricsFinder.LoadLyrics(track, settings);
         return doc is { HasLines: true } ? new FeedDocument(doc, "") : null;
@@ -140,7 +140,7 @@ public sealed class LyricsFeed
     /// the computed word). Stateless per document position — every tick recomputes from the
     /// position, so a dormant surface converges on its first tick after waking.
     /// </summary>
-    public FeedTick Tick(List<LrcLineVm> lines, int currentIndex, TimeSpan position)
+    public static FeedTick Tick(List<LrcLineVm> lines, int currentIndex, TimeSpan position)
     {
         int index = currentIndex;
         var previous = currentIndex;

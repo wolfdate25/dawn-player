@@ -50,8 +50,8 @@ public class LyricsFeedTests : IDisposable
         public Task<OnlineLyricsResult?> FetchAsync(LyricsPluginInfo plugin, LyricsSearchResult result, Track track, CancellationToken cancellationToken) =>
             Task.FromResult<OnlineLyricsResult?>(null);
         public void ApplyResult(OnlineLyricsResult result, Track track) => Session[track.Path ?? ""] = result;
-        public LyricsSaveOutcome SaveResult(OnlineLyricsResult result, Track track) => default;
-        public LyricsSaveOutcome SaveResult(OnlineLyricsResult result, Track track, bool overwriteOnce) => default;
+        public LyricsSaveOutcome SaveResult(OnlineLyricsResult result, Track track) => new(LyricsSaveResult.Failed, Error: "fake: save not implemented");
+        public LyricsSaveOutcome SaveResult(OnlineLyricsResult result, Track track, bool overwriteOnce) => new(LyricsSaveResult.Failed, Error: "fake: save not implemented");
     }
 
     private static (LyricsFeed Feed, FakeOnline Online, AppSettings Settings) CreateFeed()
@@ -131,7 +131,7 @@ public class LyricsFeedTests : IDisposable
         File.WriteAllText(Path.Combine(_tempDir, "song.lrc"), "[00:05.00]offline line", System.Text.Encoding.UTF8);
         var track = MakeTrack("song.mp3");
 
-        var loaded = feed.LoadOffline(track, settings);
+        var loaded = LyricsFeed.LoadOffline(track, settings);
 
         Assert.NotNull(loaded);
         Assert.Equal("offline line", loaded!.Document.Lines[0].Text);
@@ -143,7 +143,7 @@ public class LyricsFeedTests : IDisposable
     {
         var (feed, _, settings) = CreateFeed();
         settings.Lyrics.ReadEmbeddedLyrics = false;
-        Assert.Null(feed.LoadOffline(MakeTrack("missing.mp3"), settings));
+        Assert.Null(LyricsFeed.LoadOffline(MakeTrack("missing.mp3"), settings));
     }
 
     // ---------- VM build + toggles ----------
@@ -239,7 +239,7 @@ public class LyricsFeedTests : IDisposable
         var (feed, _, _) = CreateFeed();
         var lines = feed.BuildLines(MixedDocument());
 
-        var tick = feed.Tick(lines, -1, TimeSpan.FromMilliseconds(500));
+        var tick = LyricsFeed.Tick(lines, -1, TimeSpan.FromMilliseconds(500));
 
         Assert.Equal(-1, tick.Index);
         Assert.False(tick.Changed);
@@ -252,7 +252,7 @@ public class LyricsFeedTests : IDisposable
         var (feed, _, _) = CreateFeed();
         var lines = feed.BuildLines(MixedDocument());
 
-        var tick = feed.Tick(lines, -1, TimeSpan.FromSeconds(1.5));
+        var tick = LyricsFeed.Tick(lines, -1, TimeSpan.FromSeconds(1.5));
 
         Assert.Equal(0, tick.Index);
         Assert.True(tick.Changed);
@@ -266,9 +266,9 @@ public class LyricsFeedTests : IDisposable
     {
         var (feed, _, _) = CreateFeed();
         var lines = feed.BuildLines(MixedDocument());
-        feed.Tick(lines, -1, TimeSpan.FromSeconds(1.0));
+        LyricsFeed.Tick(lines, -1, TimeSpan.FromSeconds(1.0));
 
-        var tick = feed.Tick(lines, 0, TimeSpan.FromSeconds(2.5));
+        var tick = LyricsFeed.Tick(lines, 0, TimeSpan.FromSeconds(2.5));
 
         Assert.Equal(0, tick.Index);
         Assert.False(tick.Changed);
@@ -281,10 +281,10 @@ public class LyricsFeedTests : IDisposable
     {
         var (feed, _, _) = CreateFeed();
         var lines = feed.BuildLines(MixedDocument());
-        feed.Tick(lines, -1, TimeSpan.FromSeconds(1.0));
+        LyricsFeed.Tick(lines, -1, TimeSpan.FromSeconds(1.0));
         Assert.Equal(0, lines[0].ActiveWordIndex); // warm state
 
-        var tick = feed.Tick(lines, 0, TimeSpan.FromSeconds(5.5));
+        var tick = LyricsFeed.Tick(lines, 0, TimeSpan.FromSeconds(5.5));
 
         Assert.Equal(1, tick.Index);
         Assert.True(tick.Changed);

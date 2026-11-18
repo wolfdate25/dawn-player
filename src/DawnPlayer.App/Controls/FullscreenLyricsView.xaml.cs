@@ -158,7 +158,7 @@ public sealed partial class FullscreenLyricsView : UserControl
         {
             try
             {
-                var loaded = settings == null ? null : _feed.LoadOffline(track, settings);
+                var loaded = settings == null ? null : LyricsFeed.LoadOffline(track, settings);
                 LyricsDocument? doc = null;
                 string? source = null;
                 if (loaded != null)
@@ -272,7 +272,7 @@ public sealed partial class FullscreenLyricsView : UserControl
         if (AppServices.Playback == null || _lines.Count == 0 || !_hasTimedLines) return;
         if (AppServices.Playback.State == PlaybackState.Stopped) return;
 
-        var tick = _feed.Tick(_lines, _currentIndex, AppServices.Playback.Position);
+        var tick = LyricsFeed.Tick(_lines, _currentIndex, AppServices.Playback.Position);
         _currentIndex = tick.Index;
 
         if (tick.Changed)

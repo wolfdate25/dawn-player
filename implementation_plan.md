@@ -2521,3 +2521,15 @@ AgentOS 영상 정리(Grok Bot 팀 발표 "모든 코드는 슬롭이다")의 �
 - 콜드 리빌드(obj/bin 삭제): **0 오류, 경고 6 — 전량 §13 선경고**(커밋 52798bc 파일, 본 작업 미수정).
   신규 파일 기여 경고 0.
 - 전체 스위트 **2,456 / 2,456** (기존 2,445 + 신규 11: 밴 게이트 3 + 계산기 속성 8, 콜드 빌드 산출물).
+
+### 15.4 위생 마감 배치 (2026-11-18, 승인 후 실행)
+
+- **선경고 6건 전량 청소 → 콜드 리빌드 true 0경고 0오류**(저장소 최초): CA1822 3건
+  (`LyricsFeed.LoadOffline/Tick`·`LyricsOnlineSettingsViewModel.AddPluginOption` static 전환 +
+  호출부 11곳 동기 수정), CS8603 2건(FakeOnline `SaveResult`가 `default`(null)를 반환 —
+  가짜 구현이 계약 위반. 구체 `Failed` 아웃컴 반환으로 수리, 소비자 없음 확인), CA1869 1건
+  (Theory 행마다 새 JsonSerializerOptions → 정적 캐시).
+- **레거시 Sort 2곳 OrderBy 전환**(§15.2 청소 후보 이행): PlaylistManager
+  `files.Sort(OrdinalIgnoreCase)`·`items.Sort(cmp)` → 안정 OrderBy — 동률 항목이 런마다 뒤바뀌지
+  않음. R3 allowlist는 MusicLibrary(전순서 설계)만 잔류.
+- 필터 64/64, 전체 스위트 **2,456 / 2,456**(콜드 빌드 산출물 1회).

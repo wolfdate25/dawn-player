@@ -463,7 +463,7 @@ public sealed partial class SettingsPage : Page
     {
         if (sender is FrameworkElement { Tag: ViewModels.Settings.LyricsPluginItemVm item })
         {
-            ViewModel.OnlineLyrics.AddPluginOption(item);
+            ViewModels.Settings.LyricsOnlineSettingsViewModel.AddPluginOption(item);
         }
     }
 

@@ -659,7 +659,9 @@ public sealed class PlaylistManager : IPlaylistManager
                     // threw out of the whole folder on the first access-denied subdirectory, which
                     // surfaced as "0 tracks added" for a drop that was mostly readable.
                     CollectAudioFiles(p, files);
-                    files.Sort(StringComparer.OrdinalIgnoreCase);
+                    // OrderBy is the stable sort: List.Sort may swap case-insensitively
+                    // equal names run to run (BannedApiGateTests R3).
+                    files = files.OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList();
                 }
                 // Cue virtual tracks arrive as fragment paths (file.ext#cue=...) whose
                 // extension no longer parses as audio, so route them through their physical half.
@@ -1006,7 +1008,10 @@ public sealed class PlaylistManager : IPlaylistManager
                     break;
 
                 default:
-                    items.Sort(cmp);
+                    // Stable OrderBy over the Comparison: equal-comparing items (the
+                    // `_ => 0` fallback, same-title duplicates) keep their current order
+                    // instead of swapping run to run (BannedApiGateTests R3).
+                    items = items.OrderBy(i => i, Comparer<PlaylistItem>.Create(cmp)).ToList();
                     break;
             }
             pl.Items.ReplaceAll(items);

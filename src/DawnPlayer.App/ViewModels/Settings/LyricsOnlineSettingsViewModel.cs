@@ -214,7 +214,7 @@ public sealed class LyricsOnlineSettingsViewModel : ViewModelBase
 
     // ---------------- plugin options (§12 A8) ----------------
 
-    public void AddPluginOption(LyricsPluginItemVm item) =>
+    public static void AddPluginOption(LyricsPluginItemVm item) =>
         item.Options.Add(new PluginOptionVm());
 
     public void RemovePluginOption(LyricsPluginItemVm item, PluginOptionVm option)

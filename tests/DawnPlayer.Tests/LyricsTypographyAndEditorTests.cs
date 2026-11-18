@@ -13,6 +13,11 @@ namespace DawnPlayer.Tests;
 
 public class LyricsTypographyAndEditorTests
 {
+    /// <summary>Cached deserializer options — a fresh instance per Theory row trips CA1869 and
+    /// buys nothing (options are immutable thread-safe wrappers).</summary>
+    private static readonly System.Text.Json.JsonSerializerOptions CaseInsensitiveOptions =
+        new() { PropertyNameCaseInsensitive = true };
+
     [Fact]
     public void LyricsSettings_DefaultValues_AreSensibleAndSafe()
     {
@@ -242,8 +247,7 @@ public class LyricsTypographyAndEditorTests
             ("{\"Lyrics\":{\"DefaultOffsetStepMs\":1000}}", 1000.0),
         })
         {
-            var settings = System.Text.Json.JsonSerializer.Deserialize<AppSettings>(json,
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+            var settings = System.Text.Json.JsonSerializer.Deserialize<AppSettings>(json, CaseInsensitiveOptions)!;
             Assert.Equal(expected, SettingsStore.Normalize(settings).Lyrics.DefaultOffsetStepMs);
         }
     }

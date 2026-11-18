@@ -29,11 +29,8 @@ public class BannedApiGateTests
     {
         // Library sort keys break ties with the original index (a.Index.CompareTo) — a total
         // order, so List.Sort instability cannot reorder anything. Deliberate by design.
+        // (PlaylistManager's two legacy sorts were converted to OrderBy in the §15.4 batch.)
         @"src\DawnPlayer.Core\Library\MusicLibrary.cs",
-
-        // Legacy tie-unstable sorts (equal-comparing entries may swap run to run — cosmetic
-        // ordering only). Blocked for NEW code; existing sites are cleanup candidates (§15).
-        @"src\DawnPlayer.Core\Playlist\PlaylistManager.cs",
     };
 
     /// <summary>Files allowed to use TimeSpan.FromSeconds for WHOLE-SECOND durations (exact in
